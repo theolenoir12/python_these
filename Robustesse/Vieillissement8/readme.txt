@@ -1,0 +1,1 @@
+post review article - on change le E_0 ELY, on fait un test à pas de temps plus fin, éventuellement on test un LPSP exprimé en euros pour quantifier. SoH BAT à 70% 

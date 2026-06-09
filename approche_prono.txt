@@ -1,0 +1,7 @@
+pour le pronostic : 
+au fil des semaines, on construit une série temporelle des états de alpha. 
+
+On considère qu'il n'y a pas besoin de pronostic la première semaine.
+
+On entraîne ensuite le réseau de neurones sur les données de la dernière semaine (7*24 = 168 données), et on le fait prédire les données de la prochaine journée (len(test) = 1/7*len(train), proche des 1/10), car c'est l'horizon glissant du MPC.
+Tout au long de la semaine on fait glisser la série d'entrées pour garde 168 valeurs (à iso-entraînement) et on calcule le MPC à chaque fois. On ré-entraîne le LSTM chaque semaine sur les 168 dernières valeurs. 

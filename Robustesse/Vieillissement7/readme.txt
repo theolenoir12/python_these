@@ -1,0 +1,1 @@
+changement définition SOH pour passer sur l'évolution de la puissance à courant constant

@@ -5,12 +5,13 @@ from .Init_EMR_MG_v16_python import *
 from .simulate_transition import simulate_transition
 from .get_soh import get_soh
 from .cost_fcn_total2 import *
+from .cost_fcn_total2 import _ely_advance, UV_TO_PCT  # helpers prefixes _ non importes par *
 
 
 def init_and_run_loop(get_optimal_action_RB):
 
     # Initialisation des variables
-    T = (SIM['Tend'] / 365)*100  # horizon de temps
+    T = (SIM['Tend'] / 365)*365*15  # horizon de temps
     SoC_init  = 0.5  # état initial
     E_h2_init = 200
     SoC_t = SoC_init
@@ -42,8 +43,8 @@ def init_and_run_loop(get_optimal_action_RB):
     deg_fc  = {'start-stop':np.zeros(n),'high':np.zeros(n), 'idling':np.zeros(n),
         'transient':np.zeros(n), 'total':np.zeros(n)}
     
-    deg_ely = {'start-stop': np.zeros(n), 'turning power': np.zeros(n), 'idling': np.zeros(n),
-        'transient':np.zeros(n), 'total':np.zeros(n)}
+    deg_ely = {'start-stop': np.zeros(n), 'maintaining': np.zeros(n), 'reversible': np.zeros(n),
+        'irreversible':np.zeros(n), 'total':np.zeros(n)}
     
     defaillances = []
     
@@ -99,7 +100,14 @@ def init_and_run_loop(get_optimal_action_RB):
     # accumulation incrementale O(1)/pas, EXACTEMENT equivalente (telescopage verifie).
     cum_bat = 0.0
     cum_fc  = np.zeros(5)
-    cum_ely = np.zeros(5)
+    # ELY : modele de recuperation STATEFUL (pas de subtract-trick). Etats en uV,
+    # reportes d'un pas a l'autre, remis a 0 au remplacement.
+    V_irr_ely = 0.0
+    V_rev_ely = 0.0
+    V_ss_ely  = 0.0
+    V_idle_ely = 0.0
+    Ts_h = LOAD['Ts'] / 3600.0
+    range_useful_ely = (1 - ELY['SoH_EoL']) * 100
     
     # --- Initialisation des tableaux ---
     data = {
@@ -126,8 +134,8 @@ def init_and_run_loop(get_optimal_action_RB):
             'idling': np.zeros(n), 'transient': np.zeros(n), 'total': np.zeros(n)
         },
         "deg_ely": {
-            'start-stop': np.zeros(n), 'turning power': np.zeros(n), 
-            'idling': np.zeros(n), 'transient': np.zeros(n), 'total': np.zeros(n)
+            'start-stop': np.zeros(n), 'maintaining': np.zeros(n),
+            'reversible': np.zeros(n), 'irreversible': np.zeros(n), 'total': np.zeros(n)
         }
     }
 
@@ -212,16 +220,24 @@ def init_and_run_loop(get_optimal_action_RB):
                     - np.array(get_cost_fc(alpha_fc[j-1:j], P_fc[j-1:j])))
         cum_fc += m_fc
 
-        if j == j_new_ely:
-            m_ely = np.array(get_cost_ely(alpha_ely[j:j+1], P_ely[j:j+1]))
-        else:
-            m_ely = (np.array(get_cost_ely(alpha_ely[j-1:j+1], P_ely[j-1:j+1]))
-                     - np.array(get_cost_ely(alpha_ely[j-1:j], P_ely[j-1:j])))
-        cum_ely += m_ely
+        # ELY : avance stateful du modele de recuperation (V_rev/V_irr reportes).
+        # P_prev = P_ely[j-1] sauf au 1er pas du segment (pas de start-stop, comme
+        # l'ancien point unique).
+        P_prev_ely = P_ely[j] if j == j_new_ely else P_ely[j-1]
+        V_irr_ely, V_rev_ely, d_ss_ely, d_idle_ely = _ely_advance(
+            V_irr_ely, V_rev_ely, P_ely[j], P_prev_ely, P_ely_max_t, Ts_h)
+        V_ss_ely   += d_ss_ely
+        V_idle_ely += d_idle_ely
+
+        deg_irr_ely  = V_irr_ely  * UV_TO_PCT
+        deg_rev_ely  = V_rev_ely  * UV_TO_PCT
+        deg_ss_ely   = V_ss_ely   * UV_TO_PCT
+        deg_idle_ely = V_idle_ely * UV_TO_PCT
+        deg_pct_ely  = deg_irr_ely + deg_rev_ely + deg_ss_ely + deg_idle_ely
 
         SoH_bat_tp1 = 1 - cum_bat    / BAT['cost'] * (1 - BAT['SoH_EoL'])
         SoH_fc_tp1  = 1 - cum_fc[0]  / FC['cost']  * (1 - FC['SoH_EoL'])
-        SoH_ely_tp1 = 1 - cum_ely[0] / ELY['cost'] * (1 - ELY['SoH_EoL'])
+        SoH_ely_tp1 = 1 - deg_pct_ely / 100   # = 1 - (V_irr+V_rev+ss+idle)/V_EoL ; peut remonter (recup)
 
         deg_fc['start-stop'][j] = cum_fc[1]
         deg_fc['idling'][j]     = cum_fc[2]
@@ -229,11 +245,11 @@ def init_and_run_loop(get_optimal_action_RB):
         deg_fc['high'][j]       = cum_fc[4]
         deg_fc['total'][j]      = cum_fc[0]*100/FC['cost']*((1 - FC['SoH_EoL'])*100)/100
 
-        deg_ely['start-stop'][j]    = cum_ely[1]
-        deg_ely['idling'][j]        = cum_ely[2]
-        deg_ely['transient'][j]     = cum_ely[3]
-        deg_ely['turning power'][j] = cum_ely[4]
-        deg_ely['total'][j]         = cum_ely[0]*100/ELY['cost']*((1 - ELY['SoH_EoL'])*100)/100
+        deg_ely['start-stop'][j]    = deg_ss_ely
+        deg_ely['maintaining'][j]   = deg_idle_ely
+        deg_ely['reversible'][j]    = deg_rev_ely
+        deg_ely['irreversible'][j]  = deg_irr_ely
+        deg_ely['total'][j]         = deg_pct_ely
         
         if SoH_bat_tp1 < BAT['SoH_EoL'] :
             SoH_bat_tp1 = 1
@@ -246,7 +262,11 @@ def init_and_run_loop(get_optimal_action_RB):
         if SoH_ely_tp1 < ELY['SoH_EoL'] :
             SoH_ely_tp1 = 1
             j_new_ely = j
-            cum_ely = np.array(get_cost_ely(alpha_ely[j:j+1], P_ely[j:j+1]))
+            # Unite neuve : etats remis a 0 puis 1er pas (P_prev = P[j] -> pas de start-stop)
+            V_irr_ely, V_rev_ely, d_ss_ely, d_idle_ely = _ely_advance(
+                0.0, 0.0, P_ely[j], P_ely[j], P_ely_max_t, Ts_h)
+            V_ss_ely   = d_ss_ely
+            V_idle_ely = d_idle_ely
         
         alpha_fc_tp1  = np.interp(SoH_fc_tp1,  _soh_grid_flip, _alpha_fc_grid_flip)
         alpha_ely_tp1 = np.interp(SoH_ely_tp1, _soh_grid_flip, _alpha_ely_grid_flip)

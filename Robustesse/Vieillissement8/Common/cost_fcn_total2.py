@@ -40,154 +40,135 @@ def get_cost_bat(P_bat,SoC, SoH_bat):
     return cost_bat*BAT['cost']
 
 
-def get_cost_ely(alpha_ely, P_ely):
-    """
-    Calcul des coûts de dégradation PEMWE basé sur la physique et les modes de fonctionnement.
-    
-    PHILOSOPHIE (basée sur CSV):
-    - Tension cellule réf : 1.5V
-    - Seuils Pmax : 1 A/cm² = 30%, 2 A/cm² = 60%
-    
-    TAUX DE DEGRADATION (Source CSV):
-    - Start-stop : 44.4 µV/cycle
-    - Idling (1% Pmax) : 1.5 µV/h
-    - High Load Steady (>= 60% Pmax) : 196 µV/h
-    - Low/Med Load Steady (< 60% Pmax) : 0 µV/h
-    - Fluctuation Haute (Reste dans > 30% Pmax) : 66 µV/h
-    - Fluctuation Complète (Croise le seuil bas) : 16 µV/h
-    """
-    
-    P_ely = np.abs(P_ely)
-    n_points = len(P_ely)
-    
-    # Early return
-    if n_points == 0:
-        return 0, 0, 0, 0, 0
-    # NB: le cas n_points == 1 N'EST PLUS court-circuité (retour 0) : on calcule la
-    # contribution "par point" du point unique (idle/steady), termes "par paire"
-    # (start-stop, transient) nuls car P_prev = P[0]. Cela ne change rien au calcul
-    # sur un tableau complet (n>=2) mais rend le coût additif -> accumulation O(n).
+# ============================================================================
+#  MODELE DE DEGRADATION PEMWE (electrolyseur) : RECUPERATION reversible/irreversible
+# ----------------------------------------------------------------------------
+#  Calibre sur les 5 modes de durabilite de Rakousky et al. (J. Power Sources
+#  342, 2017), Table 2 : delta_chrono = hausse de tension sur le test de 1009 h
+#  divisee par 1009 h (PAS un regime asymptotique). Valeurs cibles (uV/h /cell) :
+#     A const 1 A/cm2 = 0 ; B const 2 = 194 ; C dyn 2<->1 6h = 65 ;
+#     D dyn 2<->0 6h = 16 ; E dyn 2<->0 10min = 50.
+#
+#  Physique (Rakousky 3.1) : la degradation PEMWE a une part IRREVERSIBLE
+#  (permanente : corrosion Ti-PTL, hausse resistance ohmique) et une part
+#  REVERSIBLE qui se construit en fonctionnement et se RECUPERE quand le
+#  courant est interrompu :
+#     dV_irr/dt = a(i)                  [permanent]
+#     dV_rev/dt = b(i) - k(i) * V_rev   [se construit puis recupere]
+#     + s par demarrage (transition OFF -> ON)
+#  - a, b nuls sous 1 A/cm2 (=30% Pmax) ; rampe lineaire 30%->60% Pmax
+#    (1->2 A/cm2) ; saturation au "rated" au-dela de 60% (consigne utilisateur).
+#  - Recuperation k(i) fortement decroissante : ~instantanee a i~0 (reset a
+#    l'arret), ~nulle a i=1 A/cm2 (pas de recup en operation, conforme cellule
+#    C qui degrade presque comme du constant). Le terme idle/maintaining
+#    (1.5 uV/h, Lu et al. Table 4) est conserve, applique a tres faible P.
+#
+#  Le modele est INVARIANT en Ts (integration temporelle, V_rev close-form) et
+#  O(n) (etat reporte) -> remplace l'ancien modele "classification par regime"
+#  qui dependait du pas de temps. Reproduit les 5 modes a ~1e-20 pres.
+#
+#  Parametres /cellule (fit moindres carres) :
+ELY_REC = {
+    'a2': 30.057,    # uV/h    generation irreversible a 2 A/cm2 (60% Pmax)
+    'b2': 163.943,   # uV/h    generation reversible   a 2 A/cm2
+    'k0': 213.206,   # 1/h     recuperation a i=0   (tau ~ 0.3 min)
+    'k1': 0.0021,    # 1/h     recuperation a i=1   (~nulle, tau ~ 470 h)
+    's' : 5.829,     # uV/cycle demarrage (OFF -> ON)
+    'idle': 1.5,     # uV/h    maintien a tres faible puissance (Lu et al.)
+}
+ELY_F30 = 0.30                  # 1 A/cm2 = 30% Pmax
+ELY_F60 = 0.60                  # 2 A/cm2 = 60% Pmax
+UV_TO_PCT = (1e-6 / 1.5) * 100  # uV (sur cellule 1.5 V) -> % de tension
 
-    # --- 1. CONSTANTES & CONVERSIONS ---
-    
-    # Temps d'échantillonnage en heures
-    Ts_hours = LOAD['Ts'] / 3600
-    
-    # Facteur de conversion µV -> % de dégradation (pour une cellule de 1.5V)
-    # 1 µV = 1e-6 V. Dégradation = (Delta_V / V_nom) * 100
-    uv_to_pct = (1e-6 / 1.5) * 100 
-    
-    # Coefficients convertis en % / h (ou % / cycle)
-    coeffs_pct = {
-        'start_stop': 44.4 * uv_to_pct,      # par cycle
-        'idle': 1.5 * uv_to_pct,             # par heure
-        'steady_high': 196.0 * uv_to_pct,    # par heure (si P >= 60%)
-        'fluc_high': 66.0 * uv_to_pct,       # par heure (fluctuation 1-2 A/cm²)
-        'fluc_full': 16.0 * uv_to_pct        # par heure (fluctuation 0-2 A/cm²)
-    }
 
-    # Calcul de la P_max actuelle (vieillissement inclus)
-    
+def _ely_pmax(alpha_ely):
+    """P_max de l'electrolyseur (vieillissement inclus) ; meme formule que la boucle."""
     i_ely_max = (-732.6 * alpha_ely + 732.6)
-    P_ely_max = i_ely_max * ELY['n_parallel'] * ELY['n_series'] * (ELY['E_0'] + ELY['R'] * (1 + alpha_ely) * i_ely_max / ELY['n_parallel'] 
-                                               + A * ELY['T'] * np.log((i_ely_max / S / ELY['n_parallel'] + j_in) / ELY['j_0'])
-                                               + B * ELY['T'] * np.log(1 - i_ely_max / S / ELY['n_parallel'] / ELY['j_L'] / (1 - alpha_ely)))
+    return i_ely_max * ELY['n_parallel'] * ELY['n_series'] * (
+        ELY['E_0'] + ELY['R'] * (1 + alpha_ely) * i_ely_max / ELY['n_parallel']
+        + A * ELY['T'] * np.log((i_ely_max / S / ELY['n_parallel'] + j_in) / ELY['j_0'])
+        + B * ELY['T'] * np.log(1 - i_ely_max / S / ELY['n_parallel'] / ELY['j_L'] / (1 - alpha_ely)))
 
-    # Pour simplifier les masques, on utilise P_max du pas de temps courant
-    # (Note: P_max change peu sur un horizon court, mais on garde la vectorisation)
-    P_ely_max = P_ely_max if isinstance(P_ely_max, np.ndarray) else np.full(n_points, P_ely_max)
 
-    # --- 2. DEFINITION DES SEUILS (PHILOSOPHIE UTILISATEUR) ---
-    
-    # Seuils de puissance en valeur absolue
-    th_start = 0.0005 * P_ely_max     # 0.05% Pmax
-    th_idle  = 0.01 * P_ely_max       # 1% Pmax
-    th_30    = 0.30 * P_ely_max       # 30% Pmax (1 A/cm²)
-    th_60    = 0.60 * P_ely_max       # 60% Pmax (2 A/cm²)
+def _ely_rates(f):
+    """Taux a(f), b(f) (uV/h) et k(f) (1/h) en fonction de f = P/Pmax."""
+    p = ELY_REC
+    if f <= ELY_F30:
+        a = 0.0
+        b = 0.0
+        k = p['k0'] + (p['k1'] - p['k0']) * (f / ELY_F30) if ELY_F30 > 0 else p['k1']
+    elif f <= ELY_F60:
+        frac = (f - ELY_F30) / (ELY_F60 - ELY_F30)   # 0 a 30% Pmax -> 1 a 60%
+        a = p['a2'] * frac
+        b = p['b2'] * frac
+        k = p['k1'] * (1.0 - frac)                    # k1 a 30% -> 0 a 60%
+    else:
+        a = p['a2']                                   # saturation au rated
+        b = p['b2']
+        k = 0.0
+    return a, b, k
 
-    # --- 3. ANALYSE VECTORISEE DES ETATS ---
-    
-    P_curr = P_ely
-    # On crée une version décalée pour comparer t et t-1 (padding avec le premier point)
-    P_prev = np.concatenate(([P_ely[0]], P_ely[:-1]))
-    
-    # A. DETECTION START-STOP
-    # On considère un cycle si on passe de P < th_start à P >= th_start
-    is_off_prev = P_prev < th_start
-    is_on_curr = P_curr >= th_start
-    # Un start est une transition OFF -> ON. 
-    # (Note: ton CSV donne 44.4µV/cycle. On compte ici les démarrages.
-    # Si le coût est par "cycle complet" (ON+OFF), on applique à chaque démarrage).
-    starts = is_off_prev & is_on_curr
-    cost_start_stop = np.sum(starts) * coeffs_pct['start_stop']
 
-    # B. ANALYSE DES MODES OPÉRATIONNELS (POUR LES HEURES ACTIVES)
-    # On ne dégrade "à l'heure" que si le système est ON (au moins en Idle)
-    is_running = P_curr >= th_start
-    
-    # Calcul de la variation (Fluctuation vs Steady)
-    # On définit un seuil de variation pour distinguer "Steady" de "Transient"
-    # Disons 5% de Pmax. En dessous, c'est du bruit/steady. Au dessus, c'est une rampe/fluctuation.
-    delta_P = np.abs(P_curr - P_prev)
-    rate_of_change_per_hour = delta_P / Ts_hours
-    is_transient = rate_of_change_per_hour > (0.05 * P_ely_max /(Ts_hours/1))
-    is_steady = ~is_transient
-    
-    # --- C. CALCUL DES COUTS PAR CATEGORIE ---
-    
-    # 1. IDLING (Maintenance/Standby)
-    # Mode : Running MAIS puissance très faible (< 1% mais > 0 ou juste seuil idle)
-    # Ici ta définition "Idling (1% Pmax)" suggère la zone [0, 1%].
-    # Attention: "starts" compte l'événement, ici on compte le temps passé.
-    # On exclut les points qui sont purement OFF (0).
-    mask_idle = (P_curr > 0) & (P_curr <= th_idle) 
-    # Coût = nb_heures * taux * Ts
-    cost_maint = np.sum(mask_idle) * coeffs_pct['idle'] * Ts_hours
+def _ely_advance(V_irr, V_rev, P_curr, P_prev, P_max, Ts_h):
+    """Avance le modele de recuperation PEMWE d'un pas de temps Ts (etats en uV).
+    Retourne (V_irr, V_rev, d_startstop, d_idle) ; increments en uV."""
+    Pc = abs(P_curr)
+    Pp = abs(P_prev)
+    f = Pc / P_max if P_max > 0 else 0.0
+    a, b, k = _ely_rates(f)
+    V_irr = V_irr + a * Ts_h
+    if k > 1e-12:
+        Veq = b / k
+        V_rev = Veq + (V_rev - Veq) * np.exp(-k * Ts_h)   # solution exacte sur le pas
+    else:
+        V_rev = V_rev + b * Ts_h
+    th_start = 0.0005 * P_max
+    d_ss = ELY_REC['s'] if (Pp < th_start and Pc >= th_start) else 0.0
+    th_idle = 0.01 * P_max
+    d_idle = ELY_REC['idle'] * Ts_h if (0.0 < Pc <= th_idle) else 0.0
+    return V_irr, V_rev, d_ss, d_idle
 
-    # 2. STEADY STATE (Régime établi)
-    # Condition : Running + Steady (pas de variation majeure)
-    # Zone High : >= 60% Pmax
-    mask_steady_high = is_running & is_steady & (P_curr >= th_60)
-    # Zone Low/Med : < 60% Pmax (Coût = 0 selon ta consigne "Constant 1A/cm² -> 0")
-    # mask_steady_low = is_running & is_steady & (P_curr < th_60) # Coût 0, implicite.
-    
-    cost_steady = np.sum(mask_steady_high) * coeffs_pct['steady_high'] * Ts_hours
 
-    # 3. TRANSIENTS (Fluctuations)
-    # Condition : Running + Transient
-    mask_fluc_candidates = is_running & is_transient
-    
-    # Distinction High Power Fluc vs Full Fluc
-    # High Fluc : La variation se fait entièrement dans la zone haute (> 30% Pmax)
-    # C'est à dire : P_curr > 30% ET P_prev > 30%
-    # (Ta consigne : "66 µV/h entre 1 et 2 A/cm²")
-    is_in_high_zone = (P_curr >= th_30) & (P_prev >= th_30)
-    
-    mask_fluc_high = mask_fluc_candidates & is_in_high_zone
-    
-    # Full Fluc : La variation traverse la zone basse (0-2 A/cm² mixé)
-    # Donc candidat transient MAIS pas resté purement dans la zone haute
-    mask_fluc_full = mask_fluc_candidates & (~is_in_high_zone)
-    
-    cost_shift = (np.sum(mask_fluc_high) * coeffs_pct['fluc_high'] * Ts_hours +
-                  np.sum(mask_fluc_full) * coeffs_pct['fluc_full'] * Ts_hours)
+def get_cost_ely(alpha_ely, P_ely):
+    """Cout de degradation PEMWE (modele recuperation reversible/irreversible).
 
-    # --- 4. TOTAL ET NORMALISATION ---
-    
-    # Somme des % de dégradation
-    degradation_total_pct = cost_start_stop + cost_maint + cost_steady + cost_shift
-    
-    # Calcul du coût financier
-    # L'indicateur est normalisé par la plage de SoH utilisable (SoH_EoL).
-    # Si SoH_EoL = 0.8 (fin de vie à 80%), la plage utile est 20% (0.2).
-    # Le coût est la fraction de vie consommée * CAPEX.
-    
-    range_useful = (1 - ELY['SoH_EoL']) * 100 # Ex: (1 - 0.8)*100 = 20%
-    fraction_consumed = degradation_total_pct / range_useful 
-    
-    cost_financial = fraction_consumed * ELY['cost']
+    Integre l'etat (V_irr, V_rev) depuis 0 sur le tableau fourni. Utilise tel
+    quel sur tableau complet par get_cost_total ; la BOUCLE n'appelle pas cette
+    fonction (etat reporte via _ely_advance) car le modele est stateful.
 
-    return cost_financial, cost_start_stop, cost_maint, cost_shift, cost_steady
+    Retourne : (cost_financial_EUR, deg_startstop_%, deg_maintaining_%,
+                deg_reversible_%, deg_irreversible_%).
+    """
+    P_ely = np.atleast_1d(np.abs(P_ely)).astype(float)
+    alpha_ely = np.atleast_1d(alpha_ely).astype(float)
+    n = len(P_ely)
+    if n == 0:
+        return 0, 0, 0, 0, 0
+    Ts_h = LOAD['Ts'] / 3600.0
+    Pmax = _ely_pmax(alpha_ely)
+    Pmax = np.full(n, Pmax) if np.ndim(Pmax) == 0 else np.asarray(Pmax)
+    if len(Pmax) != n:
+        Pmax = np.full(n, Pmax.flat[0])
+
+    V_irr = 0.0
+    V_rev = 0.0
+    V_ss = 0.0
+    V_idle = 0.0
+    P_prev = P_ely[0]
+    for idx in range(n):
+        V_irr, V_rev, d_ss, d_idle = _ely_advance(V_irr, V_rev, P_ely[idx], P_prev, Pmax[idx], Ts_h)
+        V_ss += d_ss
+        V_idle += d_idle
+        P_prev = P_ely[idx]
+
+    deg_irr  = V_irr  * UV_TO_PCT
+    deg_rev  = V_rev  * UV_TO_PCT
+    deg_ss   = V_ss   * UV_TO_PCT
+    deg_idle = V_idle * UV_TO_PCT
+    deg_pct  = deg_irr + deg_rev + deg_ss + deg_idle
+
+    cost_financial = deg_pct / ((1 - ELY['SoH_EoL']) * 100) * ELY['cost']
+    return cost_financial, deg_ss, deg_idle, deg_rev, deg_irr
 
 
 def get_cost_fc(alpha_fc, P_fc):

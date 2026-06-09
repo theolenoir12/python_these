@@ -83,9 +83,9 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
             deg_fc['total'][k-1]      = np.nan
         if deg_ely['total'][k] < 5e-3 and deg_ely['total'][k-1] > 1 :
             deg_ely['start-stop'][k-1]    = np.nan
-            deg_ely['idling'][k-1]        = np.nan
-            deg_ely['transient'][k-1]     = np.nan
-            deg_ely['turning power'][k-1] = np.nan
+            deg_ely['maintaining'][k-1]   = np.nan
+            deg_ely['reversible'][k-1]    = np.nan
+            deg_ely['irreversible'][k-1]  = np.nan
             deg_ely['total'][k-1]         = np.nan
             
     # --- GESTION DU DOSSIER DE SAUVEGARDE (La modification est ici) ---
@@ -131,13 +131,14 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
     plot_SoH(temps, SoH_ely, ELY['SoH_EoL'], 'SoH_ely.pdf', title=r'$\mathbf{SoH\ of\ the\ electrolyzer}$')
     
     # --- Figures de dégradations ---
-    def plot_deg(temps, x1,x2,x3,x4,x5, filename, title):
+    def plot_deg(temps, x1,x2,x3,x4,x5, filename, title,
+                 labels=(r'$Start-stop$', r'$Idling$', r'$Transient$', r'$High\ power$')):
         plt.figure(figsize=(10,6))
         plt.plot(temps/3600/24, x1, lw=3, label=r'$Total$')
-        plt.plot(temps/3600/24, x2, lw=3, label=r'$Start-stop$')
-        plt.plot(temps/3600/24, x3, lw=3, label=r'$Idling$')
-        plt.plot(temps/3600/24, x4, lw=3, label=r'$Transient$')
-        plt.plot(temps/3600/24, x5, lw=3, label=r'$High\ power$')
+        plt.plot(temps/3600/24, x2, lw=3, label=labels[0])
+        plt.plot(temps/3600/24, x3, lw=3, label=labels[1])
+        plt.plot(temps/3600/24, x4, lw=3, label=labels[2])
+        plt.plot(temps/3600/24, x5, lw=3, label=labels[3])
         plt.title(title)
         plt.xlabel(r'$\mathbf{Time\ (days)}$')
         plt.ylabel(r'$\mathbf{{{Degradations}}}$')
@@ -148,7 +149,8 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
         plt.close()
         
     plot_deg(temps,deg_fc['total'],deg_fc['start-stop'],deg_fc['idling'],deg_fc['transient'],deg_fc['high'],'deg_fc.pdf', title=r'$\mathbf{Degradations\ of\ the\ fuel\ cell}$')
-    plot_deg(temps,deg_ely['total'],deg_ely['start-stop'],deg_ely['idling'],deg_ely['transient'],deg_ely['turning power'],'deg_ely.pdf', title=r'$\mathbf{Degradations\ of\ the\ electrolyzer}$')
+    plot_deg(temps,deg_ely['total'],deg_ely['start-stop'],deg_ely['maintaining'],deg_ely['reversible'],deg_ely['irreversible'],'deg_ely.pdf', title=r'$\mathbf{Degradations\ of\ the\ electrolyzer}$',
+             labels=(r'$Start-stop$', r'$Maintaining$', r'$Reversible$', r'$Irreversible$'))
             
     def plot_degradation_pie_charts(deg_fc, deg_ely, target_dir):
         def get_max_degradation_values(deg_dict, keys):
@@ -163,8 +165,8 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
         labels_fc = ['Start-stop', 'Idling', 'Transient', 'High power']
         values_fc = get_max_degradation_values(deg_fc, keys_fc)
     
-        keys_ely = ['start-stop', 'idling', 'transient', 'turning power']
-        labels_ely = ['Start-stop', 'Idling', 'Transient', 'High power']
+        keys_ely = ['start-stop', 'maintaining', 'reversible', 'irreversible']
+        labels_ely = ['Start-stop', 'Maintaining', 'Reversible', 'Irreversible']
         values_ely = get_max_degradation_values(deg_ely, keys_ely)
     
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10))
@@ -247,7 +249,7 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
         # --- LIGNE 2 : Pie Charts (Titres abaissés) ---
         cf_pie = [
             (deg_d['fc'], ['start-stop','idling','transient','high'], ['Start-stop','Idling','Transient','High power'], r'\mathbf{PEMFC\ Degradation}', g[1, 0:3]),
-            (deg_d['ely'], ['start-stop','idling','transient','turning power'], ['Start-stop','Idling','Transient','High power'], r'\mathbf{PEMWE\ Degradation}', g[1, 3:6])
+            (deg_d['ely'], ['start-stop','maintaining','reversible','irreversible'], ['Start-stop','Maintaining','Reversible','Irreversible'], r'\mathbf{PEMWE\ Degradation}', g[1, 3:6])
         ]
         
         colors_p = ['#ff9999','#66b3ff','#99ff99','#ffcc99']
@@ -441,8 +443,30 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
         np.flatnonzero(np.isnan(SoH_bat)), 
         np.flatnonzero(~np.isnan(SoH_bat)), 
         SoH_bat[~np.isnan(SoH_bat)])
-    print("Dégradations : ",get_cost_total(alpha_fc, P_fc, alpha_ely, P_ely, P_bat, SoC, LOAD, BAT, FC, ELY, SoH_bat), '(EUR)')
-    
+    deg_eur = get_cost_total(alpha_fc, P_fc, alpha_ely, P_ely, P_bat, SoC, LOAD, BAT, FC, ELY, SoH_bat)
+    print("Dégradations : ", deg_eur, '(EUR)')
+    # --- Décomposition coût total de possession : BoP (installation, payé 1 fois) +
+    #     dégradation actualisée (facteur d'annuité present-worth) = NPC ---
+    _kwh_bat = BAT['series_num'] * BAT['parallel_num'] * BAT['Q_bat'] * BAT['v_cell_nom'] / 1000
+    _bop = (BAT['CAPEX'] * _kwh_bat        - BAT['cost']) \
+         + (FC['CAPEX']  * FC['P_fc_max']/1000  - FC['cost']) \
+         + (ELY['CAPEX'] * ELY['P_ely_max']/1000 - ELY['cost'])
+    _r = 0.05                                               # taux d'actualisation réel
+    _N = len(temps) * LOAD['Ts'] / (3600 * 24 * 365)       # horizon (ans)
+    _AF = 1.0 if _r <= 0 else (1 - (1 + _r) ** (-_N)) / (_r * _N)
+    _npc = _bop + _AF * deg_eur
+    print("  BoP (installation) : %.0f EUR  |  dégradation actualisée (r=%.0f%%, N=%.0f ans, AF=%.3f) : %.0f EUR"
+          % (_bop, _r*100, _N, _AF, _AF * deg_eur))
+    print("  NPC (coût total de possession) : %.0f EUR  =  %.1f k€" % (_npc, _npc / 1000))
+    # --- Cout d'indisponibilite : VOLL (Value of Lost Load) x energie non fournie ---
+    _Pp = np.clip(np.array(P_planned), 0, None); _Pr = np.clip(np.array(P_real), 0, None)
+    _e_unserved = np.clip(_Pp - _Pr, 0, None).sum() * LOAD['Ts'] / 3600.0   # kWh sur l'horizon (P en kW)
+    _VOLL = 5.0                                                              # EUR/kWh (socio-eco insulaire, a ajuster)
+    _voll_cost = _AF * _VOLL * _e_unserved
+    print("  Énergie non fournie : %.0f kWh  |  coût d'indisponibilité (VOLL=%.1f €/kWh, actualisé) : %.0f EUR"
+          % (_e_unserved, _VOLL, _voll_cost))
+    print("  COÛT TOTAL (NPC + indisponibilité) : %.0f EUR  =  %.1f k€" % (_npc + _voll_cost, (_npc + _voll_cost) / 1000))
+
     lpsp_percent = get_LPSP(P_planned, P_real)
     # Correction temporaire NaN pour le coût
     SoH_clean = np.copy(SoH_bat)

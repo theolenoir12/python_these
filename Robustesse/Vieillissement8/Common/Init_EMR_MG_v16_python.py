@@ -11,7 +11,7 @@ F = 96485               # (C/mol) Faraday's constant
 R = 8.314               # (J/mol/K) Gas constant
 q = 1.6e-19             # (C) Electronic charge
 
-Ts = 60*10
+Ts = 3600
 
 # Load data
 sidelec_PV    = []
@@ -22,9 +22,10 @@ with open(csv_path, 'r') as csvfile:
 # with open('./../sidelec_roche_plate_csv_filter3.csv') as csvfile:  
 # with open('./../sidelec_roche_plate_csv_10mins.csv') as csvfile:  
     reader = csv.reader(csvfile, delimiter=';') # change contents to floats
-    for row in reader: # each row is a list
-        sidelec_PV.append(float(row[1]))
-        sidelec_conso.append(float(row[2]))
+    for row in reader: # each row is a list (col0 = PV/production, col1 = consommation ;
+                       # l'ancienne colonne temps en tete a ete retiree du CSV)
+        sidelec_PV.append(float(row[0]))
+        sidelec_conso.append(float(row[1]))
 
 def load_lut(file):
     # Charge le CSV, trie par puissance (colonne 0) et retourne l'array
@@ -68,7 +69,7 @@ BAT = {
     'v_cell_nom': 12,           # Cell nominal voltage
     'v_cell_min': 11.4,         # Cell minimal voltage at 80% DoD
     'r': 3.4e-3,                # Cell equivalent serial resistance [Ohm]
-    'series_num': 45,           # Number of cells in series
+    'series_num': 104,           # Number of cells in series
     'parallel_num': 1,          # Number of branches in parallel
     'CAPEX':150,                # €/kWh
     'SoH_EoL' : 0.7,            # SoH quand on déclare la fin de vie (40% de perte de capacité)
@@ -91,7 +92,7 @@ H2_tank = {
 FC = {
     'R': 0.001,                # (Ohm) Kong et al.
     'eff': 0.50,
-    'n_series': 9,            # Number of cells in series
+    'n_series': 20,            # Number of cells in series
     'n_parallel': 1,           # Number of stacks in parallel
     'T': 273 + 60,             # (K) FC temperature
     'E_0': 1.23,               # (V) 57.5/53 from Bressel et al.
@@ -112,7 +113,7 @@ S    = 220                 # (cm2) Electrode surface (Kong et al. + Bressel)
 ELY = {
     'R': 0.001,              # (Ohm) Kong et al.
     'eff': 0.65,
-    'n_series': 9,
+    'n_series': 6.5,
     'n_parallel': 1,
     'T': 273 + 60,
     'E_0': 1.23,

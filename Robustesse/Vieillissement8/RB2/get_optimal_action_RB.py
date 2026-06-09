@@ -9,19 +9,19 @@ def get_optimal_action_RB(SoC_t,P_tot_ref_t,defaillances,lol_tab,alpha_fc_t,alph
         
     ######################### RULES ##########################    
     if P_tot_ref_t > 0 :
-        if P_tot_ref_t > 950 :
-            P_dc_bat_t = P_tot_ref_t - 950
-            P_dc_fc_t  = 950
+        if P_tot_ref_t > 0.6*FC['P_fc_max'] :
+            P_dc_bat_t = P_tot_ref_t - 0.6*FC['P_fc_max']
+            P_dc_fc_t  = 0.6*FC['P_fc_max']
             P_dc_ely_t = 0
         else :
             P_dc_bat_t = P_tot_ref_t
             P_dc_fc_t  = 0
             P_dc_ely_t = 0
     if P_tot_ref_t < 0 :
-        if P_tot_ref_t < - 9000 :
-            P_dc_bat_t = P_tot_ref_t + 9000
+        if P_tot_ref_t < - 0.7*ELY['P_ely_max'] :
+            P_dc_bat_t = P_tot_ref_t + 0.7*ELY['P_ely_max']
             P_dc_fc_t  = 0
-            P_dc_ely_t = - 9000
+            P_dc_ely_t = - 0.7*ELY['P_ely_max']
         else :
             P_dc_bat_t = P_tot_ref_t
             P_dc_fc_t  = 0

@@ -40,7 +40,7 @@ from Common.cost_fcn_total2 import get_cost_total
 from Common.get_lol import get_lol
 
 # ============================ CONFIGURATION ============================
-LPSP_MAX = 2.6921                    # contrainte dure [%] : LPSP de RB2 a ne pas depasser
+LPSP_MAX = 2.7127                    # contrainte dure [%] : LPSP de RB2 a ne pas depasser
 LPSP_TOL = 1e-4                      # tolerance numerique sur la contrainte
 
 DISCOUNT_RATE = 0.05                 # r : uniquement pour le report NPC (n'affecte pas l'objectif)

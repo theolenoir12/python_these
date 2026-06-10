@@ -36,11 +36,11 @@ def load_lut(file):
 _repeat = int(3600 // Ts)  # = 1 si Ts=3600, = 60 si Ts=60
 
 LOAD = {
-    'P_ref': np.repeat(sidelec_conso * 31, _repeat),
+    'P_ref': np.repeat(sidelec_conso * 51, _repeat),
     'Ts': Ts
 }
 PV = {
-    'P': np.repeat(sidelec_PV * 31, _repeat)
+    'P': np.repeat(sidelec_PV * 51, _repeat)
 }
 
 # Passive components

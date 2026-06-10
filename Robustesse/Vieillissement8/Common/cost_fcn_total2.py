@@ -73,9 +73,10 @@ ELY_REC = {
     'b2': 163.943,   # uV/h    generation reversible   a 2 A/cm2
     'k0': 213.206,   # 1/h     recuperation a i=0   (tau ~ 0.3 min)
     'k1': 0.0021,    # 1/h     recuperation a i=1   (~nulle, tau ~ 470 h)
-    's' : 5.829,     # uV/cycle demarrage (OFF -> ON)
+    's' : 11.7,      # uV/cycle demarrage (OFF -> ON)
     'idle': 1.5,     # uV/h    maintien a tres faible puissance (Lu et al.)
 }
+
 ELY_F30 = 0.30                  # 1 A/cm2 = 30% Pmax
 ELY_F60 = 0.60                  # 2 A/cm2 = 60% Pmax
 UV_TO_PCT = (1e-6 / 1.5) * 100  # uV (sur cellule 1.5 V) -> % de tension

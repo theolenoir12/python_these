@@ -48,7 +48,7 @@ n     = len(temps)
 
 
 # --- Figure à  deux sous-graphiques ---
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7, 6), dpi=300, sharex=True)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 3), dpi=300, sharex=True)
 
 # --- Conso en haut ---
 ax1.plot(temps/3600/24, sidelec_conso[0:n]/1000, color='black', linewidth=1)

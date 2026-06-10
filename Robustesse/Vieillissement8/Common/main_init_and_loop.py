@@ -11,7 +11,7 @@ from .cost_fcn_total2 import _ely_advance, UV_TO_PCT  # helpers prefixes _ non i
 def init_and_run_loop(get_optimal_action_RB):
 
     # Initialisation des variables
-    T = (SIM['Tend'] / 365)*365*15  # horizon de temps
+    T = (SIM['Tend'] / 365)*365*25  # horizon de temps
     SoC_init  = 0.5  # état initial
     E_h2_init = 200
     SoC_t = SoC_init

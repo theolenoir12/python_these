@@ -69,7 +69,7 @@ BAT = {
     'v_cell_nom': 12,           # Cell nominal voltage
     'v_cell_min': 11.4,         # Cell minimal voltage at 80% DoD
     'r': 3.4e-3,                # Cell equivalent serial resistance [Ohm]
-    'series_num': 104,           # Number of cells in series
+    'series_num': 60,           # Number of cells in series
     'parallel_num': 1,          # Number of branches in parallel
     'CAPEX':150,                # €/kWh
     'SoH_EoL' : 0.7,            # SoH quand on déclare la fin de vie (40% de perte de capacité)
@@ -92,7 +92,7 @@ H2_tank = {
 FC = {
     'R': 0.001,                # (Ohm) Kong et al.
     'eff': 0.50,
-    'n_series': 20,            # Number of cells in series
+    'n_series': 10,            # Number of cells in series
     'n_parallel': 1,           # Number of stacks in parallel
     'T': 273 + 60,             # (K) FC temperature
     'E_0': 1.23,               # (V) 57.5/53 from Bressel et al.
@@ -113,7 +113,7 @@ S    = 220                 # (cm2) Electrode surface (Kong et al. + Bressel)
 ELY = {
     'R': 0.001,              # (Ohm) Kong et al.
     'eff': 0.65,
-    'n_series': 6.5,
+    'n_series': 10,
     'n_parallel': 1,
     'T': 273 + 60,
     'E_0': 1.23,

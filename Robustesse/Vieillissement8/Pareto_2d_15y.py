@@ -19,16 +19,16 @@ plt.rcParams.update({
 
 # Données bleues (points d'origine)
 points = np.array([
-    [6.6997, 208.7457],   # 0-100
-    [24.3189, 175.2456],  # 25-75
-    [10.7333, 137.6821],  # 50-50
-    [4.6102, 63.0629],    # 75-25
-    [4.5393, 63.2961],    # 100-0
-    [1.4320, 60.5127],    # RB2
-    [1.6156, 39.9420],    # RB2(SoH)
-    [1.7701, 92.6865],    # RB1
-    [0.7954, 221.3859],   # SoC1
-    [34.5915, 175.8923],  # SoC06
+    [10.4291, 72.2274],   # 0-100
+    [20.2484, 64.1032],  # 25-75
+    [8.0822, 63.1622],  # 50-50
+    [3.8271, 32.4428],    # 75-25
+    [2.4565, 38.6825],    # 100-0
+    [2.6666, 34.6169],    # RB2
+    [2.5100, 32.4441],    # RB2(SoH)
+    [1.2658, 46.0521],    # RB1
+    [1.3529, 82.3372],   # SoC1
+    [29.3615, 63.6004],  # SoC06
     # [1.8278, 40.5302],    # RB2(RUL)
     # [16.6714, 176.2612],  # f0.25
     # [21.2558, 195.8383],  # f0.5
@@ -53,34 +53,34 @@ fig, ax = plt.subplots(figsize=(8, 6))
 # Affichage des points bleus
 ax.scatter(points[:, 0], points[:, 1], color='royalblue', s=60, alpha=0.8)
 
-# Ajout des labels avec conditions spécifiques
+# # Ajout des labels avec conditions spécifiques
 for i, label in enumerate(labels):
-    if label == 'RB2(RUL)':
-        ax.text(points[i, 0] - 0.2, points[i, 1] - 0.4, label, 
-                fontsize=14, color='black', verticalalignment='top')
+#     if label == 'RB2(RUL)':
+#         ax.text(points[i, 0] - 0.2, points[i, 1] - 0.4, label, 
+#                 fontsize=14, color='black', verticalalignment='top')
     
-    elif label == 'RB2':
-        ax.text(points[i, 0] - 1.5, points[i, 1] + 11.5, label, 
-                fontsize=14, color='black', verticalalignment='top')  
+#     elif label == 'RB2':
+#         ax.text(points[i, 0] - 1.5, points[i, 1] + 11.5, label, 
+#                 fontsize=14, color='black', verticalalignment='top')  
         
-    elif label == 'SoC06':
-        ax.text(points[i, 0] - 3, points[i, 1] - 5.5, label, 
-                fontsize=14, color='black', verticalalignment='top')         
-    elif label == 'SoC1':
-        ax.text(points[i, 0] + 0.5, points[i, 1] + 0.3, label, 
-                fontsize=14, color='black', verticalalignment='top')  
-    elif label == '75-25':
-        ax.text(points[i, 0] +0.5, points[i, 1] -0.4, label, 
-                fontsize=14, color='black', verticalalignment='top')    
+#     elif label == 'SoC06':
+#         ax.text(points[i, 0] - 3, points[i, 1] - 5.5, label, 
+#                 fontsize=14, color='black', verticalalignment='top')         
+#     elif label == 'SoC1':
+#         ax.text(points[i, 0] + 0.5, points[i, 1] + 0.3, label, 
+#                 fontsize=14, color='black', verticalalignment='top')  
+#     elif label == '75-25':
+#         ax.text(points[i, 0] +0.5, points[i, 1] -0.4, label, 
+#                 fontsize=14, color='black', verticalalignment='top')    
         
-    elif label == 'RB2(SoH)':
-        # MODIFICATION ICI : on soustrait au lieu d'ajouter pour descendre le label
-        # Ajuste le -0.8 selon tes préférences de distance
-        ax.text(points[i, 0]+0.5, points[i, 1] - 4, label, 
-                fontsize=14, color='black', verticalalignment='top', horizontalalignment='center')  
+#     elif label == 'RB2(SoH)':
+#         # MODIFICATION ICI : on soustrait au lieu d'ajouter pour descendre le label
+#         # Ajuste le -0.8 selon tes préférences de distance
+#         ax.text(points[i, 0]+0.5, points[i, 1] - 4, label, 
+#                 fontsize=14, color='black', verticalalignment='top', horizontalalignment='center')  
     
-    else:
-        # Placement standard pour les autres
+#     else:
+#         # Placement standard pour les autres
         ax.text(points[i, 0] + 0.5, points[i, 1] + 0.5, label, 
                 fontsize=14, color='black')
 

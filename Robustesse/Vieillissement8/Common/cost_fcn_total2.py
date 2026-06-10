@@ -186,10 +186,10 @@ def get_cost_fc(alpha_fc, P_fc):
     P_low  = 0.01 * P_fc_max
 
     # Coefficients de dégradation
-    alpha_on_off = 1.96e-3  / 4 # (% de tension / cycle)
-    alpha_high   = 1.47e-3  / 4 # (% de tension / heure)
-    alpha_low    = 1.26e-3  / 4 # (% de tension / heure)
-    alpha_shift  = 5.93e-5  / 4 # (% de tension / cycle)
+    alpha_on_off = 1.96e-3   # (% de tension / cycle)
+    alpha_high   = 1.47e-3   # (% de tension / heure)
+    alpha_low    = 1.26e-3   # (% de tension / heure)
+    alpha_shift  = 5.93e-5   # (% de tension / cycle)
 
     # Comptage des cycles ON/OFF et calcul du coût asSoCié
     counter_on_off = np.sum(np.diff(P_fc < 1) == 1)/2 #pour éviter de compter en double
@@ -209,12 +209,12 @@ def get_cost_fc(alpha_fc, P_fc):
     # cost_high = cost_high + cost_const
     #############################################################
     
-     ####################### EXTRAPOLATION LINÉAIRE ###############
-    mask_const = (P_fc >= P_low) & (P_fc <= P_high)
-    alpha_const_points = alpha_low + (alpha_high - alpha_low) * (P_fc[mask_const] - P_low[mask_const]) / (P_high[mask_const] - P_low[mask_const])
-    cost_const = np.sum(alpha_const_points) * Ts / 3600
-    cost_high = cost_high + cost_const
-    ############################################################# 
+    #  ####################### EXTRAPOLATION LINÉAIRE ###############
+    # mask_const = (P_fc >= P_low) & (P_fc <= P_high)
+    # alpha_const_points = alpha_low + (alpha_high - alpha_low) * (P_fc[mask_const] - P_low[mask_const]) / (P_high[mask_const] - P_low[mask_const])
+    # cost_const = np.sum(alpha_const_points) * Ts / 3600
+    # cost_high = cost_high + cost_const
+    # ############################################################# 
 
     # Calcul du coût des transitions de puissance
     cost_shift = alpha_shift * np.sum(np.abs(np.diff(P_fc)) / (P_high[:-1] - P_low[:-1]))

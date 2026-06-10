@@ -4,8 +4,9 @@ import importlib
 import numpy as np
 import matplotlib.pyplot as plt
 from time import time as timer
-  
-    
+from concurrent.futures import ProcessPoolExecutor
+
+
 # --- CONFIGURATION ---
 # Liste des configurations : (Nom du dossier, Label pour le plot)
 # Assure-toi que le nom du fichier de stratégie dans ces dossiers est toujours le même
@@ -16,10 +17,10 @@ scenarios = [
     ("50-50", "50-50"),
     ("75-25", "75-25"),
     ("100-0", "100-0"),
-    ("RB2",   "RB2"), 
-    ("RB2(SoH)",   "RB2(SoH)"), 
+    ("RB2",   "RB2"),
+    ("RB2(SoH)",   "RB2(SoH)"),
     ("RB1",   "RB1"),
-    ("SoC1",   "SoC1"), 
+    ("SoC1",   "SoC1"),
     ("SoC06",   "SoC06")
     # ("RB2(RUL)",  "RB2(RUL)")
 ]
@@ -27,65 +28,96 @@ scenarios = [
 STRATEGY_FILENAME = "get_optimal_action_RB" # Le nom du fichier .py SANS .py
 STRATEGY_FUNC_NAME = "get_optimal_action_RB" # Le nom de la fonction dedans
 
+# Nombre de workers (1 process par scénario, borné au nb de cœurs - 1)
+N_WORKERS = max(1, min(len(scenarios), (os.cpu_count() or 2) - 1))
+
 # --- IMPORTS COMMON ---
 # On ajoute le chemin courant pour trouver Common
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from Common.main_init_and_loop import init_and_run_loop
-from Common.main_plot import run_main_plot
+from Common.cost_fcn_total2 import get_cost_total
+from Common.Init_EMR_MG_v16_python import LOAD, BAT, FC, ELY
+
+
+def _compute_metrics(data):
+    """Reproduit EXACTEMENT le calcul (LPSP %, coût k€) de run_main_plot, sans aucun plot.
+    -> Extrait des lignes 47-49 / 330-331 / 436-477 de Common/main_plot.py."""
+    P_bat = data["P_bat"]; P_fc = data["P_fc"]; P_ely = data["P_ely"]
+    P_dc_load = data["P_dc_load"]; P_dc_pv = data["P_dc_pv"]; lol_tab = data["lol_tab"]
+    SoC = data["SoC"]
+    alpha_fc  = data["alpha_fc"][:-1]
+    alpha_ely = data["alpha_ely"][:-1]
+    SoH_bat   = data["SoH_bat"][:-1].copy()
+
+    # Insertion des NaN juste avant un remplacement batterie (lignes 71-73 de main_plot ;
+    # seul SoH_bat influe sur le coût). Puis interpolation (lignes 442-445).
+    for k in range(1, len(SoH_bat)):
+        if SoH_bat[k] == 1:
+            SoH_bat[k - 1] = np.nan
+    if np.isnan(SoH_bat).any():
+        SoH_bat[np.isnan(SoH_bat)] = np.interp(
+            np.flatnonzero(np.isnan(SoH_bat)),
+            np.flatnonzero(~np.isnan(SoH_bat)),
+            SoH_bat[~np.isnan(SoH_bat)])
+
+    # LPSP (lignes 330-331 + 436-439)
+    P_planned = np.array([(a - b) / 1000 for a, b in zip(P_dc_load, P_dc_pv)])
+    P_real    = np.array([(a - b) * (1 - c) / 1000 for a, b, c in zip(P_dc_load, P_dc_pv, lol_tab)])
+    p, r = np.clip(P_planned, 0, None), np.clip(P_real, 0, None)
+    lpsp = (np.clip(p - r, 0, None).sum() / p.sum() * 100) if p.sum() > 0 else 0.0
+
+    # Coût de dégradation [k€] (ligne 477)
+    cost_keur = get_cost_total(alpha_fc, P_fc, alpha_ely, P_ely, P_bat, SoC,
+                               LOAD, BAT, FC, ELY, SoH_bat) / 1000
+    return float(lpsp), float(cost_keur)
+
+
+def run_one(args):
+    """Worker : (folder_name, label) -> (label, lpsp, cost). Charge dynamiquement la
+    stratégie du dossier, lance la simulation, calcule les métriques. Aucun plot."""
+    folder_name, label = args
+    folder_path = os.path.abspath(folder_name)
+    if not os.path.exists(folder_path):
+        print(f"ERREUR: Le dossier {folder_path} n'existe pas. Ignoré.", flush=True)
+        return label, np.nan, np.nan
+
+    # On place CE dossier en tête de sys.path et on purge un éventuel module homonyme
+    # d'un scénario précédent (worker réutilisé) -> on importe bien le bon fichier.
+    if folder_path in sys.path:
+        sys.path.remove(folder_path)
+    sys.path.insert(0, folder_path)
+    sys.modules.pop(STRATEGY_FILENAME, None)
+    try:
+        module = importlib.import_module(STRATEGY_FILENAME)
+        get_action_func = getattr(module, STRATEGY_FUNC_NAME)
+    except ImportError as e:
+        print(f"Erreur d'import dans {folder_name}: {e}", flush=True)
+        return label, np.nan, np.nan
+
+    t0 = timer()
+    data = init_and_run_loop(get_action_func)
+    lpsp, cost = _compute_metrics(data)
+    print(f"  [OK] {label:10s} -> LPSP {lpsp:7.4f}%  cost {cost:8.3f} k€  ({timer()-t0:.0f}s)", flush=True)
+    return label, lpsp, cost
+
 
 def run_batch():
+    print(f"--- Démarrage du Batch sur {len(scenarios)} scénarios ({N_WORKERS} workers) ---", flush=True)
+    t0 = timer()
     results = []
     labels = []
+    # ex.map conserve l'ordre des scénarios -> alignement points/labels garanti
+    with ProcessPoolExecutor(max_workers=N_WORKERS) as ex:
+        for label, lpsp, cost in ex.map(run_one, scenarios):
+            if np.isnan(lpsp):
+                continue
+            results.append([lpsp, cost])
+            labels.append(label)
+    print(f"--- Batch terminé en {timer()-t0:.0f}s ---", flush=True)
 
-    print(f"--- Démarrage du Batch sur {len(scenarios)} scénarios ---")
-
-    for folder_name, label in scenarios:
-        print(f"\nTraitement du scénario : {label} (Dossier: {folder_name})")
-        
-        # 1. Construction du chemin vers le dossier spécifique
-        folder_path = os.path.abspath(folder_name)
-        
-        if not os.path.exists(folder_path):
-            print(f"ERREUR: Le dossier {folder_path} n'existe pas. Ignoré.")
-            continue
-
-        # 2. Importation dynamique de la stratégie
-        # C'est la partie "magique" : on force Python à charger le fichier de CE dossier
-        if folder_path not in sys.path:
-            sys.path.insert(0, folder_path)
-        
-        try:
-            # On importe le module
-            module = importlib.import_module(STRATEGY_FILENAME)
-            # IMPORTANT : On force le rechargement car sinon Python garde la stratégie du dossier précédent en mémoire
-            importlib.reload(module) 
-            
-            # On récupère la fonction
-            get_action_func = getattr(module, STRATEGY_FUNC_NAME)
-            
-        except ImportError as e:
-            print(f"Erreur d'import dans {folder_name}: {e}")
-            sys.path.pop(0)
-            continue
-            
-        # 3. Exécution de la simulation (comme dans main.py)
-        data = init_and_run_loop(get_action_func)
-        
-        # 4. Récupération des métriques (LPSP %, Cost k€)
-        # Note: on peut désactiver l'affichage des plots individuels si on veut aller vite
-        # en modifiant run_main_plot pour accepter un argument 'silent=True' par exemple
-        lpsp, cost = run_main_plot(data,strategy_name=folder_name) 
-        
-        results.append([lpsp, cost])
-        labels.append(label)
-        
-        # Nettoyage du path
-        sys.path.pop(0)
-
-    # Convertir en numpy array pour le plot
     points = np.array(results)
-    
     return points, labels
+
 
 # --- FONCTION DE PLOT (Ta version adaptée) ---
 def plot_pareto(points, labels_list):
@@ -114,16 +146,16 @@ def plot_pareto(points, labels_list):
         # Ajout des labels
         for i, label in enumerate(labels_list):
             x, y = points[i, 0], points[i, 1]
-            
+
             # # Tes conditions spécifiques de placement
             if 'RB2(SoH)' in label: # "in" permet d'être plus souple
                 ax.text(x + 0.05, y - 0.8, label, fontsize=14, color='black', verticalalignment='top')
             # elif label == 'RB2':
-            #     ax.text(x - 1.5, y + 2.5, label, fontsize=14, color='black', verticalalignment='top')  
+            #     ax.text(x - 1.5, y + 2.5, label, fontsize=14, color='black', verticalalignment='top')
             # elif 'SoC06' in label:
-            #     ax.text(x - 3, y + 2.5, label, fontsize=14, color='black', verticalalignment='top')  
+            #     ax.text(x - 3, y + 2.5, label, fontsize=14, color='black', verticalalignment='top')
             # elif 'SoH' in label:
-            #     ax.text(x + 2.5, y - 0.8, label, fontsize=14, color='black', va='top', ha='center')  
+            #     ax.text(x + 2.5, y - 0.8, label, fontsize=14, color='black', va='top', ha='center')
             else:
             #     # Placement standard
                 ax.text(x + 0.5, y + 0.5, label, fontsize=14, color='black')
@@ -132,7 +164,7 @@ def plot_pareto(points, labels_list):
     ax.set_xlabel("LPSP [%]", fontsize=18)
     ax.set_ylabel("Degradation [k€]", fontsize=18)
     ax.grid(True, linestyle='--', alpha=0.5)
-    
+
 
     plt.tight_layout()
     plt.savefig("pareto_ems_batch_15y.pdf", format='pdf', bbox_inches='tight')
@@ -143,17 +175,17 @@ if __name__ == "__main__":
     print("\n--- Résultats Finaux ---")
     print("Labels:", labels)
     print("Points (LPSP, Cost):", points)
-    
+
     points = np.vstack([points, [0, 0]])
     labels.append("Ideal")
-    
-    plot_pareto(points, labels)
-    
-# Sauvegarde des résultats
-results_file = "batch_results_summary_15y.txt"
-with open(results_file, "w", encoding="utf-8") as f:
-    f.write("Label;LPSP(%);Cost(kEUR)\n") # En-tête
-    for label, (lpsp, cost) in zip(labels, points):
-        f.write(f"{label};{lpsp:.4f};{cost:.4f}\n")
 
-print(f"✅ Résultats sauvegardés dans : {results_file}")
+    plot_pareto(points, labels)
+
+    # Sauvegarde des résultats
+    results_file = "batch_results_summary_25y.txt"
+    with open(results_file, "w", encoding="utf-8") as f:
+        f.write("Label;LPSP(%);Cost(kEUR)\n") # En-tête
+        for label, (lpsp, cost) in zip(labels, points):
+            f.write(f"{label};{lpsp:.4f};{cost:.4f}\n")
+
+    print(f"✅ Résultats sauvegardés dans : {results_file}")

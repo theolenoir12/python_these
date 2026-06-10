@@ -1,0 +1,28 @@
+# Sensibilite seuils EoL -- RB2(SoH) 25 ans | base EoL={'bat': 0.7, 'fc': 0.9, 'ely': 0.9}
+BASELINE; LPSP=2.6496%; deg=58.535kEUR; vie_bat=3.9215753424657533; vie_fc=12.573401826484018; vie_ely=19.113926940639267
+
+## OAT bat : SoH_EoL varie, autres au baseline
+SoH_EoL;LPSP_%;deg_kEUR;vie_composant_ans
+0.600;3.0140;45.581;5.5
+0.650;2.8067;51.101;4.7
+0.700;2.6496;58.535;3.9
+0.750;2.5459;68.801;3.2
+0.800;2.4438;84.370;2.5
+
+## OAT fc : SoH_EoL varie, autres au baseline
+SoH_EoL;LPSP_%;deg_kEUR;vie_composant_ans
+0.900;2.6496;58.535;12.6
+0.920;2.6025;58.992;10.0
+0.940;2.6122;59.929;7.6
+0.960;2.6074;61.825;5.0
+
+## OAT ely : SoH_EoL varie, autres au baseline
+SoH_EoL;LPSP_%;deg_kEUR;vie_composant_ans
+0.900;2.6496;58.535;19.1
+0.920;2.6114;59.885;16.9
+0.940;2.5645;62.601;14.4
+0.960;2.5453;68.227;11.1
+
+## Monte Carlo conjoint (N=35) ranges={'bat': (0.6, 0.8), 'fc': (0.9, 0.96), 'ely': (0.9, 0.96)}
+LPSP_mean=2.6457 LPSP_std=0.1377 (min 2.3972 max 2.8982)
+deg_mean=61.033 deg_std=9.756 (min 48.041 max 83.333)

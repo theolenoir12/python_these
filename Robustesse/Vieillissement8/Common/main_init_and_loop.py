@@ -75,13 +75,13 @@ def init_and_run_loop(get_optimal_action_RB):
     def residual_ely(alpha, SoH):
         return V_bol_ely / voltage_ely(alpha, i_ely_nom) - SoH
     
-    alpha_fc_eol  = brentq(residual_fc, 0.0, 0.22223223, args=(FC['SoH_EoL'],), xtol=1e-10, rtol=1e-10)
-    alpha_ely_eol = brentq(residual_ely, 0.0, 0.226330713, args=(ELY['SoH_EoL'],), xtol=1e-10, rtol=1e-10)
+    alpha_fc_eol  = brentq(residual_fc, 0.0, 0.274215, args=(FC['SoH_EoL'],), xtol=1e-10, rtol=1e-10)
+    alpha_ely_eol = brentq(residual_ely, 0.0, 0.248679, args=(ELY['SoH_EoL'],), xtol=1e-10, rtol=1e-10)
     
         # --- LUT alpha = f(SoH) ---
     _soh_grid      = np.linspace(1.0, min(FC['SoH_EoL'], ELY['SoH_EoL']), 2000)
-    _alpha_fc_grid  = np.array([brentq(residual_fc,  0.0, 0.22223223,   args=(s,), xtol=1e-10) for s in _soh_grid])
-    _alpha_ely_grid = np.array([brentq(residual_ely, 0.0, 0.226330713, args=(s,), xtol=1e-10) for s in _soh_grid])
+    _alpha_fc_grid  = np.array([brentq(residual_fc,  0.0, 0.274215,   args=(s,), xtol=1e-10) for s in _soh_grid])
+    _alpha_ely_grid = np.array([brentq(residual_ely, 0.0, 0.248679, args=(s,), xtol=1e-10) for s in _soh_grid])
     # soh_grid est décroissant (1.0 → SoH_EoL), on le retourne pour interp qui exige x croissant
     _soh_grid_flip      = _soh_grid[::-1]
     _alpha_fc_grid_flip  = _alpha_fc_grid[::-1]

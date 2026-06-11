@@ -153,7 +153,7 @@ SoH_fc = np.array([
 from scipy.optimize import brentq
 
 ####################################################################################################################
-SoH_EoL_fc = 0.9
+SoH_EoL_fc = 0.85
 ####################################################################################################################
 
 V_bol_fc    = voltage(0.0, i_fc_nom)
@@ -162,7 +162,7 @@ def residual_fc(alpha):
     return voltage(alpha, i_fc_nom) / V_bol_fc - SoH_EoL_fc
 
 # Recherche d'un encadrement valide : on cherche alpha_max tel que SoH < SoH_EoL
-alpha_max_search = 0.22223223  # borne haute (alpha < 1 par construction)
+alpha_max_search = 0.274215  # borne haute (alpha < 1 par construction)
 if residual_fc(alpha_max_search) > 0:
     print("Attention : SoH_EoL non atteint dans [0, 1[. Augmenter la plage d'alpha.")
 else:
@@ -174,7 +174,7 @@ else:
 #########################################################################################################
 from scipy.optimize import curve_fit
 
-SoH_center = 0.9  # point de centrage
+SoH_center = 0.85  # point de centrage
 
 def model_poly3(x, a, b, c, d):
     s = x - SoH_center
@@ -186,7 +186,7 @@ def residual_fc(alpha, SoH):
 SoH_fc   = np.linspace(SoH_EoL_fc, 1, M)
 P_fc_max = np.zeros(M)
 for i in range(M):
-    alpha_fc = brentq(residual_fc, 0.0, 0.22223223, args=(SoH_fc[i],), xtol=1e-10, rtol=1e-10)
+    alpha_fc = brentq(residual_fc, 0.0, 0.274215, args=(SoH_fc[i],), xtol=1e-10, rtol=1e-10)
     i_fc_max    = (-234.8032 * alpha_fc + 238.8252)
     P_fc_max[i] = i_fc_max * FC['n_parallel'] * FC['n_series'] * (FC['E_0'] - FC['R'] * (1 + alpha_fc) * i_fc_max / FC['n_parallel']
                                             - A * FC['T'] * np.log((i_fc_max / S / FC['n_parallel'] + j_in) / FC['j_0'])

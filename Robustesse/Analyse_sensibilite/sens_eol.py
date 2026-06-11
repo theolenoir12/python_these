@@ -241,11 +241,7 @@ def main():
                     xytext=(dx, dy), fontsize=11, color=col, weight='bold', zorder=7)
 
     ax.set_xlabel("LPSP [%]"); ax.set_ylabel("Cout de degradation [kEUR]")
-    ax.set_title("Robustesse du front de Pareto aux seuils de fin de vie (EoL)\n"
-                 "point = seuils nominaux ; ellipses 1$\\sigma$/2$\\sigma$ = incertitude EoL "
-                 "(bat %.2f-%.2f, FC/ELY %.2f-%.2f)"
-                 % (MC_RANGES['bat'][0], MC_RANGES['bat'][1],
-                    MC_RANGES['fc'][0], MC_RANGES['fc'][1]), fontsize=10)
+    ax.set_title("Robustesse du front de Pareto aux seuils EoL", fontsize=12)
     ax.grid(True, ls='--', alpha=0.5)
     fig.tight_layout()
     fig.savefig(os.path.join(RESULTS_DIR, "sens_eol_pareto.pdf"), bbox_inches="tight")
@@ -275,7 +271,7 @@ def main():
             axb.set_ylabel("Vie du composant [ans]", color='tab:blue')
         axb.tick_params(axis='y', labelcolor='tab:blue')
         ax.tick_params(axis='y', labelcolor='tab:red')
-    fig.suptitle("Sensibilite aux seuils EoL (OAT, strategie %s)" % REF_LABEL, fontsize=12)
+    fig.suptitle("Sensibilite OAT aux seuils EoL (%s)" % REF_LABEL, fontsize=12)
     fig.tight_layout()
     fig.savefig(os.path.join(RESULTS_DIR, "sens_eol_oat.pdf"), bbox_inches="tight")
     plt.close()

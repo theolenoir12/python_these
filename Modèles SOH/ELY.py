@@ -154,7 +154,7 @@ SoH_ely = np.array([
 from scipy.optimize import brentq
 
 ####################################################################################################################
-SoH_EoL_ely = 0.9
+SoH_EoL_ely = 0.85
 ####################################################################################################################
 
 V_bol_ely   = voltage(0.0, i_ely_nom)
@@ -163,7 +163,7 @@ def residual_ely(alpha):
     return V_bol_ely / voltage(alpha, i_ely_nom) - SoH_EoL_ely
 
 # Pour l'ELY : tension monte avec alpha, donc SoH décroît → résiduel change de signe
-alpha_max_search = 0.226330713
+alpha_max_search = 0.248679
 if residual_ely(alpha_max_search) > 0:
     print("Attention : SoH_EoL non atteint dans [0, 1[. Augmenter la plage d'alpha.")
 else:
@@ -175,7 +175,7 @@ else:
 
 from scipy.optimize import curve_fit
 
-SoH_center = 0.9  # point de centrage
+SoH_center = 0.85  # point de centrage
 
 def model_poly3(x, a, b, c, d):
     s = x - SoH_center
@@ -187,7 +187,7 @@ def residual_ely(alpha, SoH):
 SoH_ely   = np.linspace(SoH_EoL_ely, 1, M)
 P_ely_max = np.zeros(M)
 for i in range(M):
-    alpha_ely = brentq(residual_ely, 0.0, 0.226330713, args=(SoH_ely[i],), xtol=1e-10, rtol=1e-10)
+    alpha_ely = brentq(residual_ely, 0.0, 0.248679, args=(SoH_ely[i],), xtol=1e-10, rtol=1e-10)
     i_ely_max = (-732.6 * alpha_ely + 732.6)
     P_ely_max[i] = i_ely_max * ELY['n_parallel'] * ELY['n_series'] * (ELY['E_0'] + ELY['R'] * (1 + alpha_ely) * i_ely_max / ELY['n_parallel'] 
                                                + A * ELY['T'] * np.log((i_ely_max / S / ELY['n_parallel'] + j_in) / ELY['j_0'])

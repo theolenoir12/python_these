@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\" -Recurse -Directory | Where-Object { $_.FullName -match \"Robustesse|Analyse\" } | Select-Object FullName)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\" -Recurse | Where-Object { $_.Name -match \"reviewer|comment|APEN\" } | Select-Object FullName)",
+      "PowerShell(Get-CimInstance *)",
+      "PowerShell($py = \\(Get-Command python -ErrorAction SilentlyContinue\\).Source; Write-Output \"python: $py\"; if \\($py\\) { python -c \"import numpy,scipy,matplotlib,sympy; print\\('deps OK', numpy.__version__\\)\" }; Write-Output \"---conda envs---\"; \\(Get-Command conda -ErrorAction SilentlyContinue\\).Source)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(git check-ignore *)"
+    ]
+  }
+}

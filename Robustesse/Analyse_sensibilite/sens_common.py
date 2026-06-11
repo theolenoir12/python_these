@@ -24,8 +24,14 @@ import time
 import numpy as np
 from concurrent.futures import ProcessPoolExecutor
 
-# --- Chemin ABSOLU vers le code de base (lecture seule) ---
-VIEIL8 = "/home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Vieillissement8"
+# --- Chemin vers le code de base (LECTURE SEULE), PORTABLE Win/Linux ---
+# Vieillissement8 est le dossier FRERE de Analyse_sensibilite : on le resout en
+# relatif (marche sur n'importe quelle machine ou le depot est clone). On garde
+# l'ancien chemin Linux en repli pour ne rien casser sur l'ancienne machine.
+HERE = os.path.dirname(os.path.abspath(__file__))
+_VIEIL8_REL   = os.path.normpath(os.path.join(HERE, os.pardir, "Vieillissement8"))
+_VIEIL8_LINUX = "/home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Vieillissement8"
+VIEIL8 = _VIEIL8_REL if os.path.isdir(_VIEIL8_REL) else _VIEIL8_LINUX
 if VIEIL8 not in sys.path:
     sys.path.insert(0, VIEIL8)
 _RB2SOH = os.path.join(VIEIL8, "RB2(SoH)")
@@ -38,11 +44,32 @@ from Common.cost_fcn_total2 import get_cost_total          # noqa: E402
 from get_optimal_action_RB import get_optimal_action_RB as BASE_STRAT  # noqa: E402
 
 # --- Dossier de sortie (a cote de ce fichier) ---
-HERE = os.path.dirname(os.path.abspath(__file__))
 RESULTS_DIR = os.path.join(HERE, "results")
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 N_WORKERS = max(1, (os.cpu_count() or 2) - 1)
+
+# --- Chargement DYNAMIQUE d'une strategie par dossier (cf. batch_pareto.run_one) ---
+STRATEGY_FILENAME  = "get_optimal_action_RB"   # nom du fichier .py SANS extension
+STRATEGY_FUNC_NAME = "get_optimal_action_RB"   # nom de la fonction dedans
+
+
+def load_strategy(folder_name):
+    """Importe get_optimal_action_RB depuis VIEIL8/<folder_name> et renvoie la
+    fonction. A APPELER DANS LE WORKER : on purge un eventuel module homonyme
+    (process reutilise pour une autre strategie) puis on met le bon dossier en
+    tete de sys.path -> on importe toujours la bonne strategie. Common reste
+    accessible via VIEIL8 (deja dans sys.path)."""
+    import importlib
+    folder_path = os.path.join(VIEIL8, folder_name)
+    if not os.path.isdir(folder_path):
+        raise FileNotFoundError("Strategie introuvable : %s" % folder_path)
+    if folder_path in sys.path:
+        sys.path.remove(folder_path)
+    sys.path.insert(0, folder_path)
+    sys.modules.pop(STRATEGY_FILENAME, None)
+    module = importlib.import_module(STRATEGY_FILENAME)
+    return getattr(module, STRATEGY_FUNC_NAME)
 
 
 def metrics(data):

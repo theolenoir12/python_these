@@ -19,6 +19,7 @@ hypothèses des modèles de dégradation.
 | `sens_cweights.py` | **Étape 3** — sensibilité aux poids de coût (C-weights), **toutes stratégies** (R3-major3, R1-6). |
 | `sens_hthresholds.py` | **Étape 4** — sensibilité aux seuils de dégradation H2 (PEMFC/PEMWE), **toutes stratégies** (R3-major3-i). |
 | `sens_sizing.py` | **Étape 5** — robustesse du **classement** des EMS au dimensionnement (batterie/FC/ELY), **scénarios discrets** (R3-major5). |
+| `sens_calendar.py` | **Étape 6** — impact du **vieillissement calendaire** batterie (terme ajouté, fonction du SoC), **toutes stratégies** (R3-major3-ii). |
 | `results/` | Sorties (figures PDF + résumés `.txt`). |
 
 ## Étape 1 — Erreur d'estimation du SoH
@@ -153,6 +154,26 @@ Sorties :
 > ⚠️ Couplage notable : le réservoir H2 et l'ELY restant fixes, agrandir la FC
 > seule peut **augmenter** la LPSP (le tank se vide plus vite) — point à discuter.
 
+## Étape 6 — Vieillissement calendaire batterie
+
+Réponse à R3-major3-ii : le calendaire était exclu, mais le **temps de résidence
+en SoC** (contrôlé par l'EMS) est un mécanisme calendaire. On **ajoute** un terme
+calendaire et on mesure son impact.
+
+**Modèle ajouté** dans `cost_fcn_total2.get_cost_bat` (perte de capacité
+`Q_cal = Σ_t k_cal(SoC_t)·Δt`, forme **linéaire** `g(SoC)=SoC`), calibré par
+`T_cal` = vie calendaire à SoC=100 % pour atteindre l'EoL. Terme **additif** →
+télescope dans l'accumulation incrémentale → agit sur SoH/remplacements **et**
+coût. **OFF par défaut** (`BAT_CAL_TCAL_Y = None` → résultats de base inchangés,
+vérifié) ; la sensibilité l'active dans le worker, `T_cal ~ U[10, 20]` ans.
+
+Sorties :
+- `results/sens_calendar_pareto.pdf` — front : point baseline (calendaire OFF) +
+  nuage/ellipse (calendaire ON) ; le décalage = l'impact calendaire.
+- `results/sens_calendar_insight.pdf` — OAT(T_cal) + **surcoût calendaire vs SoC
+  moyen** par EMS (montre que l'EMS pilote le calendaire — argument R3).
+- `results/sens_calendar.txt` — chiffres (baseline vs MC, Δcoût, vie batterie).
+
 ## Lancer
 
 ```bash
@@ -162,6 +183,7 @@ cd Robustesse/Analyse_sensibilite
 ~/miniconda3/envs/simu_env/bin/python sens_cweights.py         # étape 3
 ~/miniconda3/envs/simu_env/bin/python sens_hthresholds.py      # étape 4
 ~/miniconda3/envs/simu_env/bin/python sens_sizing.py           # étape 5
+~/miniconda3/envs/simu_env/bin/python sens_calendar.py         # étape 6
 ```
 
 > Sous Windows, remplacer par le Python anaconda local
@@ -182,3 +204,5 @@ une machine plus grosse.
   `N_MC`. Sécurité : tout tirage gardant `f30 < f60` (toujours vrai ici).
 - **Étape 5** : `len(SIZINGS)` × 10 EMS. Avec 7 scénarios → **70 runs**
   (~12-15 min). Ajuster la liste `SIZINGS` (facteurs bat/fc/ely).
+- **Étape 6** : 10 baseline + 10×`N_MC` + OAT (re-simulation requise). Avec
+  `N_MC=15` → **~171 runs** (~50-70 min sur 7 cœurs). Ajuster `TCAL_RANGE`.

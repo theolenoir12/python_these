@@ -10,6 +10,14 @@ deg_cumul = np.loadtxt(file_path, delimiter=',')
 deg_cumul1 = deg_cumul[:,0]/100
 deg_cumul2 = deg_cumul[:,1]
 
+# --- Vieillissement CALENDAIRE batterie (optionnel, OFF par defaut) ---
+# None ou 0 -> terme calendaire NUL -> comportement IDENTIQUE a l'original
+# (modele de base purement cyclage). Active par l'analyse de sensibilite
+# (R3-major3-ii). BAT_CAL_TCAL_Y = vie calendaire [ans] a SoC=100% constant pour
+# atteindre l'EoL ; forme lineaire g(SoC)=SoC (taux ~ temps de residence pondere
+# par le SoC, variable controlee par l'EMS).
+BAT_CAL_TCAL_Y = None
+
 def get_cost_bat(P_bat,SoC, SoH_bat):
     
     # Lecture des données de dégradation cumulative à partir d'un fichier CSV
@@ -33,6 +41,19 @@ def get_cost_bat(P_bat,SoC, SoH_bat):
 
     # Coût total en termes de dégradation (Ah)
     cost_tot = np.sum(deg_SoC * scaling_factors)
+
+    # --- Terme CALENDAIRE optionnel (OFF si BAT_CAL_TCAL_Y est None/0) ---
+    # Perte de capacite calendaire = somme_t k_cal(SoC_t)*dt, ADDITIVE par pas ->
+    # compatible avec l'accumulation incrementale de la boucle (telescopage OK
+    # sur SoC[:-1] = SoC en debut de pas). cost_tot est en micro-Ah (x1e-6 -> Ah).
+    if BAT_CAL_TCAL_Y:
+        Ts_h = LOAD['Ts'] / 3600.0
+        soc_step = np.atleast_1d(SoC).astype(float)[:-1]   # SoC au debut de chaque pas
+        # k_cal(SoC=1) [Ah/h] : SoC=1 constant -> EoL (perte 1-SoH_EoL) en T_cal ans
+        k1 = ((1 - BAT['SoH_EoL']) * BAT['Q_bat'] * BAT['parallel_num']
+              / (BAT_CAL_TCAL_Y * 8760.0))
+        q_cal_Ah = float(np.sum(k1 * soc_step * Ts_h))      # g(SoC) = SoC (lineaire)
+        cost_tot = cost_tot + q_cal_Ah * 1e6                # remise en micro-Ah
 
     # Calcul du coût de la batterie en pourcentage par rapport à la fin de vie
     cost_bat = cost_tot * 1e-6 / ((1 - BAT['SoH_EoL']) * BAT['Q_bat'] * BAT['parallel_num'])

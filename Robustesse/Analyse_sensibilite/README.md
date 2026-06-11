@@ -13,9 +13,11 @@ hypothèses des modèles de dégradation.
 
 | Fichier | Rôle |
 |---|---|
-| `sens_common.py` | Helpers partagés : import (portable Win/Linux) du code de base, **chargeur dynamique de stratégie** (`load_strategy`), métriques (LPSP, coût de dégradation — identiques à `batch_pareto`), durées de vie, exécution parallèle, ellipses de confiance. |
+| `sens_common.py` | Helpers partagés : import (portable Win/Linux) du code de base, **chargeur dynamique de stratégie** (`load_strategy`), métriques (`metrics`, `metrics_components`), durées de vie, exécution parallèle, ellipses de confiance. |
 | `sens_soh_estimation.py` | **Étape 1** — robustesse de RB2(SoH) à l'erreur d'estimation du SoH (R2-6, R3-min2). |
 | `sens_eol.py` | **Étape 2** — sensibilité aux seuils de fin de vie (EoL), **toutes stratégies** (R3-major3-iii, R4-9/R4-10, R1-6). |
+| `sens_cweights.py` | **Étape 3** — sensibilité aux poids de coût (C-weights), **toutes stratégies** (R3-major3, R1-6). |
+| `sens_hthresholds.py` | **Étape 4** — sensibilité aux seuils de dégradation H2 (PEMFC/PEMWE), **toutes stratégies** (R3-major3-i). |
 | `results/` | Sorties (figures PDF + résumés `.txt`). |
 
 ## Étape 1 — Erreur d'estimation du SoH
@@ -65,13 +67,69 @@ Sorties :
   (coût & durée de vie) sur la stratégie de référence (RB2(SoH)).
 - `results/sens_eol.txt` — chiffres (nominal + moyennes/écarts-types MC, OAT).
 
+## Étape 3 — Poids de coût (C-weights)
+
+L'axe Y (coût de dégradation) pondère les trois dégradations par les **coûts de
+remplacement** des composants (dérivés des CAPEX : BAT 150 €/kWh, FC stack
+750 €/kW, ELY stack 563 €/kW). On fait varier ces poids (±30 % par défaut,
+centré) pour mesurer la robustesse du front.
+
+**Propriété clé** : la trajectoire SoH, les remplacements et la **LPSP sont
+invariants** aux poids (le facteur `['cost']` se simplifie dans le calcul du
+SoH), et le coût total est **linéaire** en chaque poids. Donc :
+- **1 seule simulation par stratégie** (10 simus) ; le Monte-Carlo est du
+  **post-traitement analytique** (`N_MC=5000`, instantané) ;
+- la bande par point est **purement verticale** (barres d'erreur, pas
+  d'ellipses) — *résultat en soi* : le classement LPSP est insensible aux
+  hypothèses de coût, seule l'amplitude de l'axe dégradation se dilate.
+
+Sorties :
+- `results/sens_cweights_pareto.pdf` — front des 10 EMS, barres verticales
+  (IC 95 %) = incertitude due aux poids de coût.
+- `results/sens_cweights_breakdown.pdf` — composition du coût (bat/FC/ELY) par
+  stratégie : montre quel composant domine la dégradation de chaque EMS.
+- `results/sens_cweights.txt` — chiffres (nominal, composantes, IC).
+
+## Étape 4 — Seuils de dégradation H2 (PEMFC / PEMWE)
+
+Réponse à R3-major3-i (« linear superposition of four mechanisms with seemingly
+arbitrary thresholds (1 %, 80 %, 60 %) »). On balaie les **4 seuils de régime** :
+
+| Seuil | Nominal | Rôle |
+|---|---|---|
+| `FC_FHIGH` | 0.80 | PEMFC, seuil haute puissance (« 80 % ») |
+| `FC_FLOW`  | 0.01 | PEMFC, seuil idling (« 1 % ») |
+| `ELY_F30`  | 0.30 | PEMWE, début de dégradation (30 % Pmax) |
+| `ELY_F60`  | 0.60 | PEMWE, saturation au *rated* (« 60 % ») |
+
+**Refactor** : ces 4 seuils sont désormais des **constantes de module** de
+`cost_fcn_total2.py` (les FC ont été promus depuis des littéraux ; valeurs par
+défaut **inchangées**, comportement nominal identique — vérifié). La boucle ET le
+calcul de coût appellent les mêmes fonctions qui relisent ces constantes ; on les
+**mute donc dans chaque worker** (override cohérent, sans dupliquer le modèle).
+
+Contrairement aux C-weights, ces seuils pilotent dégradation → SoH →
+**remplacements → LPSP** : il faut **re-simuler**, et la bande par point est **2D
+(ellipses)** comme l'EoL.
+
+Sorties :
+- `results/sens_hthresholds_pareto.pdf` — front des 10 EMS + ellipses 1σ/2σ.
+- `results/sens_hthresholds_oat.pdf` — OAT 1×4 (coût & durée de vie vs chaque
+  seuil) sur la stratégie de référence.
+- `results/sens_hthresholds.txt` — chiffres (nominal + MC + OAT).
+
 ## Lancer
 
 ```bash
 cd Robustesse/Analyse_sensibilite
 ~/miniconda3/envs/simu_env/bin/python sens_soh_estimation.py   # étape 1
 ~/miniconda3/envs/simu_env/bin/python sens_eol.py              # étape 2
+~/miniconda3/envs/simu_env/bin/python sens_cweights.py         # étape 3
+~/miniconda3/envs/simu_env/bin/python sens_hthresholds.py      # étape 4
 ```
+
+> Sous Windows, remplacer par le Python anaconda local
+> (`C:\Users\tlenoi01\AppData\Local\anaconda3\python.exe`).
 
 `N_WORKERS` est **auto-détecté** (`os.cpu_count()−1`) : le code s'adapte seul à
 une machine plus grosse.
@@ -81,3 +139,8 @@ une machine plus grosse.
 - **Étape 2** : 10 nominaux + 10×`N_MC` + OAT. Avec `N_MC=15` → **~170 runs**
   (~50-70 min sur 7 cœurs). Monter `N_MC` pour lisser les ellipses (sur grosse
   machine, rien d'autre à changer).
+- **Étape 3** : **10 runs seulement** (~3-5 min) — le MC sur les poids est
+  analytique. Ajuster `DELTA` (par composant) pour la largeur des bandes.
+- **Étape 4** : 10 nominaux + 10×`N_MC` + OAT (re-simulation requise). Avec
+  `N_MC=15` → **~176 runs** (~50-70 min sur 7 cœurs). Ajuster `MC_RANGES` /
+  `N_MC`. Sécurité : tout tirage gardant `f30 < f60` (toujours vrai ici).

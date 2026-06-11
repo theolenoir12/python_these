@@ -81,6 +81,18 @@ ELY_F30 = 0.30                  # 1 A/cm2 = 30% Pmax
 ELY_F60 = 0.60                  # 2 A/cm2 = 60% Pmax
 UV_TO_PCT = (1e-6 / 1.5) * 100  # uV (sur cellule 1.5 V) -> % de tension
 
+# --- Seuils de regime PEMFC (fractions de P_fc_max), exposes au niveau module ---
+# Promus depuis des litteraux locaux de get_cost_fc pour permettre les analyses
+# de sensibilite (R3 : "seemingly arbitrary thresholds 1%, 80%, 60%"). Valeurs
+# par DEFAUT inchangees -> comportement nominal identique a l'original.
+FC_FHIGH = 0.80                 # seuil haute puissance (R3 : "80%")
+FC_FLOW  = 0.01                 # seuil idling / basse puissance (R3 : "1%")
+# Coefficients de degradation PEMFC (% de tension) -- exposes aussi (info/futur)
+FC_ALPHA_ON_OFF = 1.96e-3       # / cycle  (start-stop)
+FC_ALPHA_HIGH   = 1.47e-3       # / heure  (haute puissance)
+FC_ALPHA_LOW    = 1.26e-3       # / heure  (idling)
+FC_ALPHA_SHIFT  = 5.93e-5       # / cycle  (transient)
+
 
 def _ely_pmax(alpha_ely):
     """P_max de l'electrolyseur (vieillissement inclus) ; meme formule que la boucle."""
@@ -183,14 +195,14 @@ def get_cost_fc(alpha_fc, P_fc):
                                             - B * FC['T'] * np.log(1 - i_fc_max / S / FC['n_parallel'] / FC['j_L'] / (1 - alpha_fc)))
 
     #P_fc_max = 1e3 * (6.249 - 5.619 * alpha_fc) * FC['n_parallel'] * FC['n_series'] / 50 #empirique en fonction de mon modèle
-    P_high = 0.8 * P_fc_max
-    P_low  = 0.01 * P_fc_max
+    P_high = FC_FHIGH * P_fc_max
+    P_low  = FC_FLOW  * P_fc_max
 
-    # Coefficients de dégradation
-    alpha_on_off = 1.96e-3   # (% de tension / cycle)
-    alpha_high   = 1.47e-3   # (% de tension / heure)
-    alpha_low    = 1.26e-3   # (% de tension / heure)
-    alpha_shift  = 5.93e-5   # (% de tension / cycle)
+    # Coefficients de dégradation (constantes de module, cf. en-tete)
+    alpha_on_off = FC_ALPHA_ON_OFF   # (% de tension / cycle)
+    alpha_high   = FC_ALPHA_HIGH     # (% de tension / heure)
+    alpha_low    = FC_ALPHA_LOW      # (% de tension / heure)
+    alpha_shift  = FC_ALPHA_SHIFT    # (% de tension / cycle)
 
     # Comptage des cycles ON/OFF et calcul du coût asSoCié
     counter_on_off = np.sum(np.diff(P_fc < 1) == 1)/2 #pour éviter de compter en double

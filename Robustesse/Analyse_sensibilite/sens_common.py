@@ -40,7 +40,8 @@ if _RB2SOH not in sys.path:
 
 from Common import Init_EMR_MG_v16_python as I            # noqa: E402
 from Common.main_init_and_loop import init_and_run_loop   # noqa: E402
-from Common.cost_fcn_total2 import get_cost_total          # noqa: E402
+from Common.cost_fcn_total2 import (get_cost_total,        # noqa: E402
+                                    get_cost_bat, get_cost_fc, get_cost_ely)
 from get_optimal_action_RB import get_optimal_action_RB as BASE_STRAT  # noqa: E402
 
 # --- Dossier de sortie (a cote de ce fichier) ---
@@ -95,6 +96,39 @@ def metrics(data):
     cost = get_cost_total(alpha_fc, P_fc, alpha_ely, P_ely, P_bat, SoC,
                           I.LOAD, I.BAT, I.FC, I.ELY, SoH_bat) / 1000.0
     return float(lpsp), float(cost)
+
+
+def metrics_components(data):
+    """Comme metrics() mais renvoie (LPSP %, cost_bat, cost_fc, cost_ely) en kEUR
+    SEPARES (cost_bat+cost_fc+cost_ely == cout total de metrics()).
+
+    Utile pour la sensibilite aux C-WEIGHTS (poids de cout = couts de
+    remplacement) : la trajectoire SoH/les remplacements/le LPSP sont INVARIANTS
+    aux poids (le facteur *['cost'] se simplifie dans le calcul du SoH), et le
+    cout total est LINEAIRE en chaque composante :
+        cout(m_bat,m_fc,m_ely) = m_bat*cost_bat + m_fc*cost_fc + m_ely*cost_ely.
+    -> 1 simulation par strategie suffit ; le Monte-Carlo sur les poids est du
+    post-traitement analytique (cf. sens_cweights.py)."""
+    P_bat = data["P_bat"]; P_fc = data["P_fc"]; P_ely = data["P_ely"]
+    P_dc_load = data["P_dc_load"]; P_dc_pv = data["P_dc_pv"]; lol = data["lol_tab"]
+    SoC = data["SoC"]
+    alpha_fc = data["alpha_fc"][:-1]; alpha_ely = data["alpha_ely"][:-1]
+    SoH_bat = data["SoH_bat"][:-1].copy()
+    for k in range(1, len(SoH_bat)):
+        if SoH_bat[k] == 1:
+            SoH_bat[k - 1] = np.nan
+    if np.isnan(SoH_bat).any():
+        SoH_bat[np.isnan(SoH_bat)] = np.interp(
+            np.flatnonzero(np.isnan(SoH_bat)),
+            np.flatnonzero(~np.isnan(SoH_bat)), SoH_bat[~np.isnan(SoH_bat)])
+    P_planned = (P_dc_load - P_dc_pv) / 1000.0
+    P_real    = (P_dc_load - P_dc_pv) * (1 - lol) / 1000.0
+    p, r = np.clip(P_planned, 0, None), np.clip(P_real, 0, None)
+    lpsp = (np.clip(p - r, 0, None).sum() / p.sum() * 100) if p.sum() > 0 else 0.0
+    cb = get_cost_bat(P_bat, SoC, SoH_bat) / 1000.0
+    cf = get_cost_fc(alpha_fc, P_fc)[0] / 1000.0
+    ce = get_cost_ely(alpha_ely, P_ely)[0] / 1000.0
+    return float(lpsp), float(cb), float(cf), float(ce)
 
 
 def lifetimes(data):

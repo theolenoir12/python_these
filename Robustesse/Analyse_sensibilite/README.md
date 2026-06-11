@@ -18,6 +18,7 @@ hypothèses des modèles de dégradation.
 | `sens_eol.py` | **Étape 2** — sensibilité aux seuils de fin de vie (EoL), **toutes stratégies** (R3-major3-iii, R4-9/R4-10, R1-6). |
 | `sens_cweights.py` | **Étape 3** — sensibilité aux poids de coût (C-weights), **toutes stratégies** (R3-major3, R1-6). |
 | `sens_hthresholds.py` | **Étape 4** — sensibilité aux seuils de dégradation H2 (PEMFC/PEMWE), **toutes stratégies** (R3-major3-i). |
+| `sens_sizing.py` | **Étape 5** — robustesse du **classement** des EMS au dimensionnement (batterie/FC/ELY), **scénarios discrets** (R3-major5). |
 | `results/` | Sorties (figures PDF + résumés `.txt`). |
 
 ## Étape 1 — Erreur d'estimation du SoH
@@ -118,6 +119,40 @@ Sorties :
   seuil) sur la stratégie de référence.
 - `results/sens_hthresholds.txt` — chiffres (nominal + MC + OAT).
 
+## Étape 5 — Robustesse au dimensionnement
+
+Réponse à R3-major5 : le classement des EMS (Fig. 6) est-il robuste à la taille
+des composants ? On définit des **scénarios discrets** de dimensionnement (un
+dimensionnement = un choix de conception, pas une incertitude) et, pour chacun,
+on recalcule le **front complet des 10 EMS**, puis on regarde si l'**ordre**
+change.
+
+**Leviers** (PV **non** touché, choix utilisateur) :
+
+| Composant | Paramètre | Effet |
+|---|---|---|
+| Batterie | `BAT['series_num']` | capacité (nb de cellules en série) |
+| PEMFC | `FC['n_series']` | puissance max (nb de cellules) |
+| PEMWE | `ELY['n_series']` | puissance max (nb de cellules) |
+
+**Pourquoi `n_series` et zéro édition du code de base** : `n_series` est un
+facteur **linéaire** de la puissance qui (i) se simplifie dans le ratio du brentq
+→ calibration SoH→α inchangée, (ii) est cohérent boucle/`Init` (contrairement à
+`n_parallel`, qui est incohérent — bug latent à éviter). On mute juste les
+tailles dans le worker et on met à l'échelle (×facteur) les 5 grandeurs dérivées
+figées à l'import (`BAT['cost']`, `FC['P_fc_max']/['cost']`,
+`ELY['P_ely_max']/['cost']`). Le reste est relu en direct.
+
+Sorties :
+- `results/sens_sizing_fronts.pdf` — petits multiples : un front (10 EMS) par
+  scénario, points non-dominés à bord noir.
+- `results/sens_sizing_ranking.pdf` — heatmap du **rang par coût** EMS×scénario
+  (* = non-dominé) : montre d'un coup d'œil si l'ordre se réordonne.
+- `results/sens_sizing.txt` — chiffres par scénario.
+
+> ⚠️ Couplage notable : le réservoir H2 et l'ELY restant fixes, agrandir la FC
+> seule peut **augmenter** la LPSP (le tank se vide plus vite) — point à discuter.
+
 ## Lancer
 
 ```bash
@@ -126,6 +161,7 @@ cd Robustesse/Analyse_sensibilite
 ~/miniconda3/envs/simu_env/bin/python sens_eol.py              # étape 2
 ~/miniconda3/envs/simu_env/bin/python sens_cweights.py         # étape 3
 ~/miniconda3/envs/simu_env/bin/python sens_hthresholds.py      # étape 4
+~/miniconda3/envs/simu_env/bin/python sens_sizing.py           # étape 5
 ```
 
 > Sous Windows, remplacer par le Python anaconda local
@@ -144,3 +180,5 @@ une machine plus grosse.
 - **Étape 4** : 10 nominaux + 10×`N_MC` + OAT (re-simulation requise). Avec
   `N_MC=15` → **~176 runs** (~50-70 min sur 7 cœurs). Ajuster `MC_RANGES` /
   `N_MC`. Sécurité : tout tirage gardant `f30 < f60` (toujours vrai ici).
+- **Étape 5** : `len(SIZINGS)` × 10 EMS. Avec 7 scénarios → **70 runs**
+  (~12-15 min). Ajuster la liste `SIZINGS` (facteurs bat/fc/ely).

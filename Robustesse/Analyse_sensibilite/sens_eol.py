@@ -79,7 +79,7 @@ SCENARIOS = [
 #   fc/ely : >= 0.90 (limite calibration ; voir docstring). Elargir = editer les
 #            brackets brentq dans Vieillissement8 puis ces plages.
 MC_RANGES = dict(bat=(0.60, 0.80), fc=(0.85, 0.95), ely=(0.85, 0.95))
-N_MC    = 15          # tirages par strategie (auto-scalable : monter sur grosse machine)
+N_MC    = 200         # tirages par strategie (run mesocentre : 200 pour ellipses lisses)
 MC_SEED = 2024
 
 # --- OAT (figure d'appui) : un seuil a la fois, sur UNE strategie de reference ---

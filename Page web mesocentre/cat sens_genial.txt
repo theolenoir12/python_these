@@ -1,0 +1,56 @@
+[tlenoir@mesointeractive Analyse_sensibilite]$ cat sens_genial.*.out
+Job 204059  noeud=node4-26  script=sens_cweigths.py
+cpus-per-task=32  debut=Wed Jun 17 11:54:46 CEST 2026
+Matplotlib created a temporary config/cache directory at /tmp/jobscratch/204059/matplotlib-f54cvzrp because the default path (/Home/Users/tlenoir/.config/matplotlib) is not a writable directory; it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+numpy 1.21.5 scipy 1.9.1
+python: can't open file '/Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/sens_cweigths.py': [Errno 2] No such file or directory
+
+real    0m0.029s
+user    0m0.020s
+sys     0m0.004s
+fin=Wed Jun 17 11:54:55 CEST 2026
+Job 204155  noeud=node4-26  script=sens_cweights.py
+cpus-per-task=32  debut=Wed Jun 17 13:23:36 CEST 2026
+Matplotlib created a temporary config/cache directory at /tmp/jobscratch/204155/matplotlib-bv3_8ztx because the default path (/Home/Users/tlenoir/.config/matplotlib) is not a writable directory; it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+numpy 1.21.5 scipy 1.9.1
+Matplotlib created a temporary config/cache directory at /tmp/jobscratch/204155/matplotlib-m30fay7a because the default path (/Home/Users/tlenoir/.config/matplotlib) is not a writable directory; it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+=== ETAPE 3 -- Sensibilite aux poids de cout (C-weights) (10 EMS, 25 ans) ===
+    DELTA={'bat': 0.3, 'fc': 0.3, 'ely': 0.3} | N_MC=5000 (post-traitement) | CI=95%
+    couts de remplacement nominaux [EUR] : bat=6998 fc=1183 ely=9339
+
+--- C-weights -- 1 simu/strategie : 10 runs (32 workers) ---
+  [  1/10] 0-100     -> LPSP 10.3787%  cout  124.22 kEUR  (bat 16.1 / fc 22.9 / ely 85.3)
+  [  2/10] 25-75     -> LPSP 20.2640%  cout  110.78 kEUR  (bat 18.3 / fc 16.1 / ely 76.4)
+  [  3/10] 50-50     -> LPSP 8.0738%  cout  109.02 kEUR  (bat 41.1 / fc 9.7 / ely 58.2)
+  [  4/10] 75-25     -> LPSP 3.8028%  cout   59.67 kEUR  (bat 46.0 / fc 2.9 / ely 10.8)
+  [  5/10] 100-0     -> LPSP 2.4862%  cout   66.42 kEUR  (bat 48.8 / fc 3.9 / ely 13.8)
+  [  6/10] RB2       -> LPSP 2.7126%  cout   65.17 kEUR  (bat 44.6 / fc 2.3 / ely 18.2)
+  [  7/10] RB2(SoH)  -> LPSP 2.6493%  cout   58.53 kEUR  (bat 45.0 / fc 2.4 / ely 11.1)
+  [  8/10] RB1       -> LPSP 1.2596%  cout   80.16 kEUR  (bat 46.2 / fc 4.3 / ely 29.7)
+  [  9/10] SoC1      -> LPSP 1.3398%  cout  140.68 kEUR  (bat 33.2 / fc 22.6 / ely 84.9)
+  [ 10/10] SoC06     -> LPSP 29.4607%  cout  109.27 kEUR  (bat 11.1 / fc 20.5 / ely 77.7)
+  (62s)
+
+==============================================================================
+C-WEIGHTS : LPSP fixe ; cout nominal et bande 95% (poids +/-{'bat': 0.3, 'fc': 0.3, 'ely': 0.3})
+------------------------------------------------------------------------------
+strat     | LPSP     | cout_nom  | bande CI95 [kEUR]      | composantes bat/fc/ely
+0-100     | 10.3787% |   124.22 | [  97.29 ..  151.49] | 16.1 / 22.9 / 85.3
+25-75     | 20.2640% |   110.78 | [  86.72 ..  135.07] | 18.3 / 16.1 / 76.4
+50-50     | 8.0738% |   109.02 | [  85.54 ..  132.42] | 41.1 / 9.7 / 58.2
+75-25     | 3.8028% |    59.67 | [  45.52 ..   73.86] | 46.0 / 2.9 / 10.8
+100-0     | 2.4862% |    66.42 | [  51.00 ..   81.86] | 48.8 / 3.9 / 13.8
+RB2       | 2.7126% |    65.17 | [  50.15 ..   80.36] | 44.6 / 2.3 / 18.2
+RB2(SoH)  | 2.6493% |    58.53 | [  44.59 ..   72.55] | 45.0 / 2.4 / 11.1
+RB1       | 1.2596% |    80.16 | [  62.23 ..   98.16] | 46.2 / 4.3 / 29.7
+SoC1      | 1.3398% |   140.68 | [ 111.03 ..  170.07] | 33.2 / 22.6 / 84.9
+SoC06     | 29.4607% |   109.27 | [  85.06 ..  133.75] | 11.1 / 20.5 / 77.7
+==============================================================================
+Resultats : /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_cweights.txt
+Figures   : /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_cweights_pareto.pdf
+            /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_cweights_breakdown.pdf
+
+real    1m14.238s
+user    10m15.694s
+sys     0m1.073s
+fin=Wed Jun 17 13:24:51 CEST 2026

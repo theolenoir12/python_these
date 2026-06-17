@@ -48,7 +48,19 @@ from get_optimal_action_RB import get_optimal_action_RB as BASE_STRAT  # noqa: E
 RESULTS_DIR = os.path.join(HERE, "results")
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
-N_WORKERS = max(1, (os.cpu_count() or 2) - 1)
+def _detect_workers():
+    # Sur un noeud SLURM, os.cpu_count() renvoie tous les coeurs physiques du
+    # noeud, pas forcement ceux alloues au job. On privilegie donc
+    # SLURM_CPUS_PER_TASK (= --cpus-per-task) quand il est defini : on utilise
+    # alors exactement les coeurs reserves. En local (pas de SLURM), on garde
+    # cpu_count()-1 pour laisser une marge a la machine de l'utilisateur.
+    n_slurm = os.environ.get("SLURM_CPUS_PER_TASK")
+    if n_slurm:
+        return max(1, int(n_slurm))
+    return max(1, (os.cpu_count() or 2) - 1)
+
+
+N_WORKERS = _detect_workers()
 
 # --- Chargement DYNAMIQUE d'une strategie par dossier (cf. batch_pareto.run_one) ---
 STRATEGY_FILENAME  = "get_optimal_action_RB"   # nom du fichier .py SANS extension

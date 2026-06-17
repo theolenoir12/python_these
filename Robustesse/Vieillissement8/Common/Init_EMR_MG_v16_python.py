@@ -3,7 +3,13 @@ import csv
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-csv_path    = os.path.abspath(os.path.join(current_dir, '..', '..','..', '..', '..', 'Data', 'sidelec_roche_plate_csv.csv'))
+# Dossier des donnees : par defaut a 5 niveaux au-dessus de Common (layout
+# historique Doctorat/Data/...). Surchargeable par la variable d'environnement
+# GENIAL_DATA_DIR (utile sur un centre de calcul ou le layout differe). Le
+# comportement par defaut (env non definie) est strictement inchange.
+_data_dir   = os.environ.get('GENIAL_DATA_DIR') or os.path.abspath(
+    os.path.join(current_dir, '..', '..', '..', '..', '..', 'Data'))
+csv_path    = os.path.join(_data_dir, 'sidelec_roche_plate_csv.csv')
 
 # Constants
 kB = 1.38065e-23        # (J/K) Boltzmann's constant

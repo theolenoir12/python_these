@@ -58,7 +58,7 @@ EMS_LIST = [
 # --- Monte Carlo : vie calendaire a SoC=100% (annees), uniforme. Memes tirages
 # pour toutes les strategies (common random numbers). ---
 TCAL_RANGE = (10.0, 20.0)
-N_MC    = 15
+N_MC    = 200         # run mesocentre : 200 pour nuages/ellipses lisses
 MC_SEED = 99
 
 # --- OAT (figure d'appui) : grille de T_cal sur une strategie de reference ---

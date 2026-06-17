@@ -47,7 +47,7 @@ BIAS_GRID = [-0.10, -0.075, -0.05, -0.025, 0.0, 0.025, 0.05, 0.075, 0.10]
 # N_MC tirages par sigma. Cout total = 1(base) + len(BIAS_GRID) + len(SIGMA_LIST)*N_MC.
 #   N_MC=20 -> ~50 sims (rapide) ; N_MC=50 -> ~110 sims (nuages/ellipses plus lisses).
 SIGMA_LIST = [0.02, 0.10]
-N_MC = 20
+N_MC = 200            # run mesocentre : 200 pour nuages/ellipses lisses
 MC_SEED0 = 1000
 
 OUT_TXT = os.path.join(RESULTS_DIR, "sens_soh.txt")

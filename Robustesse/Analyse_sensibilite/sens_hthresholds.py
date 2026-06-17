@@ -68,7 +68,7 @@ SCENARIOS = [
 # flow << fhigh toujours vrai. ---
 MC_RANGES = dict(fhigh=(0.70, 0.90), flow=(0.005, 0.02),
                  f30=(0.25, 0.35), f60=(0.50, 0.70))
-N_MC    = 15          # tirages par strategie (auto-scalable : monter sur grosse machine)
+N_MC    = 200         # tirages par strategie (run mesocentre : 200 pour ellipses lisses)
 MC_SEED = 4242
 
 # --- OAT (figure d'appui) : un seuil a la fois, sur UNE strategie de reference ---

@@ -1,0 +1,109 @@
+% =====================================================================
+% Sensitivity analysis + unified ranking -- methodology paragraph (English).
+% Drop-in subsection for the APEN paper. Assumes: graphicx, amsmath.
+% (Currency is written "EUR"; replace by \euro / \texteuro if you load eurosym
+%  or textcomp.) Figure paths point to results_meso/. Adjust \label / \ref to
+%  your numbering. EoL thresholds is used as the illustrative Pareto example;
+%  swap sens_eol_pareto.pdf for sens_hthresholds_pareto.pdf if preferred.
+% =====================================================================
+
+\subsection{Robustness of the EMS ranking}
+\label{sec:sensitivity}
+
+We assess the robustness of the energy-management strategies (EMS) to the
+uncertain parameters of the ageing and cost models through Monte-Carlo
+sensitivity analyses. For each analysis, the parameters are drawn uniformly
+within the intervals specified below and \emph{the same draws are reused for
+every EMS}, so that the comparison between strategies is not polluted by sampling
+noise. Each draw is propagated through a full 25-year simulation, yielding for
+every strategy a two-dimensional outcome: the loss-of-power-supply probability
+(LPSP) and the degradation cost.
+
+\paragraph{Sampled parameters.}
+Three families of parameters are varied:
+\begin{itemize}
+  \item \textbf{End-of-life (EoL) thresholds} of the three components: the
+        battery EoL is drawn in $[0.6,\,0.8]$ and the PEMFC and PEMWE EoL in
+        $[0.85,\,0.95]$ ($N=200$ paired draws per strategy).
+  \item \textbf{Degradation-function thresholds of the hydrogen components}
+        (PEMFC/PEMWE), i.e.\ the regime thresholds of the piecewise degradation
+        model: $f_\mathrm{high}\in[0.70,\,0.90]$, $f_\mathrm{low}\in[0.005,\,0.020]$,
+        $f_{30}\in[0.25,\,0.35]$ and $f_{60}\in[0.50,\,0.70]$ ($N=200$ paired
+        draws per strategy).
+  \item \textbf{Component replacement-cost weights} (the coefficients that weight
+        each component's degradation in the cost axis): each weight is varied by
+        $\pm30\%$ around its nominal value ($N=5000$, $95\%$ confidence interval).
+        Because the LPSP and the replacement schedule are invariant to these
+        weights, only the degradation-cost axis dilates, which is handled
+        analytically.
+\end{itemize}
+
+\paragraph{Robustness to SoH-estimation error.}
+The RB2(SoH) strategy acts on the \emph{estimated} state of health (SoH) rather
+than on its true value. To check that this dependence is not a liability, we add
+a $2\%$ Gaussian noise to the SoH estimate ($N=200$). The resulting performance
+remains very close to the exact-information case: the LPSP stays at
+$2.66\%$ (range $2.64$--$2.68\%$) against $2.65\%$ with the true SoH, and the
+degradation cost at $58.7$~kEUR (range $58.5$--$58.8$~kEUR) against $58.5$~kEUR.
+The strategy is therefore essentially insensitive to realistic SoH-estimation
+noise.
+
+\paragraph{Unified ranking through a monetary value of the LPSP.}
+Each analysis produces a cloud of points in the (LPSP, degradation cost) plane,
+which is convenient for inspecting one analysis at a time but does not, by
+itself, rank the strategies across all cases. To obtain a single ordering, we
+assign a monetary value to the unserved load through a tiered
+\emph{value of lost load} (VOLL) and add it to the degradation cost:
+\begin{equation}
+  C_\mathrm{tot} \;=\; C_\mathrm{deg} \;+\;
+  \mathrm{VOLL}(\mathrm{LPSP}) \times E_\mathrm{unserved},
+  \qquad
+  E_\mathrm{unserved} \;=\; \frac{\mathrm{LPSP}}{100}\,E_\mathrm{ref},
+  \label{eq:total_cost}
+\end{equation}
+where $E_\mathrm{ref}=273.4$~MWh is the net planned load energy over the 25-year
+horizon, and the VOLL increases by tiers with the severity of the shortfall:
+\begin{equation}
+  \mathrm{VOLL}(\mathrm{LPSP}) =
+  \begin{cases}
+    2~\mathrm{EUR/kWh}  & \text{if } \mathrm{LPSP} < 5\%, \\
+    5~\mathrm{EUR/kWh}  & \text{if } 5\% \le \mathrm{LPSP} < 10\%, \\
+    10~\mathrm{EUR/kWh} & \text{if } \mathrm{LPSP} \ge 10\%.
+  \end{cases}
+  \label{eq:voll}
+\end{equation}
+The single scalar $C_\mathrm{tot}$ in \eqref{eq:total_cost} makes the strategies
+directly comparable within and across all sensitivity cases.
+
+\paragraph{Presentation.}
+We report the results with two complementary figures. First, as an illustrative
+example, a Pareto plane (degradation cost versus LPSP) on which each strategy
+carries a $1\sigma$/$2\sigma$ confidence ellipse summarising its Monte-Carlo
+dispersion (Fig.~\ref{fig:pareto_example}, here for the EoL-threshold analysis).
+Second, a ranking heatmap of $C_\mathrm{tot}$ (strategy $\times$ sensitivity
+case, rank~1 = lowest cost), which condenses all analyses into a quick visual
+summary (Fig.~\ref{fig:ranking}). Across every case, RB2(SoH) is consistently the
+lowest-cost strategy, followed by RB2 and the battery-dominated 100--0 and
+75--25 strategies, whereas the strategies that incur a high LPSP (SoC06, 25--75,
+0--100) are strongly penalised once the unserved load is priced.
+
+% ---------------------------------------------------------------------
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.8\linewidth]{results_meso/sens_eol_pareto.pdf}
+  \caption{Illustrative sensitivity analysis (EoL thresholds): Pareto plane of
+  the ten EMS, each point at its nominal thresholds with a $1\sigma$/$2\sigma$
+  confidence ellipse summarising the Monte-Carlo dispersion over the sampled
+  EoL thresholds.}
+  \label{fig:pareto_example}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{results_meso/voll_ranking.pdf}
+  \caption{Unified ranking of the ten EMS by total cost
+  $C_\mathrm{tot}=C_\mathrm{deg}+\mathrm{VOLL}(\mathrm{LPSP})\times
+  E_\mathrm{unserved}$ across the sensitivity cases (rank~1 = lowest cost; the
+  rightmost column is the mean rank). RB2(SoH) ranks first in every case.}
+  \label{fig:ranking}
+\end{figure}

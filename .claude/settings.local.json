@@ -11,7 +11,23 @@
       "WebSearch",
       "WebFetch(domain:mesowiki.univ-fcomte.fr)",
       "WebFetch(domain:meso.univ-fcomte.fr)",
-      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\a9024e12\\\\tmp\\\\check_meso.py\")"
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\a9024e12\\\\tmp\\\\check_meso.py\")",
+      "PowerShell($p = \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\Data\\\\sidelec_roche_plate_csv.csv\"; if \\(Test-Path $p\\) { \"FOUND\"; \"lines: $\\(\\(Get-Content $p | Measure-Object -Line\\).Lines\\)\"; \"first rows:\"; Get-Content $p -TotalCount 3 } else { \"NOT FOUND at $p\"; Get-ChildItem \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\" -Directory | Select-Object Name })",
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\502c1435\\\\tmp\\\\compute_eref.py\")",
+      "PowerShell($d = \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\.claude\\\\worktrees\\\\voll-summary\\\\Robustesse\\\\Analyse_sensibilite\"; & \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"$d\\\\plot_voll_summary.py\")",
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\502c1435\\\\tmp\\\\inspect_figs.py\")",
+      "PowerShell(Copy-Item *)",
+      "PowerShell($wt = \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\.claude\\\\worktrees\\\\voll-no-sizing\\\\Robustesse\\\\Analyse_sensibilite\"; & \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"$wt\\\\plot_voll_summary.py\")",
+      "PowerShell(Set-Content *)",
+      "PowerShell($wt = \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\.claude\\\\worktrees\\\\voll-pub\\\\Robustesse\\\\Analyse_sensibilite\"; foreach \\($n in @\\(\"plot_voll_summary.py\",\"voll_common.py\"\\)\\) { $b = [System.IO.File]::ReadAllBytes\\(\"$wt\\\\$n\"\\); $na = \\($b | Where-Object { $_ -gt 127 }\\).Count; \"$n : non-ASCII bytes = $na\" }; \"--- run ---\"; & \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"$wt\\\\plot_voll_summary.py\")",
+      "PowerShell(Out-Null *)",
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\502c1435\\\\tmp\\\\font_probe.py\"; \"--- latex available? ---\"; $l = Get-Command pdflatex -ErrorAction SilentlyContinue; if \\($l\\) { \"pdflatex: $\\($l.Source\\)\" } else { \"pdflatex: NOT FOUND\" })",
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\502c1435\\\\tmp\\\\usetex_probe.py\")",
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\502c1435\\\\tmp\\\\font_probe2.py\" 2>$null)",
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\502c1435\\\\tmp\\\\euro_probe.py\" 2>$null)",
+      "PowerShell($wt = \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\.claude\\\\worktrees\\\\voll-text\\\\Robustesse\\\\Analyse_sensibilite\"; & \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"$wt\\\\plot_voll_summary.py\" 2>$null)",
+      "PowerShell($main = \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Analyse_sensibilite\"; & \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"$main\\\\plot_voll_summary.py\" 2>$null | Select-Object -First 3)",
+      "PowerShell(Select-String *)"
     ]
   }
 }

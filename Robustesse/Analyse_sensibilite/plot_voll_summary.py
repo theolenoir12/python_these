@@ -83,8 +83,8 @@ def set_pub_style():
         # --- Typography ---
         "font.family": "serif",
         # Force Computer Modern Roman, fallback to DejaVu
-        "font.serif": ["cmr10", "Computer Modern Serif", "DejaVu Serif"],
-        # Ensure math text (subscripts, sigma) uses CM
+    "font.serif": ["DejaVu Serif", "Computer Modern Serif", "serif"],
+    "axes.formatter.use_mathtext": True,        # Ensure math text (subscripts, sigma) uses CM
         "mathtext.fontset": "cm",
         "axes.unicode_minus": False,           # Fixes hyphen vs minus sign issues in CM
 
@@ -181,13 +181,13 @@ def figure_ranking(cases):
     # --- Adjusted Figure Size ---
     # Increased vertical scaling (0.7 -> 0.95) to accommodate larger fonts and formatting.
     fig, (ax, axm) = plt.subplots(
-        1, 2, figsize=(4.0 + 1.8 * ncols, 0.95 * nrows + 3.2),
+        1, 2, figsize=(4.0 + 1.8 * ncols, 0.65 * nrows + 3.2),
         gridspec_kw=dict(width_ratios=[ncols, 1.2], wspace=0.10),
         constrained_layout=True)
 
     # 1. Main Heatmap
-    im = ax.imshow(Rs, cmap=cmap, aspect="auto", vmin=1, vmax=n, interpolation='nearest')
-
+    im = ax.imshow(Rs, cmap=cmap, aspect="auto", vmin=1, vmax=n,
+               interpolation='nearest', rasterized=True)
     # X-axis ticks (sensitivity cases)
     ax.set_xticks(range(ncols))
     # Rotation adjusted for readability.

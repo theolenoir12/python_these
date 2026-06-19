@@ -56,12 +56,29 @@ VOLL_TIERS = [
 
 
 def voll_eur_per_kwh(lpsp_pct):
-    """VOLL [EUR/kWh] pour une LPSP donnee en POURCENT (palier)."""
+    """VOLL [EUR/kWh] pour une LPSP (ou LPS instantanee) donnee en POURCENT."""
     x = lpsp_pct / 100.0
     for thr, val in VOLL_TIERS:
         if thr is None or x < thr:
             return val
     return VOLL_TIERS[-1][1]
+
+
+def voll_eur_per_kwh_array(lpsp_pct):
+    """Version VECTORISEE de voll_eur_per_kwh : lpsp_pct est un array [%].
+    Sert a la valorisation PAS A PAS du LPS (cf. sens_common.lps_cost_keur) :
+    le palier VoLL est reevalue a CHAQUE pas de temps a partir de la fraction non
+    servie de ce pas, et non a partir de la LPSP agregee sur 25 ans."""
+    import numpy as np
+    x = np.asarray(lpsp_pct, dtype=float) / 100.0
+    out = np.full(x.shape, float(VOLL_TIERS[-1][1]))
+    # du palier le plus haut au plus bas : chaque condition x<thr ecrase la valeur,
+    # ce qui reproduit exactement la logique scalaire ci-dessus.
+    for thr, val in reversed(VOLL_TIERS):
+        if thr is None:
+            continue
+        out[x < thr] = float(val)
+    return out
 
 
 def lost_energy_kwh(lpsp_pct):
@@ -74,9 +91,18 @@ def cost_lpsp_keur(lpsp_pct):
     return voll_eur_per_kwh(lpsp_pct) * lost_energy_kwh(lpsp_pct) / 1000.0
 
 
-def total_cost_keur(lpsp_pct, deg_keur):
-    """Indicateur unifie [kEUR] = degradation + cout financier du LPSP."""
-    return deg_keur + cost_lpsp_keur(lpsp_pct)
+def total_cost_keur(lpsp_pct, deg_keur, clps_keur=None):
+    """Indicateur unifie [kEUR] = degradation + cout financier de l'energie non
+    servie. Deux modes :
+      - clps_keur fourni : on utilise le cout LPS evalue PAS A PAS pendant la
+        simulation, sum_t VoLL(LPS(t))*E_unserved(t) (cf. sens_common.lps_cost_keur).
+        C'est le mode courant (colonne 'clps' des .txt).
+      - clps_keur None : repli sur l'ancienne valorisation AGREGEE
+        VoLL(LPSP)*E_unserved (cost_lpsp_keur), pour rester compatible avec
+        d'anciens .txt depourvus de la colonne 'clps'."""
+    if clps_keur is None:
+        return deg_keur + cost_lpsp_keur(lpsp_pct)
+    return deg_keur + clps_keur
 
 
 # =========================================================================
@@ -125,7 +151,11 @@ def parse_cweights():
             if len(p) < 10:
                 continue
             out[p[0]] = dict(lpsp=float(p[1]), deg=float(p[2]),
-                             cout_lo95=float(p[8]), cout_hi95=float(p[9]))
+                             cb=float(p[3]), cf=float(p[4]), ce=float(p[5]),
+                             mean=float(p[6]),
+                             cout_lo95=float(p[8]), cout_hi95=float(p[9]),
+                             clps=(float(p[10]) if len(p) > 10
+                                   and p[10] not in ('', '-') else None))
     return out
 
 
@@ -146,7 +176,11 @@ def _parse_front_meanstd(fname):
         if len(p) < 6 or p[0] not in EMS_ORDER:
             continue
         out[p[0]] = dict(lpsp_nom=float(p[1]), deg_nom=float(p[2]),
-                         lpsp_mean=float(p[3]), deg_mean=float(p[5]))
+                         lpsp_mean=float(p[3]), deg_mean=float(p[5]),
+                         clps_nom=(float(p[10]) if len(p) > 10
+                                   and p[10] not in ('', '-') else None),
+                         clps_mean=(float(p[11]) if len(p) > 11
+                                    and p[11] not in ('', '-') else None))
     return out
 
 
@@ -177,45 +211,29 @@ def parse_calendar():
 
 
 def parse_sizing():
-    """results_meso/sens_sizing.txt -> liste [(scenario_label, {ems: (lpsp, deg)})]
-    dans l'ordre du fichier. cols de chaque section :
-    ems;LPSP_%;deg_kEUR;rank_cout;non_domine"""
-    with open(_path("sens_sizing.txt"), encoding="utf-8") as f:
-        txt = f.read()
-    blocks = []
-    cur_label, cur = None, None
-    for ln in txt.splitlines():
-        s = ln.strip()
-        m = re.match(r"##\s*Scenario\s*'(.*?)'", s)
-        if m:
-            if cur_label is not None:
-                blocks.append((cur_label, cur))
-            cur_label, cur = m.group(1), {}
-            continue
-        if cur is None or not s or s.startswith("#") or s.startswith("ems;"):
-            continue
-        p = s.split(";")
-        if len(p) < 3 or p[0] not in EMS_ORDER:
-            continue
-        try:
-            cur[p[0]] = (float(p[1]), float(p[2]))
-        except ValueError:
-            continue                      # ligne 'FAIL'
-    if cur_label is not None:
-        blocks.append((cur_label, cur))
-    return blocks
+    """results_meso/sens_sizing.txt (format Monte-Carlo, comme sens_eol) ->
+    {ems: dict(lpsp_nom, deg_nom, lpsp_mean, deg_mean)} (section '## Front ...').
+    cols: strat;LPSP_nom;deg_nom;LPSP_mean;LPSP_std;deg_mean;deg_std;..."""
+    return _parse_front_meanstd("sens_sizing.txt")
 
 
 def parse_soh():
-    """results_meso/sens_soh.txt -> dict(baseline=(lpsp,deg),
-    bias=[(bias,lpsp,deg)...], sigma=[(sigma,lpsp_mean,deg_mean)...]).
-    Mono-strategie (RB2(SoH)) : sert d'annexe."""
+    """results_meso/sens_soh.txt -> dict(baseline=(lpsp,deg,clps),
+    bias=[(bias,lpsp,deg,clps)...], sigma=[(sigma,lpsp_mean,deg_mean,clps_mean)...]).
+    Mono-strategie (RB2(SoH)) : sert d'annexe. La 4e composante (clps = cout LPS
+    pas-a-pas) vaut None si la colonne est absente (ancien .txt)."""
+    def _opt(parts, idx):
+        return (float(parts[idx]) if len(parts) > idx
+                and parts[idx] not in ('', '-') else None)
+
     with open(_path("sens_soh.txt"), encoding="utf-8") as f:
         txt = f.read()
     base = None
-    m = re.search(r"BASELINE;\s*LPSP=([\d.]+)%;\s*deg=([\d.]+)kEUR", txt)
+    m = re.search(r"BASELINE;\s*LPSP=([\d.]+)%;\s*deg=([\d.]+)kEUR"
+                  r"(?:;\s*clps=([\d.]+)kEUR)?", txt)
     if m:
-        base = (float(m.group(1)), float(m.group(2)))
+        base = (float(m.group(1)), float(m.group(2)),
+                float(m.group(3)) if m.group(3) else None)
     bias, sigma = [], []
     section = None
     for ln in txt.splitlines():
@@ -229,10 +247,11 @@ def parse_soh():
         p = s.split(";")
         try:
             if section == "bias" and len(p) >= 3:
-                bias.append((float(p[0]), float(p[1]), float(p[2])))
+                # bias;LPSP_%;deg_kEUR;dLPSP_pts;ddeg_%;clps_kEUR
+                bias.append((float(p[0]), float(p[1]), float(p[2]), _opt(p, 5)))
             elif section == "sigma" and len(p) >= 7:
-                # sigma;N;LPSP_mean;LPSP_std;LPSP_min;LPSP_max;deg_mean;...
-                sigma.append((float(p[0]), float(p[2]), float(p[6])))
+                # sigma;N;LPSP_mean;LPSP_std;LPSP_min;LPSP_max;deg_mean;...;clps_mean
+                sigma.append((float(p[0]), float(p[2]), float(p[6]), _opt(p, 10)))
         except ValueError:
             continue
     return dict(baseline=base, bias=bias, sigma=sigma)
@@ -251,41 +270,45 @@ def build_cases():
     cw   = parse_cweights()
     eol  = parse_eol()
     hthr = parse_hthresholds()
+    siz  = parse_sizing()
 
     # Labels EN CLAIR (anglais, publication). Termes precis :
     #  - "EoL thresholds"            : seuils de fin de vie des composants.
     #  - "H2 degradation thresholds" : seuils des FONCTIONS DE DEGRADATION des
     #                                  composants H2 (PEMFC/PEMWE), pas un seuil
     #                                  "H2" generique.
-    #  - "Replacement-cost weights"  : poids = couts de remplacement des composants
-    #                                  (haut = pessimiste, bas = optimiste, IC95).
+    #  - "Replacement-cost weights"  : poids = couts de remplacement des composants.
+    #  - "Component sizing"          : taille BAT/FC/ELY (+/-20%, Monte-Carlo).
+    # TOUS les axes de stress sont desormais traites de facon UNIFIEE : moyenne du
+    # Monte-Carlo (LPSP_mean, deg_mean), exactement comme l'EoL et l'H2.
+    # Chaque strategie d'un cas est decrite par un TRIPLET (lpsp_%, deg_kEUR,
+    # clps_kEUR) ou clps est le cout LPS evalue PAS A PAS (moyenne MC quand il y a
+    # un Monte-Carlo). Si clps vaut None (ancien .txt), total_cost_keur retombe sur
+    # la valorisation agregee a partir de la LPSP.
     cases = []
     # -- Nominal (reference commune ; on prend cweights : LPSP + cout_nominal) --
     cases.append(("Nominal", "base",
-                  {e: (cw[e]["lpsp"], cw[e]["deg"]) for e in EMS_ORDER if e in cw}))
+                  {e: (cw[e]["lpsp"], cw[e]["deg"], cw[e].get("clps")) for e in EMS_ORDER if e in cw}))
     # -- Stress seuils de fin de vie (moyenne MC) --
     cases.append(("EoL thresholds", "eol",
-                  {e: (eol[e]["lpsp_mean"], eol[e]["deg_mean"]) for e in EMS_ORDER if e in eol}))
+                  {e: (eol[e]["lpsp_mean"], eol[e]["deg_mean"], eol[e].get("clps_mean")) for e in EMS_ORDER if e in eol}))
     # -- Stress seuils des fonctions de degradation H2 (moyenne MC) --
     cases.append(("H2 degradation thresholds", "hthr",
-                  {e: (hthr[e]["lpsp_mean"], hthr[e]["deg_mean"]) for e in EMS_ORDER if e in hthr}))
+                  {e: (hthr[e]["lpsp_mean"], hthr[e]["deg_mean"], hthr[e].get("clps_mean")) for e in EMS_ORDER if e in hthr}))
+    # -- Poids = couts de remplacement (moyenne MC, +/-30%). La LPSP -- et donc le
+    #    cout LPS pas-a-pas -- est invariante aux poids : seul le cout (deg) porte
+    #    le MC, clps reste celui du run nominal. --
+    cases.append(("Replacement-cost weights", "cw",
+                  {e: (cw[e]["lpsp"], cw[e]["mean"], cw[e].get("clps")) for e in EMS_ORDER if e in cw}))
+    # -- Dimensionnement (moyenne MC, +/-20%) -- ajoute seulement si les donnees MC
+    #    sont presentes (sinon ancien fichier/format -> on saute proprement). --
+    if siz:
+        cases.append(("Component sizing", "sizing",
+                      {e: (siz[e]["lpsp_mean"], siz[e]["deg_mean"], siz[e].get("clps_mean")) for e in EMS_ORDER if e in siz}))
     # -- Vieillissement calendaire batterie : VOLONTAIREMENT EXCLU pour l'instant
-    #    (modele de vieillissement calendaire pas encore assez realiste). Le parser
-    #    parse_calendar() reste disponible ; pour le reintegrer, decommenter :
+    #    (modele pas encore assez realiste). parse_calendar() reste disponible ;
+    #    pour le reintegrer, decommenter :
     # cal = parse_calendar()
     # cases.append(("Calendar aging", "cal",
     #               {e: (cal[e]["lpsp_cal"], cal[e]["deg_cal"]) for e in EMS_ORDER if e in cal}))
-    # -- Poids = couts de remplacement : haut (pessimiste) / bas (optimiste), IC95.
-    #    LPSP invariant -> on garde la LPSP nominale, on remplace deg par la borne.
-    cases.append(("Replacement-cost weights (high)", "cw",
-                  {e: (cw[e]["lpsp"], cw[e]["cout_hi95"]) for e in EMS_ORDER if e in cw}))
-    cases.append(("Replacement-cost weights (low)", "cw",
-                  {e: (cw[e]["lpsp"], cw[e]["cout_lo95"]) for e in EMS_ORDER if e in cw}))
-    # -- Dimensionnement : VOLONTAIREMENT EXCLU pour l'instant (traite plus tard).
-    #    Le parser parse_sizing() reste disponible ; pour reintegrer ces cas,
-    #    decommenter la boucle ci-dessous (cf. sens_sizing.txt) :
-    # for label, d in parse_sizing():
-    #     if label.lower() == "nominal":
-    #         continue                      # == cas 'Nominal' deja present
-    #     cases.append(("Dim. " + label, "sizing", dict(d)))
     return cases

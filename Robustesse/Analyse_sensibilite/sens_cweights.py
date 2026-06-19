@@ -50,7 +50,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from sens_common import (I, init_and_run_loop, load_strategy, metrics_components,
-                         run_pool, RESULTS_DIR)
+                         lps_cost_keur, run_pool, RESULTS_DIR)
 
 # ============================ CONFIGURATION ============================
 # --- Front de Pareto : les 10 EMS (memes dossiers que sens_eol / batch_pareto) ---
@@ -71,7 +71,12 @@ SCENARIOS = [
 # Incertitude relative de chaque cout de remplacement. +/-30% par defaut ;
 # l'hydrogene (FC/ELY) est en general plus incertain que la batterie -> ajustable.
 DELTA   = dict(bat=0.30, fc=0.30, ely=0.30)
-N_MC    = 5000          # post-traitement analytique -> on peut etre genereux
+# MC a 200 tirages (homogene avec sens_eol / sens_hthresholds / sens_sizing).
+# Rappel : pour les poids de cout le MC est ANALYTIQUE (1 simu/strategie suffit,
+# cf. propriete de linearite ci-dessus) -> 200 tirages sont gratuits ; la LPSP
+# etant INVARIANTE aux poids, la bande par point reste PUREMENT VERTICALE (barres
+# d'erreur, pas d'ellipse 2D possible).
+N_MC    = 200
 MC_SEED = 7
 CI      = 95            # intervalle de confiance affiche (percentiles), en %
 
@@ -90,13 +95,14 @@ def evaluate(params):
         strat = load_strategy(params['folder'])
         data = init_and_run_loop(strat)
         lpsp, cb, cf, ce = metrics_components(data)
+        clps = lps_cost_keur(data)   # cout LPS pas-a-pas (invariant aux poids de cout)
         ok = True
     except Exception as e:
-        lpsp = cb = cf = ce = None
+        lpsp = cb = cf = ce = clps = None
         ok = False
         print("  [FAIL] %-9s : %s" % (params['label'], e), flush=True)
     return dict(label=params['label'], folder=params['folder'],
-                lpsp=lpsp, cb=cb, cf=cf, ce=ce, ok=ok)
+                lpsp=lpsp, cb=cb, cf=cf, ce=ce, clps=clps, ok=ok)
 
 
 def _fmt(r):
@@ -133,7 +139,7 @@ def main():
         samples = r['cb'] * M[:, 0] + r['cf'] * M[:, 1] + r['ce'] * M[:, 2]
         stats[label] = dict(
             lpsp=r['lpsp'], nominal=r['cb'] + r['cf'] + r['ce'],
-            cb=r['cb'], cf=r['cf'], ce=r['ce'],
+            cb=r['cb'], cf=r['cf'], ce=r['ce'], clps=r['clps'],
             mean=float(samples.mean()), std=float(samples.std()),
             lo=float(np.percentile(samples, plo)),
             hi=float(np.percentile(samples, phi)))
@@ -144,16 +150,17 @@ def main():
                 % (DELTA, N_MC, CI))
         f.write("# couts de remplacement nominaux [EUR]: bat=%.0f fc=%.0f ely=%.0f\n"
                 % (nominal_w['bat'], nominal_w['fc'], nominal_w['ely']))
-        f.write("# LPSP INVARIANT aux poids ; cout lineaire -> bande verticale\n\n")
+        f.write("# LPSP INVARIANT aux poids ; cout lineaire -> bande verticale\n")
+        f.write("# clps = cout LPS pas-a-pas [kEUR] (invariant aux poids de cout)\n\n")
         f.write("strat;LPSP_%%;cout_nominal;cost_bat;cost_fc;cost_ely;"
-                "cout_mean;cout_std;cout_lo%d;cout_hi%d\n" % (CI, CI))
+                "cout_mean;cout_std;cout_lo%d;cout_hi%d;clps\n" % (CI, CI))
         for _, label in SCENARIOS:
             s = stats.get(label)
             if s is None:
                 f.write("%s;FAIL\n" % label); continue
-            f.write("%s;%.4f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n"
+            f.write("%s;%.4f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n"
                     % (label, s['lpsp'], s['nominal'], s['cb'], s['cf'], s['ce'],
-                       s['mean'], s['std'], s['lo'], s['hi']))
+                       s['mean'], s['std'], s['lo'], s['hi'], s['clps']))
 
     # ===================== FIGURE 1 : FRONT + BARRES VERTICALES (CI) =====================
     fig, ax = plt.subplots(figsize=(8.5, 6.5))

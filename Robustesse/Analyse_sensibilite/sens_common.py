@@ -143,6 +143,32 @@ def metrics_components(data):
     return float(lpsp), float(cb), float(cf), float(ce)
 
 
+def lps_cost_keur(data):
+    """Cout financier de l'energie non servie [kEUR], evalue PAS A PAS :
+        C_LPS = sum_t VoLL(LPS(t)) * E_unserved(t),
+    ou LPS(t) est la FRACTION non servie du pas t (part de la charge nette
+    planifiee non fournie) et E_unserved(t) l'energie non servie de ce pas [kWh].
+    Le palier VoLL est donc reevalue A CHAQUE PAS, contrairement a la valorisation
+    agregee de voll_common.cost_lpsp_keur (un seul palier sur la LPSP 25 ans).
+
+    L'energie non servie par pas est calculee EXACTEMENT comme le numerateur de la
+    LPSP de metrics() (memes clips, meme P_planned/P_real) ; sa somme vaut donc
+    (LPSP/100)*E_REF : seule la PONDERATION par palier change. Ts via I.LOAD['Ts']."""
+    from voll_common import voll_eur_per_kwh_array  # leger (os/re), pas de cycle
+    P_dc_load = data["P_dc_load"]; P_dc_pv = data["P_dc_pv"]; lol = data["lol_tab"]
+    Ts_h = I.LOAD['Ts'] / 3600.0
+    P_planned = (P_dc_load - P_dc_pv) / 1000.0                 # kW, charge nette
+    P_real    = (P_dc_load - P_dc_pv) * (1.0 - lol) / 1000.0   # kW, charge servie
+    p = np.clip(P_planned, 0.0, None)
+    r = np.clip(P_real, 0.0, None)
+    unserved = np.clip(p - r, 0.0, None)                       # kW non servis au pas t
+    e_unserved = unserved * Ts_h                                # kWh non servis au pas t
+    # LPS(t) = fraction non servie du pas (0 quand rien n'etait a fournir)
+    lps_frac = np.divide(unserved, p, out=np.zeros_like(p), where=p > 0.0)
+    voll = voll_eur_per_kwh_array(100.0 * lps_frac)            # EUR/kWh, palier par pas
+    return float((voll * e_unserved).sum() / 1000.0)
+
+
 def lifetimes(data):
     """Premier remplacement de chaque composant (annees) ; None si aucun."""
     yr = I.LOAD['Ts'] / 3600 / 24 / 365

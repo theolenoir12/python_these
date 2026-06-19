@@ -122,11 +122,12 @@ Sorties :
 
 ## Étape 5 — Robustesse au dimensionnement
 
-Réponse à R3-major5 : le classement des EMS (Fig. 6) est-il robuste à la taille
-des composants ? On définit des **scénarios discrets** de dimensionnement (un
-dimensionnement = un choix de conception, pas une incertitude) et, pour chacun,
-on recalcule le **front complet des 10 EMS**, puis on regarde si l'**ordre**
-change.
+Réponse à R3-major5 : les résultats sont-ils robustes à la taille des composants ?
+**Approche Monte-Carlo unifiée** (comme l'EoL et l'H2) : chaque composant (BAT,
+FC, ELY) est multiplié par un facteur tiré **uniformément dans [0.8, 1.2]**
+(±20 %), les trois indépendants ; `N_MC=200` tirages, **mêmes triplets pour
+toutes les stratégies** (common random numbers). On reproduit le **front de
+Pareto des 10 EMS** où chaque point porte son **nuage MC + ellipses 1σ/2σ**.
 
 **Leviers** (PV **non** touché, choix utilisateur) :
 
@@ -145,11 +146,11 @@ figées à l'import (`BAT['cost']`, `FC['P_fc_max']/['cost']`,
 `ELY['P_ely_max']/['cost']`). Le reste est relu en direct.
 
 Sorties :
-- `results/sens_sizing_fronts.pdf` — petits multiples : un front (10 EMS) par
-  scénario, points non-dominés à bord noir.
-- `results/sens_sizing_ranking.pdf` — heatmap du **rang par coût** EMS×scénario
-  (* = non-dominé) : montre d'un coup d'œil si l'ordre se réordonne.
-- `results/sens_sizing.txt` — chiffres par scénario.
+- `results/sens_sizing_pareto.pdf` — front des 10 EMS, point = dimensionnement
+  nominal, ellipses 1σ/2σ = incertitude de taille autour de chaque point.
+- `results/sens_sizing_oat.pdf` — figure d'appui : effet OAT d'un composant à la
+  fois (coût & durée de vie) sur la stratégie de référence (RB2(SoH)).
+- `results/sens_sizing.txt` — chiffres (nominal + moyennes/écarts-types MC, OAT).
 
 > ⚠️ Couplage notable : le réservoir H2 et l'ELY restant fixes, agrandir la FC
 > seule peut **augmenter** la LPSP (le tank se vide plus vite) — point à discuter.
@@ -202,7 +203,8 @@ une machine plus grosse.
 - **Étape 4** : 10 nominaux + 10×`N_MC` + OAT (re-simulation requise). Avec
   `N_MC=15` → **~176 runs** (~50-70 min sur 7 cœurs). Ajuster `MC_RANGES` /
   `N_MC`. Sécurité : tout tirage gardant `f30 < f60` (toujours vrai ici).
-- **Étape 5** : `len(SIZINGS)` × 10 EMS. Avec 7 scénarios → **70 runs**
-  (~12-15 min). Ajuster la liste `SIZINGS` (facteurs bat/fc/ely).
+- **Étape 5** : 10 nominaux + 10×`N_MC` + OAT (re-simulation requise, Monte-Carlo
+  ±20 % par composant). Avec `N_MC=200` → **~2022 runs** (~75 min sur 32 cœurs).
+  Ajuster `DELTA` / `N_MC`.
 - **Étape 6** : 10 baseline + 10×`N_MC` + OAT (re-simulation requise). Avec
   `N_MC=15` → **~171 runs** (~50-70 min sur 7 cœurs). Ajuster `TCAL_RANGE`.

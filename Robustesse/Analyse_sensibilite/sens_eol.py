@@ -51,7 +51,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from sens_common import (I, init_and_run_loop, load_strategy, metrics,
-                         lifetimes, run_pool, confidence_ellipse, RESULTS_DIR)
+                         lps_cost_keur, lifetimes, run_pool, confidence_ellipse,
+                         RESULTS_DIR)
 
 # ============================ CONFIGURATION ============================
 # Seuils EoL du fichier de base (Init_EMR_MG_v16_python : BAT 0.70, FC/ELY 0.90).
@@ -103,16 +104,18 @@ def evaluate(params):
         I.ELY['SoH_EoL'] = params['ely']
         data = init_and_run_loop(strat)
         lpsp, cost = metrics(data)
+        clps = lps_cost_keur(data)
         lb, lf, le = lifetimes(data)
         ok = True
     except Exception as e:                 # ex. brentq hors bracket si EoL trop bas
-        lpsp = cost = lb = lf = le = None
+        lpsp = cost = clps = lb = lf = le = None
         ok = False
         print("  [FAIL] %-9s EoL=(%.3f,%.3f,%.3f) : %s"
               % (params['label'], params['bat'], params['fc'], params['ely'], e), flush=True)
     return dict(params=params, label=params['label'], kind=params['kind'],
                 bat=params['bat'], fc=params['fc'], ely=params['ely'],
-                lpsp=lpsp, cost=cost, life_bat=lb, life_fc=lf, life_ely=le, ok=ok)
+                lpsp=lpsp, cost=cost, clps=clps,
+                life_bat=lb, life_fc=lf, life_ely=le, ok=ok)
 
 
 def _yr(x):
@@ -190,19 +193,22 @@ def main():
         f.write("# MC: N=%d/strat, ranges=%s, seed=%d (memes triplets pour toutes les strategies)\n\n"
                 % (N_MC, MC_RANGES, MC_SEED))
         f.write("## Front de Pareto : point nominal + dispersion MC par strategie\n")
-        f.write("strat;LPSP_nom;deg_nom;LPSP_mean;LPSP_std;deg_mean;deg_std;deg_min;deg_max;N_ok\n")
+        f.write("strat;LPSP_nom;deg_nom;LPSP_mean;LPSP_std;deg_mean;deg_std;deg_min;deg_max;N_ok;clps_nom;clps_mean;clps_std\n")
         for _, label in SCENARIOS:
             rn = nom.get(label)
             sub = mc_by.get(label, [])
             if rn is None:
                 f.write("%s;NOMINAL_FAIL\n" % label); continue
             lp = np.array([r['lpsp'] for r in sub]); dg = np.array([r['cost'] for r in sub])
+            cl = np.array([r['clps'] for r in sub])
             if len(sub):
-                f.write("%s;%.4f;%.3f;%.4f;%.4f;%.3f;%.3f;%.3f;%.3f;%d\n"
+                f.write("%s;%.4f;%.3f;%.4f;%.4f;%.3f;%.3f;%.3f;%.3f;%d;%.3f;%.3f;%.3f\n"
                         % (label, rn['lpsp'], rn['cost'], lp.mean(), lp.std(),
-                           dg.mean(), dg.std(), dg.min(), dg.max(), len(sub)))
+                           dg.mean(), dg.std(), dg.min(), dg.max(), len(sub),
+                           rn['clps'], cl.mean(), cl.std()))
             else:
-                f.write("%s;%.4f;%.3f;-;-;-;-;-;-;0\n" % (label, rn['lpsp'], rn['cost']))
+                f.write("%s;%.4f;%.3f;-;-;-;-;-;-;0;%.3f;-;-\n"
+                        % (label, rn['lpsp'], rn['cost'], rn['clps']))
         f.write("\n## OAT (strategie %s) : un seuil varie, les deux autres au baseline\n" % REF_LABEL)
         for k, comp, lifekey in (('oat_bat', 'bat', 'life_bat'),
                                  ('oat_fc', 'fc', 'life_fc'),

@@ -40,8 +40,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from sens_common import (I, init_and_run_loop, load_strategy, metrics, lifetimes,
-                         run_pool, confidence_ellipse, RESULTS_DIR)
+from sens_common import (I, init_and_run_loop, load_strategy, metrics,
+                         lps_cost_keur, lifetimes, run_pool, confidence_ellipse,
+                         RESULTS_DIR)
 from Common import cost_fcn_total2 as CF   # pour muter les seuils (globals module)
 
 # ============================ CONFIGURATION ============================
@@ -62,21 +63,23 @@ SCENARIOS = [
     ("SoC06",    "SoC06"),
 ]
 
-# --- Monte Carlo : 4 seuils echantillonnes CONJOINTEMENT (uniforme, centre sur
-# le nominal). Memes N_MC quadruplets pour toutes les strategies (common random
-# numbers). Plages choisies pour rester physiques : f30 < f60 toujours vrai,
-# flow << fhigh toujours vrai. ---
-MC_RANGES = dict(fhigh=(0.70, 0.90), flow=(0.005, 0.02),
-                 f30=(0.25, 0.35), f60=(0.50, 0.70))
+# --- Monte Carlo : 4 seuils echantillonnes CONJOINTEMENT (uniforme). CHAQUE
+# seuil varie de +/-20% autour de son nominal (taille uniforme -> plus clair a
+# expliquer). Memes N_MC quadruplets pour toutes les strategies (common random
+# numbers). Les contraintes physiques restent satisfaites sur tout le domaine :
+# f30 < f60 (max f30=0.36 < min f60=0.48) et flow << fhigh ; fhigh max=0.96 < 1.
+MC_RANGES = dict(fhigh=(0.64, 0.96), flow=(0.008, 0.012),
+                 f30=(0.24, 0.36), f60=(0.48, 0.72))
 N_MC    = 200         # tirages par strategie (run mesocentre : 200 pour ellipses lisses)
 MC_SEED = 4242
 
 # --- OAT (figure d'appui) : un seuil a la fois, sur UNE strategie de reference ---
+# Grilles a +/-20% (nominal +/-{20%,10%,0}) pour rester coherent avec le MC.
 REF_FOLDER, REF_LABEL = "RB2(SoH)", "RB2(SoH)"
-FHIGH_GRID = [0.70, 0.75, 0.80, 0.85, 0.90]
-FLOW_GRID  = [0.005, 0.0075, 0.01, 0.015, 0.02]
-F30_GRID   = [0.25, 0.275, 0.30, 0.325, 0.35]
-F60_GRID   = [0.50, 0.55, 0.60, 0.65, 0.70]
+FHIGH_GRID = [0.64, 0.72, 0.80, 0.88, 0.96]
+FLOW_GRID  = [0.008, 0.009, 0.010, 0.011, 0.012]
+F30_GRID   = [0.24, 0.27, 0.30, 0.33, 0.36]
+F60_GRID   = [0.48, 0.54, 0.60, 0.66, 0.72]
 
 # Cout total ~ 10 nominaux + 10*N_MC + OAT. N_MC=15 -> 10 + 150 + ~16 = ~176 sims.
 OUT_TXT = os.path.join(RESULTS_DIR, "sens_hthresholds.txt")
@@ -94,10 +97,11 @@ def evaluate(params):
         strat = load_strategy(params['folder'])
         data = init_and_run_loop(strat)
         lpsp, cost = metrics(data)
+        clps = lps_cost_keur(data)
         lb, lf, le = lifetimes(data)
         ok = True
     except Exception as e:
-        lpsp = cost = lb = lf = le = None
+        lpsp = cost = clps = lb = lf = le = None
         ok = False
         print("  [FAIL] %-9s seuils=(%.3f,%.4f,%.3f,%.3f) : %s"
               % (params['label'], params['fhigh'], params['flow'],
@@ -105,7 +109,8 @@ def evaluate(params):
     return dict(params=params, label=params['label'], kind=params['kind'],
                 fhigh=params['fhigh'], flow=params['flow'],
                 f30=params['f30'], f60=params['f60'],
-                lpsp=lpsp, cost=cost, life_bat=lb, life_fc=lf, life_ely=le, ok=ok)
+                lpsp=lpsp, cost=cost, clps=clps,
+                life_bat=lb, life_fc=lf, life_ely=le, ok=ok)
 
 
 def _yr(x):
@@ -172,18 +177,21 @@ def main():
         f.write("# MC: N=%d/strat, ranges=%s, seed=%d (memes quadruplets pour toutes)\n\n"
                 % (N_MC, MC_RANGES, MC_SEED))
         f.write("## Front de Pareto : nominal + dispersion MC par strategie\n")
-        f.write("strat;LPSP_nom;deg_nom;LPSP_mean;LPSP_std;deg_mean;deg_std;deg_min;deg_max;N_ok\n")
+        f.write("strat;LPSP_nom;deg_nom;LPSP_mean;LPSP_std;deg_mean;deg_std;deg_min;deg_max;N_ok;clps_nom;clps_mean;clps_std\n")
         for _, label in SCENARIOS:
             rn = nom.get(label); sub = mc_by.get(label, [])
             if rn is None:
                 f.write("%s;NOMINAL_FAIL\n" % label); continue
             if sub:
                 lp = np.array([r['lpsp'] for r in sub]); dg = np.array([r['cost'] for r in sub])
-                f.write("%s;%.4f;%.3f;%.4f;%.4f;%.3f;%.3f;%.3f;%.3f;%d\n"
+                cl = np.array([r['clps'] for r in sub])
+                f.write("%s;%.4f;%.3f;%.4f;%.4f;%.3f;%.3f;%.3f;%.3f;%d;%.3f;%.3f;%.3f\n"
                         % (label, rn['lpsp'], rn['cost'], lp.mean(), lp.std(),
-                           dg.mean(), dg.std(), dg.min(), dg.max(), len(sub)))
+                           dg.mean(), dg.std(), dg.min(), dg.max(), len(sub),
+                           rn['clps'], cl.mean(), cl.std()))
             else:
-                f.write("%s;%.4f;%.3f;-;-;-;-;-;-;0\n" % (label, rn['lpsp'], rn['cost']))
+                f.write("%s;%.4f;%.3f;-;-;-;-;-;-;0;%.3f;-;-\n"
+                        % (label, rn['lpsp'], rn['cost'], rn['clps']))
         f.write("\n## OAT (strategie %s) : un seuil varie, les 3 autres au nominal\n" % REF_LABEL)
         for k, key, lifekey in (('oat_fhigh', 'fhigh', 'life_fc'),
                                 ('oat_flow', 'flow', 'life_fc'),

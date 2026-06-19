@@ -34,7 +34,7 @@ except ImportError:
         E_REF_KWH = 1e6
         HORIZON_Y = 25
         @staticmethod
-        def total_cost_keur(lpsp, deg): return lpsp * 10 + deg
+        def total_cost_keur(lpsp, deg, clps=None): return deg + (clps if clps is not None else lpsp * 10)
         @staticmethod
         def cost_lpsp_keur(lpsp): return lpsp * 10
         @staticmethod
@@ -151,8 +151,9 @@ def _rank_matrix(cases):
     labels = [c[0] for c in cases]
     R = np.full((len(ems), len(cases)), np.nan)
     for jc, (_, _grp, d) in enumerate(cases):
-        # Calculate costs and ranks. Assuming input data structure matches expectations.
-        rk = _ranks({e: V.total_cost_keur(d[e][0], d[e][1]) for e in d if e in d})
+        # Every column is ranked by the unified total cost of its (Monte-Carlo
+        # mean) point -> uniform treatment across all sensitivity axes.
+        rk = _ranks({e: V.total_cost_keur(*d[e]) for e in d if e in d})
         for ir, e in enumerate(ems):
             if e in rk:
                 R[ir, jc] = rk[e]
@@ -276,7 +277,7 @@ def figure_distribution(cases):
     """Boxplot of the total cost per strategy over all cases (log), sorted by median."""
     ems = V.EMS_ORDER
     # Extract data, filter out missing entries
-    data = {e: [V.total_cost_keur(d[e][0], d[e][1])
+    data = {e: [V.total_cost_keur(*d[e])
                 for _, _g, d in cases if e in d] for e in ems}
     # Sort strategies by median cost
     order = sorted(ems, key=lambda e: np.median(data[e]) if data[e] else np.inf)
@@ -303,7 +304,7 @@ def figure_distribution(cases):
     nominal = cases[0][2]
     for i, e in enumerate(order, 1):
         if e in nominal:
-            ax.plot(i, V.total_cost_keur(nominal[e][0], nominal[e][1]),
+            ax.plot(i, V.total_cost_keur(*nominal[e]),
                     "D", color=C_RED, markersize=10, zorder=10, label="_nolegend_")
 
     # Formatting
@@ -335,7 +336,10 @@ def figure_decomposition(cases):
     # Filter strategies present in nominal case
     ems = [e for e in V.EMS_ORDER if e in nominal]
     deg = np.array([nominal[e][1] for e in ems])
-    clp = np.array([V.cost_lpsp_keur(nominal[e][0]) for e in ems])
+    # cout LPS pas-a-pas stocke (3e composante) ; repli sur la valorisation
+    # agregee si la colonne 'clps' est absente (ancien .txt).
+    clp = np.array([nominal[e][2] if len(nominal[e]) > 2 and nominal[e][2] is not None
+                    else V.cost_lpsp_keur(nominal[e][0]) for e in ems])
     tot = deg + clp
 
     # Sort bars by total cost
@@ -468,7 +472,8 @@ def figure_soh_annexe():
         ax1 = axes[0, curr_ax]
         curr_ax += 1
         b = np.array([r[0] for r in soh["bias"]]) * 100.0 # Convert to %
-        tot = np.array([V.total_cost_keur(r[1], r[2]) for r in soh["bias"]])
+        tot = np.array([V.total_cost_keur(r[1], r[2], r[3] if len(r) > 3 else None)
+                        for r in soh["bias"]])
         deg = np.array([r[2] for r in soh["bias"]])
 
         # Line plot with markers
@@ -487,7 +492,8 @@ def figure_soh_annexe():
     if has_sigma:
         ax2 = axes[0, curr_ax]
         sg = np.array([r[0] for r in soh["sigma"]]) * 100.0 # Convert to %
-        tot = np.array([V.total_cost_keur(r[1], r[2]) for r in soh["sigma"]])
+        tot = np.array([V.total_cost_keur(r[1], r[2], r[3] if len(r) > 3 else None)
+                        for r in soh["sigma"]])
 
         ax2.plot(sg, tot, "-o", color=C_LINE, markersize=8)
         # Mathtext for Sigma symbol
@@ -517,7 +523,8 @@ def write_recap(cases, mean_rank, labels, data):
             f.write("# E_ref = %.3f MWh (net planned energy, %g yr) ; "
                     "unserved_energy = LPSP%%/100 * E_ref\n\n" % (V.E_REF_KWH/1000.0, V.HORIZON_Y))
 
-            f.write("## Global ranking (mean total-cost rank over %d cases)\n" % len(cases))
+            f.write("## Global ranking (mean rank over %d sensitivity columns)\n"
+                    % len(labels))
             f.write("mean_rank;ems;total_cost_median_kEUR;min;max\n")
 
             # Get indices for sorting based on mean rank
@@ -533,13 +540,15 @@ def write_recap(cases, mean_rank, labels, data):
                 else:
                     f.write("%.2f;%s;NA;NA;NA\n" % (mean_rank[i], e))
 
+            # Cost table: only the actual cost cases (the sizing column is a rank,
+            # not a cost) -> header derived from `cases`, not from `labels`.
             f.write("\n## Total cost per case and strategy [kEUR]\n")
-            f.write("ems;" + ";".join(labels) + "\n")
+            f.write("ems;" + ";".join(c[0] for c in cases) + "\n")
             for e in ems_list:
                 row = [e]
                 for _, _g, d in cases:
                     if e in d:
-                        row.append("%.2f" % V.total_cost_keur(d[e][0], d[e][1]))
+                        row.append("%.2f" % V.total_cost_keur(*d[e]))
                     else:
                         row.append("NA")
                 f.write(";".join(row) + "\n")

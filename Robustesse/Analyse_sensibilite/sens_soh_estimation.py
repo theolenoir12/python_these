@@ -31,8 +31,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from sens_common import (I, init_and_run_loop, BASE_STRAT, metrics, lifetimes,
-                         run_pool, confidence_ellipse, RESULTS_DIR)
+from sens_common import (I, init_and_run_loop, BASE_STRAT, metrics, lps_cost_keur,
+                         lifetimes, run_pool, confidence_ellipse, RESULTS_DIR)
 
 # ============================ CONFIGURATION ============================
 REFRESH_STEPS = int(24 * 7 * 3600 // I.LOAD['Ts'])   # rafraichissement estimation = 1 semaine
@@ -83,9 +83,10 @@ def evaluate(params):
     strat = make_noisy_soh(params['bias'], params['sigma'], params['seed'])
     data = init_and_run_loop(strat)
     lpsp, cost = metrics(data)
+    clps = lps_cost_keur(data)
     lb, lf, le = lifetimes(data)
     return dict(params=params, bias=params['bias'], sigma=params['sigma'],
-                lpsp=lpsp, cost=cost, life_bat=lb, life_fc=lf, life_ely=le)
+                lpsp=lpsp, cost=cost, clps=clps, life_bat=lb, life_fc=lf, life_ely=le)
 
 
 def _fmt(r):
@@ -113,22 +114,24 @@ def main():
     with open(OUT_TXT, "w", encoding="utf-8") as f:
         f.write("# Sensibilite estimation SoH -- RB2(SoH) 25 ans | refresh=%dpas clip=%s comp=%s\n"
                 % (REFRESH_STEPS, CLIP, COMPONENTS))
-        f.write("BASELINE; LPSP=%.4f%%; deg=%.3fkEUR; vie_bat=%s; vie_fc=%s; vie_ely=%s\n\n"
-                % (base['lpsp'], base['cost'], base['life_bat'], base['life_fc'], base['life_ely']))
+        f.write("BASELINE; LPSP=%.4f%%; deg=%.3fkEUR; clps=%.3fkEUR; vie_bat=%s; vie_fc=%s; vie_ely=%s\n\n"
+                % (base['lpsp'], base['cost'], base['clps'],
+                   base['life_bat'], base['life_fc'], base['life_ely']))
         f.write("## Regime 1 : biais systematique\n")
-        f.write("bias;LPSP_%;deg_kEUR;dLPSP_pts;ddeg_%\n")
+        f.write("bias;LPSP_%;deg_kEUR;dLPSP_pts;ddeg_%;clps_kEUR\n")
         for r in r_bias:
-            f.write("%+.4f;%.4f;%.3f;%+.4f;%+.2f\n"
+            f.write("%+.4f;%.4f;%.3f;%+.4f;%+.2f;%.3f\n"
                     % (r['bias'], r['lpsp'], r['cost'], r['lpsp'] - base['lpsp'],
-                       (r['cost'] - base['cost']) / base['cost'] * 100))
+                       (r['cost'] - base['cost']) / base['cost'] * 100, r['clps']))
         f.write("\n## Regime 2 : bruit gaussien (Monte Carlo)\n")
-        f.write("sigma;N;LPSP_mean;LPSP_std;LPSP_min;LPSP_max;deg_mean;deg_std;deg_min;deg_max\n")
+        f.write("sigma;N;LPSP_mean;LPSP_std;LPSP_min;LPSP_max;deg_mean;deg_std;deg_min;deg_max;clps_mean\n")
         for sg in SIGMA_LIST:
             sub = [r for r in r_mc if abs(r['sigma'] - sg) < 1e-12]
             lp = np.array([r['lpsp'] for r in sub]); dg = np.array([r['cost'] for r in sub])
-            f.write("%.3f;%d;%.4f;%.4f;%.4f;%.4f;%.3f;%.3f;%.3f;%.3f\n"
+            cl = np.array([r['clps'] for r in sub])
+            f.write("%.3f;%d;%.4f;%.4f;%.4f;%.4f;%.3f;%.3f;%.3f;%.3f;%.3f\n"
                     % (sg, len(sub), lp.mean(), lp.std(), lp.min(), lp.max(),
-                       dg.mean(), dg.std(), dg.min(), dg.max()))
+                       dg.mean(), dg.std(), dg.min(), dg.max(), cl.mean()))
 
     # ===================== FIGURE 1 : biais (double axe) =====================
     b = np.array([r['bias'] for r in r_bias]) * 100

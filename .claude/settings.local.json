@@ -27,7 +27,14 @@
       "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\502c1435\\\\tmp\\\\euro_probe.py\" 2>$null)",
       "PowerShell($wt = \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\.claude\\\\worktrees\\\\voll-text\\\\Robustesse\\\\Analyse_sensibilite\"; & \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"$wt\\\\plot_voll_summary.py\" 2>$null)",
       "PowerShell($main = \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Analyse_sensibilite\"; & \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"$main\\\\plot_voll_summary.py\" 2>$null | Select-Object -First 3)",
-      "PowerShell(Select-String *)"
+      "PowerShell(Select-String *)",
+      "PowerShell(python -m py_compile \"Robustesse\\\\Analyse_sensibilite\\\\sens_sizing.py\"; if \\($?\\) { \"OK syntaxe\" })",
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" -m py_compile \"Robustesse\\\\Analyse_sensibilite\\\\sens_sizing.py\"; if \\($?\\) { \"OK syntaxe\" })",
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" -c \"import itertools; L=[0.8,1.0,1.2]; S=[\\('B%.1f F%.1f E%.1f'%\\(b,f,e\\),\\(b,f,e\\)\\) for b,f,e in itertools.product\\(L,L,L\\)]; print\\('n=',len\\(S\\)\\); print\\('nominal in:', any\\(x[1]==\\(1.0,1.0,1.0\\) for x in S\\)\\); print\\(S[0][0],'...',S[-1][0]\\)\")",
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" plot_cweights_ranking.py 2>$null; Write-Output \"----\"; & \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" plot_voll_summary.py 2>$null)",
+      "PowerShell($py = \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\"; $d = \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Analyse_sensibilite\"; & $py -m py_compile \"$d\\\\sens_sizing.py\" \"$d\\\\sens_cweights.py\" \"$d\\\\voll_common.py\" \"$d\\\\plot_voll_summary.py\"; if \\($?\\) { \"py_compile OK\" }; \"----\"; & $py \"$d\\\\plot_voll_summary.py\" 2>$null)",
+      "PowerShell($py = \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\"; $d = \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Analyse_sensibilite\"; & $py \"$d\\\\plot_voll_summary.py\" 2>$null | Select-Object -First 3)",
+      "PowerShell($py = \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\"; $d = \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Analyse_sensibilite\"; & $py \"$d\\\\plot_eol_pareto_en.py\" 2>$null)"
     ]
   }
 }

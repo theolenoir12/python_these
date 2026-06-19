@@ -135,6 +135,8 @@ def main():
         raise RuntimeError("Aucune ligne 'Front de Pareto' lue dans %s" % TXT)
 
     fig, ax = plt.subplots(figsize=(8, 6))
+    rng = np.random.default_rng(0)   # nuage reproductible
+    N_CLOUD = 40                     # qq points par strategie, juste pour la dispersion
 
     for strat in STRAT_ORDER:
         if strat not in rows:
@@ -142,6 +144,15 @@ def main():
         r = rows[strat]
         base = COLORS[strat] if COLOR_BY_STRAT else POINT_COLOR
         col = darken(base, 0.7)  # version assombrie pour points, ellipses, texte
+
+        # petit nuage TRES leger pour figurer la dispersion (a la maniere de
+        # sens_eol_pareto). Le .txt ne garde pas le nuage MC brut -> on re-tire
+        # quelques points depuis la meme loi que les ellipses : normale alignee
+        # sur les axes, centree (lpsp_mean, deg_mean), ecarts-types (std).
+        if r['lpsp_std'] > 0 or r['deg_std'] > 0:
+            cx = rng.normal(r['lpsp_mean'], r['lpsp_std'], N_CLOUD)
+            cy = rng.normal(r['deg_mean'], r['deg_std'], N_CLOUD)
+            ax.scatter(cx, cy, s=6, color=col, alpha=0.4, edgecolor='none', zorder=2)
 
         # ellipses alignees sur les axes, centrees sur la moyenne MC (1s plein, 2s tirete)
         for n_std, lw, ls, alpha in ((1.0, 1.6, '-', 0.9), (2.0, 0.9, '--', 0.5)):

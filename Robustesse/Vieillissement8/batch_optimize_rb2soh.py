@@ -40,11 +40,11 @@ from Common.cost_fcn_total2 import get_cost_total
 from Common.get_lol import get_lol
 
 # ============================ CONFIGURATION ============================
-LPSP_MAX = 2.7127                    # contrainte dure [%] : LPSP de RB2 a ne pas depasser
+LPSP_MAX = 2.4509                    # contrainte dure [%] : LPSP de RB2 a ne pas depasser
 LPSP_TOL = 1e-4                      # tolerance numerique sur la contrainte
 
 DISCOUNT_RATE = 0.05                 # r : uniquement pour le report NPC (n'affecte pas l'objectif)
-BASE_F_FC, BASE_F_ELY = 0.475, 0.33  # couple de reference (= setpoints RB2)
+BASE_F_FC, BASE_F_ELY = 0.450, 0.33  # couple de reference (= setpoints RB2)
 
 # --- PHASE 1 : grille fine autour de la frontiere de faisabilite ---
 # (resserree sur coef_fc ~ 0.475 et coef_ely ~ 0.30-0.36, d'apres le fichier exporte)

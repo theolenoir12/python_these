@@ -38,8 +38,8 @@ points = np.array([
     [8.0744, 109.0235],   # 50-50
     [3.8032, 59.6765],    # 75-25
     [2.4851, 66.4122],    # 100-0
-    [2.7127, 65.1767],    # RB2
-    [2.6496, 58.5350],    # RB2(SoH)
+    [2.4540, 65.4218],    # RB2
+    [2.5475, 59.3644],    # RB2(SoH)
     [1.2597, 80.1562],    # RB1
     [1.3389, 140.6745],   # SoC1
     [29.4642, 109.2535],  # SoC06
@@ -86,6 +86,35 @@ for i, label in enumerate(labels):
     else:
         ax.text(points[i, 0] + 0.5, points[i, 1] + 0.5, label,
                 fontsize=14, color=col, weight='bold', path_effects=LABEL_STROKE)
+
+# --- Encadre zoom sur le cluster bas-gauche, place dans le coin bas-droit (vide) ---
+zoom_labels = ['75-25', '100-0', 'RB2', 'RB2(SoH)', 'RB1']
+axins = ax.inset_axes([0.45, 0.08, 0.52, 0.46])  # [x0, y0, w, h] en fraction des axes
+
+for i, label in enumerate(labels):
+    if label in zoom_labels:
+        axins.scatter(points[i, 0], points[i, 1], color=color_of(label), s=70, alpha=0.9)
+
+# Decalages de labels adaptes a l'echelle agrandie : (dx, dy, ha, va)
+zoom_offsets = {
+    'RB1':      (0.10, 0.0,  'left',   'center'),
+    '100-0':    (0.10, 1.3,  'left',   'bottom'),
+    'RB2':      (-0.10, -0.8, 'right', 'top'),
+    'RB2(SoH)': (0.0, -1.2,  'center', 'top'),
+    '75-25':    (0.10, 0.0,  'left',   'center'),
+}
+for i, label in enumerate(labels):
+    if label in zoom_labels:
+        dx, dy, ha, va = zoom_offsets[label]
+        axins.text(points[i, 0] + dx, points[i, 1] + dy, label, fontsize=11,
+                   color=color_of(label), weight='bold', path_effects=LABEL_STROKE,
+                   horizontalalignment=ha, verticalalignment=va)
+
+axins.set_xlim(1.0, 4.3)
+axins.set_ylim(55, 84)
+axins.grid(True, linestyle='--', alpha=0.5)
+axins.tick_params(labelsize=10)
+ax.indicate_inset_zoom(axins, edgecolor='gray', alpha=0.6)
 
 # Style de l'axe
 ax.set_xlabel("LPSP [%]", fontsize=18)

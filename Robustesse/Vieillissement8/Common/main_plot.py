@@ -420,8 +420,8 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
         return -1
     idx_fc_last  = last_nonzero_before(fc_replacements,  P_fc_k)
     idx_ely_last = last_nonzero_before(ely_replacements, P_ely_k)
-    plot_row(2, t_days, P_fc_k, 'r', title=r'$\mathbf{PEMFC\ power}$', ylabel=r'P_{\mathrm{FC}} [kW]', annots=[(0, 60, -40), (idx_fc_last, -60, -40)])
-    plot_row(3, t_days, P_ely_k, 'g', title=r'$\mathbf{PEMWE\ power}$', ylabel=r'P_{\mathrm{ELY}} [kW]', ymax_custom=1, annots=[(10, 60, 40), (idx_ely_last, -60, 40)])
+    plot_row(2, t_days, P_fc_k, 'r', title=r'$\mathbf{PEMFC\ power}$', ylabel=r'P_{\mathrm{FC}} [kW]')
+    plot_row(3, t_days, P_ely_k, 'g', title=r'$\mathbf{PEMWE\ power}$', ylabel=r'P_{\mathrm{ELY}} [kW]', ymax_custom=1, annots=[(8, 60, 40), (idx_ely_last, -60, 40)])
     plot_row(4, t_days, SoC_p, 'b', title=r'$\mathbf{Battery\ state\ of\ charge}$', ylabel=r'SoC_{\mathrm{bat}} [\%]', ymax_custom=110)
     plot_row(5, t_days, E_h2_k, 'g', title=r'$\mathbf{Hydrogen\ energy\ stored}$', ylabel=r'E_{H2} [kWh]', ymax_custom=220)
     plot_row(6, t_days, LPS_p, 'r', title=r'$\mathbf{Loss\ of\ power\ supply}$', ylabel=r'LPS [\%]', ymax_custom=110)

@@ -91,7 +91,7 @@ IDEAL_COLOR = '0.3'  # gris fonce, comme dans pareto_ems.py
 # Defaut : (+0.5, +0.5) en haut a droite du point.
 LABEL_PLACEMENT = {
     'RB2':      dict(dx=-2.7, dy=+4.0, ha='left',   va='top'),
-    'SoC06':    dict(dx=-2.0, dy=-3.0, ha='left',   va='top'),
+    # 'SoC06':    dict(dx=-2.0, dy=-3.0, ha='left',   va='top'),
     'RB2(SoH)': dict(dx=+0.3, dy=-4.0, ha='center', va='top'),
     'Ideal':    dict(dx=+0.5, dy=+0.5, ha='left',   va='bottom'),
 }
@@ -180,6 +180,63 @@ def main():
     ax.text(IDEAL_POINT[0] + pi['dx'], IDEAL_POINT[1] + pi['dy'], 'Ideal',
             fontsize=14, color=ic, weight='bold', path_effects=LABEL_STROKE,
             horizontalalignment=pi['ha'], verticalalignment=pi['va'], zorder=7)
+
+    # --- Encart de zoom sur le cluster bas-gauche (comme Pareto_2d_25y.py) ---
+    # Test : on rejoue nuage + ellipses + point nominal pour qq strategies seulement.
+    zoom_strats = ['75-25', '100-0', 'RB2', 'RB2(SoH)', 'RB1']
+    zoom_strats = [s for s in zoom_strats if s in rows]
+    if zoom_strats:
+        axins = ax.inset_axes([0.4, 0.05, 0.5, 0.4])  # [x0, y0, w, h] frac. des axes
+
+        # decalages de labels adaptes a l'echelle agrandie : (dx, dy, ha, va)
+        zoom_offsets = {
+            'RB1':      (0.10, 0.0,  'left',   'center'),
+            '100-0':    (0.10, 1.3,  'left',   'bottom'),
+            'RB2':      (-0.10, -0.8, 'right', 'top'),
+            'RB2(SoH)': (0.0, -1.2,  'center', 'top'),
+            '75-25':    (0.10, 0.0,  'left',   'center'),
+        }
+
+        for strat in zoom_strats:
+            r = rows[strat]
+            base = COLORS[strat] if COLOR_BY_STRAT else POINT_COLOR
+            col = darken(base, 0.7)
+
+            if r['lpsp_std'] > 0 or r['deg_std'] > 0:
+                cx = rng.normal(r['lpsp_mean'], r['lpsp_std'], N_CLOUD)
+                cy = rng.normal(r['deg_mean'], r['deg_std'], N_CLOUD)
+                axins.scatter(cx, cy, s=6, color=col, alpha=0.4, edgecolor='none', zorder=2)
+
+            for n_std, lw, ls, alpha in ((1.0, 1.6, '-', 0.9), (2.0, 0.9, '--', 0.5)):
+                axins.add_patch(Ellipse(
+                    (r['lpsp_mean'], r['deg_mean']),
+                    width=2 * n_std * r['lpsp_std'],
+                    height=2 * n_std * r['deg_std'],
+                    edgecolor=col, facecolor='none', lw=lw, ls=ls, alpha=alpha, zorder=4))
+
+            axins.scatter([r['lpsp_nom']], [r['deg_nom']], s=70, color=col, alpha=0.9,
+                          zorder=6)
+
+            dx, dy, ha, va = zoom_offsets.get(strat, (0.10, 0.0, 'left', 'center'))
+            axins.text(r['lpsp_nom'] + dx, r['deg_nom'] + dy, strat, fontsize=11,
+                       color=col, weight='bold', path_effects=LABEL_STROKE,
+                       horizontalalignment=ha, verticalalignment=va, zorder=7)
+
+        # bornes auto a partir des points nominaux + moyennes +/- 2 sigma
+        xs, ys = [], []
+        for strat in zoom_strats:
+            r = rows[strat]
+            xs += [r['lpsp_nom'], r['lpsp_mean'] - 2 * r['lpsp_std'],
+                   r['lpsp_mean'] + 2 * r['lpsp_std']]
+            ys += [r['deg_nom'], r['deg_mean'] - 2 * r['deg_std'],
+                   r['deg_mean'] + 2 * r['deg_std']]
+        mx = 0.10 * (max(xs) - min(xs) or 1.0)
+        my = 0.10 * (max(ys) - min(ys) or 1.0)
+        axins.set_xlim(min(xs) - mx, max(xs) + mx)
+        axins.set_ylim(min(ys) - my, max(ys) + my)
+        axins.grid(True, linestyle='--', alpha=0.5)
+        axins.tick_params(labelsize=10)
+        ax.indicate_inset_zoom(axins, edgecolor='gray', alpha=0.6)
 
     ax.set_xlabel("LPSP [%]", fontsize=18)
     ax.set_ylabel("Degradation cost [k€]", fontsize=18)

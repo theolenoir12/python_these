@@ -360,7 +360,7 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
     fig, axs = plt.subplots(7, 2, figsize=(41, 18), sharex='col')
     plt.subplots_adjust(wspace=0.1, hspace=0.4)
         
-    def plot_row(row_idx, x, y, color='b', label=None, title=None, ylabel=None, y2=None, label2=None, color2='y', ymax_custom=None,annots=False):
+    def plot_row(row_idx, x, y, color='b', label=None, title=None, ylabel=None, y2=None, label2=None, color2='y', ymax_custom=None,annots=False, zoom_ploss=False):
         plt.rcParams.update({
             "text.usetex": False, "mathtext.fontset": "cm", "font.family": "serif",
             "axes.labelsize": 20, "axes.titlesize": 24, "legend.fontsize": 17,
@@ -408,6 +408,25 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
         ax_right.set_ylim(ymin, ymax)
         ax_right.tick_params(axis='both', labelleft=True, labelsize=21)
 
+        # --- Annotation de la perte de puissance sur le zoom : puissance crete au 1er vs
+        #     au dernier jour de la semaine, avec plus de decimales (variation faible) ---
+        if zoom_ploss:
+            idxs = np.flatnonzero(mask)
+            if len(idxs):
+                first = idxs[x[idxs] <= zoom_start + 1]
+                last  = idxs[x[idxs] >= zoom_end   - 1]
+                for seg, off_x, off_y in ((first, 55, 55), (last, -55, 55)):
+                    if len(seg):
+                        ii = seg[np.argmin(y[seg])]   # pic de puissance (plus negatif)
+                        val = y[ii]
+                        ax_right.annotate(f'{val:.4f}',
+                                          xy=(x[ii], val),
+                                          xytext=(off_x, off_y), textcoords='offset points',
+                                          fontsize=23, fontweight='bold', color=color,
+                                          bbox=dict(boxstyle="round,pad=0.3", fc="white", ec=color, lw=1.5, alpha=1.0),
+                                          arrowprops=dict(arrowstyle="->", color='k', lw=1.8),
+                                          ha='center', va='center')
+
     # Appels avec les nouvelles limites
     plot_row(0, t_days, P_planned, 'b', label='Planned', title=r'$\mathbf{Power\ demand}$', ylabel=r'P_{\mathrm{bus}} [kW]', y2=P_real, label2='Real')
     plot_row(1, t_days, P_bat_k, 'b', title=r'$\mathbf{Battery\ power}$', ylabel=r'P_{\mathrm{bat}} [kW]')
@@ -421,7 +440,7 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
     idx_fc_last  = last_nonzero_before(fc_replacements,  P_fc_k)
     idx_ely_last = last_nonzero_before(ely_replacements, P_ely_k)
     plot_row(2, t_days, P_fc_k, 'r', title=r'$\mathbf{PEMFC\ power}$', ylabel=r'P_{\mathrm{FC}} [kW]')
-    plot_row(3, t_days, P_ely_k, 'g', title=r'$\mathbf{PEMWE\ power}$', ylabel=r'P_{\mathrm{ELY}} [kW]', ymax_custom=1, annots=[(8, 60, 40), (idx_ely_last, -60, 40)])
+    plot_row(3, t_days, P_ely_k, 'g', title=r'$\mathbf{PEMWE\ power}$', ylabel=r'P_{\mathrm{ELY}} [kW]', ymax_custom=1, annots=[(8, 60, 40), (idx_ely_last, -60, 40)], zoom_ploss=True)
     plot_row(4, t_days, SoC_p, 'b', title=r'$\mathbf{Battery\ state\ of\ charge}$', ylabel=r'SoC_{\mathrm{bat}} [\%]', ymax_custom=110)
     plot_row(5, t_days, E_h2_k, 'g', title=r'$\mathbf{Hydrogen\ energy\ stored}$', ylabel=r'E_{H2} [kWh]', ymax_custom=220)
     plot_row(6, t_days, LPS_p, 'r', title=r'$\mathbf{Loss\ of\ power\ supply}$', ylabel=r'LPS [\%]', ymax_custom=110)

@@ -41,18 +41,25 @@ E_REF_KWH = 273380.731444          # kWh, energie nette planifiee sur 25 ans
 HORIZON_Y = 25.0
 
 # =========================================================================
-# 2) VOLL PAR PALIERS (Value Of Lost Load)
+# 2) VOLL (Value Of Lost Load)
 # -------------------------------------------------------------------------
-# Approche par paliers : plus la LPSP est elevee, plus la defaillance est jugee
-# couteuse (penalite croissante). Les seuils sont en FRACTION de LPSP (0.05 = 5%).
-# Reglage courant : 2 EUR/kWh si LPSP<5% ; 5 si 5-10% ; 10 si >=10%.
-# (seuil_fraction_haut, VOLL EUR/kWh) -- trie par seuil croissant ; le dernier
-# palier (seuil None) s'applique au-dela du dernier seuil.
+# VOLL CONSTANT (approche standard en fiabilite reseau / microgrid : cout de
+# l'energie non servie = VOLL [EUR/kWh] * EENS [kWh], cf. ACER/London Economics,
+# fourchette residentielle/mixte ~1-5 EUR/kWh). On retient 3 EUR/kWh (milieu de
+# fourchette). Format conserve (seuil_fraction_haut, VOLL) avec un SEUL palier
+# (seuil None) -> valeur constante quelle que soit la LPSP, pas d'effet de palier.
 VOLL_TIERS = [
-    (0.05, 2),
-    (0.1, 5),
-    (None, 10)
+    (None, 3)
 ]
+
+# Valorisation de l'energie non servie :
+#   - False (defaut) : AGREGEE  -> cout_LPSP = VOLL(LPSP) * EENS (depuis la LPSP).
+#     Avec un VOLL constant, c'est exactement VOLL * EENS. Mode retenu pour le
+#     classement (coherent avec un VOLL constant ; la colonne 'clps' des .txt a
+#     ete calculee PAS A PAS avec l'ANCIEN tiering et n'est donc plus utilisee).
+#   - True : PAS A PAS -> on reutilise la colonne 'clps' stockee (sum_t VoLL(LPS_t)
+#     * E_unserved_t). A ne reactiver que si 'clps' est recalcule avec ce VOLL.
+USE_STEPWISE_LPS = False
 
 
 def voll_eur_per_kwh(lpsp_pct):
@@ -100,7 +107,8 @@ def total_cost_keur(lpsp_pct, deg_keur, clps_keur=None):
       - clps_keur None : repli sur l'ancienne valorisation AGREGEE
         VoLL(LPSP)*E_unserved (cost_lpsp_keur), pour rester compatible avec
         d'anciens .txt depourvus de la colonne 'clps'."""
-    if clps_keur is None:
+    # Mode agrege par defaut (USE_STEPWISE_LPS=False) ou si 'clps' absent.
+    if clps_keur is None or not USE_STEPWISE_LPS:
         return deg_keur + cost_lpsp_keur(lpsp_pct)
     return deg_keur + clps_keur
 

@@ -1,0 +1,149 @@
+==============================================================================
+ AIDE-MEMOIRE -- LANCER UNE ANALYSE DE SENSIBILITE SUR LE MESOCENTRE (Helios)
+ Theo Lenoir -- microgrid H2/batterie -- dossier Robustesse/Analyse_sensibilite
+==============================================================================
+
+Ce fichier resume TOUTE la procedure pour relancer une simu sur le cluster
+de calcul de Franche-Comte (MesoFC / Helios). Copier-coller direct.
+Remplacer partout <login> par ton identifiant Helios.
+
+Source detaillee : Robustesse/Analyse_sensibilite/MESOCENTRE.md
+
+
+------------------------------------------------------------------------------
+ 0. A FAIRE UNE SEULE FOIS (le tout premier coup)
+------------------------------------------------------------------------------
+
+ - Avoir un compte Helios (compte + demande d'acces explicite).
+ - Etre sur le reseau de l'universite, sinon ACTIVER LE VPN (Helios n'est
+   accessible que depuis le reseau interne).
+ - Frontal (machine d'accueil) : mesohelios1.univ-fcomte.fr  (port 22, SSH).
+   /!\ Il redemarre tous les jours a 04h00 : ne pas y laisser de session ouverte.
+
+ DEFINITIONS A CONNAITRE (variables du cluster) :
+   $HOME  = /Home/Users/<login>  -> 10 Go, SAUVEGARDE, mais LECTURE SEULE sur
+                                     les noeuds de calcul. NE PAS travailler ici.
+   $WORK  = /Work/Users/<login>  -> 1 To, PAS de sauvegarde. ON TRAVAILLE ICI.
+   GENIAL_DATA_DIR = $WORK/genial_data  -> ou sont les gros CSV d'entree
+                                           (defini automatiquement par le .slurm)
+
+ ARBORESCENCE CIBLE sur le cluster :
+   $WORK/genial/Robustesse/Analyse_sensibilite/   <- on lance les jobs ICI
+   $WORK/genial/Robustesse/Vieillissement8/...     <- code de base (importe)
+   $WORK/genial_data/sidelec_roche_plate_csv.csv   <- pointe par GENIAL_DATA_DIR
+
+
+------------------------------------------------------------------------------
+ 1. SE CONNECTER AU CLUSTER (depuis PowerShell Windows)
+------------------------------------------------------------------------------
+
+   ssh <login>@mesohelios1.univ-fcomte.fr
+
+ (VPN actif si tu es hors universite.)
+
+
+------------------------------------------------------------------------------
+ 2. ENVOYER LE CODE ET LES DONNEES (depuis PowerShell Windows)
+------------------------------------------------------------------------------
+
+ A lancer depuis  C:\Users\tlenoi01\Doctorat\GENIAL\python_these
+
+ # a) le code (tout le dossier Robustesse) :
+   scp -r .\Robustesse tlenoir@mesohelios1.univ-fcomte.fr:/Work/Users/tlenoir/genial/
+
+ # b) les donnees d'entree (gitignorees, donc a envoyer a part) :
+   scp "C:\Users\tlenoi01\Doctorat\Data\sidelec_roche_plate_csv.csv" <login>@mesohelios1.univ-fcomte.fr:/Work/Users/<login>/genial_data/
+
+ NOTE : les 2 tables de rendement (FC_efficiency_LU_table_power.csv,
+ ELY_efficiency_LU_table_power.csv) sont dans Robustesse/Vieillissement8/Common/
+ et partent donc avec le scp -r du code. Verifie qu'elles sont la avant l'envoi.
+
+ # c) IMPORTANT -- une fois connecte au cluster (ssh), corriger les fins de
+ #    ligne Windows du script SLURM, sinon bash plante :
+   cd /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite
+   dos2unix run_meso.slurm
+
+ (Si seulement quelques fichiers .py ont change, on peut ne re-scp que ceux-la,
+  ex. :  scp .\Robustesse\Analyse_sensibilite\sens_sizing.py <login>@mesohelios1.univ-fcomte.fr:/Work/Users/<login>/genial/Robustesse/Analyse_sensibilite/ )
+
+------------------------------------------------------------------------------
+ 4. LANCER UN JOB  (1 analyse = 1 soumission) (cluster)
+------------------------------------------------------------------------------
+
+ Se placer dans le dossier de lancement :
+   cd /Work/Users/<login>/genial/Robustesse/Analyse_sensibilite
+
+ Soumettre (choisir le(s) script(s) voulu(s)) :
+   sbatch run_meso.slurm sens_sizing.py
+   sbatch run_meso.slurm sens_cweights.py
+   sbatch run_meso.slurm sens_eol.py
+   sbatch run_meso.slurm sens_hthresholds.py
+   sbatch run_meso.slurm sens_calendar.py
+   sbatch run_meso.slurm sens_soh_estimation.py
+
+ Les jobs sont independants : on peut tout soumettre d'un coup, l'ordonnanceur
+ gere. Chaque job tourne sur 1 noeud = 32 coeurs (partition smp).
+
+
+------------------------------------------------------------------------------
+ 5. SUIVRE LES JOBS  (sur le cluster)
+------------------------------------------------------------------------------
+
+   squeue --me                  # mes jobs en attente / en cours
+   cat sens_genial.<jobid>.out  # le log (sortie + erreurs + temps final)
+   seff <jobid>                 # efficacite CPU/RAM (apres la fin)
+   scancel <jobid>              # annuler un job
+
+ Le <jobid> est affiche au moment du sbatch ("Submitted batch job 123456").
+
+
+------------------------------------------------------------------------------
+ 6. RAPATRIER LES RESULTATS  (depuis PowerShell Windows dans le dossier Analyse_sensibilite)
+------------------------------------------------------------------------------
+
+ Les figures (.pdf) et chiffres (.txt) sont ecrits dans
+   .../Analyse_sensibilite/results/  sur le cluster.
+
+ Les ramener dans un dossier local results_meso :
+   scp -r tlenoir@mesohelios1.univ-fcomte.fr:/Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results .\results_meso
+
+ Ensuite, en local, relancer les scripts de plot (ex. plot_voll_summary.py)
+ qui lisent ces .txt pour produire les figures finales de la these.
+
+
+------------------------------------------------------------------------------
+ 7. REGLER LE NOMBRE DE TIRAGES MONTE-CARLO
+------------------------------------------------------------------------------
+
+ Dans le script sens_*.py concerne, variable  N_MC  (en haut du fichier).
+ Ordre de grandeur : ~70 s par simu de 25 ans ; sur 32 coeurs ~2 s par tirage.
+ Exemple : sens_sizing.py / sens_eol.py avec N_MC=200 -> ~2000 runs -> ~75 min,
+ tres en-dessous du walltime de 24 h. On peut viser plusieurs centaines de
+ tirages sans souci.
+
+
+------------------------------------------------------------------------------
+ 8. LIMITES A CONNAITRE
+------------------------------------------------------------------------------
+
+ - Partition smp : 32 CPU max par utilisateur -> --cpus-per-task <= 32.
+   C'est deja le max utile (le code est mono-noeud, ProcessPoolExecutor).
+ - Memoire : noeud smp = 96 Go ; le .slurm demande --mem=80G. Ne pas depasser 96G.
+ - Le frontal redemarre a 04h00 : lancer les longs calculs via sbatch (jamais
+   en direct sur le frontal), comme ci-dessus.
+
+
+==============================================================================
+ RESUME ULTRA-RAPIDE (le workflow type, ex. relancer le sizing)
+==============================================================================
+
+ 1. (PowerShell)  scp -r .\Robustesse <login>@mesohelios1.univ-fcomte.fr:/Work/Users/<login>/genial/
+ 2. (PowerShell)  ssh <login>@mesohelios1.univ-fcomte.fr
+ 3. (cluster)     cd /Work/Users/<login>/genial/Robustesse/Analyse_sensibilite
+ 4. (cluster)     dos2unix run_meso.slurm
+ 5. (cluster)     sbatch run_meso.slurm sens_sizing.py
+ 6. (cluster)     squeue --me           # attendre la fin
+ 7. (PowerShell)  scp -r <login>@mesohelios1.univ-fcomte.fr:/Work/Users/<login>/genial/Robustesse/Analyse_sensibilite/results .\Robustesse\Analyse_sensibilite\results_meso
+ 8. (local)       relancer les plot_*.py
+
+==============================================================================

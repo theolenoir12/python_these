@@ -336,9 +336,11 @@ def figure_decomposition(cases):
     # Filter strategies present in nominal case
     ems = [e for e in V.EMS_ORDER if e in nominal]
     deg = np.array([nominal[e][1] for e in ems])
-    # cout LPS pas-a-pas stocke (3e composante) ; repli sur la valorisation
-    # agregee si la colonne 'clps' est absente (ancien .txt).
-    clp = np.array([nominal[e][2] if len(nominal[e]) > 2 and nominal[e][2] is not None
+    # cout de l'energie non servie. Par defaut (USE_STEPWISE_LPS=False) on prend
+    # la valorisation agregee VoLL*EENS, coherente avec le classement ; on ne
+    # reutilise la colonne 'clps' (LPS pas-a-pas) que si ce mode est reactive.
+    clp = np.array([nominal[e][2] if (V.USE_STEPWISE_LPS and len(nominal[e]) > 2
+                                      and nominal[e][2] is not None)
                     else V.cost_lpsp_keur(nominal[e][0]) for e in ems])
     tot = deg + clp
 

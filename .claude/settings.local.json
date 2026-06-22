@@ -50,7 +50,10 @@
       "Bash(~/miniconda3/envs/simu_env/bin/python plot_robustesse.py)",
       "Bash(~/miniconda3/envs/simu_env/bin/python -c ' *)",
       "Bash(pgrep -f \"envs/simu_env/bin/python -$\")",
-      "Bash(~/miniconda3/envs/simu_env/bin/python *)"
+      "Bash(~/miniconda3/envs/simu_env/bin/python *)",
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\9f64a4ba\\\\tmp\\\\rank_check.py\")",
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\9f64a4ba\\\\tmp\\\\rank_const.py\")",
+      "PowerShell($d=\"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Analyse_sensibilite\"; & \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"$d\\\\plot_voll_summary.py\" | Out-Host; \"EXIT=$LASTEXITCODE\")"
     ]
   }
 }

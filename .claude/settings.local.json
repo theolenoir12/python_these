@@ -53,7 +53,13 @@
       "Bash(~/miniconda3/envs/simu_env/bin/python *)",
       "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\9f64a4ba\\\\tmp\\\\rank_check.py\")",
       "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\9f64a4ba\\\\tmp\\\\rank_const.py\")",
-      "PowerShell($d=\"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Analyse_sensibilite\"; & \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"$d\\\\plot_voll_summary.py\" | Out-Host; \"EXIT=$LASTEXITCODE\")"
+      "PowerShell($d=\"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Analyse_sensibilite\"; & \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"$d\\\\plot_voll_summary.py\" | Out-Host; \"EXIT=$LASTEXITCODE\")",
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\9f64a4ba\\\\tmp\\\\cmp_nominal.py\")",
+      "PowerShell($d=\"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\"; git -C $d log --oneline -5 -- \"Robustesse/Vieillissement8/Pareto_2d_25y.py\"; \"----- RB2 folder -----\"; git -C $d log --oneline -8 -- \"Robustesse/Vieillissement8/RB2\"; \"----- RB2\\(SoH\\) folder -----\"; git -C $d log --oneline -8 -- \"Robustesse/Vieillissement8/RB2\\(SoH\\)\")",
+      "PowerShell($d=\"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\"; \"=== fichiers modifies dans RB2 / RB2\\(SoH\\) au commit 7e97ef3 ===\"; git -C $d show --stat --oneline 7e97ef3 -- \"Robustesse/Vieillissement8/RB2\" \"Robustesse/Vieillissement8/RB2\\(SoH\\)\")",
+      "PowerShell($d=\"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\"; git -C $d show 7e97ef3 -- \"Robustesse/Vieillissement8/RB2/get_optimal_action_RB.py\")",
+      "PowerShell($d=\"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\"; \"=== historique RB2\\(SoH\\)/get_optimal_action_RB.py ===\"; git -C $d log --oneline -6 -- \"Robustesse/Vieillissement8/RB2\\(SoH\\)/get_optimal_action_RB.py\"; \"=== diff de ce fichier au commit 6871b17 \\(le commit ou Pareto a ete fige\\) ===\"; git -C $d show 6871b17 -- \"Robustesse/Vieillissement8/RB2\\(SoH\\)/get_optimal_action_RB.py\" | Select-Object -First 40)",
+      "PowerShell(& \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\" \"C:\\\\Users\\\\tlenoi01\\\\.claude\\\\jobs\\\\9f64a4ba\\\\tmp\\\\run_nominal.py\" | Out-Host; \"EXIT=$LASTEXITCODE\")"
     ]
   }
 }

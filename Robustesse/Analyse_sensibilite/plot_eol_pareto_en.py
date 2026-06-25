@@ -65,7 +65,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 # --- Source des donnees : on prefere results_meso/ (run mesocentre, N=200) ---
 def _find_txt():
-    for sub in ("results_meso", "results"):
+    for sub in ("results_meso_eol", "results"):
         p = os.path.join(HERE, sub, "sens_eol.txt")
         if os.path.isfile(p):
             return p, os.path.join(HERE, sub)

@@ -1,0 +1,27 @@
+# Résumé unifié -- cout_total = coût de dégradation + coût de l'énergie non fournie
+# VOLL [€/kWh] : <999% -> 3
+# E_ref = 273.381 MWh (énergie nette planifiée, 25 ans) ; energie_non_fournie = LPSP%/100 * E_ref
+
+## Classement global (rang moyen sur 5 colonnes de sensibilité)
+rang_moyen;ems;cout_total_median_keur;min;max
+1.20;RB2;85.75;84.93;89.75
+1.80;100-0;87.01;86.79;92.07
+3.20;RB1;90.82;90.49;92.92
+3.80;75-25;91.29;90.86;94.48
+5.00;SoC1;152.00;151.33;159.01
+6.00;50-50;175.53;175.24;178.45
+7.00;0-100;210.12;208.54;233.22
+8.00;25-75;278.02;276.97;282.52
+9.00;SoC06;351.58;350.35;357.60
+
+## Coût total par cas et stratégie [k€]
+ems;Nominal;Seuils de fin de vie;Seuils de dégradation H2;Coûts de remplacement;Dimensionnement
+0-100;209.34;219.21;208.54;210.12;233.22
+25-75;276.97;282.52;278.02;277.65;281.79
+50-50;175.24;178.45;175.48;175.80;175.53
+75-25;90.86;91.29;92.03;91.04;94.48
+100-0;86.81;88.07;86.79;87.01;92.07
+RB2;85.52;84.93;86.99;85.75;89.75
+RB1;90.49;92.20;90.81;90.82;92.92
+SoC1;151.67;159.01;151.33;152.47;152.00
+SoC06;350.89;357.49;350.35;351.58;357.60

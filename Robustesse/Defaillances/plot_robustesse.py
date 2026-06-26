@@ -187,7 +187,7 @@ def _heatmap(M, strategies, scenarios, title, cbar_label, fname, best="min"):
 def fig_heatmap(strategies, scenarios, lpsp):
     M = np.array([[np.mean(lpsp[sk][st]) for st in strategies] for sk in scenarios])
     _heatmap(M, strategies, scenarios,
-             "LPSP moyenne sous défaillance (la plus faible encadrée)",
+             None,
              "LPSP moyenne [%]", "robustesse_heatmap.pdf", best="min")
 
 
@@ -196,7 +196,7 @@ def fig_heatmap_delta(strategies, scenarios, lpsp, lpsp_nom):
                   for sk in scenarios])
     M = np.clip(M, 0, None)   # surcout >= 0 (le residu negatif est du bruit numerique)
     _heatmap(M, strategies, scenarios,
-             "Surcoût de robustesse  =  LPSP(panne) − LPSP(marche normale)",
+             None,
              "Surcoût de LPSP [points de %]", "robustesse_heatmap_delta.pdf",
              best="min")
 
@@ -226,7 +226,7 @@ def fig_cdf(strategies, scenarios, lpsp):
         _despine(ax)
         ax.legend(loc="lower right", ncol=2, handlelength=1.5,
                   columnspacing=1.0, labelspacing=0.3)
-    fig.suptitle("Fonctions de répartition de la LPSP sous défaillance", y=0.99)
+    # fig.suptitle("Fonctions de répartition de la LPSP sous défaillance", y=0.99)
     fig.tight_layout(rect=[0, 0, 1, 0.97])
     out = os.path.join(rc.RESULTS_DIR, "robustesse_cdf.pdf")
     fig.savefig(out); plt.close(fig)

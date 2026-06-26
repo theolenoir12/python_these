@@ -71,7 +71,7 @@ def main():
 
     # --- Axes, grille, libelles ---
     ax.set_xlabel("SoC [%]", fontsize=16)
-    ax.set_ylabel(r"$\delta_{1C}$ Dégradation cumulée [$\mu$Ah]", fontsize=16)
+    ax.set_ylabel(r"$\delta^{1C}$ Dégradation cumulée [$\mu$Ah]", fontsize=16)
 
 
     ax.set_xlim(-7, 105)

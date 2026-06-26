@@ -258,13 +258,13 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
             v = np.array([d[key][np.argmax(d['total'])-1] for key in k])
             m = v > 0
             if any(m):
-                wedges, texts, autotexts = ax.pie(v[m], labels=np.array(l)[m], autopct='%1.1f%%', 
-                                                  startangle=140, colors=np.array(colors_p)[m], 
-                                                  pctdistance=0.75, explode=[0.08]*sum(m))
-                plt.setp(texts, fontsize=28)
+                wedges, texts, autotexts = ax.pie(
+                    v[m], autopct='%1.1f%%', startangle=140,
+                    colors=np.array(colors_p)[m], pctdistance=0.75,
+                    explode=[0.08]*sum(m))
                 plt.setp(autotexts, fontsize=26, weight="bold")
-                
-            # "pad=10" pour coller le titre au camembert et supprimer le gap
+                ax.legend(wedges, np.array(l)[m], loc='center left',
+                          bbox_to_anchor=(0.95, 0.5), prop={'size': 26}, frameon=False)
             ax.set_title(rf'${t}$', pad=10)
     
         plt.savefig(os.path.join(sdir, 'all_aging_2.pdf'), format='pdf', bbox_inches='tight')
@@ -440,7 +440,7 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
     idx_fc_last  = last_nonzero_before(fc_replacements,  P_fc_k)
     idx_ely_last = last_nonzero_before(ely_replacements, P_ely_k)
     plot_row(2, t_days, P_fc_k, 'r', title=r'$\mathbf{PEMFC\ power}$', ylabel=r'P_{\mathrm{FC}} [kW]')
-    plot_row(3, t_days, P_ely_k, 'g', title=r'$\mathbf{PEMWE\ power}$', ylabel=r'P_{\mathrm{ELY}} [kW]', ymax_custom=1, annots=[(8, 60, 40), (idx_ely_last, -60, 40)], zoom_ploss=True)
+    plot_row(3, t_days, P_ely_k, 'g', title=r'$\mathbf{PEMWE\ power}$', ylabel=r'P_{\mathrm{ELY}} [kW]')#, ymax_custom=1, annots=[(8, 60, 40), (idx_ely_last, -60, 40)], zoom_ploss=True)
     plot_row(4, t_days, SoC_p, 'b', title=r'$\mathbf{Battery\ state\ of\ charge}$', ylabel=r'SoC_{\mathrm{bat}} [\%]', ymax_custom=110)
     plot_row(5, t_days, E_h2_k, 'g', title=r'$\mathbf{Hydrogen\ energy\ stored}$', ylabel=r'E_{H2} [kWh]', ymax_custom=220)
     plot_row(6, t_days, LPS_p, 'r', title=r'$\mathbf{Loss\ of\ power\ supply}$', ylabel=r'LPS [\%]', ymax_custom=110)

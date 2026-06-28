@@ -1,0 +1,102 @@
+==============================================================================
+ AIDE-MEMOIRE -- LANCER LA PD VIEILLISSEMENT 25 ANS SUR LE MESOCENTRE (Helios)
+ Theo Lenoir -- microgrid H2/batterie -- dossier Robustesse/Vieillissement8/DP
+ login = tlenoir
+==============================================================================
+
+ But : (re)lancer dp_aging.py (PD avec vieillissement, 25 ans, grille 51x51)
+       -> compare RB2 / PD BoL-figee / PD sequentielle sur le cout unifie.
+ Tout est en copier-coller direct (login tlenoir deja rempli).
+
+ RAPPEL : version CORRIGEE (correctif "phase" du 28/06/2026). Les 2 fichiers
+ dp_core.py et dp_aging.py DOIVENT etre les versions a jour (DPPolicy avec
+ phase_align). C'est ce qui evite le delestage massif du 1er run (LPSP 24%).
+
+ Frontal : mesohelios1.univ-fcomte.fr (SSH port 22). VPN si hors universite.
+ Le frontal redemarre tous les jours a 04h00 -> jamais de calcul en direct,
+ toujours via sbatch.
+
+
+------------------------------------------------------------------------------
+ 1. ENVOYER LE CODE CORRIGE  (depuis PowerShell Windows)
+------------------------------------------------------------------------------
+
+ A lancer depuis  C:\Users\tlenoi01\Doctorat\GENIAL\python_these
+
+ # Minimal : seuls les 2 fichiers corriges ont change.
+ #   (le run_dp_aging.slurm est deja sur le cluster, inchange)
+   scp .\Robustesse\Vieillissement8\DP\dp_core.py  tlenoir@mesohelios1.univ-fcomte.fr:/Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP/
+   scp .\Robustesse\Vieillissement8\DP\dp_aging.py tlenoir@mesohelios1.univ-fcomte.fr:/Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP/
+
+ # (Variante : si tu prefere renvoyer tout le dossier DP d'un coup)
+ #   scp -r .\Robustesse\Vieillissement8\DP tlenoir@mesohelios1.univ-fcomte.fr:/Work/Users/tlenoir/genial/Robustesse/Vieillissement8/
+
+ # Donnees d'entree : DEJA en place ($WORK/genial_data). Rien a renvoyer.
+
+
+------------------------------------------------------------------------------
+ 2. SE CONNECTER  (depuis PowerShell Windows)
+------------------------------------------------------------------------------
+
+   ssh tlenoir@mesohelios1.univ-fcomte.fr
+
+
+------------------------------------------------------------------------------
+ 3. PREPARER + SOUMETTRE  (sur le cluster)
+------------------------------------------------------------------------------
+
+   cd /Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP
+
+ # corriger les fins de ligne Windows (sinon bash plante) :
+   dos2unix run_dp_aging.slurm dp_core.py dp_aging.py
+
+ # (optionnel) sauvegarder l'ancien resultat casse avant ecrasement :
+   mkdir -p results_old && cp results/dp_aging_25y_51x51.* results_old/ 2>/dev/null
+
+ # lancer :
+   sbatch run_dp_aging.slurm
+
+ -> note le numero affiche : "Submitted batch job <JOBID>".
+    Run unique (la PD sequentielle est sequentielle) ; walltime 8 h ; ~4 h reel.
+
+
+------------------------------------------------------------------------------
+ 4. SUIVRE LE JOB  (sur le cluster)
+------------------------------------------------------------------------------
+
+   squeue --me                  # mon job (R = en cours, PD = en attente)
+   cat dp_aging.<JOBID>.out     # log live (table comparative + rebuilds au fil)
+   seff <JOBID>                 # efficacite CPU/RAM (apres la fin)
+   scancel <JOBID>              # annuler
+
+
+------------------------------------------------------------------------------
+ 5. RAPATRIER LES RESULTATS  (depuis PowerShell Windows)
+------------------------------------------------------------------------------
+
+ Sorties cluster :
+   .../Vieillissement8/DP/results/dp_aging_25y_51x51.txt   (table)
+   .../Vieillissement8/DP/results/dp_aging_25y_51x51.npz   (trajectoires)
+   .../Vieillissement8/DP/dp_aging.<JOBID>.out             (log)
+
+ Les ramener en local :
+   scp -r tlenoir@mesohelios1.univ-fcomte.fr:/Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP/results .\Robustesse\Vieillissement8\DP\results_meso
+
+ Verifier dans le .txt : la PD doit cette fois etre EN-DESSOUS de RB2 sur
+ UNIF_kE (gain positif). Sinon, me redonner le .out + le .txt.
+
+
+==============================================================================
+ RESUME ULTRA-RAPIDE
+==============================================================================
+
+ 1. (PowerShell) scp .\Robustesse\Vieillissement8\DP\dp_core.py  tlenoir@mesohelios1.univ-fcomte.fr:/Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP/
+ 2. (PowerShell) scp .\Robustesse\Vieillissement8\DP\dp_aging.py tlenoir@mesohelios1.univ-fcomte.fr:/Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP/
+ 3. (PowerShell) ssh tlenoir@mesohelios1.univ-fcomte.fr
+ 4. (cluster)    cd /Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP
+ 5. (cluster)    dos2unix run_dp_aging.slurm dp_core.py dp_aging.py
+ 6. (cluster)    sbatch run_dp_aging.slurm
+ 7. (cluster)    squeue --me   ;   cat dp_aging.<JOBID>.out
+ 8. (PowerShell) scp -r tlenoir@mesohelios1.univ-fcomte.fr:/Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP/results .\Robustesse\Vieillissement8\DP\results_meso
+
+==============================================================================

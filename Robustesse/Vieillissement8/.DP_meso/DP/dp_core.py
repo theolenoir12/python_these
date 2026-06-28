@@ -75,6 +75,19 @@ def net_reference(n=N_YEAR):
     return P_dc_load - P_dc_pv, P_dc_load, P_dc_pv
 
 
+def net_reference_window(start, n=N_YEAR):
+    """Profil net [W] sur la FENETRE REELLE [start:start+n] des tableaux LOAD/PV.
+
+    Indispensable pour la PD avec vieillissement : le profil 25 ans n'est PAS
+    forcement 8760-periodique cale au pas 0 (la donnee mesocentre derive d'~1 h/an
+    -> period. effective 8759). On cale donc le template PD sur la fenetre que la
+    politique va effectivement gouverner (wrap au bout pour la derniere annee
+    partielle)."""
+    load = np.asarray(LOAD['P_ref']); pv = np.asarray(PV['P'])
+    idx = (np.arange(start, start + n)) % len(load)
+    return load[idx] / ETA - pv[idx]
+
+
 # ---------------------------------------------------------------------------
 # Grille de controle P_dc_h2  (>0 FC ; <0 ELY)
 #   contrainte FC  : P_dc_fc / eta  <= P_fc_max   -> u <= P_fc_max*eta

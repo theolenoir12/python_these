@@ -8,10 +8,10 @@ from .cost_fcn_total2 import *
 from .cost_fcn_total2 import _ely_advance, UV_TO_PCT  # helpers prefixes _ non importes par *
 
 
-def init_and_run_loop(get_optimal_action_RB):
+def init_and_run_loop(get_optimal_action_RB, n_years=25):
 
     # Initialisation des variables
-    T = (SIM['Tend'] / 365)*365*25  # horizon de temps
+    T = (SIM['Tend'] / 365)*365*n_years  # horizon de temps (defaut 25 ans)
     SoC_init  = 0.5  # état initial
     E_h2_init = 200
     SoC_t = SoC_init

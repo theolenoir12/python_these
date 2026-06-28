@@ -37,7 +37,8 @@ os.environ.setdefault('GENIAL_DATA_DIR', '/home/theo/Documents/Doctorat/Data')
 
 import dp_core as dp
 from dp_core import (SOC_LO, SOC_HI, E_H2_INIT, CAP_WH, ETA, N_YEAR,
-                     control_grid, precompute_controls, solve_cyclic, net_reference)
+                     control_grid, precompute_controls, solve_cyclic,
+                     net_reference, net_reference_window)
 from Common.get_lol import get_lol
 
 # Metrique UNIFIE officiel (== these) : sens_common.metrics + voll_common.
@@ -51,15 +52,21 @@ import voll_common as voll                            # total_cost_keur, VOLL=3
 # ---------------------------------------------------------------------------
 class DPPolicy:
     def __init__(self, Ns=51, Nh=51, n_fc=10, n_ely=50, n_iter=3,
-                 recompute='yearly', verbose=True):
+                 recompute='yearly', verbose=True, phase_align=True):
         self.Ns, self.Nh = Ns, Nh
         self.n_fc, self.n_ely, self.n_iter = n_fc, n_ely, n_iter
         self.recompute = recompute            # 'yearly' | 'never'
         self.verbose = verbose
+        # phase_align : cale le template PD sur la FENETRE REELLE du profil que la
+        # politique va gouverner (robuste a un profil non-8760-periodique). Si False
+        # -> ancien comportement (template annee-0, lookup policy[j%8760]) ; ne sert
+        # qu'a la validation/reproduction du bug de derive.
+        self.phase_align = phase_align
         self.soc_grid = np.linspace(SOC_LO, SOC_HI, Ns)
         self.h2_grid  = np.linspace(0.0, E_H2_INIT, Nh)
-        self.P_ref_net, _, _ = net_reference(N_YEAR)   # profil net annuel (periodique)
+        self.P_ref_net, _, _ = net_reference(N_YEAR)   # profil net annee-0 (fallback)
         self.j = 0                            # compteur de pas global
+        self.j_anchor = 0                     # pas global au dernier rebuild (origine du template)
         self.policy = None
         self.u = None
         self.fc_on = 0
@@ -68,12 +75,17 @@ class DPPolicy:
         self.n_rebuild = 0
 
     def _rebuild(self, soh_bat, p_fc_max, p_ely_max):
-        """Re-resout la PD 1 an au niveau de vieillissement courant."""
+        """Re-resout la PD 1 an au niveau de vieillissement courant, sur la fenetre
+        de profil REELLE demarrant au pas courant (origine = self.j_anchor)."""
         t0 = time.time()
         u = control_grid(self.n_fc, self.n_ely, p_fc_max, p_ely_max)
         pre = precompute_controls(u, p_fc_max, p_ely_max)
         cap = CAP_WH * soh_bat
-        _, policy = solve_cyclic(self.soc_grid, self.h2_grid, u, pre, self.P_ref_net,
+        if self.phase_align:
+            P_ref = net_reference_window(self.j_anchor, N_YEAR)   # fenetre reelle
+        else:
+            P_ref = self.P_ref_net                                # template annee-0 (ancien)
+        _, policy = solve_cyclic(self.soc_grid, self.h2_grid, u, pre, P_ref,
                                  n_iter=self.n_iter, verbose=False,
                                  cap_wh=cap, soh_bat=soh_bat)
         self.u = u
@@ -97,6 +109,9 @@ class DPPolicy:
                  SoH_fc, SoH_ely):
         hour = self.j % N_YEAR
 
+        # parametres de vieillissement utilises pour le (re)build
+        soh_b, pfc, pely = SoH_bat, P_fc_max, P_ely_max
+
         need = (self.policy is None)
         if self.recompute == 'yearly':
             if hour == 0:
@@ -109,14 +124,30 @@ class DPPolicy:
                     SoH_ely > self._last_soh[1] + 0.05 or
                     SoH_bat > self._last_soh[2] + 0.05):
                     need = True
+        elif self.recompute == 'never':
+            # politique NON-adaptative au vieillissement : aging gele au BoL.
+            # Mais avec phase_align on re-ancre la PHASE chaque annee (sinon le
+            # template annee-0 desynchronise sur un profil derivant).
+            soh_b, pfc, pely = 1.0, dp.P_FC_MAX, dp.P_ELY_MAX
+            if self.phase_align and hour == 0:
+                need = True
         if need:
-            self._rebuild(SoH_bat, P_fc_max, P_ely_max)
+            self.j_anchor = self.j            # origine du template = pas courant
+            self._rebuild(soh_b, pfc, pely)
         self._last_soh = (SoH_fc, SoH_ely, SoH_bat)
 
+        # index temporel dans le template PD :
+        #  - phase_align : pas ecoule depuis le rebuild (template cale sur la fenetre
+        #    reelle) -> reste synchrone au cycle jour/nuit meme si le profil derive.
+        #  - sinon : heure-de-l'annee j%8760 (ancien, casse si profil non periodique).
+        if self.phase_align:
+            tt = min(self.j - self.j_anchor, self.policy.shape[0] - 1)
+        else:
+            tt = hour
         # lookup table -> controle u
         i  = self._nearest(self.soc_grid, SoC)
         jx = self._nearest(self.h2_grid, E_h2)
-        ui = self.policy[hour, i, jx, self.fc_on, self.ely_on]
+        ui = self.policy[tt, i, jx, self.fc_on, self.ely_on]
         u_val = self.u[ui]
         P_dc_fc  = max(u_val, 0.0)
         P_dc_ely = min(u_val, 0.0)

@@ -80,7 +80,12 @@
    .../Vieillissement8/DP/dp_aging.<JOBID>.out             (log)
 
  Les ramener en local :
+ # PowerShell (Windows) :
    scp -r tlenoir@mesohelios1.univ-fcomte.fr:/Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP/results .\Robustesse\Vieillissement8\DP\results_meso
+ # bash (Linux / portable theo-IdeaPad) -- ATTENTION : slash "/", PAS "\" :
+ #   sous bash les backslashes Windows "\" sont supprimes et tout le chemin se
+ #   colle en un seul nom de dossier bizarre. Utiliser des "/" :
+   scp -r tlenoir@mesohelios1.univ-fcomte.fr:/Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP/results ./Robustesse/Vieillissement8/.DP_meso/DP/results_meso
 
  Verifier dans le .txt : la PD doit cette fois etre EN-DESSOUS de RB2 sur
  UNIF_kE (gain positif). Sinon, me redonner le .out + le .txt.

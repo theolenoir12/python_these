@@ -134,7 +134,12 @@
       "Bash(cp /home/theo/Documents/Doctorat/GENIAL/Python/.claude/worktrees/dp-aging/Robustesse/Vieillissement8/DP/dp_aging.py /home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Vieillissement8/DP/dp_aging.py)",
       "Read(//home/theo/Documents/Doctorat/**)",
       "Bash(git worktree *)",
-      "Bash(git branch *)"
+      "Bash(git branch *)",
+      "Bash(ls -la .DP_meso/)",
+      "Bash(mv .DP_meso/DP .DP_meso/DP_CASSE_210435)",
+      "Bash(mv \"/home/theo/Documents/Doctorat/GENIAL/Python/.RobustesseVieillissement8DPresults_meso\" .DP_meso/DP)",
+      "Bash(ls -la results/pareto_*.png results/pareto_*.pdf)",
+      "Bash(rm -f results/dp_pareto_6y_25x25.* results/pareto_deg_eens.* results/pareto_unif_vs_eps.*)"
     ]
   }
 }

@@ -1,0 +1,218 @@
+================================================================================
+ROBUSTESSE DE RB2(Pred) AU BRUIT D'ESTIMATION DE LA PREVISION
+================================================================================
+Dossier : Robustesse/Predictions/
+Date    : 2026-06-29
+Horizon : simulation 25 ans, pas Ts = 1 h, indicateur unifie VoLL = 3 EUR/kWh.
+
+--------------------------------------------------------------------------------
+0. RESUME EN UNE PHRASE
+--------------------------------------------------------------------------------
+La pre-charge batterie de RB2(Pred), qui apporte -2.06 kEUR avec une prevision
+PARFAITE (omnisciente), est ANEANTIE par le bruit reel des previsions LSTM
+(decision binaire -> +0.33 kEUR, donc PIRE que sans prevision) ; on la rend
+ROBUSTE par une HYSTERESIS a marge +-sigma sur l'energie nette prevue, qui
+recupere ~71 % du gain (-1.44 kEUR vs RB2 nu) sous incertitude realiste.
+
+
+--------------------------------------------------------------------------------
+1. POINT DE DEPART : RB2(Pred) ET SON LEVIER PREVISIONNEL
+--------------------------------------------------------------------------------
+RB2(Pred) = RB2 (nu, setpoints figes) augmentee d'UN SEUL levier 100 %
+previsionnel : la PRE-CHARGE BATTERIE.
+
+  Mecanisme (fichier RB2(Pred)/get_optimal_action_RB.py, fonction _precharge) :
+  si la prevision annonce un DEFICIT NET sur l'horizon proche H_PRE = 18 h et
+  que le SoC a de la marge, on COUPE l'electrolyseur (P_ely_set = 0) pour que le
+  surplus PV courant charge la BATTERIE (rendement aller-retour ~95 %) au lieu
+  de partir dans la chaine H2 (ELY 0.7 x FC 0.5, tres lossy). On aborde ainsi le
+  creux a venir avec une marge de SoC -> moins de passages au plancher -> moins
+  de LPSP, sans surcout de degradation.
+
+  Grandeur de decision = ENERGIE NETTE prevue cumulee sur 18 h :
+      net = somme( P_tot_ref_future[:18] ) * dt   [Wh]
+      decision (origine) : pre-charger si net > 0   (deficit prevu)
+
+  Propriete methodologique : RB2(Pred) ne differe de RB2 que par une fonction de
+  la prevision. Si la prevision est neutre / non informative, on retombe
+  EXACTEMENT sur RB2 (test nul). Tout gain est donc attribuable a la prevision.
+
+  Valeur avec prevision PARFAITE (omnisciente) : 83.49 kEUR vs RB2 nu 85.55,
+  soit -2.06 kEUR (-2.4 %), gain 100 % LPSP (2.454 % -> 2.228 %), deg inchangee.
+  C'est une BORNE SUPERIEURE : en pratique on ne connait pas le vrai futur.
+
+
+--------------------------------------------------------------------------------
+2. QUANTIFICATION DE L'INCERTITUDE DE PREVISION
+--------------------------------------------------------------------------------
+Source : "Predictions profils/" (LSTM + prediction recursive sur conso et PV).
+On caracterise empiriquement le bruit d'ESTIMATION sur la grandeur reellement
+utilisee par la pre-charge : l'ENERGIE NETTE (conso - PV) cumulee sur l'horizon.
+
+  Backtest multi-origines (216 origines du jeu de test) :
+    ecart = energie nette PREDITE - energie nette REELLE.
+  La distribution est quasi-GAUSSIENNE (cf. figure incertitude_energie_net_2j).
+
+  Mesure A L'HORIZON DE DECISION H_PRE = 18 h
+  (script Predictions profils/pv_profils_backtest_h18.py) :
+        biais ~ -2.3 kWh   (negligeable)
+        sigma ~ 39.4 kWh
+  (Pour memoire, a 48 h : biais -4.7 kWh, sigma 80 kWh. Le sigma a 18 h est plus
+   faible que 80*sqrt(18/48)=49 : les erreurs horaires se compensent en partie.)
+
+  -> La prevision REALISTE se modelise donc par :
+        net_pred = net_vrai + N(biais, sigma),   sigma = 39.4 kWh @ 18 h.
+  Le sigma est mesure CONTRE LA REALITE (back-test) : il est IRREDUCTIBLE. On ne
+  peut pas le faire disparaitre en moyennant davantage d'echantillons du modele
+  (le backtest utilise deja la prevision moyenne, dropout desactive).
+
+
+--------------------------------------------------------------------------------
+3. INJECTION DU BRUIT ET CONSTAT DE FRAGILITE
+--------------------------------------------------------------------------------
+Implementation (RB2(Pred)/get_optimal_action_RB.py) : on ajoute le bruit a la
+grandeur scalaire de decision :
+      net += ( BIAS_E_KWH + SIGMA_E_KWH * N(0,1) ) * 1000   [Wh]
+Flag NOISE_ENABLE (False -> omniscient a l'identique, test nul preserve).
+Generateur seedable (set_noise_seed) ; evaluation Monte-Carlo : tirages
+INDEPENDANTS a chaque pas, N graines.
+
+Harnais : Robustesse/Predictions/mc_noise_pred.py   (decision binaire)
+
+  RESULTAT (N = 16) :
+    RB2 nu .......................... 85.55 kEUR  (LPSP 2.454 %, deg 65.42)
+    RB2(Pred) omniscient ............ 83.49 kEUR  (LPSP 2.228 %, deg 65.22)
+    RB2(Pred) BRUITE (binaire) ...... 85.88 +/- 0.13 kEUR (LPSP 2.393 %, deg 66.25)
+
+  => Le bruit ANEANTIT le gain : -2.06 kEUR devient +0.33 kEUR (PIRE que RB2 nu).
+
+DECOMPOSITION DU SURCOUT (omniscient -> bruite, +2.39 kEUR) :
+    ~ +1.35 kEUR de LPSP   (la pre-charge se declenche au mauvais moment)
+    ~ +1.03 kEUR de DEGRADATION.
+
+POURQUOI LA DEGRADATION MONTE alors que la pre-charge COUPE l'ELY ?
+  La decision est BINAIRE (net>0) avec une action BRUTALE (ELY a 0). Pres du
+  seuil net ~ 0, le bruit fait BASCULER la decision d'un pas a l'autre -> l'ELY
+  CLIGNOTE (marche/arret) -> degradation start-stop.
+  Confirme par le compte de demarrages ELY :
+        omniscient ......... 8961
+        bruite binaire ..... 9736   (+775 demarrages PARASITES)
+
+
+--------------------------------------------------------------------------------
+4. LEVIER DE ROBUSTESSE : HYSTERESIS A MARGE (ANTI-CLIGNOTEMENT)
+--------------------------------------------------------------------------------
+Le bruit etant irreductible, on rend la DECISION tolerante au bruit, en
+UTILISANT le sigma mesure. On remplace le seuil binaire par une HYSTERESIS a
+deux seuils sur l'energie nette prevue, plus une duree minimale de maintien :
+
+  - on ENTRE en pre-charge (ELY coupe)  si  net_pred > +M_SIGMA * sigma
+  - on SORT (ELY rallume)               si  net_pred < -M_SIGMA * sigma
+  - entre les deux : on GARDE l'etat courant      (ZONE MORTE = rejet du bruit)
+  - apres chaque bascule, l'etat est GELE pendant MIN_DWELL pas (borne la
+    frequence de clignotement).
+
+  La demi-largeur de bande +-M_SIGMA*sigma se cale DIRECTEMENT sur l'incertitude
+  quantifiee : bande large = plus robuste mais moins reactif.
+
+Implementation : RB2(Pred)/get_optimal_action_RB.py
+    flags  HYST_ENABLE, M_SIGMA, MIN_DWELL
+    etat module _state_on / _dwell ; reset() A APPELER avant chaque run
+    (les workers d'un pool sont reutilises -> sinon l'etat fuit d'un run a l'autre).
+    HYST_ENABLE = False  ->  decision binaire d'origine (sections 1 et 3).
+
+Harnais de balayage : Robustesse/Predictions/mc_noise_hyst.py
+    (sweep M_SIGMA x MIN_DWELL en Monte-Carlo + compte des demarrages ELY).
+
+
+--------------------------------------------------------------------------------
+5. RESULTATS DU BALAYAGE (Monte-Carlo 25 ans)
+--------------------------------------------------------------------------------
+Extrait (moyenne sur graines ; sigma inter-graines ~0.1 kEUR, tres serre) :
+
+  M_SIGMA  MIN_DWELL |  total   | LPSP %  | deg    | ELY starts
+  -------------------+----------+---------+--------+-----------
+   0.00      12      |  85.62   | 2.488   | 65.22  |  9298
+   0.00      36      |  87.21   | 2.942   | 63.08  |  8776     (maintien seul = PIRE)
+   0.50      12      |  84.50   | 2.373   | 65.03  |  9090
+   1.00      12      |  84.11   | 2.330   | 65.00  |  8976  <-- OPTIMUM
+   1.00      18      |  84.45   | 2.454   | 64.33  |  8823
+   1.00      36      |  85.24   | 2.613   | 63.81  |  8760
+   1.50      12      |  84.35   | 2.346   | 65.11  |  8995
+
+OPTIMUM ROBUSTE :  M_SIGMA = 1.0 , MIN_DWELL = 12  (confirme N = 16)
+    total = 84.11 +/- 0.09 kEUR | LPSP 2.330 % | deg 65.00 | ELY starts 8976
+
+BILAN (plus bas = mieux) :
+    RB2 nu ............................ 85.55
+    RB2(Pred) omniscient (borne sup) .. 83.49
+    RB2(Pred) bruite BINAIRE (fragile)  85.88   ( -0.33 vs RB2 nu : PERTE )
+    RB2(Pred) bruite + HYSTERESIS ..... 84.11   ( +1.44 vs RB2 nu : GAIN )
+
+    => l'anti-clignotement RECUPERE ~71 % du gain omniscient sous bruit reel,
+       et ramene les demarrages ELY au niveau omniscient (clignotement tue).
+
+
+--------------------------------------------------------------------------------
+6. ENSEIGNEMENTS
+--------------------------------------------------------------------------------
+(1) C'est la BANDE DE MARGE +-sigma qui apporte la robustesse, PAS le gel
+    temporel. Avec M_SIGMA = 0 (maintien pur, sans marge), c'est PIRE que RB2 nu
+    (85.62 -> 87.21 quand MIN_DWELL passe de 12 a 36 : le LPSP explose). Geler la
+    decision sans filtrer le bruit est contre-productif. Autrement dit,
+    l'anti-clignotement agit surtout via sa composante "SEUIL DE CONFIANCE k*sigma"
+    : le sigma quantifie sert CONSTRUCTIVEMENT a decider, pas seulement a degrader.
+
+(2) TROP DE MAINTIEN NUIT. Au-dela de 12 h, le total remonte : la degradation
+    baisse (moins de demarrages) mais le LPSP grimpe plus vite (la decision figee
+    rate les vraies transitions). Optimum MIN_DWELL = 12 h ~ DEMI-JOURNEE, soit
+    encore l'echelle DIURNE caracteristique de ce systeme.
+
+(3) M_SIGMA ~ 1.0 est optimal (bande = +-1 sigma).
+
+(4) CAVEAT IMPORTANT (honnetete intellectuelle, a faire figurer dans la redaction)
+    Le "plafond" omniscient-hysteresis (memes parametres, sans bruit) retombe a
+    85.55 = RB2 nu : la bande +-sigma (+-39 kWh) est TROP LARGE pour le signal
+    VRAI (les deficits nets a 18 h sont souvent < 39 kWh) et bloque alors les
+    vrais declenchements. Sous bruit, le bruit "dithering" abaisse le seuil
+    effectif et laisse passer les bons declenchements.
+    => L'hysteresis est un DISPOSITIF DE ROBUSTESSE AU BRUIT, pas une amelioration
+       inconditionnelle. On ne la presente pas comme un meilleur EMS dans l'absolu,
+       mais comme la facon de PRESERVER la valeur de la prevision face a son
+       incertitude reelle.
+
+
+--------------------------------------------------------------------------------
+7. HYPOTHESES ET LIMITES
+--------------------------------------------------------------------------------
+- Le bruit est suppose GAUSSIEN, INDEPENDANT a chaque pas. C'est le PIRE-CAS pour
+  le clignotement (des previsions consecutives reelles, dont les fenetres 48 h se
+  recouvrent, seraient correlees -> moins de clignotement, donc majorant moins
+  pessimiste). Variante a bruit CORRELE (processus AR) non encore testee.
+- Le sigma inter-graines est minuscule (~0.1 kEUR) : avec des tirages
+  independants, le bruit s'auto-moyenne sur les ~219 000 pas d'une simu 25 ans ;
+  l'agregat est donc quasi deterministe (peu de graines suffisent).
+- Le sigma = 39.4 kWh est specifique a l'horizon de decision (18 h) et au jeu de
+  donnees / modele LSTM courant.
+
+
+--------------------------------------------------------------------------------
+8. FICHIERS
+--------------------------------------------------------------------------------
+  RB2(Pred)/get_optimal_action_RB.py
+      strategie : pre-charge + bruit (NOISE_ENABLE) + hysteresis (HYST_ENABLE).
+      Defaut PRODUCTION : NOISE_ENABLE=True, HYST_ENABLE=True,
+                          M_SIGMA=1.0, MIN_DWELL=12.
+
+  mc_noise_pred.py    Monte-Carlo de la decision BINAIRE (constat de fragilite).
+  mc_noise_hyst.py    balayage M_SIGMA x MIN_DWELL + compte des demarrages ELY.
+
+  ../../Predictions profils/pv_profils_backtest_h18.py
+      mesure du biais/sigma de l'energie nette prevue a 18 h et 48 h.
+  ../../Predictions profils/resultats_backtest/
+      figures (incertitude_energie_net_2j) + CSV (bruit_estimation_*).
+
+  Lancer (env simu_env) :
+    cd "Robustesse/Predictions"
+    /home/theo/miniconda3/envs/simu_env/bin/python mc_noise_hyst.py 16
+================================================================================

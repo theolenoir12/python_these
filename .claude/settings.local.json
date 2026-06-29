@@ -141,7 +141,20 @@
       "Bash(ls -la results/pareto_*.png results/pareto_*.pdf)",
       "Bash(rm -f results/dp_pareto_6y_25x25.* results/pareto_deg_eens.* results/pareto_unif_vs_eps.*)",
       "Bash(MPLBACKEND=Agg /home/theo/miniconda3/envs/simu_env/bin/python Pareto_2d_25y.py)",
-      "Bash(which pdftoppm *)"
+      "Bash(which pdftoppm *)",
+      "PowerShell(Get-ChildItem -Recurse \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Vieillissement8\\\\DP\\\\results_meso\" | ForEach-Object { \"{0,-10} {1,12} {2}\" -f $_.LastWriteTime.ToString\\(\"yyyy-MM-dd\"\\), $_.Length, $_.FullName })",
+      "PowerShell(Get-ChildItem -Recurse \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Vieillissement8\\\\DP\\\\results\" | ForEach-Object { \"{0,-10} {1,12} {2}\" -f $_.LastWriteTime.ToString\\(\"yyyy-MM-dd\"\\), $_.Length, $_.FullName })",
+      "PowerShell(python -c \"import numpy as np; print\\(np.__version__\\)\"; \\(Get-Command python\\).Source)",
+      "PowerShell($cands = @\\(\"$env:USERPROFILE\\\\anaconda3\\\\python.exe\",\"$env:USERPROFILE\\\\Anaconda3\\\\python.exe\",\"$env:USERPROFILE\\\\miniconda3\\\\python.exe\",\"C:\\\\ProgramData\\\\anaconda3\\\\python.exe\",\"C:\\\\ProgramData\\\\Anaconda3\\\\python.exe\"\\); foreach\\($c in $cands\\){ if\\(Test-Path $c\\){ \"$c\" } })",
+      "PowerShell(Get-Content *)",
+      "PowerShell($cands=@\\(\"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\",\"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\envs\\\\tensorflow_env\\\\python.exe\"\\); foreach\\($c in $cands\\){ if\\(Test-Path $c\\){ \"$c : \"; & $c -c \"import numpy,sys; print\\(sys.version.split\\(\\)[0], 'numpy', numpy.__version__\\)\" } })",
+      "PowerShell($py=\"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\"; $base=\"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Vieillissement8\\\\DP\"; & $py \"$base\\\\plot_pareto.py\" \"$base\\\\results_meso\\\\dp_pareto_25y_51x51.npz\")",
+      "PowerShell(New-Item *)",
+      "PowerShell($py=\"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\"; & $py \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Vieillissement8\\\\DP\\\\plot_pareto_vs_strategies.py\")",
+      "PowerShell($py=\"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\"; & $py \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Vieillissement8\\\\DP\\\\plot_pareto_vs_strategies.py\" 2>$null)",
+      "PowerShell($cands = @\\(\"$env:USERPROFILE\\\\anaconda3\\\\python.exe\",\"$env:USERPROFILE\\\\Anaconda3\\\\python.exe\",\"$env:LOCALAPPDATA\\\\anaconda3\\\\python.exe\",\"C:\\\\ProgramData\\\\anaconda3\\\\python.exe\",\"C:\\\\ProgramData\\\\Anaconda3\\\\python.exe\"\\); foreach \\($c in $cands\\) { if \\(Test-Path $c\\) { Write-Output \"FOUND: $c\" } }; try { \\(Get-Command python.exe -ErrorAction Stop\\).Source } catch {}; try { \\(Get-Command py -ErrorAction Stop\\).Source } catch {})",
+      "PowerShell(git *)",
+      "PowerShell($py=\"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\"; & $py -m py_compile \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Vieillissement8\\\\DP\\\\plot_pareto_vs_strategies.py\" \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Robustesse\\\\Prédictions\\\\plot_pareto_vs_strategies.py\"; if \\($?\\) { Write-Output \"py_compile OK \\(les deux\\)\" })"
     ]
   }
 }

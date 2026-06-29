@@ -1,0 +1,4 @@
+on va essayer de réinstaurer du dropout dans la recherche d'hyperparamètres, en complexifiant le modèle.
+Essayer d'appliquer le même masque de dropout
+Essayer d'enlever le recurrent_dropout ?
+

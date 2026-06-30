@@ -128,20 +128,36 @@ Harnais de balayage : Robustesse/Predictions/mc_noise_hyst.py
 --------------------------------------------------------------------------------
 5. RESULTATS DU BALAYAGE (Monte-Carlo 25 ans)
 --------------------------------------------------------------------------------
-Extrait (moyenne sur graines ; sigma inter-graines ~0.1 kEUR, tres serre) :
+Sweep complet N = 16 graines (moyenne ; sigma inter-graines ~0.1 kEUR) :
 
-  M_SIGMA  MIN_DWELL |  total   | LPSP %  | deg    | ELY starts
-  -------------------+----------+---------+--------+-----------
-   0.00      12      |  85.62   | 2.488   | 65.22  |  9298
-   0.00      36      |  87.21   | 2.942   | 63.08  |  8776     (maintien seul = PIRE)
-   0.50      12      |  84.50   | 2.373   | 65.03  |  9090
-   1.00      12      |  84.11   | 2.330   | 65.00  |  8976  <-- OPTIMUM
-   1.00      18      |  84.45   | 2.454   | 64.33  |  8823
-   1.00      36      |  85.24   | 2.613   | 63.81  |  8760
-   1.50      12      |  84.35   | 2.346   | 65.11  |  8995
+  M_SIGMA  MIN_DWELL |  total   |  +/-   | LPSP %  | deg    | ELY starts
+  -------------------+----------+--------+---------+--------+-----------
+   0.50       0      |  84.832  | 0.105  | 2.336   | 65.68  |  9319
+   0.50       6      |  84.773  | 0.155  | 2.380   | 65.25  |  9184
+   0.50      12      |  84.584  | 0.160  | 2.379   | 65.07  |  9098
+   1.00       0      |  84.506  | 0.069  | 2.334   | 65.36  |  9118   (bande SEULE, sans gel)
+   1.00       6      |  84.491  | 0.132  | 2.349   | 65.23  |  9080
+   1.00      12      |  84.109  | 0.086  | 2.330   | 65.00  |  8976  <-- OPTIMUM
+   1.50       0      |  84.633  | 0.123  | 2.356   | 65.31  |  9075
+   1.50       6      |  84.590  | 0.094  | 2.359   | 65.24  |  9052
+   1.50      12      |  84.367  | 0.117  | 2.347   | 65.12  |  9003
+
+  (Pour memoire, anciens essais a fort maintien, M_SIGMA=0 = gel SANS bande :
+     0.00 / 12 -> 85.62 ; 0.00 / 36 -> 87.21 (PIRE) ; gel pur contre-productif.)
 
 OPTIMUM ROBUSTE :  M_SIGMA = 1.0 , MIN_DWELL = 12  (confirme N = 16)
     total = 84.11 +/- 0.09 kEUR | LPSP 2.330 % | deg 65.00 | ELY starts 8976
+
+TEST CIBLE "HYSTERESIS SANS TEMPS DE GEL" (MIN_DWELL = 0, demande 2026-06-29) :
+    A M_SIGMA = 1.0, la BANDE SEULE (gel=0) donne 84.506 +/- 0.069 kEUR, soit
+    +1.04 kEUR vs RB2 nu (85.548) -- elle INVERSE deja le signe (le binaire
+    perdait -0.33) et recupere ~51 % du gain omniscient, avec la PLUS FAIBLE
+    variance du tableau. Le gel n'est donc PAS necessaire pour la robustesse.
+    Mais il n'est pas decoratif non plus : passer gel 0 -> 12 ajoute encore
+    +0.40 kEUR (84.506 -> 84.109), ~28 % du gain robuste, effet net et franc.
+    Ce supplement vient UNIQUEMENT de la degradation (deg 65.36 -> 65.00 via
+    9118 -> 8976 demarrages ELY ; LPSP inchange) : le gel mange le clignotement
+    RESIDUEL que la zone morte laisse passer.
 
 BILAN (plus bas = mieux) :
     RB2 nu ............................ 85.55
@@ -156,12 +172,20 @@ BILAN (plus bas = mieux) :
 --------------------------------------------------------------------------------
 6. ENSEIGNEMENTS
 --------------------------------------------------------------------------------
-(1) C'est la BANDE DE MARGE +-sigma qui apporte la robustesse, PAS le gel
-    temporel. Avec M_SIGMA = 0 (maintien pur, sans marge), c'est PIRE que RB2 nu
-    (85.62 -> 87.21 quand MIN_DWELL passe de 12 a 36 : le LPSP explose). Geler la
-    decision sans filtrer le bruit est contre-productif. Autrement dit,
-    l'anti-clignotement agit surtout via sa composante "SEUIL DE CONFIANCE k*sigma"
-    : le sigma quantifie sert CONSTRUCTIVEMENT a decider, pas seulement a degrader.
+(1) C'est la BANDE DE MARGE +-sigma qui PORTE la robustesse ; le gel temporel
+    n'est qu'un COMPLEMENT (revise par le test gel=0, cf. section 5). Deux tests
+    complementaires le montrent :
+      - gel SANS bande (M_SIGMA = 0) : CONTRE-PRODUCTIF, pire que RB2 nu
+        (85.62 -> 87.21 quand MIN_DWELL 12 -> 36 : le LPSP explose). Geler la
+        decision sans filtrer le bruit ne sert a rien.
+      - bande SANS gel (M_SIGMA = 1, MIN_DWELL = 0) : SUFFIT a inverser le signe
+        (+1.04 kEUR vs RB2 nu, ~51 % du gain omniscient), variance minimale.
+    Donc le gel n'est ni necessaire ni suffisant SEUL. Mais ajoute SUR la bande
+    il aide REELLEMENT : +0.40 kEUR (gel 0 -> 12 a M_SIGMA=1), ~28 % du gain
+    robuste, en supprimant le clignotement RESIDUEL (gain 100 % degradation).
+    Autrement dit, l'anti-clignotement agit d'abord via sa composante "SEUIL DE
+    CONFIANCE k*sigma" : le sigma quantifie sert CONSTRUCTIVEMENT a decider ; le
+    maintien temporel n'apporte qu'un second ordre (mais non negligeable).
 
 (2) TROP DE MAINTIEN NUIT. Au-dela de 12 h, le total remonte : la degradation
     baisse (moins de demarrages) mais le LPSP grimpe plus vite (la decision figee

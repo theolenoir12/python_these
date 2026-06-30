@@ -47,12 +47,18 @@ plt.rcParams.update({
 })
 
 # --- Tous les points connus (LPSP %, deg kEUR/25ans), == Pareto_2d_25y.py -----
+# RB2(Pred) et RB2(SoH+Pred) : points REALISTES (prevision bruitee + hysteresis
+# anti-clignotement M_SIGMA=1.0/MIN_DWELL=12), 25 ans, Monte-Carlo N=8/16 graines.
+# Ce ne sont PLUS les bornes omniscientes (prevision parfaite) :
+#     RB2(Pred)     omni (2.2280, 65.2188) -> reel (2.3297, 65.0030)
+#     RB2(SoH+Pred) omni (2.3449, 59.5982) -> reel (2.4580, 59.4033)
+# cf. robustesse_bruit_prevision.txt et RB2(SoH)/readme.txt.
 PT = {
     '0-100': (10.3855, 124.1937), '25-75': (20.2667, 110.7658),
     '50-50': (8.0744, 109.0235),  '75-25': (3.8032, 59.6765),
     '100-0': (2.4851, 66.4122),   'RB2': (2.4540, 65.4218),
-    'RB2(SoH)': (2.5475, 59.3644), 'RB2(Pred)': (2.2280, 65.2184),
-    'RB2(RUL)': (2.5763, 59.9217), 'RB2(SoH+Pred)': (2.3167, 59.6867),
+    'RB2(SoH)': (2.5475, 59.3644), 'RB2(Pred)': (2.3297, 65.0030),
+    'RB2(RUL)': (2.5763, 59.9217), 'RB2(SoH+Pred)': (2.4580, 59.4033),
     'RB1': (1.2597, 80.1562),     'SoC1': (1.3389, 140.6745),
     'SoC06': (29.4642, 109.2535), 'Ideal': (0.0, 0.0),
 }

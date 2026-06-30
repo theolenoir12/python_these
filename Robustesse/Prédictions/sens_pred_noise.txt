@@ -1,0 +1,11 @@
+# Sensibilite au bruit de prediction -- ellipses de Pareto
+# sigma_inject ~ U([0.50,1.50]*39.38) kWh ; bande hyst figee a 39.38 ; N=3 ; 2 ans
+strat;variant;LPSP_mean;LPSP_std;deg_mean;deg_std;N
+RB2(Pred);bin;2.0328;0.0054;4.6826;0.0088;3
+RB2(Pred);hyst;2.0751;0.0420;4.6363;0.0074;3
+RB2(SoH+Pred);bin;2.0960;0.0295;4.6754;0.0045;3
+RB2(SoH+Pred);hyst;2.1524;0.0418;4.6392;0.0024;3
+RB2;baseline;2.2107;0;4.6412;0;1
+RB2(Pred);omniscient;1.9714;0;4.6544;0;1
+RB2(SoH);baseline;2.2795;0;4.6339;0;1
+RB2(SoH+Pred);omniscient;2.0444;0;4.6500;0;1

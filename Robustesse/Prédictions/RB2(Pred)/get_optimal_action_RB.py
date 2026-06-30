@@ -58,7 +58,12 @@ SOC_TARGET   = 0.99     # on ne pre-charge que si SoC < cette cible
 # reseede le generateur avant chaque run pour des realisations reproductibles.
 NOISE_ENABLE = True
 BIAS_E_KWH   = -2.32    # biais du backtest a 18h [kWh]
-SIGMA_E_KWH  = 39.38    # ecart-type du backtest a 18h [kWh]
+SIGMA_E_KWH  = 39.38    # ecart-type du backtest a 18h [kWh] (valeur de DESIGN)
+# Sigma du bruit REELLEMENT INJECTE. None -> = SIGMA_E_KWH (cas nominal). Le
+# DECOUPLER de SIGMA_E_KWH permet de tester la robustesse a une MISESTIMATION de
+# sigma : la bande d'hysteresis reste calee sur SIGMA_E_KWH (design fige) tandis
+# que le vrai bruit varie (cf. sens_pred_noise.py, ellipses de sensibilite).
+SIGMA_INJECT_KWH = None
 
 # --- Anti-clignotement (robustesse au bruit) ---------------------------------
 # Le bruit fait basculer la decision binaire net>0 d'un pas a l'autre pres du
@@ -114,9 +119,10 @@ def _precharge(P_tot_ref_future, SoC_t):
         return False
     dt_h = LOAD['Ts'] / 3600.0
     net = float(np.sum(np.asarray(P_tot_ref_future[:H_PRE], dtype=float))) * dt_h  # [Wh]
-    # Bruit de prevision : net_pred = net_vrai + N(biais, sigma) (kWh -> Wh).
+    # Bruit de prevision : net_pred = net_vrai + N(biais, sigma_inject) (kWh -> Wh).
     if NOISE_ENABLE:
-        net += (BIAS_E_KWH + SIGMA_E_KWH * _rng.standard_normal()) * 1000.0
+        sig_inj = SIGMA_E_KWH if SIGMA_INJECT_KWH is None else SIGMA_INJECT_KWH
+        net += (BIAS_E_KWH + sig_inj * _rng.standard_normal()) * 1000.0
 
     if not HYST_ENABLE:
         return net > 0.0  # decision binaire d'origine (P_tot_ref>0 = deficit)

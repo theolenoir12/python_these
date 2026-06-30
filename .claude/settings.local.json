@@ -177,7 +177,9 @@
       "PowerShell($py = \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\"; & $py -m py_compile \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Prédictions profils\\\\plot_pv_profils.py\" \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Prédictions profils\\\\pv_profils_backtest_net.py\"; if\\($?\\){Write-Output \"COMPILE OK\"})",
       "PowerShell($py = \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\"; $env:PYTHONIOENCODING=\"utf-8\"; Write-Output \"=== PREDICTION/MCDROPOUT FIGS ===\"; & $py \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Prédictions profils\\\\plot_pv_profils.py\" 2>$null; Write-Output \"=== BACKTEST 2J ===\"; & $py \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Prédictions profils\\\\pv_profils_backtest_net.py\" 2>$null)",
       "PowerShell($py = \"C:\\\\Users\\\\tlenoi01\\\\AppData\\\\Local\\\\anaconda3\\\\python.exe\"; $env:PYTHONIOENCODING=\"utf-8\"; & $py \"C:\\\\Users\\\\tlenoi01\\\\Doctorat\\\\GENIAL\\\\python_these\\\\Prédictions profils\\\\pv_profils_backtest_net.py\" 2>$null | Select-Object -Last 3)",
-      "Bash(echo \"EXIT $?\")"
+      "Bash(echo \"EXIT $?\")",
+      "Bash(pkill -f \"Pareto_2d_25y.py\")",
+      "Bash(pkill -f \"sens_pred_noise.py\")"
     ]
   }
 }

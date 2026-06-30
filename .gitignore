@@ -16,3 +16,4 @@ __pycache__/
 # IDE
 .vscode/
 .spyproject/
+.claude/settings.local.json

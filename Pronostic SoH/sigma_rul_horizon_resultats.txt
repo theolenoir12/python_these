@@ -1,0 +1,65 @@
+==============================================================================
+ INCERTITUDE D'ESTIMATION DE LA RUL (PEMWE) -- DEPENDANCE A L'HORIZON
+ Resultats du pronostic LSTM + MC-dropout, pour appuyer la section RB2(RUL)
+ du chapitre 3 (sensibilite a l'incertitude du pronostic).
+ Genere le 2026-07-01.  Scripts : Pronostic SoH/compute_prono_sigma.py
+                                   Pronostic SoH/compute_prono_sigma_horizons.py
+ Donnees brutes : Pronostic SoH/sigma_rul_vs_horizon.csv
+==============================================================================
+
+METHODE
+-------
+- Modele : LSTM entraine + MC-dropout (Gal & Ghahramani), modele
+  resultats_mc_dropout/modele_mc_dropout_scaler2.keras.
+- Trajectoire de SoH du PEMWE : SoH_ely_2.csv (1 point / jour apres sous-ech.).
+- A un instant d'estimation t_now (place a differentes fractions de l'historique),
+  on lance M passes stochastiques (dropout actif), chacune auto-alimentee jusqu'au
+  franchissement du seuil de fin de vie SoH_EoL = 0,90.
+- RUL d'une passe = nb de jours entre t_now et le franchissement du seuil.
+  sigma_RUL = ecart-type des RUL sur les M passes ; RUL_moy = leur moyenne.
+- sigma_SoH = ecart-type des M predictions au 1er pas (horizon ~0) = incertitude
+  d'estimation du SoH "instantane" telle que la verrait RB2(SoH).
+- M = 200 passes ; seuil non atteint dans MAX_STEPS=1600 -> trajectoire exclue
+  (colonne n_croisent indique combien des M passes croisent reellement le seuil).
+
+RESULTAT PRINCIPAL : sigma_RUL EN FONCTION DE L'HORIZON
+------------------------------------------------------
+ t_now[%hist] | RUL_moy [j]      | sigma_RUL [j] | sigma_RUL/RUL | sigma_SoH | n_croisent
+ -------------+------------------+---------------+---------------+-----------+-----------
+    0,70      |  799  (~2,2 ans) |     96,8      |    12,1 %     | 6,8e-4    | 195/200
+    0,78      |  556  (~1,5 an)  |     36,4      |     6,6 %     | 4,3e-4    | 197/200
+    0,85      |  439             |     22,5      |     5,1 %     | 3,5e-4    | 198/200
+    0,91      |  383             |     20,1      |     5,2 %     | 2,7e-4    | 196/200
+    0,96      |  275  (~9 mois)  |     19,9      |     7,2 %     | 1,4e-4    | 196/200
+
+ Point isole de controle (compute_prono_sigma.py, M=500, t_now=0,85) :
+    RUL_moy = 440,9 j ; sigma_RUL = 23,1 j ; sigma_RUL/RUL = 5,2 % ; sigma_SoH = 3,1e-4
+ -> coherent avec la ligne 0,85 ci-dessus (validation).
+
+LECTURE
+-------
+1. sigma_RUL ABSOLU : plancher ~20 j aux horizons courts, puis EXPLOSE au-dela de
+   ~450 j (36 j a 556 j, 97 j a 800 j). L'extrapolation longue amplifie l'erreur.
+2. sigma_RUL RELATIF : courbe en U. Minimum ~5 % vers 400-440 j ; remonte a 12 % a
+   800 j (extrapolation longue) et a ~7 % tout pres de l'EoL (sigma absolu plancher
+   mais RUL petite).
+3. sigma_SoH reste MINUSCULE partout (1e-4 a 7e-4) : le SoH instantane est ~2 a 3
+   ordres de grandeur plus precis (en relatif) que la RUL extrapolee.
+
+IMPLICATION POUR LE CHAPITRE 3 (RB2(RUL) vs RB2(SoH))
+-----------------------------------------------------
+- Le levier de RB2(RUL) s'active quand RUL < RUL_ref = 1000 j : c'est PRECISEMENT
+  la zone la plus incertaine (sigma_RUL/RUL ~ 12 % et plus vers 800-1000 j). La
+  decision de commencer a derater se prend donc sur l'estimation de RUL la MOINS
+  fiable.
+- RB2(SoH) decide sur le SoH instantane (sigma_SoH ~ 3e-4), signal beaucoup plus
+  robuste.
+=> argument quantitatif en faveur de RB2(SoH) plutot que RB2(RUL).
+
+USAGE EN AVAL
+-------------
+La courbe sigma_RUL/RUL(horizon) alimente l'analyse de sensibilite
+mc_rul_uncertainty.py (Predictions/) : bruit RUL dependant de l'horizon
+(sigma_rel interpole sur cette courbe) pour mesurer la taille des ellipses de
+Pareto de RB2(RUL) vs RB2(SoH).
+==============================================================================

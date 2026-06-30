@@ -1,0 +1,13 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1782852945.916607   26644 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1782852946.093194   26644 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE4.1 SSE4.2 AVX AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+================================================================
+ECARTS-TYPES D'ESTIMATION (MC-dropout, M=500 passes, PEMWE)
+----------------------------------------------------------------
+  SIGMA_SOH        = 0.00031   (unites de SoH, horizon ~0)
+  RUL_MEAN         = 440.9   jours
+  SIGMA_RUL_DAYS   = 23.1   jours
+  SIGMA_RUL_REL    = 0.0523   (= 5.2 % de la RUL)
+================================================================
+-> reporter SIGMA_RUL_REL et SIGMA_SOH dans mc_rul_uncertainty.py

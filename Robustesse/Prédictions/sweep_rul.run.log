@@ -1,0 +1,33 @@
+==============================================================================
+BALAYAGE RB2(RUL) : (RUL_ELY_REF, EXP_ELY) -- 26 couples, 25 ans, 2 workers
+  REF_GRID = [500.0, 750.0, 1000.0, 1500.0, 2000.0]
+  EXP_GRID = [0.0, 0.05, 0.1, 0.2, 0.5, 1.0]
+  ref=   500 exp=0.00 | LPSP=2.521%  deg=60.59 kEUR  total=81.26 kEUR
+  ref=   500 exp=0.05 | LPSP=2.520%  deg=60.47 kEUR  total=81.13 kEUR
+  ref=   750 exp=0.05 | LPSP=2.533%  deg=60.42 kEUR  total=81.19 kEUR
+  ref=  1000 exp=0.05 | LPSP=2.543%  deg=60.37 kEUR  total=81.22 kEUR
+  ref=  1500 exp=0.05 | LPSP=2.564%  deg=60.26 kEUR  total=81.29 kEUR
+  ref=  2000 exp=0.05 | LPSP=2.562%  deg=60.14 kEUR  total=81.15 kEUR
+  ref=   500 exp=0.10 | LPSP=2.583%  deg=60.28 kEUR  total=81.47 kEUR
+  ref=   750 exp=0.10 | LPSP=2.597%  deg=60.09 kEUR  total=81.39 kEUR
+  ref=  1000 exp=0.10 | LPSP=2.576%  deg=59.92 kEUR  total=81.05 kEUR
+  ref=  1500 exp=0.10 | LPSP=2.636%  deg=59.67 kEUR  total=81.29 kEUR
+  ref=  2000 exp=0.10 | LPSP=2.654%  deg=59.36 kEUR  total=81.13 kEUR
+  ref=   500 exp=0.20 | LPSP=2.640%  deg=59.92 kEUR  total=81.57 kEUR
+  ref=   750 exp=0.20 | LPSP=2.688%  deg=59.65 kEUR  total=81.70 kEUR
+  ref=  1000 exp=0.20 | LPSP=2.760%  deg=59.34 kEUR  total=81.98 kEUR
+  ref=  1500 exp=0.20 | LPSP=2.859%  deg=58.86 kEUR  total=82.30 kEUR
+  ref=  2000 exp=0.20 | LPSP=2.974%  deg=58.45 kEUR  total=82.84 kEUR
+  ref=   500 exp=0.50 | LPSP=2.808%  deg=59.62 kEUR  total=82.65 kEUR
+  ref=   750 exp=0.50 | LPSP=2.981%  deg=59.23 kEUR  total=83.68 kEUR
+  ref=  1000 exp=0.50 | LPSP=3.119%  deg=58.85 kEUR  total=84.43 kEUR
+  ref=  1500 exp=0.50 | LPSP=3.429%  deg=58.31 kEUR  total=86.43 kEUR
+  ref=  2000 exp=0.50 | LPSP=3.572%  deg=57.86 kEUR  total=87.16 kEUR
+  ref=   500 exp=1.00 | LPSP=2.961%  deg=59.54 kEUR  total=83.83 kEUR
+  ref=   750 exp=1.00 | LPSP=3.193%  deg=59.17 kEUR  total=85.35 kEUR
+  ref=  1000 exp=1.00 | LPSP=3.516%  deg=58.82 kEUR  total=87.65 kEUR
+  ref=  1500 exp=1.00 | LPSP=3.805%  deg=58.27 kEUR  total=89.48 kEUR
+  ref=  2000 exp=1.00 | LPSP=4.134%  deg=57.87 kEUR  total=91.77 kEUR
+  (26 runs en 1039s)
+  brut -> /home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Prédictions/sweep_rul.csv
+  tableau -> /home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Prédictions/sweep_rul.txt

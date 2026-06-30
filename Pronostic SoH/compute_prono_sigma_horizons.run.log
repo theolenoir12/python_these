@@ -1,0 +1,16 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1782859190.412156   44228 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1782859190.520551   44228 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE4.1 SSE4.2 AVX AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+==============================================================================
+INCERTITUDE D'ESTIMATION DE LA RUL EN FONCTION DE L'HORIZON (PEMWE, M=200)
+------------------------------------------------------------------------------
+  t_now[%%hist] ; RUL_moy[j] ; sigma_RUL[j] ; sigma_RUL_rel[%] ; sigma_SoH ; n_croisent
+       0.70 ;     799.3 ;        96.8 ;           12.1 ; 0.000679 ;  195/200 croisent  [380s]
+       0.78 ;     555.8 ;        36.4 ;            6.6 ; 0.000431 ;  197/200 croisent  [210s]
+       0.85 ;     438.7 ;        22.5 ;            5.1 ; 0.000346 ;  198/200 croisent  [168s]
+       0.91 ;     383.5 ;        20.1 ;            5.2 ; 0.000266 ;  196/200 croisent  [127s]
+       0.96 ;     274.8 ;        19.9 ;            7.2 ; 0.000137 ;  196/200 croisent  [79s]
+==============================================================================
+-> sigma_rul_vs_horizon.csv
+Lecture : plus t_now est tot (fraction basse) -> EoL lointaine -> RUL_moy grande et sigma_RUL_rel plus eleve. C'est la dependance a l'horizon.

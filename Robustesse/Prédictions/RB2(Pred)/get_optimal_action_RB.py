@@ -84,6 +84,12 @@ SIGMA_INJECT_KWH = None
 # qui apporte la robustesse ; le maintien 12h (~demi-journee diurne) n'aide qu'a
 # la marge. HYST_ENABLE=False -> binaire net>0 (omniscient 83.49 / bruite 85.88).
 HYST_ENABLE = True
+# --- Socle RB2 : RE-OPTIMISE sur le cost-min (0.440/0.310) au lieu du nominal
+#     0.450/0.330 (comparaison honnete best-vs-best). Parametrable pour le sweep.
+C_FC_BASE   = 0.440     # etait 0.450 (nominal) -> 0.440 (cost-min RB2)
+C_ELY_BASE  = 0.310     # etait 0.330 (nominal) -> 0.310 (cost-min RB2)
+GAMMA_FC    = 0.0       # exposant SoH_fc (0 = RB2(Pred) ; 1 = RB2(SoH+Pred))
+GAMMA_ELY   = 0.0       # exposant SoH_ely (0 = RB2(Pred) ; 2 = RB2(SoH+Pred))
 M_SIGMA     = 1.0       # demi-largeur de bande = M_SIGMA * sigma [-]
 MIN_DWELL   = 12        # duree minimale de maintien d'un etat [pas/h]
 
@@ -142,8 +148,8 @@ def get_optimal_action_RB(SoC_t,P_tot_ref_t,defaillances,lol_tab,alpha_fc_t,alph
 
     ######################### RULES ##########################
     # Setpoints RB2 nu (FIXES, ancrage)
-    P_fc_set  = 0.450 * FC['P_fc_max']
-    P_ely_set = 0.330 * ELY['P_ely_max']
+    P_fc_set  = C_FC_BASE * FC['P_fc_max'] * SoH_fc_t ** GAMMA_FC
+    P_ely_set = C_ELY_BASE * ELY['P_ely_max'] * SoH_ely_t ** GAMMA_ELY
 
     # --- AUGMENTATION PREVISION : pre-charge batterie (seule modif vs RB2) ---
     # On coupe l'ELY pour rediriger le surplus courant vers la batterie.

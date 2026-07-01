@@ -1,0 +1,12 @@
+# RB2(Pred/SoH+Pred) re-optimise ; mode=sohpred gammas=(1,2) socle 0.440/0.310 ; VoLL=3
+# Phase 1 omniscient (deterministe) :
+kind;H_PRE;LPSP(%);deg(kEUR);total(kEUR)
+base;6;2.9089;54.9115;78.7682
+omni;6;2.8166;55.0556;78.1559
+omni;12;2.6633;55.2105;77.0532
+omni;18;2.6398;55.2661;76.9161
+omni;24;2.7916;54.9607;77.8557
+omni;36;2.7918;54.9364;77.8335
+# best H_PRE omniscient = 18 h
+# Phase 2 bruite+hyst MC (N=12, M_SIGMA=1.0, MIN_DWELL=12, H_PRE=18) :
+RB2(Pred);18;2.7534;55.0846;77.6665  # +/- 0.0143 ; 0.0129 ; 0.1195

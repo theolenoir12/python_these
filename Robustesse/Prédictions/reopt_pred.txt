@@ -1,0 +1,12 @@
+# RB2(Pred) re-optimise sur socle cost-min RB2 (0.440/0.310) ; VoLL=3
+# Phase 1 omniscient (deterministe) :
+kind;H_PRE;LPSP(%);deg(kEUR);total(kEUR)
+base;6;2.5920;58.8499;80.1081
+omni;6;2.5535;58.9514;79.8938
+omni;12;2.4308;59.0976;79.0333
+omni;18;2.4208;59.1727;79.0269
+omni;24;2.4932;58.8808;79.3283
+omni;36;2.4862;58.8553;79.2454
+# best H_PRE omniscient = 18 h
+# Phase 2 bruite+hyst MC (N=12, M_SIGMA=1.0, MIN_DWELL=12, H_PRE=18) :
+RB2(Pred);18;2.5301;58.9666;79.7170  # +/- 0.0074 ; 0.0142 ; 0.0681

@@ -1,0 +1,32 @@
+==============================================================================
+ ANALYSE DE SENSIBILITE DE RB2(RUL) A L'INCERTITUDE DU PRONOSTIC -- OBSERVATIONS
+ Complement a mc_rul_uncertainty.py (ellipses de Pareto, N=200).
+ Note du 2026-07-01 (observation de Theo).
+==============================================================================
+
+CONSTAT : la petite ellipse de RB2(RUL) est PLAUSIBLE (ce n'est pas un artefact).
+------------------------------------------------------------------------------
+La dispersion du point de Pareto de RB2(RUL) sous incertitude du pronostic est
+faible (2sigma ~ 0.006 pt de LPSP x 0.023 kEUR). Cela s'explique physiquement :
+
+- En regardant les courbes d'evolution de la puissance ELY au cours du temps, la
+  puissance ELY reste a peu pres CONSTANTE jusqu'a l'annee ~14, puis DECROIT
+  fortement. C'est seulement a partir de ce moment que le levier RB2(RUL)
+  (f_ely = min(RUL/RUL_ref,1)^p) commence reellement a moduler l'electrolyseur.
+
+- Or a l'annee ~14, l'electrolyseur a DEJA bien vieilli : la RUL predite y est
+  FAIBLE (~600 jours). D'apres la caracterisation sigma_RUL(horizon)
+  (compute_prono_sigma_horizons.py), c'est justement la zone ou l'estimation de
+  la RUL est ASSEZ CORRECTE (sigma_RUL/RUL ~ 6-7 %, proche du minimum de la
+  courbe en U), et non la zone tres incertaine des horizons longs.
+
+- Consequence : le bruit d'estimation effectivement propage par le levier est
+  petit (l'incertitude est faible LA OU le levier agit), d'ou le faible sigma sur
+  (LPSP, deg) et donc l'ellipse assez faible.
+
+AUTREMENT DIT
+-------------
+Le levier RB2(RUL) s'active tard (ELY deja vieilli), a un horizon de RUL court et
+BIEN estime. La sensibilite a l'incertitude du pronostic y est donc naturellement
+limitee -> la petite ellipse est coherente avec la physique, pas sous-evaluee.
+==============================================================================

@@ -1,0 +1,64 @@
+==============================================================================
+ APLATISSEMENT DU RUL AUX HORIZONS LONGS (PEMWE) -- DIAGNOSTIC
+ Pourquoi le tableau sigma_RUL(horizon) ne peut PAS etre etendu tel quel jusqu'a
+ t_now = 25 % : le modele LSTM+MC-dropout ne projette plus la degradation
+ jusqu'a EoL=0.90 quand on estime tot dans la vie.
+ Genere le 2026-07-01.  Script : Pronostic SoH/diag_flattening.py
+==============================================================================
+
+CONSTAT PREALABLE (donnees brutes)
+----------------------------------
+- Trajectoire reelle SoH_ely_2.csv : va de 1.0000 a 0.9205 en 1334 jours
+  (~3.7 ans de donnees horaires sous-echantillonnees a 1 pt/jour).
+- ELLE N'ATTEINT JAMAIS EoL=0.90. Tous les RUL utilises dans le chapitre sont
+  donc des EXTRAPOLATIONS au-dela de la fin de l'enregistrement.
+
+DIAGNOSTIC (M=30 passes MC-dropout, MAX_STEPS=900 jours, EoL=0.90)
+-----------------------------------------------------------------
+ t_now[%hist] | jour | SoH_0 | plateau_median | plateau_bas(2.5%) | n_croisent
+ -------------+------+-------+----------------+-------------------+-----------
+    0.65      |  867 | 0.964 |     0.9164     |      0.8930       |   2/30
+    0.55      |  733 | 0.970 |     0.9755     |      0.9080       |   1/30
+    0.45      |  600 | 0.977 |     0.9923     |      0.9429       |   0/30
+    0.35      |  466 | 0.984 |     1.0060     |      0.9575       |   0/30
+    0.25      |  333 | 0.988 |     1.0144     |      0.9831       |   0/30
+ (plateau_* = SoH predit au bout de 900 jours d'extrapolation ; median sur les
+  passes ; "bas" = quantile 2.5 % = la passe la plus degradante.)
+
+LECTURE
+-------
+1. Plus t_now est TOT (fraction basse), plus le plateau median est HAUT :
+   0.916 a t_now=0.65 -> 1.014 a t_now=0.25. Le modele auto-regressif "s'aplatit"
+   d'autant plus que la fenetre de depart est dans la zone lente (debut de vie),
+   ou la degradation jour-a-jour est quasi nulle : il apprend a "rester plat".
+2. Des t_now <= 0.55, la trajectoire MEDIANE ne franchit plus EoL (plateau > 0.90)
+   -> 0 a 1 passe sur 30 croise -> RUL NON ESTIMABLE a cet horizon.
+3. A t_now <= 0.35 le plateau median depasse 1.0 (SoH predit qui remonte) :
+   NON-PHYSIQUE. Le modele n'anticipe pas la degradation future.
+4. Cause de fond : la vraie degradation ACCELERE (le taux double environ sur la
+   vie). Seeder le rollout dans la zone lente initiale et extrapoler une tendance
+   quasi plate sous-estime structurellement -> jamais d'EoL en vue.
+
+CONSEQUENCE POUR LE CHAPITRE 3
+------------------------------
+- Le tableau sigma_RUL(horizon) est FIABLE seulement pres de la fin de vie
+  (t_now >~ 0.70, RUL <~ 800 j, sigma_rel <~ 12 %). Il ne peut pas etre prolonge
+  honnetement jusqu'a t_now=0.25 AVEC CE MODELE : le RUL y est indefini.
+- Cela RENFORCE encore l'argument pro-RB2(SoH) : non seulement la RUL est plus
+  incertaine que le SoH, mais aux horizons longs elle n'est meme PAS ESTIMABLE,
+  alors que le SoH instantane reste, lui, toujours disponible et precis.
+
+PISTES POUR OBTENIR DE VRAIS SIGMA LONG-TERME (a discuter / a retester)
+----------------------------------------------------------------------
+- Sous-echantillonnage PLUS GROSSIER (ex. 1 pt/semaine) et RE-ENTRAINEMENT : moins
+  de pas auto-regressifs pour couvrir la meme duree -> moins d'accumulation ->
+  degradation par pas plus saillante -> pente descendante mieux apprise. (NB : va
+  dans le sens INVERSE de "diminuer la periode d'echantillonnage" ; c'est
+  l'AUGMENTER qui devrait aider.)
+- Reseaux SEGMENTES par bande d'horizon (un modele par tranche de RUL) : chaque
+  rollout reste court -> moins d'aplatissement.
+- Limite de fond : aucune de ces variantes ne fera anticiper une ACCELERATION
+  jamais vue dans la fenetre de depart ; un a priori physique (modele de
+  degradation) ou un entrainement sur des trajectoires completes multiples
+  serait sans doute necessaire.
+==============================================================================

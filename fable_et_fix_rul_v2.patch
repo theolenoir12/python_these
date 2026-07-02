@@ -1,0 +1,1303 @@
+From c46ee78a6483c8e78b3eb80eb3ef21b799974cb3 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 2 Jul 2026 02:25:14 +0000
+Subject: [PATCH] Fable : leviers previsionnels RB2(Proba)/RB2(Prop) + fix
+ ancre RUL
+
+- Robustesse/Fable : deux prototypes d'amelioration du levier previsionnel
+  sur socle cost-min (0.440/0.310), avec propriete de test nul :
+  * RB2(Proba) : hysteresis sur la PROBABILITE de deficit Phi(net/sigma)
+    (seuils reglables/asymetriques, sans gel par defaut) ;
+  * RB2(Prop)  : modulation CONTINUE du setpoint ELY par Phi(net/(TAU*sigma))
+    (anti-clignotement par construction, utilise l'amplitude prevue).
+  + bench_fable.py (Monte-Carlo, common random numbers, memes metriques que
+    sens_pred_noise), sweeps TAU et (P_HI,P_LO,gel), job slurm mesocentre.
+  + README_fable.txt : decomposition du cout de degradation 25 ans
+    (BAT ~63% / ELY ~32% / FC ~4%) et propositions d'integration de SoH_bat
+    dans RB2 (cross-modulation implementee en hook BETA_*_BAT, OFF par defaut).
+
+- Fix RUL (Vieillissement8/Common + Predictions/Common, 3 boucles) :
+  l'extrapolation lineaire etait ancree sur SoH[j_new] (valeur EoL ~0.9 de
+  l'ancienne unite) -> delta negatif -> RUL figee a sa valeur par defaut des
+  le 1er remplacement (levier RB2(RUL) desactive en silence). Nouvelles
+  ancres j_rul_* = j+1 (SoH=1) ; telescopage des couts inchange.
+  + Fable/check_rul_fix.py : non-regression (usure acceleree x150) --
+    verifie OK avec le fix, ECHEC reproduit sur l'ancien code.
+
+A relancer avec les vraies donnees : bench_fable (les runs de validation ici
+utilisaient un profil synthetique, le CSV de donnees n'etant pas dans le depot),
+puis sweep_rul / sweep_rul_attribution / mc_rul_uncertainty (post-fix RUL).
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01S5DnMhbYaVGE7pYKS9b37j
+---
+ Robustesse/Fable/RB2(Proba)/__init__.py       |   0
+ .../Fable/RB2(Proba)/get_optimal_action_RB.py | 178 ++++++++++++++
+ Robustesse/Fable/RB2(Proba)/main.py           |  37 +++
+ Robustesse/Fable/RB2(Prop)/__init__.py        |   0
+ .../Fable/RB2(Prop)/get_optimal_action_RB.py  | 157 ++++++++++++
+ Robustesse/Fable/RB2(Prop)/main.py            |  37 +++
+ Robustesse/Fable/README_fable.txt             | 216 +++++++++++++++++
+ Robustesse/Fable/bench_fable.py               | 225 ++++++++++++++++++
+ Robustesse/Fable/check_rul_fix.py             |  93 ++++++++
+ Robustesse/Fable/run_meso_fable.slurm         |  53 +++++
+ .../Common/main_init_and_loop.py"             |  27 ++-
+ .../Common/main_init_and_loop_forecast.py"    |  27 ++-
+ .../Common/main_init_and_loop.py              |  29 ++-
+ 13 files changed, 1054 insertions(+), 25 deletions(-)
+ create mode 100644 Robustesse/Fable/RB2(Proba)/__init__.py
+ create mode 100644 Robustesse/Fable/RB2(Proba)/get_optimal_action_RB.py
+ create mode 100644 Robustesse/Fable/RB2(Proba)/main.py
+ create mode 100644 Robustesse/Fable/RB2(Prop)/__init__.py
+ create mode 100644 Robustesse/Fable/RB2(Prop)/get_optimal_action_RB.py
+ create mode 100644 Robustesse/Fable/RB2(Prop)/main.py
+ create mode 100644 Robustesse/Fable/README_fable.txt
+ create mode 100644 Robustesse/Fable/bench_fable.py
+ create mode 100644 Robustesse/Fable/check_rul_fix.py
+ create mode 100644 Robustesse/Fable/run_meso_fable.slurm
+
+diff --git a/Robustesse/Fable/RB2(Proba)/__init__.py b/Robustesse/Fable/RB2(Proba)/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/Robustesse/Fable/RB2(Proba)/get_optimal_action_RB.py b/Robustesse/Fable/RB2(Proba)/get_optimal_action_RB.py
+new file mode 100644
+index 0000000..afbd74c
+--- /dev/null
++++ b/Robustesse/Fable/RB2(Proba)/get_optimal_action_RB.py
+@@ -0,0 +1,178 @@
++import math
++import numpy as np
++from Common.Init_EMR_MG_v16_python import *
++from Common.get_lol import *
++
++# ==========================================================================
++#  RB2(Proba) : pre-charge previsionnelle declenchee par la PROBABILITE de
++#  deficit, au lieu d'une bande d'energie fixe.
++#
++#  IDEE. RB2(Pred) filtre le bruit par une hysteresis en ENERGIE de demi-
++#  largeur M_SIGMA*sigma. Or on CONNAIT sigma (backtest LSTM) : on peut donc
++#  raisonner directement en PROBABILITE. Avec net_pred ~ N(net_vrai, sigma) :
++#      P(deficit) = P(net_vrai > 0 | net_pred) = Phi(net_pred / sigma)
++#  et on declenche/relache la pre-charge par une hysteresis SUR CETTE
++#  PROBABILITE :
++#      - ENTRER en pre-charge (ELY coupe)  si  P(deficit) > P_HI
++#      - SORTIR (ELY rallume)              si  P(deficit) < P_LO
++#      - entre les deux : garder l'etat courant (zone morte).
++#
++#  EQUIVALENCE / DIFFERENCE avec l'hysteresis en energie :
++#    P_HI/P_LO symetriques (p, 1-p) <=> bande +-Phi^-1(p)*sigma. Par ex.
++#    P_HI=0.84 / P_LO=0.16 == M_SIGMA=1.0. L'interet est triple :
++#      1. la bande se REGLE en unites d'erreur de prevision (probabilite),
++#         donc si sigma change (autre modele, autre horizon, sigma dependant
++#         du regime meteo), le reglage reste valable SANS re-sweep ;
++#      2. on peut REDUIRE la bande (P_HI=0.60/0.70) : l'hypothese testee est
++#         qu'une bande plus etroite SANS gel recupere les declenchements que
++#         la bande +-1sigma bloquait (cf. caveat "plateau omniscient" du
++#         README de Predictions), tout en gardant assez de rejet du bruit ;
++#      3. les seuils peuvent etre ASYMETRIQUES (confiance pour agir differente
++#         de la confiance pour arreter).
++#    Si sigma -> 0 (prevision parfaite), Phi(net/sigma) -> echelon : on
++#    RETOMBE sur la decision omnisciente binaire (le caveat disparait par
++#    construction).
++#
++#  PROPRIETE METHODO (identique a RB2(Pred)) : ENABLE=False ou prevision
++#  absente -> RB2 socle EXACT (test nul, tout gain attribuable a la prevision).
++# ==========================================================================
++
++# --- Reglages ---
++ENABLE       = True     # False -> RB2 socle a l'identique (test nul)
++USE_FORECAST = True     # False -> idem
++H_PRE        = 18       # horizon de pre-charge [pas = h] (optimum diurne, herite)
++SOC_TARGET   = 0.99     # on ne pre-charge que si SoC < cette cible
++
++# --- Bruit de prevision (memes conventions que RB2(Pred)) ---------------------
++NOISE_ENABLE = True
++BIAS_E_KWH   = -2.32    # biais du backtest a 18h [kWh]
++SIGMA_E_KWH  = 39.38    # ecart-type backtest a 18h [kWh] (valeur de DESIGN)
++SIGMA_INJECT_KWH = None # None -> = SIGMA_E_KWH ; sinon test de misestimation
++
++# --- Socle RB2 cost-min (comparaison honnete, cf reopt_pred.txt) --------------
++C_FC_BASE   = 0.440
++C_ELY_BASE  = 0.310
++GAMMA_FC    = 0.0       # exposant SoH_fc  (0 = socle nu ; >0 = variante SoH)
++GAMMA_ELY   = 0.0       # exposant SoH_ely (0 = socle nu ; >0 = variante SoH)
++
++# --- Hooks SoH_bat (cross-modulation, OFF par defaut : test nul preserve) -----
++# Quand la batterie vieillit (SoH_bat < 1), on DEPLACE du flux vers la chaine
++# H2 en remontant les setpoints FC/ELY d'un facteur SoH_bat^(-BETA). BETA=0 ->
++# facteur 1 -> socle exact. Cf. README_fable.txt section 3.
++BETA_FC_BAT  = 0.0
++BETA_ELY_BAT = 0.0
++
++# --- Declencheur probabiliste --------------------------------------------------
++P_HI      = 0.70        # on ENTRE en pre-charge si P(deficit) > P_HI
++P_LO      = 0.30        # on SORT si P(deficit) < P_LO
++MIN_DWELL = 0           # duree minimale de maintien [pas/h] (0 = pas de gel ;
++                        # hypothese : la zone morte probabiliste suffit)
++
++_rng      = np.random.default_rng(0)
++_state_on = False       # etat courant de la pre-charge (ELY coupe ?)
++_dwell    = 0           # compteur de maintien restant [pas]
++
++
++def set_noise_seed(seed):
++    """(Re)seede le generateur du bruit de prevision (1 seed / run Monte-Carlo)."""
++    global _rng
++    _rng = np.random.default_rng(seed)
++
++
++def reset():
++    """Reinitialise l'etat de l'hysteresis. A APPELER avant chaque run (les
++    workers d'un pool sont reutilises -> sinon l'etat fuit d'un run a l'autre)."""
++    global _state_on, _dwell
++    _state_on = False
++    _dwell    = 0
++
++
++def _phi(x):
++    """CDF gaussienne standard."""
++    return 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
++
++
++def _precharge(P_tot_ref_future, SoC_t):
++    """True s'il faut pre-charger : hysteresis sur P(deficit) = Phi(net/sigma)."""
++    global _state_on, _dwell
++    if not (ENABLE and USE_FORECAST):
++        return False
++    if P_tot_ref_future is None or len(P_tot_ref_future) == 0:
++        return False
++    if SoC_t >= SOC_TARGET:
++        return False
++    dt_h = LOAD['Ts'] / 3600.0
++    net = float(np.sum(np.asarray(P_tot_ref_future[:H_PRE], dtype=float))) * dt_h  # [Wh]
++    if NOISE_ENABLE:
++        sig_inj = SIGMA_E_KWH if SIGMA_INJECT_KWH is None else SIGMA_INJECT_KWH
++        net += (BIAS_E_KWH + sig_inj * _rng.standard_normal()) * 1000.0
++
++    sig_wh = SIGMA_E_KWH * 1000.0            # incertitude de DESIGN [Wh]
++    if sig_wh <= 0.0:
++        p_def = 1.0 if net > 0.0 else 0.0    # sigma nul -> decision binaire exacte
++    else:
++        p_def = _phi(net / sig_wh)
++
++    if _dwell > 0:
++        _dwell -= 1                          # etat gele
++    elif (not _state_on) and p_def > P_HI:
++        _state_on = True;  _dwell = MIN_DWELL
++    elif _state_on and p_def < P_LO:
++        _state_on = False; _dwell = MIN_DWELL
++    return _state_on
++
++
++def get_optimal_action_RB(SoC_t,P_tot_ref_t,defaillances,lol_tab,alpha_fc_t,alpha_ely_t,SoH_bat_t,E_h2_t,E_h2_init,P_fc_max_t,P_ely_max_t,RUL_fc_t,RUL_ely_t,SoH_fc_t,SoH_ely_t,P_tot_ref_future=None) :
++
++    ######################### RULES ##########################
++    # Setpoints socle (+ modulations SoH optionnelles, OFF par defaut)
++    P_fc_set  = C_FC_BASE  * FC['P_fc_max']   * SoH_fc_t  ** GAMMA_FC
++    P_ely_set = C_ELY_BASE * ELY['P_ely_max'] * SoH_ely_t ** GAMMA_ELY
++    if BETA_FC_BAT != 0.0 or BETA_ELY_BAT != 0.0:
++        # Cross-modulation SoH_bat : report de flux vers la chaine H2 quand la
++        # batterie vieillit. Cap au max physique vieilli (cote DC) pour ne pas
++        # generer de lol_pmax artificiel dans get_lol.
++        P_fc_set  = min(P_fc_set  * SoH_bat_t ** (-BETA_FC_BAT),  P_fc_max_t  * CONV['eta'])
++        P_ely_set = min(P_ely_set * SoH_bat_t ** (-BETA_ELY_BAT), P_ely_max_t / CONV['eta'])
++
++    # --- AUGMENTATION PREVISION : pre-charge batterie (seule modif vs socle) ---
++    if _precharge(P_tot_ref_future, SoC_t):
++        P_ely_set = 0.0
++    # ---------------------------------------------------------------------------
++
++    dt_h         = LOAD['Ts'] / 3600.0
++    P_fc_h2_max  = max(E_h2_t, 0.0)               / dt_h * FC['eff']  * CONV['eta'] * 1000   # [W]
++    P_ely_h2_max = max(E_h2_init - E_h2_t, 0.0)   / dt_h / (ELY['eff'] * CONV['eta']) * 1000 # [W]
++
++    if P_tot_ref_t > 0 :
++        P_fc_avail = min(P_fc_set, P_fc_h2_max)
++        if P_tot_ref_t > P_fc_avail :
++            P_dc_fc_t  = P_fc_avail
++            P_dc_bat_t = P_tot_ref_t - P_fc_avail
++        else :
++            P_dc_fc_t  = 0
++            P_dc_bat_t = P_tot_ref_t
++        P_dc_ely_t = 0
++    if P_tot_ref_t < 0 :
++        P_ely_avail = min(P_ely_set, P_ely_h2_max)
++        if P_tot_ref_t < - P_ely_avail :
++            P_dc_ely_t = - P_ely_avail
++            P_dc_bat_t = P_tot_ref_t + P_ely_avail
++        else :
++            P_dc_ely_t = 0
++            P_dc_bat_t = P_tot_ref_t
++        P_dc_fc_t  = 0
++    ##################################
++
++    if 'FC' in defaillances :
++        if P_tot_ref_t > 0 :
++            P_dc_bat_t = P_tot_ref_t
++    if 'ELY' in defaillances :
++        if P_tot_ref_t < 0 :
++            P_dc_bat_t = P_tot_ref_t
++
++    action = P_dc_bat_t, P_dc_fc_t, P_dc_ely_t
++
++    action, lol = get_lol(SoC_t,action,P_tot_ref_t,defaillances,E_h2_t,E_h2_init,P_fc_max_t,P_ely_max_t,SoH_bat_t)
++
++    return action, lol
+diff --git a/Robustesse/Fable/RB2(Proba)/main.py b/Robustesse/Fable/RB2(Proba)/main.py
+new file mode 100644
+index 0000000..022b420
+--- /dev/null
++++ b/Robustesse/Fable/RB2(Proba)/main.py
+@@ -0,0 +1,37 @@
++import sys
++import os
++from time import time as timer
++
++# 1. Ajout des chemins : Predictions/ (pour Common, boucle forecast) + dossier courant
++_here = os.path.dirname(os.path.abspath(__file__))
++sys.path.insert(0, os.path.abspath(os.path.join(_here, '..', '..', 'Prédictions')))
++sys.path.insert(0, _here)
++
++# 2. Imports des modules communs (boucle FORKEE : prevision omnisciente 48h)
++from Common.main_init_and_loop_forecast import init_and_run_loop_forecast
++from Common.main_plot import run_main_plot
++
++# 3. Import de la strategie du dossier courant
++from get_optimal_action_RB import get_optimal_action_RB
++import get_optimal_action_RB as strat
++
++
++def main():
++    print(f"--- Simulation {os.path.basename(_here)} [prevision 48h + bruit backtest] ---")
++    start_time = timer()
++
++    global data
++    if hasattr(strat, 'set_noise_seed'):
++        strat.set_noise_seed(0)
++    if hasattr(strat, 'reset'):
++        strat.reset()
++    data = init_and_run_loop_forecast(get_optimal_action_RB, H_forecast=48)
++
++    run_main_plot(data)
++
++    end_time = timer()
++    print(f"--- Simulation terminée en {end_time - start_time:.2f} s ---")
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/Robustesse/Fable/RB2(Prop)/__init__.py b/Robustesse/Fable/RB2(Prop)/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/Robustesse/Fable/RB2(Prop)/get_optimal_action_RB.py b/Robustesse/Fable/RB2(Prop)/get_optimal_action_RB.py
+new file mode 100644
+index 0000000..43fd2a7
+--- /dev/null
++++ b/Robustesse/Fable/RB2(Prop)/get_optimal_action_RB.py
+@@ -0,0 +1,157 @@
++import math
++import numpy as np
++from Common.Init_EMR_MG_v16_python import *
++from Common.get_lol import *
++
++# ==========================================================================
++#  RB2(Prop) : pre-charge previsionnelle PROPORTIONNELLE (modulation continue
++#  de l'electrolyseur par la confiance dans le deficit prevu).
++#
++#  IDEE. Les variantes existantes coupent l'ELY en TOUT-OU-RIEN (P_ely_set=0
++#  ou nominal). C'est cette bascule binaire qui rend la decision fragile au
++#  bruit (clignotement -> start-stop) et qui a impose hysteresis + gel. Ici on
++#  supprime la bascule : le setpoint ELY est module CONTINUMENT par le poids
++#      w = Phi( net_pred / (TAU * sigma) )  dans (0,1)
++#      P_ely_set = C_ELY * P_ely_max * (1 - w)
++#  ou net_pred est l'energie nette prevue sur H_PRE et sigma l'incertitude de
++#  prevision (backtest). w s'interprete comme P(deficit) temperee par TAU.
++#
++#  CE QUE CA CHANGE :
++#   1. ANTI-CLIGNOTEMENT PAR CONSTRUCTION : le bruit sur net_pred fait varier
++#      w de maniere lisse ; l'ELY ne passe par OFF que si w ~ 1 (deficit
++#      quasi certain). Plus besoin de MIN_DWELL ni de zone morte.
++#   2. AMPLITUDE UTILISEE, PAS SEULEMENT LE SIGNE : un petit deficit prevu
++#      (< sigma) donne une pre-charge PARTIELLE (l'ELY est reduit, pas coupe).
++#      Ces declenchements "doux" sont precisement ceux que la bande +-1sigma
++#      de l'hysteresis bloquait (caveat du README de Predictions).
++#   3. CONVERGENCE OMNISCIENTE : si sigma -> 0, w -> echelon -> on retombe
++#      sur la pre-charge binaire omnisciente. Le levier ne peut pas "bloquer"
++#      la valeur de la prevision quand celle-ci devient bonne.
++#
++#  TAU regle la douceur : TAU petit -> quasi binaire (reactif, moins robuste),
++#  TAU grand -> tres doux (robuste, levier plus faible). Balayage via
++#  bench_fable.py --sweep prop.
++#
++#  PROPRIETE METHODO : ENABLE=False ou prevision absente -> w force a 0 ->
++#  RB2 socle EXACT (test nul). Base = socle cost-min 0.440/0.310 (reopt).
++# ==========================================================================
++
++# --- Reglages ---
++ENABLE       = True     # False -> RB2 socle a l'identique (test nul)
++USE_FORECAST = True     # False -> idem
++H_PRE        = 18       # horizon de pre-charge [pas = h] (optimum diurne, herite)
++SOC_TARGET   = 0.99     # on ne pre-charge que si SoC < cette cible
++
++# --- Bruit de prevision (memes conventions que RB2(Pred)) ---------------------
++NOISE_ENABLE = True
++BIAS_E_KWH   = -2.32    # biais du backtest a 18h [kWh]
++SIGMA_E_KWH  = 39.38    # ecart-type backtest a 18h [kWh] (valeur de DESIGN)
++SIGMA_INJECT_KWH = None # None -> = SIGMA_E_KWH ; sinon test de misestimation
++
++# --- Socle RB2 cost-min (comparaison honnete, cf reopt_pred.txt) --------------
++C_FC_BASE   = 0.440
++C_ELY_BASE  = 0.310
++GAMMA_FC    = 0.0       # exposant SoH_fc  (0 = socle nu ; >0 = variante SoH)
++GAMMA_ELY   = 0.0       # exposant SoH_ely (0 = socle nu ; >0 = variante SoH)
++
++# --- Hooks SoH_bat (cross-modulation, OFF par defaut : test nul preserve) -----
++BETA_FC_BAT  = 0.0
++BETA_ELY_BAT = 0.0
++
++# --- Modulation proportionnelle ------------------------------------------------
++TAU = 1.0               # temperature de la sigmoide (en unites de sigma)
++
++_rng = np.random.default_rng(0)
++
++
++def set_noise_seed(seed):
++    """(Re)seede le generateur du bruit de prevision (1 seed / run Monte-Carlo)."""
++    global _rng
++    _rng = np.random.default_rng(seed)
++
++
++def reset():
++    """Pas d'etat interne (modulation sans memoire) ; present pour l'API commune."""
++    pass
++
++
++def _phi(x):
++    """CDF gaussienne standard."""
++    return 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
++
++
++def _precharge_weight(P_tot_ref_future, SoC_t):
++    """Poids de pre-charge w dans [0,1] : confiance dans un deficit net sur
++    H_PRE. 0 = prevision neutre/absente (RB2 socle exact)."""
++    if not (ENABLE and USE_FORECAST):
++        return 0.0
++    if P_tot_ref_future is None or len(P_tot_ref_future) == 0:
++        return 0.0
++    if SoC_t >= SOC_TARGET:
++        return 0.0
++    dt_h = LOAD['Ts'] / 3600.0
++    net = float(np.sum(np.asarray(P_tot_ref_future[:H_PRE], dtype=float))) * dt_h  # [Wh]
++    if NOISE_ENABLE:
++        sig_inj = SIGMA_E_KWH if SIGMA_INJECT_KWH is None else SIGMA_INJECT_KWH
++        net += (BIAS_E_KWH + sig_inj * _rng.standard_normal()) * 1000.0
++
++    sig_wh = TAU * SIGMA_E_KWH * 1000.0      # echelle de la sigmoide [Wh]
++    if sig_wh <= 0.0:
++        return 1.0 if net > 0.0 else 0.0     # TAU/sigma nul -> binaire exact
++    return _phi(net / sig_wh)
++
++
++def get_optimal_action_RB(SoC_t,P_tot_ref_t,defaillances,lol_tab,alpha_fc_t,alpha_ely_t,SoH_bat_t,E_h2_t,E_h2_init,P_fc_max_t,P_ely_max_t,RUL_fc_t,RUL_ely_t,SoH_fc_t,SoH_ely_t,P_tot_ref_future=None) :
++
++    ######################### RULES ##########################
++    # Setpoints socle (+ modulations SoH optionnelles, OFF par defaut)
++    P_fc_set  = C_FC_BASE  * FC['P_fc_max']   * SoH_fc_t  ** GAMMA_FC
++    P_ely_set = C_ELY_BASE * ELY['P_ely_max'] * SoH_ely_t ** GAMMA_ELY
++    if BETA_FC_BAT != 0.0 or BETA_ELY_BAT != 0.0:
++        # Cross-modulation SoH_bat : report de flux vers la chaine H2 quand la
++        # batterie vieillit. Cap au max physique vieilli (cote DC) pour ne pas
++        # generer de lol_pmax artificiel dans get_lol.
++        P_fc_set  = min(P_fc_set  * SoH_bat_t ** (-BETA_FC_BAT),  P_fc_max_t  * CONV['eta'])
++        P_ely_set = min(P_ely_set * SoH_bat_t ** (-BETA_ELY_BAT), P_ely_max_t / CONV['eta'])
++
++    # --- AUGMENTATION PREVISION : modulation CONTINUE (seule modif vs socle) ---
++    w = _precharge_weight(P_tot_ref_future, SoC_t)
++    P_ely_set = P_ely_set * (1.0 - w)
++    # ---------------------------------------------------------------------------
++
++    dt_h         = LOAD['Ts'] / 3600.0
++    P_fc_h2_max  = max(E_h2_t, 0.0)               / dt_h * FC['eff']  * CONV['eta'] * 1000   # [W]
++    P_ely_h2_max = max(E_h2_init - E_h2_t, 0.0)   / dt_h / (ELY['eff'] * CONV['eta']) * 1000 # [W]
++
++    if P_tot_ref_t > 0 :
++        P_fc_avail = min(P_fc_set, P_fc_h2_max)
++        if P_tot_ref_t > P_fc_avail :
++            P_dc_fc_t  = P_fc_avail
++            P_dc_bat_t = P_tot_ref_t - P_fc_avail
++        else :
++            P_dc_fc_t  = 0
++            P_dc_bat_t = P_tot_ref_t
++        P_dc_ely_t = 0
++    if P_tot_ref_t < 0 :
++        P_ely_avail = min(P_ely_set, P_ely_h2_max)
++        if P_tot_ref_t < - P_ely_avail :
++            P_dc_ely_t = - P_ely_avail
++            P_dc_bat_t = P_tot_ref_t + P_ely_avail
++        else :
++            P_dc_ely_t = 0
++            P_dc_bat_t = P_tot_ref_t
++        P_dc_fc_t  = 0
++    ##################################
++
++    if 'FC' in defaillances :
++        if P_tot_ref_t > 0 :
++            P_dc_bat_t = P_tot_ref_t
++    if 'ELY' in defaillances :
++        if P_tot_ref_t < 0 :
++            P_dc_bat_t = P_tot_ref_t
++
++    action = P_dc_bat_t, P_dc_fc_t, P_dc_ely_t
++
++    action, lol = get_lol(SoC_t,action,P_tot_ref_t,defaillances,E_h2_t,E_h2_init,P_fc_max_t,P_ely_max_t,SoH_bat_t)
++
++    return action, lol
+diff --git a/Robustesse/Fable/RB2(Prop)/main.py b/Robustesse/Fable/RB2(Prop)/main.py
+new file mode 100644
+index 0000000..022b420
+--- /dev/null
++++ b/Robustesse/Fable/RB2(Prop)/main.py
+@@ -0,0 +1,37 @@
++import sys
++import os
++from time import time as timer
++
++# 1. Ajout des chemins : Predictions/ (pour Common, boucle forecast) + dossier courant
++_here = os.path.dirname(os.path.abspath(__file__))
++sys.path.insert(0, os.path.abspath(os.path.join(_here, '..', '..', 'Prédictions')))
++sys.path.insert(0, _here)
++
++# 2. Imports des modules communs (boucle FORKEE : prevision omnisciente 48h)
++from Common.main_init_and_loop_forecast import init_and_run_loop_forecast
++from Common.main_plot import run_main_plot
++
++# 3. Import de la strategie du dossier courant
++from get_optimal_action_RB import get_optimal_action_RB
++import get_optimal_action_RB as strat
++
++
++def main():
++    print(f"--- Simulation {os.path.basename(_here)} [prevision 48h + bruit backtest] ---")
++    start_time = timer()
++
++    global data
++    if hasattr(strat, 'set_noise_seed'):
++        strat.set_noise_seed(0)
++    if hasattr(strat, 'reset'):
++        strat.reset()
++    data = init_and_run_loop_forecast(get_optimal_action_RB, H_forecast=48)
++
++    run_main_plot(data)
++
++    end_time = timer()
++    print(f"--- Simulation terminée en {end_time - start_time:.2f} s ---")
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/Robustesse/Fable/README_fable.txt b/Robustesse/Fable/README_fable.txt
+new file mode 100644
+index 0000000..6179037
+--- /dev/null
++++ b/Robustesse/Fable/README_fable.txt
+@@ -0,0 +1,216 @@
++================================================================================
++FABLE : PROTOTYPES D'AMELIORATION DES STRATEGIES PREVISIONNELLES + NOTES
++Dossier : Robustesse/Fable/          Cree : 2026-07-01 (revue de coherence)
++================================================================================
++
++0. RESUME
++--------------------------------------------------------------------------------
++Ce dossier contient les prototypes issus de la revue de coherence :
++
++  RB2(Proba)/   levier previsionnel declenche par une hysteresis sur la
++                PROBABILITE de deficit  P(deficit) = Phi(net_pred/sigma)
++                (generalise l'hysteresis en energie ; seuils reglables et
++                asymetriques ; sans gel par defaut).
++
++  RB2(Prop)/    levier previsionnel PROPORTIONNEL : le setpoint ELY est module
++                CONTINUMENT par w = Phi(net_pred/(TAU*sigma)) au lieu d'etre
++                coupe en tout-ou-rien. Anti-clignotement PAR CONSTRUCTION,
++                utilise l'AMPLITUDE prevue et pas seulement le signe.
++
++  bench_fable.py        banc d'essai Monte-Carlo (common random numbers),
++                        memes metriques que sens_pred_noise / reopt_pred.
++  run_meso_fable.slurm  job mesocentre.
++
++Les deux strategies partagent le socle cost-min RB2 (0.440/0.310), les
++conventions de bruit de RB2(Pred) (biais -2.32 / sigma 39.38 kWh @18h) et la
++propriete de TEST NUL : ENABLE=False ou prevision neutre -> RB2 socle EXACT.
++
++Reperes chiffres (reopt_pred.txt, 25 ans, VoLL=3) a battre :
++    RB2 socle ................. 80.108 kEUR
++    RB2(Pred) hyst (prod) ..... 79.717 kEUR   <- levier actuel
++    RB2(Pred) omniscient ...... 79.027 kEUR   <- borne superieure du levier
++CRITERE DE SUCCES : total < 79.717 ; ideal : tendre vers 79.03 sans
++augmenter les demarrages ELY (colonne ELY_starts du bench).
++
++LANCER (depuis Fable/, env simu_env, GENIAL_DATA_DIR ou layout Data historique) :
++    python bench_fable.py --quick          # fumee (1 an, N=2) : verifie que ca tourne
++    python bench_fable.py 16 25 --omni     # bench local complet
++    sbatch run_meso_fable.slurm            # N=200 au mesocentre
++    sbatch run_meso_fable.slurm 64 25 --sweep prop    # balayage TAU
++    sbatch run_meso_fable.slurm 64 25 --sweep proba   # balayage (P_HI,P_LO,gel)
++
++
++1. RB2(Proba) : POURQUOI PASSER EN PROBABILITE
++--------------------------------------------------------------------------------
++L'hysteresis actuelle filtre le bruit par une bande en ENERGIE +-M_SIGMA*sigma.
++Comme sigma est CONNU (backtest), la meme information s'exprime en probabilite :
++    P(deficit) = Phi(net_pred / sigma)
++    ENTRER si P > P_HI ; SORTIR si P < P_LO ; sinon garder l'etat.
++
++Correspondance : (P_HI, P_LO) = (p, 1-p)  <=>  bande +-Phi^-1(p)*sigma.
++    P_HI=0.84/P_LO=0.16 == M_SIGMA=1.0 (controle de non-regression dans le sweep).
++
++Ce que ca apporte :
++  a) REGLAGE PORTABLE : le seuil est en unites d'erreur de prevision. Si sigma
++     change (autre modele, autre horizon, sigma dependant du regime meteo, ou
++     sigma fourni pas a pas par le predicteur), le reglage P_HI/P_LO reste
++     valable sans re-sweep. C'est aussi le chainon naturel vers un sigma_t
++     VARIABLE (MC-dropout / quantiles par horizon).
++  b) BANDE PLUS ETROITE TESTABLE : hypothese = le caveat "plateau omniscient"
++     (bande +-1sigma trop large qui bloque les vrais declenchements) se traite
++     en reduisant la bande (P_HI=0.60-0.70) SANS gel, plutot qu'en comptant sur
++     le dithering du bruit. Le sweep tranchera.
++  c) SEUILS ASYMETRIQUES possibles (confiance pour agir != pour arreter).
++  d) sigma -> 0  =>  Phi -> echelon  =>  retombe sur l'omniscient binaire :
++     le dispositif de robustesse DISPARAIT de lui-meme quand la prevision
++     devient parfaite (le caveat disparait par construction).
++
++Parametres : P_HI=0.70, P_LO=0.30, MIN_DWELL=0 (defauts a confirmer par sweep).
++
++
++2. RB2(Prop) : MODULATION CONTINUE (LE VRAI CHANGEMENT DE MECANISME)
++--------------------------------------------------------------------------------
++Constat sur la chaine actuelle : la pre-charge est BINAIRE (ELY coupe ou pas).
++C'est la bascule qui cree le clignotement sous bruit (start-stop ELY), qui a
++impose hysteresis+gel, dont la bande large bloque a son tour les declenchements
++"doux". RB2(Prop) supprime la bascule :
++
++    w = Phi( net_pred / (TAU*sigma) )        dans (0,1)
++    P_ely_set = C_ELY * P_ely_max * (1-w)
++
++  a) ANTI-CLIGNOTEMENT PAR CONSTRUCTION : le bruit fait varier w de facon
++     lisse ; l'ELY ne passe par OFF que si le deficit est quasi certain
++     (w~1). Ni zone morte ni gel necessaires. Verif : colonne ELY_starts.
++  b) AMPLITUDE, PAS SEULEMENT SIGNE : un deficit prevu PETIT (< sigma) reduit
++     l'ELY partiellement -> pre-charge partielle proportionnee au risque.
++     Ce sont exactement les cas que la bande +-1sigma jetait.
++  c) CONVERGENCE OMNISCIENTE : sigma -> 0 => w -> echelon => binaire omniscient.
++  d) TAU = temperature (defaut 1.0) : petit = reactif/quasi-binaire, grand =
++     doux/robuste. Balayage --sweep prop (0.25 a 2.0).
++
++Limite attendue (honnetete) : sous bruit fort, w moyen ~0.5 en zone ambigue ->
++l'ELY tourne a mi-regime dans des heures de surplus reel -> un peu moins d'H2
++stocke que l'hysteresis qui, elle, tranche. Le bench dira si le gain LPSP des
++declenchements doux paie plus que ce manque a stocker. Si RB2(Prop) et
++RB2(Proba) gagnent tous deux, tester ensuite le COMBO (modulation continue +
++petite zone morte).
++
++
++3. INTEGRATION DE SoH_bat DANS RB2 : DECOMPOSITION DU COUT ET PROPOSITIONS
++--------------------------------------------------------------------------------
++Decomposition du cout de degradation 25 ans (couts unitaires du fichier d'init,
++durees de vie observees ~5 ans BAT / ~12 ans FC / ~13 ans ELY, cf all_aging_2) :
++
++    composant   cout/remplacement   vies/25 ans   cout 25 ans   part
++    BAT         7.00 kEUR           ~5.0          ~35.0 kEUR    ~63 %
++    ELY         9.34 kEUR           ~1.9          ~18.0 kEUR    ~32 %
++    FC          1.18 kEUR           ~2.1          ~ 2.5 kEUR    ~ 4 %
++    (total ~55 kEUR : coherent avec les deg ~55-65 kEUR des tableaux)
++
++=> LA BATTERIE PORTE ~2/3 DU COUT DE DEGRADATION et aucune strategie ne
++   l'exploite. C'est mecaniquement le plus gros gisement restant. A l'inverse,
++   moduler la FC ne peut presque rien rapporter (4 %) : coherent avec
++   l'EXP_FC=0 trouve par les sweeps.
++
++POURQUOI C'EST STRUCTURELLEMENT DUR : dans RB2 la batterie est la variable
++d'AJUSTEMENT (elle absorbe tout ce que la chaine H2 ne prend pas). Elle n'a pas
++de setpoint propre -> la modulation "P_set * SoH^gamma" de RB2(SoH) ne se
++transpose pas. Les leviers doivent donc DEPLACER DU FLUX hors de la batterie,
++pas la "derater". Quatre propositions, de la plus prometteuse a la plus
++speculative (toutes gardent le test nul : SoH_bat=1 -> RB2 exact) :
++
++  (P1) CROSS-MODULATION (implementee en hook dans RB2(Proba)/RB2(Prop),
++       parametres BETA_FC_BAT / BETA_ELY_BAT, defaut 0=OFF) :
++           P_fc_set  = c_fc  * Pmax * SoH_fc^g  * SoH_bat^(-BETA_FC_BAT)
++           P_ely_set = c_ely * Pmax * SoH_ely^g * SoH_bat^(-BETA_ELY_BAT)
++       Quand la batterie vieillit, on REMONTE les setpoints H2 : la chaine H2
++       prend une part croissante du throughput, la batterie cycle moins (moins
++       de deg_SoC cumulee), au prix d'un peu plus d'usure ELY/FC et de pertes.
++       L'arbitrage est favorable sur le papier (1 kWh cycle par la batterie
++       coute ~7 kEUR/51.84 kWh/0.3 de fenetre utile >> le cout marginal ELY),
++       mais c'est le sweep qui tranchera : balayer BETA_ELY_BAT en premier
++       (l'ELY est le vrai concurrent de la batterie sur les surplus).
++       NB : c'est le symetrique exact de RB2(SoH) -> se raconte tres bien dans
++       le manuscrit ("modulation croisee des setpoints par l'etat de sante").
++
++  (P2) FENETRE SoC DEPENDANTE DU SoH_bat. Le modele de deg batterie est une
++       densite de dommage par niveau de SoC (Cumulative_degradation_bat) :
++       deplacer/retrecir la fenetre [0.2, 0.995] vers la zone la moins
++       dommageable quand SoH_bat baisse reduit le dommage par kWh cycle.
++       ATTENTION : bornes codees en dur dans get_lol.py (0.2/0.995) ->
++       demande de les promouvoir en parametres module (petit refactor).
++       Cout : perte de capacite utile -> LPSP ; a ne tester qu'apres (P1).
++
++  (P3) PRE-CHARGE CONSCIENTE DU SoH_bat (synergie avec la prevision) : la
++       marge d'energie utile de la batterie fond comme Q*SoH_bat ; a SoH=0.7
++       il faut pre-charger PLUS TOT pour stocker la meme energie avant un
++       creux. Concretement : SOC_TARGET ou le seuil P_HI (ou TAU) fonction de
++       SoH_bat (ex. P_HI = 0.70*SoH_bat^k). Peu de code, s'ajoute a (P1).
++
++  (P4) SI le vieillissement CALENDAIRE est active (BAT_CAL_TCAL_Y, analyse
++       R3) : baisser le SoC MOYEN de sejour quand la batterie est jeune
++       (surplus routes vers H2 plus tot). Sans calendaire ce levier est nul
++       par construction -> seulement pour la variante calendaire du chapitre.
++
++  Verif rapide avant sweep (P1) : la part deg_bat de RB2 vs 75-25 dans les
++  pie-charts existants (degradation_pie_charts_final) pour confirmer le ~63 %.
++
++  NB : un plafond de C-rate SoH-dependant a ete envisage puis ecarte : a
++  l'echelle du systeme (pack 51.84 kWh, flux ~qq kW), C_rate ~0.1-0.4 << 1,
++  la penalite super-lineaire C>1 du modele n'est presque jamais active.
++
++
++4. BUGS CORRIGES A COTE (fichiers Communs, hors Fable/)
++--------------------------------------------------------------------------------
++RUL EN LIGNE (Vieillissement8/Common/main_init_and_loop.py,
++              Predictions/Common/main_init_and_loop.py et _forecast.py) :
++    l'ancre de l'extrapolation lineaire etait j_new_* (pas du remplacement),
++    or SoH[j_new] est la valeur EoL (~0.9) de l'ANCIENNE unite ; delta_soh
++    restait negatif pendant toute la vie des unites suivantes -> RUL figee a
++    sa valeur par defaut (8000/3000 j) des le 1er remplacement -> levier
++    RB2(RUL) silencieusement desactive ensuite (et ellipses mc_rul_uncertainty
++    partiellement sous-estimees, le bruit x(1+eps) sur RUL=3000 ne franchissant
++    jamais le seuil de 1000 j).
++    FIX : nouvelles ancres j_rul_* = j+1 au remplacement (SoH=1 par
++    construction). Le telescopage des couts (j_new_*) est INCHANGE ; aucune
++    strategie autre que RB2(RUL) ne lit la RUL -> aucun autre resultat modifie.
++    A REFAIRE apres fix : sweep_rul.py, sweep_rul_attribution.py,
++    mc_rul_uncertainty.py (les conclusions peuvent bouger un peu ; l'argument
++    sigma_RUL(horizon) en U reste valable).
++
++5. POINTS NOTES MAIS PAS TOUCHES (choix assume : ne pas invalider l'existant)
++--------------------------------------------------------------------------------
++  a) get_lol : lol = max(lol_pmax, lol_storage, lol_soc), chaque terme calcule
++     avec les AUTRES ressources non corrigees -> sous-compte l'energie non
++     servie quand DEUX contraintes sont actives au meme pas (batterie au
++     plancher + reservoir vide, typiquement dans les pires creux). Patch
++     suggere (a chiffrer avant adoption, change le LPSP de TOUTES les
++     strategies) : recalculer lol FINAL = 1-(P_bat_corr+P_h2_corr)/P_tot_ref
++     apres toutes les corrections, plutot que le max des trois.
++  b) Nommage Predictions/ : RB2(SoH)/ y contient en realite RB2(SoH)+Pred
++     (bruit+hyst) tandis que RB2(SoH+Pred)/ est la variante binaire sans
++     bruit. A renommer un jour de calme.
++  c) Baselines : ne garder dans le manuscrit que le socle cost-min
++     (80.108) ; le readme de RB2(RUL) cite encore -5.3 % vs le nominal 85.55
++     alors que l'attribution honnete (sweep_rul_attribution) donne ~0.
++  d) sigma=39.38 kWh mesure sur sidelec_csv2 (2 ans, conso bruitee) alors que
++     la simulation tourne sur l'ancien CSV (1 an, tuile x51) : approximation a
++     assumer dans la redaction (majorant plutot realiste).
++
++6. FICHIERS / SORTIES
++--------------------------------------------------------------------------------
++  bench_fable.py             banc d'essai (voir usage en tete de fichier)
++  check_rul_fix.py           test de non-regression du fix RUL (sect. 4) :
++                             usure FC acceleree x150, verifie que la RUL est
++                             re-estimee apres le 2e remplacement (valide OK
++                             avec le fix / ECHEC reproduit sur l'ancien code)
++  bench_fable.txt            tableau stats (apres run nominal)
++  bench_fable_cloud.csv      nuage brut (label;seed;lpsp;deg;eens;total;starts)
++  sweep_fable_prop.txt       balayage TAU        (apres --sweep prop)
++  sweep_fable_proba.txt      balayage seuils/gel (apres --sweep proba)
++  RB2(Proba)/, RB2(Prop)/    strategies (main.py = run unitaire 25 ans + plots)
++
++  Lecture du bench : comparer 'total' (deg + VoLL*EENS) a la ref RB2(Pred)
++  hyst ; surveiller ELY_starts (clignotement) et sLPSP/sdeg (dispersion MC).
++  La config Proba 0.84/0.16 d12 du sweep == prod actuelle (non-regression).
++================================================================================
+diff --git a/Robustesse/Fable/bench_fable.py b/Robustesse/Fable/bench_fable.py
+new file mode 100644
+index 0000000..205c35e
+--- /dev/null
++++ b/Robustesse/Fable/bench_fable.py
+@@ -0,0 +1,225 @@
++# -*- coding: utf-8 -*-
++"""
++bench_fable.py -- BANC D'ESSAI des leviers Fable (RB2(Proba), RB2(Prop)).
++==========================================================================
++Compare, sous le MEME bruit de prevision (common random numbers), sur le
++socle cost-min (0.440/0.310) et l'indicateur unifie VoLL=3 :
++
++    RB2 socle            (reference, levier OFF -> test nul)
++    RB2(Pred) hyst       (production actuelle : bande +-1sigma + gel 12h)
++    RB2(Proba)           (hysteresis sur la PROBABILITE de deficit, sans gel)
++    RB2(Prop)            (modulation CONTINUE de l'ELY par Phi(net/TAU*sigma))
++
++Reperes attendus (reopt_pred.txt, 25 ans, VoLL=3) :
++    RB2 socle ................ 80.108 kEUR
++    RB2(Pred) hyst (MC) ...... 79.717 kEUR   (levier actuel)
++    RB2(Pred) omniscient ..... 79.027 kEUR   (borne superieure du levier)
++Critere de succes : total < 79.717 (mieux que l'hysteresis actuelle) ;
++ideal : se rapprocher de 79.03 en gardant des demarrages ELY ~stables.
++
++USAGE
++-----
++    python bench_fable.py                  # bench nominal : N=8 graines, 25 ans
++    python bench_fable.py 16 25            # N graines, n_years
++    python bench_fable.py --quick          # fumee : N=2, 1 an (verifie que ca tourne)
++    python bench_fable.py --omni           # + bornes omniscientes (1 run determinist)
++    python bench_fable.py --sweep prop     # balayage TAU de RB2(Prop)
++    python bench_fable.py --sweep proba    # balayage (P_HI,P_LO) x MIN_DWELL de RB2(Proba)
++    sbatch run_meso_fable.slurm            # mesocentre (N=200)
++
++Sorties (dans Fable/) : bench_fable*.txt (tableau) + bench_fable*_cloud.csv (brut).
++Necessite GENIAL_DATA_DIR (ou layout Doctorat/Data historique) comme les autres.
++"""
++import os, sys, csv, time
++import importlib.util
++import numpy as np
++from concurrent.futures import ProcessPoolExecutor
++
++HERE     = os.path.dirname(os.path.abspath(__file__))
++PRED_DIR = os.path.abspath(os.path.join(HERE, "..", "Prédictions"))
++for _p in (HERE, PRED_DIR):
++    if _p not in sys.path:
++        sys.path.insert(0, _p)
++
++VOLL    = 3.0        # EUR/kWh (indicateur unifie de reference these)
++MC_SEED = 2026       # base des graines (common random numbers entre strategies)
++
++# (label, dossier de la strategie, overrides de parametres module)
++BENCH_STRATS = [
++    ("RB2 socle",       os.path.join(HERE, "RB2(Prop)"),        {"ENABLE": False}),
++    ("RB2(Pred) hyst",  os.path.join(PRED_DIR, "RB2(Pred)"),    {}),
++    ("RB2(Proba)",      os.path.join(HERE, "RB2(Proba)"),       {}),
++    ("RB2(Prop)",       os.path.join(HERE, "RB2(Prop)"),        {}),
++]
++OMNI_STRATS = [
++    ("RB2(Pred) omni bin", os.path.join(PRED_DIR, "RB2(Pred)"), {"NOISE_ENABLE": False, "HYST_ENABLE": False}),
++    ("RB2(Proba) omni",    os.path.join(HERE, "RB2(Proba)"),    {"NOISE_ENABLE": False}),
++    ("RB2(Prop) omni",     os.path.join(HERE, "RB2(Prop)"),     {"NOISE_ENABLE": False}),
++]
++
++SWEEP_PROBA = [  # (P_HI, P_LO, MIN_DWELL)
++    (0.55, 0.45, 0), (0.60, 0.40, 0), (0.70, 0.30, 0), (0.80, 0.20, 0),
++    (0.84, 0.16, 0),                                   # == M_SIGMA=1.0 sans gel
++    (0.60, 0.40, 6), (0.70, 0.30, 6), (0.84, 0.16, 12) # == prod actuelle (controle)
++]
++SWEEP_PROP = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]          # TAU
++
++
++def _load(folder):
++    """Charge get_optimal_action_RB.py du dossier comme module INDEPENDANT
++    (etat module par worker, comme sens_pred_noise)."""
++    name = "strat_" + os.path.basename(folder)
++    for ch in "()+ ":
++        name = name.replace(ch, "")
++    spec = importlib.util.spec_from_file_location(
++        name, os.path.join(folder, "get_optimal_action_RB.py"))
++    m = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(m)
++    return m
++
++
++def metrics(data):
++    """(LPSP %, deg kEUR, EENS kWh, demarrages ELY) -- memes conventions que
++    sens_pred_noise.metrics (interpolation SoH_bat aux remplacements)."""
++    from Common.Init_EMR_MG_v16_python import LOAD, BAT, FC, ELY
++    from Common.cost_fcn_total2 import get_cost_total
++    P_bat = data["P_bat"]; P_fc = data["P_fc"]; P_ely = data["P_ely"]
++    P_dc_load = data["P_dc_load"]; P_dc_pv = data["P_dc_pv"]; lol = data["lol_tab"]
++    SoC = data["SoC"]
++    alpha_fc = data["alpha_fc"][:-1]; alpha_ely = data["alpha_ely"][:-1]
++    SoH_bat = data["SoH_bat"][:-1].copy()
++    for k in range(1, len(SoH_bat)):
++        if SoH_bat[k] == 1:
++            SoH_bat[k - 1] = np.nan
++    if np.isnan(SoH_bat).any():
++        SoH_bat[np.isnan(SoH_bat)] = np.interp(
++            np.flatnonzero(np.isnan(SoH_bat)),
++            np.flatnonzero(~np.isnan(SoH_bat)), SoH_bat[~np.isnan(SoH_bat)])
++    P_planned = (P_dc_load - P_dc_pv) / 1000.0
++    P_real    = (P_dc_load - P_dc_pv) * (1 - lol) / 1000.0
++    p, r = np.clip(P_planned, 0, None), np.clip(P_real, 0, None)
++    lpsp = (np.clip(p - r, 0, None).sum() / p.sum() * 100) if p.sum() > 0 else 0.0
++    eens = np.clip(p - r, 0, None).sum() * (LOAD['Ts'] / 3600.0)   # [kWh]
++    deg  = get_cost_total(alpha_fc, P_fc, alpha_ely, P_ely,
++                          P_bat, SoC, LOAD, BAT, FC, ELY, SoH_bat) / 1000.0
++    on = np.abs(P_ely) > 1.0                                       # [W] seuil diag
++    ely_starts = int(np.sum(on[1:] & ~on[:-1]))
++    return float(lpsp), float(deg), float(eens), ely_starts
++
++
++def evaluate(task):
++    """Worker picklable : un run complet. task = dict(label, folder, overrides,
++    seed, ny). Retourne les metriques + le cout total unifie."""
++    from Common.main_init_and_loop_forecast import init_and_run_loop_forecast
++    s = _load(task["folder"])
++    for k, v in task["overrides"].items():
++        setattr(s, k, v)
++    if hasattr(s, "set_noise_seed"):
++        s.set_noise_seed(task["seed"])
++    if hasattr(s, "reset"):
++        s.reset()
++    data = init_and_run_loop_forecast(s.get_optimal_action_RB, H_forecast=48,
++                                      n_years=task["ny"])
++    lpsp, deg, eens, ely_starts = metrics(data)
++    total = deg + VOLL * eens / 1000.0
++    out = dict(task)
++    out.update(lpsp=lpsp, deg=deg, eens=eens, total=total, ely_starts=ely_starts)
++    return out
++
++
++def run_all(strat_list, n_seeds, ny, tag):
++    """Lance strat_list x n_seeds en parallele (common random numbers), ecrit
++    <tag>.txt (stats) + <tag>_cloud.csv (brut), et affiche le tableau."""
++    tasks = []
++    for label, folder, overrides in strat_list:
++        deterministic = overrides.get("NOISE_ENABLE", True) is False
++        seeds = [MC_SEED] if deterministic else [MC_SEED + i for i in range(n_seeds)]
++        for sd in seeds:
++            tasks.append(dict(label=label, folder=folder, overrides=overrides,
++                              seed=sd, ny=ny))
++
++    nw = int(os.environ.get("SLURM_CPUS_PER_TASK", 0)) or (os.cpu_count() or 1)
++    nw = min(nw, len(tasks))
++    print(f"[bench_fable] {len(tasks)} runs ({ny} ans), {nw} workers ...", flush=True)
++    t0 = time.time()
++    results = []
++    with ProcessPoolExecutor(max_workers=nw) as ex:
++        for i, res in enumerate(ex.map(evaluate, tasks)):
++            results.append(res)
++            print(f"  [{i+1:3d}/{len(tasks)}] {res['label']:<22s} seed={res['seed']:<6d}"
++                  f" LPSP={res['lpsp']:.4f}%  deg={res['deg']:.3f}  total={res['total']:.3f}"
++                  f"  ELYstarts={res['ely_starts']}", flush=True)
++    print(f"[bench_fable] termine en {time.time()-t0:.0f} s", flush=True)
++
++    # --- cloud CSV ---
++    cloud = os.path.join(HERE, tag + "_cloud.csv")
++    with open(cloud, "w", newline="") as f:
++        w = csv.writer(f, delimiter=";")
++        w.writerow(["label", "seed", "lpsp_pct", "deg_keur", "eens_kwh",
++                    "total_keur", "ely_starts"])
++        for r in results:
++            w.writerow([r["label"], r["seed"], f"{r['lpsp']:.6f}", f"{r['deg']:.6f}",
++                        f"{r['eens']:.3f}", f"{r['total']:.6f}", r["ely_starts"]])
++
++    # --- stats + tableau ---
++    labels = [s[0] for s in strat_list]
++    stats = {}
++    for lab in labels:
++        rr = [r for r in results if r["label"] == lab]
++        arr = {k: np.array([r[k] for r in rr]) for k in
++               ("lpsp", "deg", "eens", "total", "ely_starts")}
++        stats[lab] = {k: (v.mean(), v.std()) for k, v in arr.items()}
++        stats[lab]["n"] = len(rr)
++
++    base = labels[0]
++    lines = [f"# bench_fable ({tag}) : {ny} ans ; VoLL={VOLL} ; N={n_seeds} graines ; "
++             f"seeds communes (CRN) ; base={base}",
++             "label ; N ; LPSP(%) ; sLPSP ; deg(kEUR) ; sdeg ; total(kEUR) ; stotal ; "
++             "dtotal_vs_base(kEUR) ; ELY_starts"]
++    for lab in labels:
++        st = stats[lab]
++        dt = st["total"][0] - stats[base]["total"][0]
++        lines.append(f"{lab} ; {st['n']} ; {st['lpsp'][0]:.4f} ; {st['lpsp'][1]:.4f} ; "
++                     f"{st['deg'][0]:.3f} ; {st['deg'][1]:.3f} ; "
++                     f"{st['total'][0]:.3f} ; {st['total'][1]:.3f} ; "
++                     f"{dt:+.3f} ; {st['ely_starts'][0]:.0f}")
++    txt = os.path.join(HERE, tag + ".txt")
++    with open(txt, "w") as f:
++        f.write("\n".join(lines) + "\n")
++    print("\n".join(lines))
++    print(f"\n[bench_fable] -> {txt}\n[bench_fable] -> {cloud}")
++    return stats
++
++
++def main(argv):
++    args = [a for a in argv[1:] if not a.startswith("--")]
++    n_seeds = int(args[0]) if len(args) > 0 else 8
++    ny      = int(args[1]) if len(args) > 1 else 25
++    quick   = "--quick" in argv
++    omni    = "--omni" in argv
++    sweep   = None
++    if "--sweep" in argv:
++        sweep = argv[argv.index("--sweep") + 1]
++    if quick:
++        n_seeds, ny = 2, 1
++
++    if sweep == "proba":
++        strats = [("RB2 socle", os.path.join(HERE, "RB2(Prop)"), {"ENABLE": False})]
++        for hi, lo, dwell in SWEEP_PROBA:
++            strats.append((f"Proba {hi:.2f}/{lo:.2f} d{dwell}",
++                           os.path.join(HERE, "RB2(Proba)"),
++                           {"P_HI": hi, "P_LO": lo, "MIN_DWELL": dwell}))
++        run_all(strats, n_seeds, ny, "sweep_fable_proba")
++    elif sweep == "prop":
++        strats = [("RB2 socle", os.path.join(HERE, "RB2(Prop)"), {"ENABLE": False})]
++        for tau in SWEEP_PROP:
++            strats.append((f"Prop TAU={tau:.2f}", os.path.join(HERE, "RB2(Prop)"),
++                           {"TAU": tau}))
++        run_all(strats, n_seeds, ny, "sweep_fable_prop")
++    else:
++        strats = list(BENCH_STRATS) + (list(OMNI_STRATS) if omni else [])
++        run_all(strats, n_seeds, ny, "bench_fable" + ("_quick" if quick else ""))
++
++
++if __name__ == "__main__":
++    main(sys.argv)
+diff --git a/Robustesse/Fable/check_rul_fix.py b/Robustesse/Fable/check_rul_fix.py
+new file mode 100644
+index 0000000..df78f50
+--- /dev/null
++++ b/Robustesse/Fable/check_rul_fix.py
+@@ -0,0 +1,93 @@
++# -*- coding: utf-8 -*-
++"""
++check_rul_fix.py -- test de NON-REGRESSION du fix d'ancre RUL (cf README sect. 4).
++===================================================================================
++Bug corrige : l'extrapolation lineaire de la RUL dans les boucles Communes etait
++ancree sur SoH[j_new] (valeur EoL ~0.9 de l'ANCIENNE unite) au lieu de SoH=1 de
++l'unite neuve -> RUL figee a sa valeur par defaut (8000/3000 j) pour toutes les
++unites APRES le premier remplacement.
++
++Principe du test (rapide, ~1 min, n'importe quel profil de donnees) :
++  - on ACCELERE artificiellement l'usure FC (FC['cost'] /= ACCEL) pour provoquer
++    plusieurs remplacements FC en quelques mois simules ;
++  - une strategie "espionne" enregistre la RUL_fc vue a chaque pas puis delegue
++    a RB2 socle ;
++  - VERDICT : il doit exister des valeurs de RUL NON-DEFAUT (< 8000 j) APRES le
++    2e remplacement. Avant le fix : impossible (tout reste a 8000).
++
++Usage :  python check_rul_fix.py       (depuis Fable/, env avec donnees dispo)
++"""
++import os, sys
++import numpy as np
++
++HERE     = os.path.dirname(os.path.abspath(__file__))
++PRED_DIR = os.path.abspath(os.path.join(HERE, "..", "Prédictions"))
++for _p in (HERE, PRED_DIR):
++    if _p not in sys.path:
++        sys.path.insert(0, _p)
++
++from Common.Init_EMR_MG_v16_python import FC
++from Common.main_init_and_loop_forecast import init_and_run_loop_forecast
++import importlib.util
++
++ACCEL   = 150.0   # acceleration des TAUX de degradation FC (assez pour >=3
++                  # remplacements meme sur profil doux ; vie >> 20 h = min RUL)
++N_YEARS = 0.5     # ~4380 h simulees -> plusieurs remplacements FC
++
++# Usure FC acceleree : multiplier les TAUX (les coefficients alpha_*). NB : ne
++# PAS passer par FC['cost'] -- il apparait au numerateur (via get_cost_fc) ET
++# au denominateur du SoH, donc se simplifie et n'accelere rien.
++import Common.cost_fcn_total2 as _cf
++_cf.FC_ALPHA_ON_OFF *= ACCEL
++_cf.FC_ALPHA_HIGH   *= ACCEL
++_cf.FC_ALPHA_LOW    *= ACCEL
++_cf.FC_ALPHA_SHIFT  *= ACCEL
++
++# Strategie de base = RB2(Prop) avec levier OFF (== RB2 socle exact)
++spec = importlib.util.spec_from_file_location(
++    "strat_base", os.path.join(HERE, "RB2(Prop)", "get_optimal_action_RB.py"))
++_base = importlib.util.module_from_spec(spec)
++spec.loader.exec_module(_base)
++_base.ENABLE = False
++
++rul_log = []   # RUL_fc vue par la strategie a chaque pas
++
++
++def spy(SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t, alpha_ely_t,
++        SoH_bat_t, E_h2_t, E_h2_init, P_fc_max_t, P_ely_max_t, RUL_fc_t,
++        RUL_ely_t, SoH_fc_t, SoH_ely_t, P_tot_ref_future=None):
++    rul_log.append(RUL_fc_t)
++    return _base.get_optimal_action_RB(
++        SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t, alpha_ely_t,
++        SoH_bat_t, E_h2_t, E_h2_init, P_fc_max_t, P_ely_max_t, RUL_fc_t,
++        RUL_ely_t, SoH_fc_t, SoH_ely_t, P_tot_ref_future)
++
++
++def main():
++    print(f"[check_rul_fix] simulation {N_YEARS} an(s), usure FC x{ACCEL:.0f} ...")
++    data = init_and_run_loop_forecast(spy, H_forecast=48, n_years=N_YEARS)
++
++    soh = data["SoH_fc"]
++    # Indices de remplacement = SAUT du SoH vers le haut (retour a 1 depuis ~EoL).
++    # (Ne pas tester soh==1 : le plateau initial a SoH=1 serait compte a tort.)
++    resets = np.flatnonzero(np.diff(soh) > 0.05)  # index j du pas de remplacement
++    rul = np.array(rul_log)
++    print(f"  remplacements FC detectes : {len(resets)} (pas {list(resets[:6])} ...)")
++    if len(resets) < 2:
++        print("  [INCONCLUSIF] moins de 2 remplacements : augmenter ACCEL ou N_YEARS.")
++        sys.exit(2)
++
++    j2 = int(resets[1])  # apres le 2e remplacement, le bug d'origine garantissait RUL=defaut
++    seg = rul[j2 + 1:]
++    n_nondefault = int(np.sum(seg < 7999.0))
++    print(f"  pas apres le 2e remplacement : {len(seg)} ; RUL non-defaut : {n_nondefault}")
++    if n_nondefault > 0:
++        print(f"  exemples RUL estimees [j] : {np.round(seg[seg < 7999.0][:5], 1)}")
++        print("[check_rul_fix] OK -- la RUL est bien re-estimee apres remplacement (fix actif).")
++    else:
++        print("[check_rul_fix] ECHEC -- RUL figee au defaut apres remplacement (bug present).")
++        sys.exit(1)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/Robustesse/Fable/run_meso_fable.slurm b/Robustesse/Fable/run_meso_fable.slurm
+new file mode 100644
+index 0000000..7d6aac8
+--- /dev/null
++++ b/Robustesse/Fable/run_meso_fable.slurm
+@@ -0,0 +1,53 @@
++#!/usr/bin/bash -l
++# ============================================================================
++# run_meso_fable.slurm -- banc d'essai des leviers Fable sur Helios (MesoFC)
++# ----------------------------------------------------------------------------
++# Noeud UNIQUE, parallelisme par processus (ProcessPoolExecutor du code Python).
++#
++#     sbatch run_meso_fable.slurm                    # bench nominal, N=200, 25 ans
++#     sbatch run_meso_fable.slurm 200 25 --omni      # + bornes omniscientes
++#     sbatch run_meso_fable.slurm 64 25 --sweep prop # balayage TAU
++#     sbatch run_meso_fable.slurm 64 25 --sweep proba
++#
++# Fichier transfere depuis Windows : passer dos2unix dessus.
++# ============================================================================
++
++#SBATCH --job-name=fable
++#SBATCH --output=%x.%J.out        ## %x=nom du job, %J=id du job
++#SBATCH --error=%x.%J.out
++#SBATCH --time=12:00:00           ## walltime hh:mm:ss
++#SBATCH --partition=smp           ## noeuds 32 coeurs / 96 Go
++#SBATCH --cpus-per-task=32        ## 1 tache, 32 coeurs (= 32 workers Python)
++#SBATCH --mem=80G                 ## <= 96 Go (RAM du noeud smp)
++
++# --- Arguments : N graines (defaut 200), n_years (defaut 25), options -------
++N_SAMPLES="${1:-200}"
++N_YEARS="${2:-25}"
++shift 2 2>/dev/null
++EXTRA_ARGS="$@"
++
++# --- Environnement ----------------------------------------------------------
++export OMP_NUM_THREADS=1
++export OPENBLAS_NUM_THREADS=1
++export MKL_NUM_THREADS=1
++export NUMEXPR_NUM_THREADS=1
++export MPLBACKEND=Agg
++export MPLCONFIGDIR="$WORK/.mplconfig"
++mkdir -p "$MPLCONFIGDIR"
++
++# Profil PV/conso (gros CSV) : provisionne une fois dans $WORK (cf. procedure).
++export GENIAL_DATA_DIR="$WORK/genial_data"
++
++module purge
++module load anaconda3@2022.10/gcc-12.1.0
++
++# --- Diagnostics ------------------------------------------------------------
++echo "Job $SLURM_JOB_ID  noeud=$(hostname)  N=$N_SAMPLES  n_years=$N_YEARS  extra=$EXTRA_ARGS"
++echo "cpus-per-task=$SLURM_CPUS_PER_TASK  debut=$(date)"
++python -c "import numpy,scipy;print('numpy',numpy.__version__,'scipy',scipy.__version__)"
++
++# --- Execution --------------------------------------------------------------
++cd "$SLURM_SUBMIT_DIR" || exit 1
++time python bench_fable.py "$N_SAMPLES" "$N_YEARS" $EXTRA_ARGS
++
++echo "fin=$(date)"
+diff --git "a/Robustesse/Pr\303\251dictions/Common/main_init_and_loop.py" "b/Robustesse/Pr\303\251dictions/Common/main_init_and_loop.py"
+index bee8f39..54753ad 100644
+--- "a/Robustesse/Pr\303\251dictions/Common/main_init_and_loop.py"
++++ "b/Robustesse/Pr\303\251dictions/Common/main_init_and_loop.py"
+@@ -95,6 +95,15 @@ def init_and_run_loop(get_optimal_action_RB):
+     j_new_ely = 0
+     _rul_min_steps = int(20 * 3600 // LOAD['Ts'])
+ 
++    # Ancres RUL : index ou le SoH de l'unite COURANTE vaut 1 (unite neuve).
++    # Distinctes de j_new_* (ancres de telescopage des couts) : un remplacement
++    # decide au pas j ne met le SoH a 1 qu'a l'index j+1. Utiliser SoH[j_new]
++    # (= SoH[j], valeur EoL ~0.9 de l'ANCIENNE unite) rendait delta_soh negatif
++    # pendant toute la vie des unites suivantes -> RUL figee a sa valeur par
++    # defaut apres le 1er remplacement (levier RB2(RUL) desactive en silence).
++    j_rul_fc  = 0
++    j_rul_ely = 0
++
+     # Accumulateurs de coût de dégradation (cumul depuis le dernier remplacement).
+     # Remplacent le recalcul O(n^2) de get_soh/get_cost_* sur [j_new:j+1] par une
+     # accumulation incrementale O(1)/pas, EXACTEMENT equivalente (telescopage verifie).
+@@ -169,22 +178,22 @@ def init_and_run_loop(get_optimal_action_RB):
+                                                    + B * ELY['T'] * np.log(1 - i_ely_max_t / S / ELY['n_parallel'] / ELY['j_L'] / (1 - alpha_ely_t)))
+     
+         # CALCUL DU RUL OPTIMISÉ (sans get_rul)
+-        # Fuel Cell
+-        diff_j_fc = j - j_new_fc
++        # Fuel Cell (ancre j_rul_fc : SoH[j_rul_fc] = 1 par construction)
++        diff_j_fc = j - j_rul_fc
+         if diff_j_fc >= _rul_min_steps:
+-            delta_soh = SoH_fc[j_new_fc] - SoH_fc[j]
++            delta_soh = SoH_fc[j_rul_fc] - SoH_fc[j]
+             if delta_soh > 1e-9: # Éviter division par zéro
+                 # Projection linéaire : (Temps_écoulé * Delta_total) / Delta_actuel - Temps_écoulé
+-                RUL_fc_t = (diff_j_fc * (SoH_fc[j_new_fc] - FC['SoH_EoL']) / delta_soh - diff_j_fc) * LOAD['Ts'] / 3600 / 24
++                RUL_fc_t = (diff_j_fc * (SoH_fc[j_rul_fc] - FC['SoH_EoL']) / delta_soh - diff_j_fc) * LOAD['Ts'] / 3600 / 24
+             else: RUL_fc_t = 8000
+         else: RUL_fc_t = 8000
+     
+-        # Électrolyseur
+-        diff_j_ely = j - j_new_ely
++        # Électrolyseur (ancre j_rul_ely : SoH[j_rul_ely] = 1 par construction)
++        diff_j_ely = j - j_rul_ely
+         if diff_j_ely >= _rul_min_steps:
+-            delta_soh_ely = SoH_ely[j_new_ely] - SoH_ely[j]
++            delta_soh_ely = SoH_ely[j_rul_ely] - SoH_ely[j]
+             if delta_soh_ely > 1e-9:
+-                RUL_ely_t = (diff_j_ely * (SoH_ely[j_new_ely] - ELY['SoH_EoL']) / delta_soh_ely - diff_j_ely) * LOAD['Ts'] / 3600 / 24
++                RUL_ely_t = (diff_j_ely * (SoH_ely[j_rul_ely] - ELY['SoH_EoL']) / delta_soh_ely - diff_j_ely) * LOAD['Ts'] / 3600 / 24
+             else: RUL_ely_t = 3000
+         else: RUL_ely_t = 3000
+     
+@@ -258,10 +267,12 @@ def init_and_run_loop(get_optimal_action_RB):
+         if SoH_fc_tp1 < FC['SoH_EoL'] :
+             SoH_fc_tp1 = 1
+             j_new_fc = j
++            j_rul_fc = j + 1   # la nouvelle unite est a SoH=1 a l'index j+1
+             cum_fc = np.array(get_cost_fc(alpha_fc[j:j+1], P_fc[j:j+1]))
+         if SoH_ely_tp1 < ELY['SoH_EoL'] :
+             SoH_ely_tp1 = 1
+             j_new_ely = j
++            j_rul_ely = j + 1  # idem
+             # Unite neuve : etats remis a 0 puis 1er pas (P_prev = P[j] -> pas de start-stop)
+             V_irr_ely, V_rev_ely, d_ss_ely, d_idle_ely = _ely_advance(
+                 0.0, 0.0, P_ely[j], P_ely[j], P_ely_max_t, Ts_h)
+diff --git "a/Robustesse/Pr\303\251dictions/Common/main_init_and_loop_forecast.py" "b/Robustesse/Pr\303\251dictions/Common/main_init_and_loop_forecast.py"
+index eb5f26b..27ec477 100644
+--- "a/Robustesse/Pr\303\251dictions/Common/main_init_and_loop_forecast.py"
++++ "b/Robustesse/Pr\303\251dictions/Common/main_init_and_loop_forecast.py"
+@@ -119,6 +119,15 @@ def init_and_run_loop_forecast(get_optimal_action_RB, H_forecast=48, n_years=25)
+     j_new_ely = 0
+     _rul_min_steps = int(20 * 3600 // LOAD['Ts'])
+ 
++    # Ancres RUL : index ou le SoH de l'unite COURANTE vaut 1 (unite neuve).
++    # Distinctes de j_new_* (ancres de telescopage des couts) : un remplacement
++    # decide au pas j ne met le SoH a 1 qu'a l'index j+1. Utiliser SoH[j_new]
++    # (= SoH[j], valeur EoL ~0.9 de l'ANCIENNE unite) rendait delta_soh negatif
++    # pendant toute la vie des unites suivantes -> RUL figee a sa valeur par
++    # defaut apres le 1er remplacement (levier RB2(RUL) desactive en silence).
++    j_rul_fc  = 0
++    j_rul_ely = 0
++
+     # Accumulateurs de coût de dégradation (cumul depuis le dernier remplacement).
+     cum_bat = 0.0
+     cum_fc  = np.zeros(5)
+@@ -190,21 +199,21 @@ def init_and_run_loop_forecast(get_optimal_action_RB, H_forecast=48, n_years=25)
+                                                    + B * ELY['T'] * np.log(1 - i_ely_max_t / S / ELY['n_parallel'] / ELY['j_L'] / (1 - alpha_ely_t)))
+ 
+         # CALCUL DU RUL OPTIMISÉ (sans get_rul)
+-        # Fuel Cell
+-        diff_j_fc = j - j_new_fc
++        # Fuel Cell (ancre j_rul_fc : SoH[j_rul_fc] = 1 par construction)
++        diff_j_fc = j - j_rul_fc
+         if diff_j_fc >= _rul_min_steps:
+-            delta_soh = SoH_fc[j_new_fc] - SoH_fc[j]
++            delta_soh = SoH_fc[j_rul_fc] - SoH_fc[j]
+             if delta_soh > 1e-9: # Éviter division par zéro
+-                RUL_fc_t = (diff_j_fc * (SoH_fc[j_new_fc] - FC['SoH_EoL']) / delta_soh - diff_j_fc) * LOAD['Ts'] / 3600 / 24
++                RUL_fc_t = (diff_j_fc * (SoH_fc[j_rul_fc] - FC['SoH_EoL']) / delta_soh - diff_j_fc) * LOAD['Ts'] / 3600 / 24
+             else: RUL_fc_t = 8000
+         else: RUL_fc_t = 8000
+ 
+-        # Électrolyseur
+-        diff_j_ely = j - j_new_ely
++        # Électrolyseur (ancre j_rul_ely : SoH[j_rul_ely] = 1 par construction)
++        diff_j_ely = j - j_rul_ely
+         if diff_j_ely >= _rul_min_steps:
+-            delta_soh_ely = SoH_ely[j_new_ely] - SoH_ely[j]
++            delta_soh_ely = SoH_ely[j_rul_ely] - SoH_ely[j]
+             if delta_soh_ely > 1e-9:
+-                RUL_ely_t = (diff_j_ely * (SoH_ely[j_new_ely] - ELY['SoH_EoL']) / delta_soh_ely - diff_j_ely) * LOAD['Ts'] / 3600 / 24
++                RUL_ely_t = (diff_j_ely * (SoH_ely[j_rul_ely] - ELY['SoH_EoL']) / delta_soh_ely - diff_j_ely) * LOAD['Ts'] / 3600 / 24
+             else: RUL_ely_t = 3000
+         else: RUL_ely_t = 3000
+ 
+@@ -274,10 +283,12 @@ def init_and_run_loop_forecast(get_optimal_action_RB, H_forecast=48, n_years=25)
+         if SoH_fc_tp1 < FC['SoH_EoL'] :
+             SoH_fc_tp1 = 1
+             j_new_fc = j
++            j_rul_fc = j + 1   # la nouvelle unite est a SoH=1 a l'index j+1
+             cum_fc = np.array(get_cost_fc(alpha_fc[j:j+1], P_fc[j:j+1]))
+         if SoH_ely_tp1 < ELY['SoH_EoL'] :
+             SoH_ely_tp1 = 1
+             j_new_ely = j
++            j_rul_ely = j + 1  # idem
+             V_irr_ely, V_rev_ely, d_ss_ely, d_idle_ely = _ely_advance(
+                 0.0, 0.0, P_ely[j], P_ely[j], P_ely_max_t, Ts_h)
+             V_ss_ely   = d_ss_ely
+diff --git a/Robustesse/Vieillissement8/Common/main_init_and_loop.py b/Robustesse/Vieillissement8/Common/main_init_and_loop.py
+index 00f18bd..a57198e 100644
+--- a/Robustesse/Vieillissement8/Common/main_init_and_loop.py
++++ b/Robustesse/Vieillissement8/Common/main_init_and_loop.py
+@@ -95,6 +95,15 @@ def init_and_run_loop(get_optimal_action_RB, n_years=25):
+     j_new_ely = 0
+     _rul_min_steps = int(20 * 3600 // LOAD['Ts'])
+ 
++    # Ancres RUL : index ou le SoH de l'unite COURANTE vaut 1 (unite neuve).
++    # Distinctes de j_new_* (ancres de telescopage des couts) : un remplacement
++    # decide au pas j ne met le SoH a 1 qu'a l'index j+1. Utiliser SoH[j_new]
++    # (= SoH[j], valeur EoL ~0.9 de l'ANCIENNE unite) rendait delta_soh negatif
++    # pendant toute la vie des unites suivantes -> RUL figee a sa valeur par
++    # defaut apres le 1er remplacement (levier RB2(RUL) desactive en silence).
++    j_rul_fc  = 0
++    j_rul_ely = 0
++
+     # Accumulateurs de coût de dégradation (cumul depuis le dernier remplacement).
+     # Remplacent le recalcul O(n^2) de get_soh/get_cost_* sur [j_new:j+1] par une
+     # accumulation incrementale O(1)/pas, EXACTEMENT equivalente (telescopage verifie).
+@@ -169,22 +178,22 @@ def init_and_run_loop(get_optimal_action_RB, n_years=25):
+                                                    + B * ELY['T'] * np.log(1 - i_ely_max_t / S / ELY['n_parallel'] / ELY['j_L'] / (1 - alpha_ely_t)))
+     
+         # CALCUL DU RUL OPTIMISÉ (sans get_rul)
+-        # Fuel Cell
+-        diff_j_fc = j - j_new_fc
++        # Fuel Cell (ancre j_rul_fc : SoH[j_rul_fc] = 1 par construction)
++        diff_j_fc = j - j_rul_fc
+         if diff_j_fc >= _rul_min_steps:
+-            delta_soh = SoH_fc[j_new_fc] - SoH_fc[j]
++            delta_soh = SoH_fc[j_rul_fc] - SoH_fc[j]
+             if delta_soh > 1e-9: # Éviter division par zéro
+                 # Projection linéaire : (Temps_écoulé * Delta_total) / Delta_actuel - Temps_écoulé
+-                RUL_fc_t = (diff_j_fc * (SoH_fc[j_new_fc] - FC['SoH_EoL']) / delta_soh - diff_j_fc) * LOAD['Ts'] / 3600 / 24
++                RUL_fc_t = (diff_j_fc * (SoH_fc[j_rul_fc] - FC['SoH_EoL']) / delta_soh - diff_j_fc) * LOAD['Ts'] / 3600 / 24
+             else: RUL_fc_t = 8000
+         else: RUL_fc_t = 8000
+-    
+-        # Électrolyseur
+-        diff_j_ely = j - j_new_ely
++
++        # Électrolyseur (ancre j_rul_ely : SoH[j_rul_ely] = 1 par construction)
++        diff_j_ely = j - j_rul_ely
+         if diff_j_ely >= _rul_min_steps:
+-            delta_soh_ely = SoH_ely[j_new_ely] - SoH_ely[j]
++            delta_soh_ely = SoH_ely[j_rul_ely] - SoH_ely[j]
+             if delta_soh_ely > 1e-9:
+-                RUL_ely_t = (diff_j_ely * (SoH_ely[j_new_ely] - ELY['SoH_EoL']) / delta_soh_ely - diff_j_ely) * LOAD['Ts'] / 3600 / 24
++                RUL_ely_t = (diff_j_ely * (SoH_ely[j_rul_ely] - ELY['SoH_EoL']) / delta_soh_ely - diff_j_ely) * LOAD['Ts'] / 3600 / 24
+             else: RUL_ely_t = 3000
+         else: RUL_ely_t = 3000
+     
+@@ -258,10 +267,12 @@ def init_and_run_loop(get_optimal_action_RB, n_years=25):
+         if SoH_fc_tp1 < FC['SoH_EoL'] :
+             SoH_fc_tp1 = 1
+             j_new_fc = j
++            j_rul_fc = j + 1   # la nouvelle unite est a SoH=1 a l'index j+1
+             cum_fc = np.array(get_cost_fc(alpha_fc[j:j+1], P_fc[j:j+1]))
+         if SoH_ely_tp1 < ELY['SoH_EoL'] :
+             SoH_ely_tp1 = 1
+             j_new_ely = j
++            j_rul_ely = j + 1  # idem
+             # Unite neuve : etats remis a 0 puis 1er pas (P_prev = P[j] -> pas de start-stop)
+             V_irr_ely, V_rev_ely, d_ss_ely, d_idle_ely = _ely_advance(
+                 0.0, 0.0, P_ely[j], P_ely[j], P_ely_max_t, Ts_h)
+-- 
+2.43.0
+

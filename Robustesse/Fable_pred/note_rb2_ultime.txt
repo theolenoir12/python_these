@@ -1,0 +1,124 @@
+================================================================================
+NOTE DE THESE -- RB2 ULTIME : L'EMPILEMENT COMPLET DES LEVIERS VALIDES
+                 (socle cost-min + SoH_fc/SoH_ely + SoH_bat + prevision)
+Dossier : Robustesse/Fable_pred/
+Donnees : ultime.212376.out (bench N=200 + omni ; table reproduite ci-dessous),
+          sweep_ultime_target.txt (N=64), sweep_ultime_hpre.txt (N=64)
+Protocole: 25 ans, VoLL=3, bruit backtest sigma=39.38 kWh @18h, CRN.
+Redige  : 2026-07-02.
+================================================================================
+
+0. RESUME (l'essentiel pour le manuscrit)
+--------------------------------------------------------------------------------
+
+NOMENCLATURE THESE (renommage 2026-07-02) :
+    RB2(SoH_bat)      = plafond SoC vieillissant seul   (ex "RB2(SoCmax)" / socwin)
+    RB2(SoH_H2)       = setpoints H2 x SoH_fc/SoH_ely   (ex "RB2(SoH)")
+    RB2(SoH_all)      = les deux leviers etat de sante  (ex "RB2(SoH) unifiee")
+    RB2(Pred)         = pre-charge +-1sigma sur RB2 nu  (impact pur de la prevision)
+    RB2(SoH_all+Pred) = strategie ultime                (ex "RB2 ULTIME")
+    (RB2(SoH_H2+Pred) = ex "RB2(SoH+Pred)", jalon intermediaire)
+NB : les tableaux reproduits des sorties de jobs gardent les anciens libelles.
+Le RB2 ULTIME -- chaque composant pilote par son etat de sante + pre-charge
+previsionnelle a seuil de confiance +-1sigma -- atteint :
+
+    77.224 +/- 0.008 kEUR   (config "ceiling", bench N=200)
+    77.103              (config cible fixe 0.90, sweep target N=64)  <- MEILLEUR
+
+soit -0.47 a -0.59 kEUR vs la reference RB2(SoH+Pred) (77.69) et
+-2.88 a -3.00 kEUR (-3.6 a -3.7 %) vs le socle : MEILLEURE STRATEGIE DE LA
+THESE, dans la fenetre predite (~77.2-77.4). Demarrages ELY ~8995 (< socle
+9199) : aucun cout cache de cyclage.
+
+DECOMPOSITION EN CASCADE (chaque increment mesure, CRN, 25 ans) :
+    RB2 socle cost-min ................. 80.102
+    + setpoints H2 x SoH (gammas 1,2) .. 78.764   (-1.34)
+    + plafond SoC x SoH_bat (g=0.2) .... 78.336   (-0.43)
+    + pre-charge +-1sigma .............. 77.224   (-1.11)
+La valeur du levier previsionnel est PRESERVEE sur la base unifiee (-1.11,
+identique a son -1.10 sur base RB2(SoH), reopt_sohpred) : aucun des trois
+etages ne cannibalise les autres.
+
+
+1. BENCH PRINCIPAL (ultime.212376.out, N=200)
+--------------------------------------------------------------------------------
+    label                | LPSP(%) | deg(kEUR) | total(kEUR) | dtotal | ELY st.
+    RB2 socle            | 2.5921  |  58.843   |   80.102    |   --   |  9199
+    Unifiee (test nul)   | 3.1051  |  52.870   |   78.336    | -1.77  |  9190
+    RB2(SoH+Pred) (g=0)  | 2.7575  |  55.075   |   77.690    | -2.41  |  8996
+    RB2 ULTIME           | 2.9421  |  53.095   |   77.224    | -2.88  |  8995
+    SoH+Pred omni (g=0)  | 2.9091  |  54.906   |   78.764    | -1.34  |  9190
+    ULTIME omni          | 3.1051  |  52.870   |   78.336    | -1.77  |  9190
+
+Controles : test nul = 78.336 pile (unifiee) ; reference RB2(SoH+Pred)
+reproduite a 0.02 pres (77.690 vs 77.667 reopt_sohpred) -> comparabilite OK.
+
+NOTE IMPORTANTE sur les lignes "omni" : elles retombent EXACTEMENT sur leurs
+bases (78.764 = RB2(SoH) pur ; 78.336 = unifiee). Ce n'est PAS une borne
+superieure : sans bruit, la bande +-1sigma bloque tous les declenchements (le
+"plateau omniscient" deja documente dans robustesse_bruit_prevision.txt sect.
+6.4). Autrement dit LA STRATEGIE BRUITEE (77.224) BAT SA PROPRE VERSION SANS
+BRUIT (78.336) : le gain previsionnel de ce design existe PAR l'interaction
+bruit x bande (dithering), c'est le prix assume de la robustesse. La vraie
+borne omnisciente (decision binaire sans bande) n'est pas mesuree ici ; sur le
+socle nu elle valait -1.08 (reopt_pred).
+
+Coordonnees PARETO du point final : (LPSP 2.94 %, deg 53.10 kEUR) -- a placer
+sur pareto_strategies : il domine RB2(SoH) (2.91/54.91) en degradation a LPSP
+quasi egal, et etend le front vers le coin bas-gauche.
+
+
+2. SWEEP "TARGET" : L'INTERACTION PLAFOND x PRE-CHARGE, CONFIRMEE ET CHIFFREE
+--------------------------------------------------------------------------------
+    config             | LPSP(%) | deg    | total  | dtotal vs unifiee
+    ceiling d12        | 2.9436  | 53.093 | 77.235 |  -1.10
+    ceiling d0         | 2.9289  | 53.201 | 77.223 |  -1.11
+    fixed 0.99 d12     | 3.3418  | 52.600 | 80.008 |  +1.67   <- DESASTRE
+    fixed 0.95 d12     | 3.0759  | 52.945 | 78.171 |  -0.16
+    fixed 0.90 d12     | 2.9221  | 53.137 | 77.103 |  -1.23   <- optimum
+    fixed 0.90 d0      | 2.9228  | 53.212 | 77.182 |  -1.15
+
+Trois enseignements :
+  a) L'INTERACTION EST REELLE ET COUTEUSE SI IGNOREE : une cible fixe 0.99
+     (au-dessus du plafond vieilli 0.935-0.995) DETRUIT le levier et au-dela
+     (+2.8 kEUR vs ceiling ; pire que la base sans prevision). Mecanisme :
+     l'hysteresis reste en pre-charge en visant une zone interdite -> ELY
+     coupe en pure perte. A consigner comme regle de conception : "TOUT seuil
+     de SoC d'une regle previsionnelle doit etre asservi a la fenetre
+     effective (vieillie) de la batterie".
+  b) La cible asservie au plafond (ceiling) regle le probleme (-1.10) ; une
+     cible fixe CONSERVATRICE 0.90 fait marginalement mieux (-1.23, ecart
+     0.12 kEUR) : s'arreter ~4 pts sous le plafond economise les dernieres
+     coupures d'ELY les plus cheres. 0.90 reste toutefois DEPENDANT de g
+     (valide car plancher du plafond = 0.935 > 0.90 pour g = 0.2) ; "ceiling"
+     est la forme robuste (marge candidate : cible = soc_max(t) - 0.03/0.05,
+     non balayee). Production retenue : fixed 0.90 (ou ceiling, equivalent
+     a 0.1 kEUR pres).
+  c) LE GEL RESTE DISPENSABLE (d12 vs d0 : ecarts <= 0.08) mais economise
+     ~130 demarrages ELY -- coherent avec sweep_fable_proba.
+
+3. SWEEP "HPRE" : L'ECHELLE DIURNE TIENT
+--------------------------------------------------------------------------------
+    H_PRE = 12 h : 78.065 (-0.27) | 18 h : 77.235 (-1.10) | 24 h : 77.203 (-1.13)
+18 h et 24 h sont a egalite statistique ; 12 h perd les trois quarts du levier.
+L'horizon de decision optimal reste l'echelle jour/nuit, comme sur toutes les
+variantes precedentes -> aucun re-reglage necessaire, robustesse du parametre.
+
+4. POSITION FINALE DANS LA THESE
+--------------------------------------------------------------------------------
+    RB2 socle cost-min ................. 80.102   (sans connaissance)
+    RB2(SoH_H2) ....................... 78.764   (+ SoH_fc/SoH_ely)
+    RB2(SoH_all) ...................... 78.336   (+ SoH_bat)
+    RB2(SoH_H2+Pred) (ex-reference) ... 77.690   (SoH_H2 + prevision)
+    RB2(SoH_all+Pred) ................. 77.103   (tout)          <- POINT FINAL
+
+Gains totaux vs socle : -3.0 kEUR (-3.7 %), LPSP 2.92 vs 2.59 (+0.33 pt),
+degradation 53.1 vs 58.8 kEUR (-9.7 %). Les DEUX axes de connaissance de la
+these (etat de sante, prevision court-terme) contribuent chacun ~la moitie du
+gain, de facon additive et attribuee (tests nuls en cascade, CRN).
+
+Fichiers sources : ultime.212376/77/78.out, sweep_ultime_target.txt,
+sweep_ultime_hpre.txt (rapatrier aussi bench_ultime.txt du cluster pour
+archive). Config production : RB2(SoH_all+Pred)/get_optimal_action_RB.py avec
+SOC_TARGET_MODE="fixed", SOC_TARGET=0.90 (ou "ceiling", equivalent).
+================================================================================

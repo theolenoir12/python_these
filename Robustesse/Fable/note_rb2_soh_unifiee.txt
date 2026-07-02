@@ -9,6 +9,14 @@ Runs    : 25 ans, deterministes (aucune prevision), socle cost-min 0.440/0.310,
 
 0. RESUME (l'essentiel pour le manuscrit)
 --------------------------------------------------------------------------------
+
+NOMENCLATURE THESE (renommage 2026-07-02) :
+    RB2(SoH_bat)      = plafond SoC vieillissant seul   (ex "RB2(SoCmax)" / socwin)
+    RB2(SoH_H2)       = setpoints H2 x SoH_fc/SoH_ely   (ex "RB2(SoH)")
+    RB2(SoH_all)      = les deux leviers etat de sante  (ex "RB2(SoH) unifiee")
+    RB2(Pred)         = pre-charge +-1sigma sur RB2 nu  (impact pur de la prevision)
+    RB2(SoH_all+Pred) = strategie ultime                (ex "RB2 ULTIME")
+    (RB2(SoH_H2+Pred) = ex "RB2(SoH+Pred)", jalon intermediaire)
 La RB2(SoH) UNIFIEE -- chaque composant pilote par SON etat de sante :
     P_fc_set  = 0.440 * Pmax_fc  * SoH_fc^1        (niveau 1, RB2(SoH))
     P_ely_set = 0.310 * Pmax_ely * SoH_ely^2       (niveau 1, RB2(SoH))

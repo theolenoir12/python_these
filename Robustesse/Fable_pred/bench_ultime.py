@@ -6,11 +6,16 @@ Empile les leviers valides : socle cost-min + gammas RB2(SoH) (1,2) + plafond
 SoC vieillissant (g=0.2) + pre-charge previsionnelle +-1sigma. Compare, sous le
 MEME bruit (CRN), sur l'indicateur unifie VoLL=3 :
 
-    RB2 socle                 (ancrage absolu, attendu 80.102)
-    Unifiee (base, test nul)  (gammas + plafond, sans prevision : attendu 78.336)
-    RB2(SoH+Pred) (g=0)       (reference actuelle de la these : attendu ~77.67)
-    RB2 ULTIME                (le point final : cible < 77.67)
-    (+ --omni : bornes a prevision parfaite)
+    RB2 socle                  (ancrage absolu, attendu 80.102)
+    RB2(SoH_all) (test nul)    (gammas + plafond, sans prevision : attendu 78.336)
+    RB2(SoH_H2+Pred) (g=0)     (ex-reference RB2(SoH+Pred) : attendu ~77.67)
+    RB2(SoH_all+Pred)          (le point final "ultime" : cible < 77.67)
+    RB2(SoH_all+Pred) (0.90)   (config cible fixe retenue par le sweep target)
+    (+ --omni : plateaux de bande a prevision parfaite)
+
+NOMENCLATURE these : RB2(SoH_bat)=plafond SoC seul ; RB2(SoH_H2)=gammas
+setpoints (ex RB2(SoH)) ; RB2(SoH_all)=les deux (ex "unifiee") ;
+RB2(SoH_all+Pred)=strategie ultime (ex "RB2 ULTIME").
 
 USAGE
 -----
@@ -36,21 +41,26 @@ for _p in (HERE, PRED_DIR):
 
 VOLL    = 3.0
 MC_SEED = 2026
-ULT     = os.path.join(HERE, "RB2(Ultime)")
+ULT     = os.path.join(HERE, "RB2(SoH_all+Pred)")
 G_WIN   = 0.2            # plafond SoC vieillissant retenu (sweep_fable_socwin_fine)
 
 # (label, overrides). Cles speciales "_lol:<PARAM>" -> Common.get_lol.
 BENCH_STRATS = [
     ("RB2 socle",            {"ENABLE": False, "NOISE_ENABLE": False,
                               "GAMMA_FC": 0.0, "GAMMA_ELY": 0.0}),
-    ("Unifiee (test nul)",   {"ENABLE": False, "NOISE_ENABLE": False,
+    ("RB2(SoH_all) (test nul)", {"ENABLE": False, "NOISE_ENABLE": False,
                               "_lol:SOC_MAX_AGED_GAIN": G_WIN}),
-    ("RB2(SoH+Pred) (g=0)",  {}),
-    ("RB2 ULTIME",           {"_lol:SOC_MAX_AGED_GAIN": G_WIN}),
+    ("RB2(SoH_H2+Pred) (g=0)", {}),
+    ("RB2(SoH_all+Pred)",    {"_lol:SOC_MAX_AGED_GAIN": G_WIN}),
+    # Config retenue par le sweep target (77.103 a N=64) : confirmation N=200
+    # pour que le chiffre du manuscrit porte le meme intervalle de confiance
+    # que les autres points de reference.
+    ("RB2(SoH_all+Pred) (0.90)", {"SOC_TARGET_MODE": "fixed", "SOC_TARGET": 0.90,
+                              "_lol:SOC_MAX_AGED_GAIN": G_WIN}),
 ]
 OMNI_STRATS = [
-    ("SoH+Pred omni (g=0)",  {"NOISE_ENABLE": False}),
-    ("ULTIME omni",          {"NOISE_ENABLE": False, "_lol:SOC_MAX_AGED_GAIN": G_WIN}),
+    ("SoH_H2+Pred omni (g=0)", {"NOISE_ENABLE": False}),
+    ("SoH_all+Pred omni",    {"NOISE_ENABLE": False, "_lol:SOC_MAX_AGED_GAIN": G_WIN}),
 ]
 
 # Cible de pre-charge x gel, sur le RB2 ULTIME complet.
@@ -66,7 +76,7 @@ LOL_DEFAULTS = {"SOC_MAX_AGED_GAIN": 0.0, "LOL_COMBINED": False}
 
 def _load():
     spec = importlib.util.spec_from_file_location(
-        "strat_RB2Ultime", os.path.join(ULT, "get_optimal_action_RB.py"))
+        "strat_RB2SoHallPred", os.path.join(ULT, "get_optimal_action_RB.py"))
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     return m

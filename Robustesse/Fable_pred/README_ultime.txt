@@ -5,7 +5,15 @@ Dossier : Robustesse/Fable Predictions/       Cree : 2026-07-02
 
 0. RESUME
 --------------------------------------------------------------------------------
-RB2(Ultime) = l'empilement des leviers VALIDES de la these, chacun atteste par
+
+NOMENCLATURE THESE (renommage 2026-07-02) :
+    RB2(SoH_bat)      = plafond SoC vieillissant seul   (ex "RB2(SoCmax)" / socwin)
+    RB2(SoH_H2)       = setpoints H2 x SoH_fc/SoH_ely   (ex "RB2(SoH)")
+    RB2(SoH_all)      = les deux leviers etat de sante  (ex "RB2(SoH) unifiee")
+    RB2(Pred)         = pre-charge +-1sigma sur RB2 nu  (impact pur de la prevision)
+    RB2(SoH_all+Pred) = strategie ultime                (ex "RB2 ULTIME")
+    (RB2(SoH_H2+Pred) = ex "RB2(SoH+Pred)", jalon intermediaire)
+RB2(SoH_all+Pred) -- "l'ultime" -- = l'empilement des leviers VALIDES de la these, chacun atteste par
 son sweep d'attribution :
 
     niveau 0  socle cost-min           0.440 / 0.310            (reopt_pred)
@@ -62,7 +70,7 @@ sweep_ultime_hpre.txt. Les jobs ecrivent des fichiers DISTINCTS par mode.
     (.txt / .out) se rapatrient. Le code va toujours PC -> git -> cluster.
   - Le plafond SoC est applique par Common/get_lol via SOC_MAX_AGED_GAIN :
     le bench le fixe PAR TACHE ("_lol:SOC_MAX_AGED_GAIN") et le remet a 0
-    ensuite ; en run unitaire, RB2(Ultime)/main.py le fixe explicitement.
+    ensuite ; en run unitaire, RB2(SoH_all+Pred)/main.py le fixe explicitement.
   - La strategie LIT le plafond effectif dans Common.get_lol (jamais sa propre
     constante) : cible de pre-charge et contrainte restent coherentes.
 ================================================================================

@@ -5,7 +5,8 @@ from Common.get_lol import *
 import Common.get_lol as _gl
 
 # ==========================================================================
-#  RB2(Ultime) : l'empilement complet des leviers valides de la these.
+#  RB2(SoH_all+Pred) -- "l'ultime" : empilement complet des leviers valides.
+#  (nomenclature : SoH_bat=plafond SoC ; SoH_H2=gammas ; SoH_all=les deux)
 #
 #      niveau 0 (socle)   : RB2 cost-min          (0.440 / 0.310)
 #      niveau 1 (SoH H2)  : setpoints modules par l'etat de sante

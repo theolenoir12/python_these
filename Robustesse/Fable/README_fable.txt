@@ -5,6 +5,14 @@ Dossier : Robustesse/Fable/          Cree : 2026-07-01 (revue de coherence)
 
 0. RESUME
 --------------------------------------------------------------------------------
+
+NOMENCLATURE THESE (renommage 2026-07-02) :
+    RB2(SoH_bat)      = plafond SoC vieillissant seul   (ex "RB2(SoCmax)" / socwin)
+    RB2(SoH_H2)       = setpoints H2 x SoH_fc/SoH_ely   (ex "RB2(SoH)")
+    RB2(SoH_all)      = les deux leviers etat de sante  (ex "RB2(SoH) unifiee")
+    RB2(Pred)         = pre-charge +-1sigma sur RB2 nu  (impact pur de la prevision)
+    RB2(SoH_all+Pred) = strategie ultime                (ex "RB2 ULTIME")
+    (RB2(SoH_H2+Pred) = ex "RB2(SoH+Pred)", jalon intermediaire)
 Ce dossier contient les prototypes issus de la revue de coherence :
 
   RB2(Proba)/   levier previsionnel declenche par une hysteresis sur la

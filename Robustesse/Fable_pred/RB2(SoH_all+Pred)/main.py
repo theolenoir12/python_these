@@ -16,7 +16,7 @@ import get_optimal_action_RB as strat
 
 
 def main():
-    print("--- Simulation RB2(Ultime) [gammas SoH + plafond SoC vieilli + pre-charge ±1σ] ---")
+    print("--- Simulation RB2(SoH_all+Pred) [gammas SoH + plafond SoC vieilli + pre-charge ±1σ] ---")
     start_time = timer()
 
     # Plafond SoC vieillissant : applique par Common/get_lol (run standalone)

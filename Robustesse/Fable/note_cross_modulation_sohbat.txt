@@ -8,6 +8,14 @@ Runs    : 25 ans, deterministes (aucune prevision), socle cost-min 0.440/0.310,
 
 0. RESUME (l'essentiel pour le manuscrit)
 --------------------------------------------------------------------------------
+
+NOMENCLATURE THESE (renommage 2026-07-02) :
+    RB2(SoH_bat)      = plafond SoC vieillissant seul   (ex "RB2(SoCmax)" / socwin)
+    RB2(SoH_H2)       = setpoints H2 x SoH_fc/SoH_ely   (ex "RB2(SoH)")
+    RB2(SoH_all)      = les deux leviers etat de sante  (ex "RB2(SoH) unifiee")
+    RB2(Pred)         = pre-charge +-1sigma sur RB2 nu  (impact pur de la prevision)
+    RB2(SoH_all+Pred) = strategie ultime                (ex "RB2 ULTIME")
+    (RB2(SoH_H2+Pred) = ex "RB2(SoH+Pred)", jalon intermediaire)
 La batterie porte ~2/3 du cout de degradation 25 ans (35 kEUR sur ~55 : 7.0 kEUR
 par remplacement, ~5 vies a ~5 ans). Deux familles de regles "conscientes du
 SoH_bat" ont ete testees pour exploiter ce gisement, avec attribution propre

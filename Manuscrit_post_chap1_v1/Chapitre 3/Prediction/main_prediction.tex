@@ -111,7 +111,7 @@ Le biais est négligeable, l'écart-type substantiel. Ce $\sigma$ est mesuré co
 \label{subsec:fragility}
 % ------------------------------------------------------------
 
-\emph{Nota.} La caractérisation du bruit puis de l'hystérésis présentée dans cette sous-section et la suivante a été établie sur la base de référence (RB2 nominal, coût total $85{,}55$~k€), en amont de la ré-optimisation du socle de RB2. Elle démontre le \emph{mécanisme} de fragilité de la décision binaire puis de sa robustification, dont les conclusions qualitatives sont indépendantes du socle. Le point de fonctionnement robuste ré-basé sur le socle optimisé ($79{,}72$~k€) est reporté au Tableau~\ref{tab:soh_pred} et à la Figure~\ref{fig:pareto_rb2pred}~; la ré-exécution de ces balayages sur le socle ré-optimisé reste à mener.
+\emph{Nota.} La caractérisation du bruit puis de l'hystérésis présentée dans cette sous-section et la suivante a été établie sur la base de référence historique (RB2 nominal, coût total $85{,}55$~k€), en amont de la ré-optimisation du socle de RB2~: elle démontre le \emph{mécanisme} de fragilité de la décision binaire puis de sa robustification. L'ensemble du dispositif a ensuite été ré-exécuté sur le socle optimisé ($80{,}11$~k€), sous une reformulation probabiliste qui généralise l'hystérésis~; cette confirmation, ainsi que la mise à l'épreuve du dispositif face à des conceptions alternatives et à un bruit corrélé, fait l'objet de la sous-section~\ref{subsec:robust_confirm}. Le point de fonctionnement robuste sur socle optimisé ($79{,}72$~k€) est reporté au Tableau~\ref{tab:soh_pred} et à la Figure~\ref{fig:pareto_rb2pred}.
 
 En injectant le bruit réaliste~\eqref{eq:noise_model} dans la grandeur de décision, et en conservant la décision binaire d'origine, pré-charger si $E_{\text{net}}^{\text{prév}}>0$, le gain s'effondre (Tableau~\ref{tab:fragility}).
 
@@ -200,14 +200,64 @@ Le positionnement de la stratégie prévisionnelle robuste dans le plan de Paret
 \end{figure}
 \FloatBarrier
 
-Le bruit est supposé gaussien et indépendant d'un pas à l'autre, ce qui constitue le pire cas pour le clignotement~: des prévisions réelles consécutives, dont les fenêtres se recouvrent, seraient corrélées et engendreraient moins de clignotement. Une modélisation à bruit corrélé reste à explorer. Le $\sigma$ retenu est par ailleurs spécifique à l'horizon de décision, au jeu de données et au modèle LSTM courant.
+Le bruit est ici supposé gaussien et indépendant d'un pas à l'autre, ce qui constitue le pire cas pour le clignotement~: des prévisions réelles consécutives, dont les fenêtres se recouvrent, sont corrélées et engendrent moins de clignotement. Cette hypothèse est levée à la sous-section suivante, où le dispositif est éprouvé sous bruit autocorrélé. Le $\sigma$ retenu est par ailleurs spécifique à l'horizon de décision, au jeu de données et au modèle LSTM courant.
+
+% ------------------------------------------------------------
+\subsection{Confirmation sur socle optimisé et mise à l'épreuve du dispositif}
+\label{subsec:robust_confirm}
+% ------------------------------------------------------------
+
+Le dispositif d'hystérésis ayant été réglé sur la base historique, sa validité sur le socle optimisé restait à établir. Cette confirmation a été conduite sous une reformulation \emph{probabiliste} qui généralise l'hystérésis et en éclaire le sens. L'incertitude $\sigma$ étant connue, l'énergie nette prévue se convertit en \emph{probabilité de déficit}~:
+\begin{equation}
+\label{eq:proba_deficit}
+\mathbb{P}(\text{déficit}) = \Phi\!\left(\frac{E_{\text{net}}^{\text{prév}}}{\sigma}\right),
+\end{equation}
+où $\Phi$ est la fonction de répartition gaussienne, et l'hystérésis s'exprime par deux seuils de confiance~: entrée en pré-charge si $\mathbb{P} > p_{\text{haut}}$, sortie si $\mathbb{P} < p_{\text{bas}}$. Le couple symétrique $(p, 1-p)$ équivaut exactement à une bande $\pm\Phi^{-1}(p)\,\sigma$~: le réglage $(0{,}84\,; 0{,}16)$ reproduit la bande $\pm 1\sigma$. L'intérêt de cette écriture est double~: le réglage s'exprime en unités d'erreur de prévision, donc reste valable si $\sigma$ change (autre modèle, autre horizon, incertitude dépendant du régime météorologique)~; et lorsque la prévision devient parfaite ($\sigma \to 0$), $\Phi$ tend vers l'échelon et la décision retombe d'elle-même sur le déclenchement omniscient — le dispositif de robustesse s'efface quand il n'a plus lieu d'être.
+
+Le balayage des seuils de confiance sur le socle optimisé (Monte-Carlo, 25~ans, 64 graines communes) est rapporté au Tableau~\ref{tab:proba_sweep}. Trois enseignements s'en dégagent. D'abord, la configuration équivalente au réglage historique ($\pm 1\sigma$, gel de \SI{12}{\hour}) confirme sa valeur sur le socle optimisé~: $79{,}72$~k€, soit $-0{,}38$~k€ par rapport au socle — le mécanisme établi sur la base historique se transpose. Ensuite, le resserrement de la bande dégrade le résultat de façon \emph{monotone}, et pas seulement par le clignotement~: la LPSP elle-même se détériore à mesure que la bande rétrécit, car les déclenchements proches du seuil sont majoritairement des \emph{faux positifs} — couper l'électrolyseur à tort prive le réservoir d'hydrogène, ce qui se paie plus tard en délestage. L'information contenue dans les prévisions de faible amplitude ($|E_{\text{net}}| < \sigma$) existe, mais son exploitation coûte plus qu'elle ne rapporte~: la bande à $\pm 1\sigma$ \emph{sature} le contenu informatif exploitable du signal. Enfin, sur le socle optimisé, le gel temporel devient superflu~: la bande seule atteint $79{,}70$~k€, statistiquement indiscernable du réglage complet — le dispositif de robustesse minimal se réduit à \emph{un seuil de confiance calé sur l'incertitude mesurée}, le gel ne conservant qu'un intérêt secondaire (environ 150 démarrages d'électrolyseur évités).
+
+\begin{table}[h!]
+\centering
+\caption{Balayage des seuils de confiance sur le socle optimisé (Monte-Carlo 25~ans, 64 graines communes, VoLL~$=3$~€/kWh). Le resserrement de la bande dégrade le compromis de façon monotone~; $\pm 1\sigma$ sans gel égale le réglage historique.}
+\label{tab:proba_sweep}
+\begin{tabular}{cccccc}
+\hline
+$(p_{\text{haut}}, p_{\text{bas}})$ & Bande équiv. & Gel [h] & LPSP [\%] & Dégrad. [k€] & Coût total [k€] \\
+\hline
+$(0{,}55\,; 0{,}45)$ & $\pm 0{,}13\sigma$ & 0  & 2,58 & 59,39 & 80,52 \\
+$(0{,}60\,; 0{,}40)$ & $\pm 0{,}25\sigma$ & 0  & 2,56 & 59,33 & 80,31 \\
+$(0{,}70\,; 0{,}30)$ & $\pm 0{,}52\sigma$ & 0  & 2,53 & 59,22 & 79,99 \\
+$(0{,}80\,; 0{,}20)$ & $\pm 0{,}84\sigma$ & 0  & 2,52 & 59,11 & 79,74 \\
+$(0{,}84\,; 0{,}16)$ & $\pm 1\sigma$      & 0  & 2,52 & 59,07 & \textbf{79,70} \\
+$(0{,}84\,; 0{,}16)$ & $\pm 1\sigma$      & 12 & 2,53 & 58,96 & 79,72 \\
+\hline
+\end{tabular}
+\end{table}
+
+Le dispositif a en outre été confronté à deux conceptions alternatives plausibles, toutes deux construites avec la même propriété de test nul et évaluées sous les mêmes tirages de bruit. La première remplace la décision binaire par une modulation \emph{continue} de l'offset de l'électrolyseur, proportionnelle à la probabilité de déficit ($P_{\text{ELY-offset}} \propto 1 - \mathbb{P}$)~: exploitant l'amplitude prévue et non plus seulement son signe, elle supprime le clignotement par construction. Elle échoue pourtant lourdement ($83{,}34$~k€, soit $+3{,}2$~k€ par rapport au socle)~: sous un bruit du même ordre que le signal, l'espérance du modulateur bride l'électrolyseur en permanence — de $20$ à $40\,\%$ pendant les heures de surplus réel — et ce déficit chronique de stockage d'hydrogène dégrade la LPSP bien au-delà de ce que le lissage économise. La seconde ajoute un levier symétrique de \emph{pré-décharge}~: avant un surplus prévu, freiner la pile pour aborder le surplus avec un SoC bas et réduire l'écrêtage haut. Toutes ses configurations perdent de $6$ à $16$~k€~: freiner la pile reporte les déficits sur la batterie — précisément le poste de dégradation dominant — et multiplie les passages au plancher de SoC. Ces deux contre-essais délimitent en creux ce qui fait la valeur du dispositif retenu~: sous une incertitude de l'ordre du signal ($\sigma \approx \SI{39}{\kilo\watt\hour}$ pour des bilans à \SI{18}{\hour} souvent inférieurs), la prévision ne fournit guère plus d'\emph{un bit exploitable par décision} — un déficit est-il probable à $\pm 1\sigma$ près — et les tentatives d'en extraire davantage (seuils fins, amplitude, signaux symétriques) rapportent moins que le coût du bruit qu'elles laissent entrer.
+
+Reste l'hypothèse d'indépendance temporelle du bruit. Les fenêtres de prévision consécutives se recouvrant très largement, l'erreur réelle est fortement autocorrélée~; le dispositif a donc été rejoué sous un bruit autorégressif d'ordre un, à variance stationnaire inchangée, pour des coefficients de corrélation horaire $\rho$ croissants (Tableau~\ref{tab:rho_sweep}). Le gain du levier robuste est insensible à la corrélation jusqu'à $\rho = 0{,}8$ et ne s'érode qu'aux corrélations extrêmes ($-0{,}19$~k€ à $\rho = 0{,}95$)~: une erreur persistante plusieurs jours durant trompe la bande de manière durable, ce que ni la zone morte ni le gel — conçus contre le bruit \emph{rapide} — ne peuvent filtrer. Le classement des variantes est inchangé à tous les niveaux de corrélation, et la modulation continue n'est pas davantage sauvée par un bruit corrélé, son défaut étant le bridage moyen et non le clignotement. L'hypothèse de bruit indépendant des analyses précédentes était donc conservative pour le clignotement et sans incidence sur les conclusions~; en toute rigueur, le gain prévisionnel robuste s'énonce entre $-0{,}2$ et $-0{,}4$~k€ selon la corrélation réelle de l'erreur de prévision.
+
+\begin{table}[h!]
+\centering
+\caption{Effet de la corrélation temporelle du bruit (processus AR(1) à variance constante, Monte-Carlo 25~ans, 32 graines communes)~: gain du levier robuste par rapport au socle optimisé.}
+\label{tab:rho_sweep}
+\begin{tabular}{lcccc}
+\hline
+Corrélation horaire $\rho$ & 0 (indép.) & 0,5 & 0,8 & 0,95 \\
+\hline
+Gain de RB2(Pred) robuste [k€] & $-0{,}37$ & $-0{,}38$ & $-0{,}34$ & $-0{,}19$ \\
+\hline
+\end{tabular}
+\end{table}
+
 
 % ------------------------------------------------------------
 \subsection{Combinaison de l'état de santé et de la prévision}
 \label{subsec:soh_pred}
 % ------------------------------------------------------------
 
-Les leviers SoH et prévision agissent sur des grandeurs différentes, durabilité pour le premier, fiabilité pour le second, et peuvent être combinés. La stratégie RB2(SoH+Pred) greffe la pré-charge robuste sur la base déjà augmentée par l'état de santé. Les performances, évaluées en Monte-Carlo (\num{200} tirages, 25~ans), sont reportées au Tableau~\ref{tab:soh_pred}.
+Les leviers SoH et prévision agissent sur des grandeurs différentes, durabilité pour le premier, fiabilité pour le second, et peuvent être combinés. La stratégie \RBshp{} greffe la pré-charge robuste sur la base déjà augmentée par l'état de santé des composants hydrogène. Les performances, évaluées en Monte-Carlo (\num{200} tirages, 25~ans), sont reportées au Tableau~\ref{tab:soh_pred}.
 
 \begin{table}[h!]
 \centering
@@ -218,21 +268,74 @@ Les leviers SoH et prévision agissent sur des grandeurs différentes, durabilit
 Stratégie & LPSP [\%] & Coût de dégradation [k€] & Coût total [k€] \\
 \hline
 RB2 (référence)   & 2,59 & 58,85 & 80,11 \\
-RB2(SoH)          & 2,91 & 54,91 & 78,77 \\
-RB2(Pred)         & 2,53 & 58,97 & 79,72 \\
-RB2(SoH+Pred)     & 2,75 & 55,08 & 77,67 \\
+\RBsohH{}         & 2,91 & 54,91 & 78,77 \\
+RB2(Pred)         & 2,53 & 58,96 & 79,72 \\
+\RBshp{}          & 2,76 & 55,08 & 77,69 \\
 \hline
 \end{tabular}
 \end{table}
 
-RB2(Pred) améliore le coût total par rapport à RB2 ($80{,}11 \to 79{,}72$~k€), par une meilleure LPSP à dégradation quasi inchangée. RB2(SoH+Pred) gagne à son tour sur la LPSP par rapport à RB2(SoH), à dégradation quasi identique, et atteint le meilleur coût total du chapitre ($77{,}67$~k€)~: le levier de prévision se transfère sur la base augmentée par l'état de santé, ce qui confirme la complémentarité des deux connaissances. La dispersion Monte-Carlo de ces points est faible, l'écart-type de dégradation valant $0{,}04$ à $0{,}16$~k€~: sur l'agrégat de 25~ans, environ \num{219000} pas, le bruit horaire indépendant s'auto-moyenne et l'indicateur final est quasi déterministe.
+RB2(Pred) améliore le coût total par rapport à RB2 ($80{,}11 \to 79{,}72$~k€), par une meilleure LPSP à dégradation quasi inchangée. \RBshp{} gagne à son tour sur la LPSP par rapport à \RBsohH, à dégradation quasi identique, et atteint $77{,}69$~k€~: le levier de prévision se transfère sur la base augmentée par l'état de santé — il y vaut même davantage que sur le socle nu ($-1{,}08$~k€ contre $-0{,}38$) — ce qui confirme la complémentarité des deux connaissances. La dispersion Monte-Carlo de ces points est faible, l'écart-type de dégradation restant inférieur à $0{,}02$~k€ et celui du coût total à $0{,}11$~k€~: sur l'agrégat de 25~ans, environ \num{219000} pas, le bruit horaire indépendant s'auto-moyenne et l'indicateur final est quasi déterministe.
 
-Le positionnement de la stratégie combinée est reporté à la Figure~\ref{fig:pareto_sohpred}. RB2(SoH+Pred) réunit les deux déplacements~: le gain de durabilité apporté par l'état de santé (comme RB2(SoH)) et le gain de fiabilité apporté par la prévision (comme RB2(Pred)), aboutissant à la droite d'iso-coût unifié la plus basse de l'amas RB2.
+Le positionnement de la stratégie combinée est reporté à la Figure~\ref{fig:pareto_sohpred}. \RBshp{} réunit les deux déplacements~: le gain de durabilité apporté par l'état de santé (comme \RBsohH) et le gain de fiabilité apporté par la prévision (comme RB2(Pred)).
 
 \begin{figure}[h!]
     \centering
     \includegraphics[width=\linewidth]{Chapitre 3/Prediction/Figures/pareto_sohpred_isocost.pdf}
-    \caption{Positionnement de RB2(SoH+Pred) dans le plan de Pareto LPSP--coût de dégradation, avec RB2 et RB2(SoH), parmi le panel du chapitre précédent (agrandissement sur l'amas RB2 en encart). Les droites pointillées grises sont les lignes d'iso-coût total unifié (dégradation $+$ valorisation de la LPSP à VoLL~$=3$~€/kWh, pente $8{,}2$~k€ par point de LPSP)~; leur étiquette donne le coût total en k€.}
+    \caption{Positionnement de \RBshp{} dans le plan de Pareto LPSP--coût de dégradation, avec RB2, RB2(Pred) et \RBsohH, parmi le panel du chapitre précédent (agrandissement sur l'amas RB2 en encart). Les droites pointillées grises sont les lignes d'iso-coût total unifié (dégradation $+$ valorisation de la LPSP à VoLL~$=3$~€/kWh, pente $8{,}2$~k€ par point de LPSP)~; leur étiquette donne le coût total en k€.}
     \label{fig:pareto_sohpred}
+\end{figure}
+\FloatBarrier
+
+% ------------------------------------------------------------
+\subsection{La stratégie complète~: \RBult}
+\label{subsec:ultime}
+% ------------------------------------------------------------
+
+Il reste à empiler l'ensemble des leviers validés~: la pré-charge prévisionnelle robuste est greffée sur la base unifiée \RBsohA{} de la section~\ref{subsec:rb2sohall}, qui cumule la modulation des offsets hydrogène et la fenêtre de SoC vieillissante. La stratégie résultante, \RBult, mobilise ainsi simultanément l'état de santé de chacun des trois composants de stockage et la prévision de l'environnement — l'intégralité des connaissances retenues de ce chapitre.
+
+Ce cumul soulève une interaction de conception qui mérite d'être soulignée, car elle est générale. La pré-charge vise à remplir la batterie jusqu'à une cible de SoC~; or la base unifiée \emph{abaisse le plafond} de SoC à mesure que la batterie vieillit. Une cible figée au voisinage du plafond nominal ($0{,}99$) devient alors inatteignable en fin de vie de batterie~: l'hystérésis reste indéfiniment en pré-charge, l'électrolyseur est coupé en pure perte, et le levier se retourne contre la stratégie. Le balayage de la cible le quantifie sans ambiguïté (Tableau~\ref{tab:target_sweep})~: la cible figée à $0{,}99$ détruit le levier et au-delà ($80{,}01$~k€, pire que la base sans prévision), tandis que la cible \emph{asservie au plafond vieilli} ($\mathrm{SoC}_{\max}(t)$ moins une marge) restaure le gain complet~; une cible figée conservatrice ($0{,}90$, sous le plafond de fin de vie) fait marginalement mieux encore, en économisant les dernières coupures d'électrolyseur, les plus coûteuses. La règle de conception à retenir dépasse ce cas d'espèce~: \emph{tout seuil de SoC d'une règle prévisionnelle doit être asservi à la fenêtre effective — vieillie — de la batterie}, faute de quoi la combinaison de leviers pris chacun bénéfiques peut devenir nuisible. L'horizon de pré-charge a été revérifié sur cette base~: $H_{\text{pre}} = 18$ et \SI{24}{\hour} sont statistiquement équivalents, \SI{12}{\hour} perd les trois quarts du levier~; l'échelle diurne du système reste le bon horizon de décision, sans re-réglage.
+
+\begin{table}[h!]
+\centering
+\caption{Effet de la cible de pré-charge sur la stratégie complète (Monte-Carlo 25~ans, 64 graines, VoLL~$=3$~€/kWh, gel \SI{12}{\hour})~: gain par rapport à la base unifiée \RBsohA{} ($78{,}34$~k€).}
+\label{tab:target_sweep}
+\begin{tabular}{lccc}
+\hline
+Cible de pré-charge & LPSP [\%] & Dégradation [k€] & Coût total [k€] \\
+\hline
+Figée à $0{,}99$ (naïve)            & 3,34 & 52,60 & 80,01 \\
+Figée à $0{,}95$                    & 3,08 & 52,95 & 78,17 \\
+Asservie au plafond vieilli         & 2,94 & 53,09 & 77,24 \\
+Figée à $0{,}90$ (conservatrice)    & 2,92 & 53,14 & \textbf{77,10} \\
+\hline
+\end{tabular}
+\end{table}
+
+Les performances de la stratégie complète sont rapportées au Tableau~\ref{tab:cascade}, sous la forme d'une décomposition en cascade où chaque étage est mesuré par test nul sous tirages de bruit communs~: chaque increment est ainsi attribué à une connaissance et une seule.
+
+\begin{table}[h!]
+\centering
+\caption{Décomposition en cascade de la stratégie complète (Monte-Carlo \num{200} tirages pour les étages prévisionnels, 25~ans, VoLL~$=3$~€/kWh, cible asservie au plafond).}
+\label{tab:cascade}
+\begin{tabular}{lcccc}
+\hline
+Étage & LPSP [\%] & Dégradation [k€] & Coût total [k€] & Gain de l'étage \\
+\hline
+RB2 socle optimisé                          & 2,59 & 58,84 & 80,10 & --- \\
+$+$ offsets H$_2$ $\times$ SoH ($\gamma = 1, 2$) & 2,91 & 54,91 & 78,76 & $-1{,}34$ \\
+$+$ plafond SoC $\times$ SoH$_{\text{bat}}$ ($g = 0{,}2$) & 3,11 & 52,87 & 78,34 & $-0{,}43$ \\
+$+$ pré-charge $\pm 1\sigma$ (= \RBult)   & 2,94 & 53,10 & \textbf{77,22} & $-1{,}11$ \\
+\hline
+\end{tabular}
+\end{table}
+
+Trois observations closent la construction. D'abord, la valeur du levier prévisionnel est \emph{préservée} sur la base unifiée~: $-1{,}11$~k€, identique à sa valeur sur \RBsohH{} — aucun étage ne cannibalise les autres, prolongeant l'additivité constatée entre les leviers d'état de santé. Ensuite, le point final s'établit à $77{,}22$~k€ en moyenne Monte-Carlo à \num{200} tirages (écart-type de moyenne inférieur à $0{,}01$~k€), et à $77{,}10$~k€ pour la variante à cible conservatrice~; par rapport au socle optimisé, le gain cumulé atteint $2{,}9$ à $3{,}0$~k€, soit $-3{,}7\,\%$ de coût total unifié, dont $-9{,}7\,\%$ de coût de dégradation pour $+0{,}35$ point de LPSP. Enfin, les démarrages de l'électrolyseur restent inférieurs à ceux du socle~: l'empilement n'introduit aucun surcoût caché de cyclage. Les deux axes de connaissance de la thèse — l'état de santé et la prévision de court terme — contribuent chacun pour environ la moitié de ce gain, de façon additive et attribuée.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{Chapitre 3/Prediction/Figures/pareto_ultime_isocost.pdf}
+    \caption{Positionnement de la stratégie complète \RBult{} dans le plan de Pareto LPSP--coût de dégradation, avec RB2, RB2(Pred) et la base unifiée \RBsohA{} (agrandissement sur l'amas RB2 en encart~; lignes d'iso-coût total unifié à VoLL~$=3$~€/kWh).}
+    \label{fig:pareto_ultime}
 \end{figure}
 \FloatBarrier

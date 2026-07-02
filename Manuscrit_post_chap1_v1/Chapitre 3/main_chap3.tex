@@ -11,6 +11,16 @@
 \renewcommand{\sectionmark}[1]{\markboth{#1}{}}
 \fancyfoot{}
 
+% --- Nomenclature des stratégies augmentées de ce chapitre --------------------
+% Le suffixe précise la connaissance injectée : SoH_H2 = offsets hydrogène
+% modulés par SoH_FC/SoH_ELY ; SoH_bat = fenêtre de SoC modulée par SoH_bat ;
+% SoH_all = les deux ; +Pred = pré-charge prévisionnelle.
+\newcommand{\RBsohH}{RB2(SoH$_{\mathrm{H_2}}$)}
+\newcommand{\RBsohB}{RB2(SoH$_{\mathrm{bat}}$)}
+\newcommand{\RBsohA}{RB2(SoH$_{\mathrm{all}}$)}
+\newcommand{\RBshp}{RB2(SoH$_{\mathrm{H_2}}$+Pred)}
+\newcommand{\RBult}{RB2(SoH$_{\mathrm{all}}$+Pred)}
+
 % ============================================================
 %  CHAPITRE 4 — Section 1 : Propos introductif & question de recherche
 % ============================================================
@@ -69,13 +79,13 @@ Le cadre et les intentions étant posés, la question de recherche structurant c
     }
 \end{align*}
 
-Pour y répondre, ce chapitre dresse d'abord l'état de l'art de l'intégration du diagnostic, du pronostic et de la prévision dans les stratégies de gestion d'énergie, et positionne l'étude. Il développe ensuite les trois axes d'augmentation de la stratégie RB2, traités séparément puis dans leur combinaison~: l'augmentation par l'état de santé (stratégie RB2(SoH)), l'augmentation par le pronostic de durée de vie résiduelle (stratégie RB2(RUL)), et l'augmentation par la prévision des profils de production et de consommation, qui mobilise un réseau de neurones récurrent et fait une large place à la question de la robustesse au bruit de prévision. Une synthèse comparative situe enfin l'ensemble des stratégies augmentées dans le plan de Pareto, vis-à-vis de la stratégie de référence et de la borne optimale, avant la conclusion du chapitre.
+Pour y répondre, ce chapitre dresse d'abord l'état de l'art de l'intégration du diagnostic, du pronostic et de la prévision dans les stratégies de gestion d'énergie, et positionne l'étude. Il développe ensuite les trois axes d'augmentation de la stratégie RB2, traités séparément puis dans leur combinaison. L'augmentation par l'état de santé se décline en deux leviers indépendants, selon le composant dont la connaissance est exploitée~: la modulation des offsets hydrogène par le SoH de la pile et de l'électrolyseur (stratégie \RBsohH), puis la modulation de la fenêtre d'usage de la batterie par son propre SoH (stratégie \RBsohB), leur cumul constituant la stratégie \RBsohA{}\footnote{Le suffixe précise la connaissance injectée~: SoH$_{\mathrm{H_2}}$ pour les offsets hydrogène modulés par le SoH de la pile et de l'électrolyseur, SoH$_{\mathrm{bat}}$ pour la fenêtre de SoC modulée par le SoH de la batterie, SoH$_{\mathrm{all}}$ pour leur cumul, +Pred pour la pré-charge prévisionnelle.}. Suivent l'augmentation par le pronostic de durée de vie résiduelle (stratégie RB2(RUL)) et l'augmentation par la prévision des profils de production et de consommation, qui mobilise un réseau de neurones récurrent et fait une large place à la question de la robustesse au bruit de prévision~; la combinaison de l'ensemble des leviers validés aboutit à la stratégie complète \RBult. Une synthèse comparative situe enfin l'ensemble des stratégies augmentées dans le plan de Pareto, vis-à-vis de la stratégie de référence et de la borne optimale, avant la conclusion du chapitre.
 
 % ============================================================
 %  Sections du chapitre
 % ============================================================
 \input{Chapitre 3/EtatArt/main_eda}            % État de l'art & positionnement
-\input{Chapitre 3/SoH/main_soh_aware}          % Axe 1 : RB2(SoH)
+\input{Chapitre 3/SoH/main_soh_aware}          % Axe 1 : SoH (RB2(SoH_H2), RB2(SoH_bat), RB2(SoH_all))
 \input{Chapitre 3/RUL/main_rul_aware}          % Axe 2 : RB2(RUL)
 \input{Chapitre 3/Prediction/main_prediction}  % Axe 3 : prévision LSTM + pré-charge + robustesse
 \input{Chapitre 3/Synthese/main_synthese}      % Synthèse comparative (Pareto + borne DP)

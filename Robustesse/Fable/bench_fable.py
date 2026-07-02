@@ -84,6 +84,25 @@ SWEEP_SOHBAT = [  # (BETA_FC_BAT, BETA_ELY_BAT)
 # Plafond SoC vieillissement-dependant (Common/get_lol), sur le socle, deterministe.
 # gain g : plafond a SoH_EoL(0.7) = 0.995 - 0.3*g
 SWEEP_SOCWIN = [0.0, 0.2, 0.4, 0.6, 0.8]
+# Grille FINE autour de l'optimum grossier (g* entre 0.1 et 0.4, cf
+# sweep_fable_socwin.txt : g=0.2 -> -0.56 kEUR, g=0.4 -> -0.38).
+SWEEP_SOCWIN_FINE = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40]
+
+# RB2(SoH) UNIFIEE : cumul des deux leviers "etat de sante" independants --
+# modulation des setpoints H2 par SoH_fc/SoH_ely (gammas de RB2(SoH)) x plafond
+# SoC par SoH_bat (socwin). Runs deterministes (pas de prevision).
+# Controles : (0,0,0)=socle 80.102 ; (1,2,0)=RB2(SoH) pur, attendu 78.768
+# (sweep_soh_attribution rang 1) ; (0,0,0.2)=socwin seul 79.543.
+SWEEP_UNIFIED = [  # (GAMMA_FC, GAMMA_ELY, SOC_MAX_AGED_GAIN)
+    (0.0, 0.0, 0.0),                                   # socle (controle)
+    (0.0, 0.0, 0.2),                                   # socwin seul (controle)
+    (1.0, 2.0, 0.0),                                   # RB2(SoH) pur (controle)
+    (1.0, 2.0, 0.1), (1.0, 2.0, 0.2), (1.0, 2.0, 0.3), (1.0, 2.0, 0.4),
+    (0.0, 2.0, 0.2),                                   # variante sans gamma_fc
+    (2.0, 2.0, 0.2),                                   # gamma_fc renforce
+    (1.0, 3.0, 0.2),                                   # gamma_ely renforce
+    (1.0, 1.0, 0.2),                                   # gamma_ely reduit
+]
 
 # Defauts des flags Common/get_lol (remis a chaque tache)
 LOL_DEFAULTS = {"SOC_MAX_AGED_GAIN": 0.0, "LOL_COMBINED": False}
@@ -295,6 +314,26 @@ def main(argv):
                            {"ENABLE": False, "NOISE_ENABLE": False,
                             "_lol:SOC_MAX_AGED_GAIN": g}))
         run_all(strats, n_seeds, ny, "sweep_fable_socwin")
+    elif sweep == "socwin_fine":
+        # Raffinement de grille autour de l'optimum grossier (socle, deterministe).
+        strats = []
+        for g in SWEEP_SOCWIN_FINE:
+            strats.append((f"SoCwin gain={g:.2f}",
+                           os.path.join(HERE, "RB2(Prop)"),
+                           {"ENABLE": False, "NOISE_ENABLE": False,
+                            "_lol:SOC_MAX_AGED_GAIN": g}))
+        run_all(strats, n_seeds, ny, "sweep_fable_socwin_fine")
+    elif sweep == "unified":
+        # RB2(SoH) UNIFIEE : gammas (SoH_fc/SoH_ely -> setpoints H2) x plafond
+        # SoC (SoH_bat -> fenetre batterie). Deterministe, base = socle.
+        strats = []
+        for gfc, gely, g in SWEEP_UNIFIED:
+            strats.append((f"Unif gFC={gfc:g} gELY={gely:g} g={g:.2f}",
+                           os.path.join(HERE, "RB2(Prop)"),
+                           {"ENABLE": False, "NOISE_ENABLE": False,
+                            "GAMMA_FC": gfc, "GAMMA_ELY": gely,
+                            "_lol:SOC_MAX_AGED_GAIN": g}))
+        run_all(strats, n_seeds, ny, "sweep_fable_unified")
     else:
         strats = list(BENCH_STRATS) + (list(OMNI_STRATS) if omni else [])
         if rho is not None:

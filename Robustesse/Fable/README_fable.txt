@@ -46,6 +46,8 @@ LANCER (depuis Fable/, env simu_env, GENIAL_DATA_DIR ou layout Data historique) 
     sbatch run_meso_fable.slurm 32 25 --sweep rho     # bruit correle AR(1) (sect. 2ter)
     sbatch run_meso_fable.slurm 1 25 --sweep soh_bat  # cross-modulation SoH_bat (sect. 3 P1)
     sbatch run_meso_fable.slurm 1 25 --sweep socwin   # plafond SoC vieilli (sect. 3 P2)
+    sbatch run_meso_fable.slurm 1 25 --sweep socwin_fine # grille FINE du plafond (g=0.05..0.40)
+    sbatch run_meso_fable.slurm 1 25 --sweep unified  # RB2(SoH) UNIFIEE : gammas x plafond SoC
     (le bench nominal accepte aussi --rho 0.8 : rejoue les 5 strategies sous bruit correle)
 
 
@@ -266,6 +268,15 @@ RUL EN LIGNE (Vieillissement8/Common/main_init_and_loop.py,
   sweep_fable_rho.txt        balayage bruit correle  (apres --sweep rho)
   sweep_fable_sohbat.txt     cross-modulation SoH_bat (apres --sweep soh_bat)
   sweep_fable_socwin.txt     plafond SoC vieilli     (apres --sweep socwin)
+  sweep_fable_socwin_fine.txt  grille fine du plafond (apres --sweep socwin_fine)
+  sweep_fable_unified.txt    RB2(SoH) unifiee        (apres --sweep unified)
+
+  NOTES DE THESE (redaction consolidee des resultats) :
+  robustesse_quatre_alternatives.txt   le levier previsionnel titulaire vs les
+                                       4 alternatives refutees + bruit correle
+  note_cross_modulation_sohbat.txt     leviers SoH_bat : cross-modulation
+                                       (refutee, genou zero-usure ELY) vs
+                                       fenetre SoC vieillissante (validee)
   RB2(Proba)/, RB2(Prop)/, RB2(PropSym)/   strategies (main.py = run unitaire)
 
   Lecture du bench : comparer 'total' (deg + VoLL*EENS) a la ref RB2(Pred)

@@ -1,0 +1,238 @@
+================================================================================
+NOTE DE THESE -- ROBUSTESSE DU LEVIER PREVISIONNEL RB2(Pred) :
+                 QUATRE ALTERNATIVES REFUTEES + VALIDATION AU BRUIT CORRELE
+Dossier  : Robustesse/Fable/
+Donnees  : bench_fable.txt, sweep_fable_proba.txt, sweep_fable_sym.txt,
+           sweep_fable_rho.txt, sweep_fable_sohbat.txt
+Protocole: 25 ans, socle cost-min (0.440/0.310), VoLL = 3 EUR/kWh, bruit de
+           prevision du backtest LSTM (sigma = 39.38 kWh @ 18 h), Monte-Carlo
+           a graines communes (CRN). Redige : 2026-07-02.
+================================================================================
+
+0. RESUME (l'essentiel pour le manuscrit)
+--------------------------------------------------------------------------------
+Le levier previsionnel retenu -- pre-charge batterie declenchee par une
+HYSTERESIS A BANDE +-1sigma sur l'energie nette prevue -- a ete confronte a
+quatre alternatives plausibles, chacune motivee par une critique legitime de
+son design. LES QUATRE PERDENT, chacune par un mecanisme identifie et
+quantifie. Le design titulaire est en outre INSENSIBLE a la correlation
+temporelle du bruit jusqu'a rho = 0.8 (AR(1)), et ne s'erode que
+marginalement a rho = 0.95.
+
+    strategie (bruit realiste)            total kEUR   vs socle    mecanisme d'echec
+    ----------------------------------    ----------   --------    -----------------
+    RB2 socle (reference)                   80.102       --            --
+    RB2(Pred) hyst +-1sigma  [TITULAIRE]    79.722      -0.38          --
+    A1  bande etroite (probabiliste)        79.99-80.52  -0.11..+0.42  faux positifs
+    A2  modulation continue (Prop)          83.343      +3.24       famine H2 chronique
+    A3  pre-decharge symetrique (PropSym)   86.5-96.5   +6.4..+16.4 report sur batterie
+    A4  cross-modulation SoH_bat            83.1-109.6  +3.0..+29.5 genou d'usure ELY
+
+    validation bruit correle AR(1) : gain titulaire -0.37 (rho=0) -> -0.38 (0.5)
+    -> -0.34 (0.8) -> -0.19 (0.95) ; classement inchange partout.
+
+Enseignements transverses (sect. 7) : sous une incertitude de prevision du
+meme ordre que le signal (sigma ~ 39 kWh vs deficits typiques a 18 h), la seule
+information EXPLOITABLE est le SIGNE du deficit assorti d'une confiance ~1sigma
+-- ni l'amplitude prevue, ni les seuils fins, ni les leviers symetriques ne
+survivent au bruit ; et les organes d'un EMS deja optimise en cout n'offrent
+aucune marge d'usure a redeployer.
+
+
+1. LE DESIGN TITULAIRE ET SA CRITIQUE
+--------------------------------------------------------------------------------
+RB2(Pred) = RB2 + UN levier : si l'energie nette prevue a 18 h depasse
++1sigma, couper l'ELY pour que le surplus PV charge la batterie (pre-charge) ;
+relacher sous -1sigma ; gel optionnel de 12 h apres bascule. Valeur mesuree
+(bench_fable.txt, N = 200) : 79.722 kEUR, soit -0.38 vs socle, pour une borne
+omnisciente a 79.03 (-1.08) : ~37 % du gain ideal survit au bruit realiste.
+
+Critiques legitimes qui ont motive les alternatives :
+  (i)   la bande +-1sigma est LARGE : sans bruit, elle bloque les vrais
+        declenchements (caveat "plateau omniscient" du README Predictions) ;
+  (ii)  la decision n'utilise que le SIGNE du deficit, pas son AMPLITUDE ;
+  (iii) le levier est ASYMETRIQUE (deficits seulement, pas les surplus) ;
+  (iv)  il ignore l'etat de sante de la batterie, qui porte 63 % du cout.
+Chaque critique a donne une alternative testable (A1-A4). Toutes partagent le
+socle, le bruit, les graines (CRN) et la propriete de test nul -> differences
+integralement attribuables au mecanisme teste.
+
+Controles de non-regression du banc (prealables a toute comparaison) :
+  - socle reproduit reopt_pred.txt a 3 decimales (80.102 vs 80.108) ;
+  - la config probabiliste 0.84/0.16 gel 12 h, mathematiquement equivalente au
+    titulaire, redonne 79.725 vs 79.717/79.722 mesures ailleurs (ecart < 0.01).
+
+
+2. A1 -- BANDE ETROITE (DECLENCHEUR PROBABILISTE) : REFUTEE, MONOTONE
+--------------------------------------------------------------------------------
+Idee : exprimer le seuil en PROBABILITE de deficit P = Phi(net_pred/sigma) et
+RETRECIR la bande (P_HI/P_LO -> 0.5) pour recuperer les declenchements doux que
++-1sigma bloque, sans gel. Correspondance exacte : (p, 1-p) <=> +-Phi^-1(p)*sigma.
+
+Resultats (sweep_fable_proba.txt, N = 64) :
+
+    P_HI/P_LO   bande equiv.  gel | LPSP(%) | deg    | total  | dtotal | ELY starts
+    0.55/0.45   +-0.13 sigma   0  | 2.5770  | 59.387 | 80.522 | +0.42  |  9687
+    0.60/0.40   +-0.25 sigma   0  | 2.5581  | 59.325 | 80.306 | +0.20  |  9566
+    0.70/0.30   +-0.52 sigma   0  | 2.5336  | 59.216 | 79.994 | -0.11  |  9362
+    0.80/0.20   +-0.84 sigma   0  | 2.5157  | 59.108 | 79.740 | -0.36  |  9209
+    0.84/0.16   +-1.00 sigma   0  | 2.5161  | 59.068 | 79.704 | -0.40  |  9164
+    0.60/0.40   +-0.25 sigma   6  | 2.6228  | 59.157 | 80.667 | +0.57  |  9332
+    0.70/0.30   +-0.52 sigma   6  | 2.5789  | 59.097 | 80.247 | +0.15  |  9229
+    0.84/0.16   +-1.00 sigma  12  | 2.5317  | 58.961 | 79.725 | -0.38  |  9020
+
+Trois lectures :
+  a) DEGRADATION MONOTONE avec le retrecissement -- et pas seulement par le
+     clignotement (9164 -> 9687 demarrages) : le LPSP LUI-MEME se degrade
+     (2.516 -> 2.577). Pres du seuil, les declenchements sont majoritairement
+     des FAUX POSITIFS : couper l'ELY a tort prive le reservoir d'H2, ce qui
+     coute plus tard en delestage. L'information a |net| < sigma est
+     inexploitable -- elle a un contenu, mais son exploitation coute plus
+     qu'elle ne rapporte.
+  b) A +-1sigma, LE GEL DEVIENT SUPERFLU : 79.704 (sans gel) vs 79.725 (gel
+     12 h), egalite statistique. Sur le socle NOMINAL le gel valait +0.40
+     (robustesse_bruit_prevision.txt sect. 5) ; sur le socle cost-min la bande
+     seule suffit. SIMPLIFICATION pour le manuscrit : le dispositif de
+     robustesse minimal est UN SEUIL DE CONFIANCE A +-1sigma, rien d'autre.
+     (Le gel garde un interet secondaire : -150 demarrages ELY.)
+  c) Le cadre probabiliste reste utile CONCEPTUELLEMENT : reglage portable en
+     unites d'erreur de prevision (si sigma change, P_HI/P_LO restent
+     valables), et convergence automatique vers l'omniscient quand sigma -> 0
+     (le caveat (i) disparait par construction, sans cout de performance).
+
+
+3. A2 -- MODULATION CONTINUE PROPORTIONNELLE (Prop) : REFUTEE, +3.2 kEUR
+--------------------------------------------------------------------------------
+Idee : supprimer la bascule ON/OFF, source du clignotement, en modulant
+continument le setpoint : P_ely_set *= (1 - w), w = Phi(net_pred/(TAU*sigma)).
+Utilise l'amplitude prevue (critique (ii)) et tue le clignotement par
+construction.
+
+Resultat (bench_fable.txt, N = 200, TAU = 1) :
+    LPSP 2.9715 (PIRE que le socle 2.5921) | deg 58.973 | total 83.343 (+3.24)
+    demarrages ELY 10035 (pires du bench).
+
+Mecanisme : sous bruit iid, pendant une heure de VRAI surplus (net_vrai < 0),
+le poids moyen vaut E[Phi(net/sigma + xi)] = Phi(net/(sigma*sqrt(2))) -- soit
+20 a 40 % de bridage PERMANENT de l'ELY dans des heures ou il devrait stocker.
+La modulation continue convertit le bruit de DECISION en deficit de STOCKAGE
+chronique : moins d'H2 -> plus de delestage dans les creux -> LPSP +0.38 pt.
+Et les excursions w ~ 1 coupent tout de meme l'ELY -> les demarrages MONTENT.
+L'anti-clignotement par construction est reel, mais il soigne le symptome en
+installant une maladie chronique pire.
+
+Verification complementaire : le bruit correle (sect. 6) REDUIT le
+clignotement de Prop (10035 -> 9704 a rho = 0.95) mais ne change presque rien
+au total (83.34 -> 83.17) : le probleme n'a jamais ete le clignotement, c'est
+le bridage moyen.
+
+Enonce these : "utiliser l'amplitude prevue sans seuillage est contre-productif
+des que sigma est du meme ordre que le signal : l'esperance du modulateur
+transfere l'incertitude directement dans le point de fonctionnement".
+
+
+4. A3 -- LEVIER SYMETRIQUE DE PRE-DECHARGE (PropSym) : REFUTE, +6 A +16 kEUR
+--------------------------------------------------------------------------------
+Idee (critique (iii)) : avant un SURPLUS confiant, freiner la FC (si
+SoC > plancher) pour aborder le surplus avec un SoC bas -> moins d'ecretage a
+SOC_MAX, H2 economise.
+
+Resultats (sweep_fable_sym.txt, N = 64 ; controle d'attribution PropSym OFF =
+Prop a 0.003 pres) : TOUTES les configs perdent, de +6.4 (t1.0/f0.65) a +16.4
+kEUR (t1.0/f0.40). Deux canaux de perte simultanes :
+  - freiner la FC reporte les deficits sur la BATTERIE -> cyclage plus profond
+    -> deg 62.4-67.0 (vs 58.8) : on aggrave precisement le poste dominant ;
+  - SoC aborde plus bas -> passages au plancher plus frequents -> LPSP 2.94-3.62.
+Le benefice vise (moins d'ecretage haut) est reel mais minuscule devant ces
+deux couts : l'ecretage haut est un evenement RARE dans ce systeme (le plafond
+0.995 est rarement atteint en exploitation socle), alors que le cyclage
+batterie et le plancher sont permanents. Le levier symetrique n'a pas de
+symetrie physique : deficit et surplus n'ont ni la meme frequence ni le meme
+cout marginal.
+
+
+5. A4 -- CROSS-MODULATION SoH_bat : REFUTEE, +3 A +29 kEUR
+--------------------------------------------------------------------------------
+Idee (critique (iv)) : quand la batterie vieillit, remonter les setpoints H2
+(P_set * SoH_bat^-beta) pour reporter du throughput sur la chaine H2.
+Resultat : echec monotone massif (+3.0 kEUR des beta_ELY = 0.25 ; +29.5 a
+beta = 2), cause structurelle : le setpoint ELY cost-min (0.310) est gare PILE
+au genou de zero-usure du modele PEMWE (30 % Pmax = 1 A/cm2, taux nuls en
+dessous) ; toute remontee fait entrer l'ELY en zone generatrice, au cout
+marginal ~6x superieur a l'economie batterie. Analyse detaillee, mecanisme et
+retro-explications (pourquoi 0.310 etait optimal ; pourquoi RB2(SoH) gamma > 0
+fonctionne = asservissement implicite au genou) : voir
+note_cross_modulation_sohbat.txt. Le pendant POSITIF (fenetre de SoC
+vieillissante, -0.56 kEUR) y est egalement documente.
+
+
+6. VALIDATION -- BRUIT CORRELE AR(1) : L'HYPOTHESE IID NE CACHAIT RIEN
+--------------------------------------------------------------------------------
+Limite connue du protocole historique (robustesse_bruit_prevision.txt sect. 7) :
+bruit iid horaire, alors que les fenetres de prevision 18 h consecutives se
+recouvrent a 17/18 -> erreur reelle fortement autocorrelee. Test : bruit AR(1)
+eps_t = rho*eps_{t-1} + sqrt(1-rho^2)*xi_t (variance stationnaire inchangee =
+sigma^2, meme graine CRN), rho = 0 / 0.5 / 0.8 / 0.95.
+
+Resultats (sweep_fable_rho.txt, N = 32) -- dtotal vs socle :
+
+    rho   | Pred hyst (titulaire) | Proba 0.70/0.30 | Prop
+    0.00  |   -0.372              |   -0.096        |  +3.250
+    0.50  |   -0.377              |   -0.069        |  +3.140
+    0.80  |   -0.341              |   -0.136        |  +3.124
+    0.95  |   -0.188              |   -0.109        |  +3.069
+
+Lectures :
+  a) le titulaire est STABLE jusqu'a rho = 0.8 ; a rho = 0.95 le gain diminue
+     de moitie mais reste positif. Mecanisme de l'erosion : une erreur
+     PERSISTANTE (plusieurs jours de biais du meme signe) trompe la bande
+     durablement -- ce que ni la zone morte ni le gel ne peuvent filtrer,
+     puisqu'ils sont concus contre le bruit RAPIDE. C'est la limite honnete a
+     enoncer : "gain robuste -0.2 a -0.4 kEUR selon la correlation reelle de
+     l'erreur de prevision".
+  b) le CLASSEMENT des alternatives est inchange a tous les rho : la
+     correlation reduit le clignotement (demarrages ELY : titulaire stable
+     ~9020-9047 ; Prop 10043 -> 9704) mais ne sauve aucune alternative.
+  c) l'hypothese iid des etudes anterieures etait donc CONSERVATIVE pour le
+     clignotement et legerement OPTIMISTE pour le gain (aux tres fortes
+     correlations) -- sans influence sur aucune conclusion qualitative.
+
+
+7. ENSEIGNEMENTS UNIFIES (proposition de redaction)
+--------------------------------------------------------------------------------
+(1) HIERARCHIE DE L'INFORMATION SOUS INCERTITUDE. Avec sigma ~ 39 kWh a 18 h,
+    du meme ordre que les deficits typiques, la prevision ne fournit qu'UN bit
+    exploitable par decision : "deficit confiant a +-1sigma pres". Les
+    tentatives d'en extraire davantage -- seuils plus fins (A1), amplitude
+    (A2), signaux symetriques (A3) -- rapportent moins que le cout du bruit
+    qu'elles laissent entrer. Le design optimal SATURE le contenu informatif
+    du signal, il ne le sous-exploite pas.
+(2) LE DISPOSITIF MINIMAL EST UN SEUIL DE CONFIANCE. A +-1sigma, zone morte et
+    gel deviennent redondants (sect. 2b) : la robustesse tient a UNE constante
+    physique mesuree (le sigma du backtest), pas a un empilement d'heuristiques.
+    Reformulation probabiliste : declencher quand P(deficit) > 84 %.
+(3) PAS DE MARGE D'USURE CACHEE DANS UN EMS OPTIMISE. Les leviers qui
+    redeployent du flux vers d'autres organes (A3 vers la batterie, A4 vers la
+    chaine H2) echouent car chaque organe du socle cost-min est deja a son
+    point d'usure minimale (ELY au genou de zero-usure ; batterie dominante
+    par construction). Le seul gisement restant est la RESTRICTION du domaine
+    d'usage de l'organe qui s'use (fenetre de SoC vieillissante, cf note
+    cross-modulation).
+(4) VALEUR DES RESULTATS NEGATIFS. Les quatre refutations sont obtenues avec
+    attribution stricte (test nul, CRN, controles de non-regression a < 0.01
+    kEUR) et mecanismes identifies : elles etablissent que le design retenu
+    n'est pas un choix d'habitude mais un OPTIMUM LOCAL ROBUSTE de sa famille,
+    borne par l'omniscient (-1.08) et atteignant ~37 % de cette borne sous
+    bruit realiste.
+
+
+8. FICHIERS SOURCES
+--------------------------------------------------------------------------------
+  bench_fable.txt            bench nominal N=200 (titulaire, A1 defaut, A2)
+  sweep_fable_proba.txt      A1 : grille (P_HI, P_LO) x gel, N=64
+  sweep_fable_sym.txt        A3 : grille (TAU_SYM, plancher), N=64
+  sweep_fable_sohbat.txt     A4 : grille (beta_FC, beta_ELY), deterministe
+  sweep_fable_rho.txt        validation AR(1), N=32
+  note_cross_modulation_sohbat.txt   analyse detaillee A4 + levier positif P2
+  reopt_pred.txt (../Predictions/)   references socle / titulaire / omniscient
+================================================================================

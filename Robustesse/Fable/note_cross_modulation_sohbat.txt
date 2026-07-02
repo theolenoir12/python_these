@@ -1,0 +1,163 @@
+================================================================================
+NOTE DE THESE -- LEVIERS SoH_bat DANS RB2 : POURQUOI LA CROSS-MODULATION ECHOUE
+                 ET POURQUOI LA FENETRE DE SoC REUSSIT
+Dossier : Robustesse/Fable/     Donnees : sweep_fable_sohbat.txt / _socwin.txt
+Runs    : 25 ans, deterministes (aucune prevision), socle cost-min 0.440/0.310,
+          VoLL = 3 EUR/kWh. Redige : 2026-07-02.
+================================================================================
+
+0. RESUME (l'essentiel pour le manuscrit)
+--------------------------------------------------------------------------------
+La batterie porte ~2/3 du cout de degradation 25 ans (35 kEUR sur ~55 : 7.0 kEUR
+par remplacement, ~5 vies a ~5 ans). Deux familles de regles "conscientes du
+SoH_bat" ont ete testees pour exploiter ce gisement, avec attribution propre
+(test nul : SoH_bat = 1 -> RB2 socle exact) :
+
+  (P1) CROSS-MODULATION (report de flux vers la chaine H2) : REFUTEE.
+       Remonter les setpoints H2 quand la batterie vieillit DETRUIT de la
+       valeur, de facon monotone et massive (+3.0 a +29.5 kEUR).
+       Cause structurelle : l'EMS optimise gare deja l'electrolyseur a son
+       point de fonctionnement SANS usure (genou 30 % Pmax du modele
+       Rakousky) ; il n'existe AUCUNE marge d'usure H2 a echanger contre
+       l'usure batterie.
+
+  (P2) FENETRE DE SoC VIEILLISSANTE (plafond abaisse avec SoH_bat) : VALIDEE.
+       soc_max(t) = 0.995 - g*(1 - SoH_bat) ; g = 0.2 -> -0.56 kEUR net
+       (deg -2.0, LPSP +0.18 pt), deja superieur au gain total du levier
+       previsionnel (-0.38). Le levier agit sur la SEULE ressource qui
+       s'use : le sejour de la batterie dans sa zone de dommage.
+
+Enseignement general : dans RB2, la batterie est la variable d'AJUSTEMENT (pas
+de setpoint propre). La connaissance de SoH_bat ne peut pas etre exploitee en
+DEPLACANT du flux (les autres organes sont deja a leur optimum d'usure) ; elle
+s'exploite en RESTREIGNANT LE DOMAINE D'USAGE de la batterie elle-meme.
+
+
+1. CONTEXTE : LE GISEMENT BATTERIE
+--------------------------------------------------------------------------------
+Decomposition du cout de degradation 25 ans (couts unitaires Init_EMR, durees
+de vie observees all_aging_2 : ~5 ans BAT / ~12 ans FC / ~13 ans ELY) :
+
+    composant   cout/rempl.   vies/25 ans   cout 25 ans     part
+    BAT         7.00 kEUR       ~5.0         ~35.0 kEUR     ~63 %
+    ELY         9.34 kEUR       ~1.9         ~18.0 kEUR     ~32 %
+    FC          1.18 kEUR       ~2.1         ~ 2.5 kEUR     ~ 4 %
+
+Aucune strategie de la famille RB2 n'utilisait SoH_bat : RB2(SoH) module les
+setpoints H2 par SoH_fc/SoH_ely uniquement. Or la modulation "P_set*SoH^gamma"
+ne se transpose pas a la batterie : elle n'a pas de setpoint, elle absorbe le
+residu (P_bat = P_net - P_H2). D'ou les deux voies testees.
+
+
+2. (P1) CROSS-MODULATION : DEFINITION ET RESULTATS
+--------------------------------------------------------------------------------
+Regle testee (hook BETA_*_BAT des strategies Fable) :
+    P_fc_set  = 0.440 * Pmax_fc  * SoH_bat^(-BETA_FC)
+    P_ely_set = 0.310 * Pmax_ely * SoH_bat^(-BETA_ELY)
+Intention : quand la batterie vieillit, la chaine H2 prend une part croissante
+du throughput -> la batterie cycle moins -> vieillit moins vite.
+
+Resultats (sweep_fable_sohbat.txt ; base socle 80.102 kEUR, deg 58.843) :
+
+    BETA_FC  BETA_ELY | LPSP(%) | deg(kEUR) | total(kEUR) | dtotal
+      0        0      | 2.5921  |  58.843   |   80.102    |   --
+      0        0.25   | 2.5152  |  62.509   |   83.137    |  +3.04
+      0        0.50   | 2.5117  |  67.550   |   88.150    |  +8.05
+      0        1.00   | 2.4885  |  75.936   |   96.345    | +16.24
+      0        2.00   | 2.4106  |  89.814   |  109.584    | +29.48
+      0.5      0.50   | 2.6013  |  67.810   |   89.145    |  +9.04
+      1.0      1.00   | 2.7469  |  80.243   |  102.772    | +22.67
+
+Lecture : le LPSP s'ameliore legerement (la batterie, soulagee, touche moins
+son plancher) mais la DEGRADATION explose des le plus petit beta (+3.7 kEUR de
+deg pour BETA_ELY = 0.25, soit un facteur ~6 fois superieur a toute economie
+batterie possible). Echec monotone : aucun optimum interieur, le meilleur beta
+est 0.
+
+
+3. (P1) LE MECANISME : L'ELY EST GARE AU GENOU DE ZERO-USURE
+--------------------------------------------------------------------------------
+Le modele de degradation PEMWE (cost_fcn_total2, calibre sur Rakousky et al.
+2017) est a SEUIL : en dessous de f = P/Pmax = 30 % (1 A/cm2), les taux de
+generation irreversible et reversible sont NULS (a = b = 0, seule la
+recuperation opere) ; ils croissent lineairement de 30 % a 60 % puis saturent.
+
+Or le setpoint cost-min vaut c_ely = 0.310, c'est-a-dire PILE au-dessus du
+genou : l'electrolyseur du socle fonctionne quasi gratuitement en usure.
+Toute regle qui REMONTE ce setpoint -- meme de 9 % (BETA_ELY = 0.25 a
+SoH_bat = 0.7) -- fait entrer l'ELY dans la zone generatrice, dont le cout
+marginal ecrase l'economie batterie esperee.
+
+Ce mecanisme RETRO-EXPLIQUE deux resultats anterieurs de la these :
+  a) POURQUOI le sweep cost-min avait selectionne c_ely = 0.310 : c'est le
+     plus grand setpoint (donc le plus de H2 stocke, le moins de LPSP) qui
+     reste sous le genou de zero-usure. L'optimum n'etait pas un compromis
+     numerique arbitraire, c'est un point PHYSIQUE du modele de degradation.
+  b) POURQUOI RB2(SoH) fonctionne avec gamma_ely > 0 : le seuil de 30 % est
+     defini par rapport au Pmax VIEILLI (qui fond avec alpha_ely), alors que
+     le setpoint est defini sur le Pmax neuf. Sans modulation, f = P/Pmax(t)
+     derive au-dessus du genou a mesure que l'ELY vieillit ; la modulation
+     SoH_ely^gamma RAMENE le setpoint sous le genou. RB2(SoH) n'est donc pas
+     un "derating prudent" generique : c'est un asservissement implicite au
+     genou de zero-usure.
+
+Cote FC, le meme test (BETA_FC > 0) degrade aussi le total, par un canal
+different : la FC ne pese que ~4 % du cout de degradation, mais un setpoint FC
+plus haut draine le reservoir H2 plus vite -> celui-ci se vide dans les creux
+longs -> LPSP en hausse (2.51 -> 2.60 -> 2.75). Aucun des deux canaux H2
+n'offre donc de marge.
+
+PORTEE ET LIMITE : ce resultat depend de la FORME a seuil du modele PEMWE
+(nulle sous 1 A/cm2). Pour un systeme dont l'electrolyseur s'use des les
+faibles charges, ou dont le setpoint optimal serait loin du genou, la
+cross-modulation pourrait retrouver une marge. La conclusion robuste est
+conditionnelle : "si l'EMS de base est deja optimise en cout, ses organes
+sont aux points d'usure minimale, et il n'y a plus de flux a redeployer
+gratuitement". C'est un argument de COHERENCE de l'optimisation, pas une
+impossibilite universelle.
+
+
+4. (P2) LA FENETRE DE SoC VIEILLISSANTE : LE LEVIER QUI MARCHE
+--------------------------------------------------------------------------------
+Regle (Common/get_lol.py, parametre SOC_MAX_AGED_GAIN = g) :
+    soc_max(t) = 0.995 - g * (1 - SoH_bat(t))      [plancher fixe 0.20]
+A SoH_EoL = 0.7 : plafond 0.935 (g = 0.2) a 0.875 (g = 0.4).
+Motivation physique : la densite de dommage par DeltaSoC du modele batterie
+(courbe Cumulative_degradation_bat) est ~4-6x plus forte en zone haute de SoC
+(> ~0.6) ; abaisser le plafond quand la batterie vieillit confine le cyclage
+dans la zone la moins dommageable, au prix de capacite utile (LPSP).
+
+Resultats (sweep_fable_socwin.txt, grille grossiere) :
+
+    g    | LPSP(%) | deg(kEUR) | total(kEUR) | dtotal
+    0.0  | 2.5921  |  58.843   |   80.102    |   --
+    0.2  | 2.7679  |  56.842   |   79.543    |  -0.56   <- optimum grossier
+    0.4  | 3.0299  |  54.869   |   79.719    |  -0.38
+    0.6  | 3.5602  |  52.897   |   82.096    |  +1.99
+    0.8  | 4.7945  |  49.582   |   88.904    |  +8.80
+
+Lecture :
+  - g = 0.2 rapporte -0.56 kEUR net : PLUS que le levier previsionnel complet
+    (-0.38 kEUR, cf robustesse_quatre_alternatives.txt). Premiere regle
+    SoH_bat gagnante de la these.
+  - la ligne g = 0.4 est un CURSEUR DE PARETO interessant : deg 54.87 (-3.97)
+    pour LPSP 3.03. A comparer a RB2(SoH) (2.909 / 54.91) : meme niveau de
+    degradation atteint par un levier INDEPENDANT (fenetre batterie vs
+    setpoints H2) -> cumul a tester (--sweep unified).
+  - au-dela (g >= 0.6) le LPSP explose : la capacite retiree n'est plus
+    compensable.
+  - l'optimum est entre 0.1 et 0.4 -> grille fine --sweep socwin_fine.
+
+NB methodologique : levier purement ETAT (SoH_bat), sans prevision -> runs
+deterministes, pas de Monte-Carlo necessaire ; test nul g = 0 -> socle exact.
+
+
+5. SUITES (lancees / a lancer)
+--------------------------------------------------------------------------------
+  --sweep socwin_fine   grille g = 0.05..0.40 pas 0.05 (optimum fin)
+  --sweep unified       cumul gammas RB2(SoH) x plafond SoC ("RB2(SoH) unifiee",
+                        controles : socle 80.102 ; RB2(SoH) pur 78.768 ;
+                        socwin seul 79.543)
+  Puis (dossier Fable Predictions, a venir) : empilement final avec la
+  pre-charge previsionnelle +-1sigma -> "RB2 ultime" du manuscrit.
+================================================================================

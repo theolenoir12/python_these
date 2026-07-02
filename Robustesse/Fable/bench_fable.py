@@ -45,21 +45,16 @@ VOLL    = 3.0        # EUR/kWh (indicateur unifie de reference these)
 MC_SEED = 2026       # base des graines (common random numbers entre strategies)
 
 # (label, dossier de la strategie, overrides de parametres module)
-# Un override peut aussi cibler Common.get_lol via la cle speciale "_lol:<PARAM>"
-# (ex. "_lol:SOC_MAX_AGED_GAIN"). Ces flags sont REMIS A LEUR DEFAUT a chaque
-# tache (les workers du pool sont reutilises -> sinon l'etat fuirait).
 BENCH_STRATS = [
     ("RB2 socle",       os.path.join(HERE, "RB2(Prop)"),        {"ENABLE": False}),
     ("RB2(Pred) hyst",  os.path.join(PRED_DIR, "RB2(Pred)"),    {}),
     ("RB2(Proba)",      os.path.join(HERE, "RB2(Proba)"),       {}),
     ("RB2(Prop)",       os.path.join(HERE, "RB2(Prop)"),        {}),
-    ("RB2(PropSym)",    os.path.join(HERE, "RB2(PropSym)"),     {}),
 ]
 OMNI_STRATS = [
     ("RB2(Pred) omni bin", os.path.join(PRED_DIR, "RB2(Pred)"), {"NOISE_ENABLE": False, "HYST_ENABLE": False}),
     ("RB2(Proba) omni",    os.path.join(HERE, "RB2(Proba)"),    {"NOISE_ENABLE": False}),
     ("RB2(Prop) omni",     os.path.join(HERE, "RB2(Prop)"),     {"NOISE_ENABLE": False}),
-    ("RB2(PropSym) omni",  os.path.join(HERE, "RB2(PropSym)"),  {"NOISE_ENABLE": False}),
 ]
 
 SWEEP_PROBA = [  # (P_HI, P_LO, MIN_DWELL)
@@ -68,25 +63,6 @@ SWEEP_PROBA = [  # (P_HI, P_LO, MIN_DWELL)
     (0.60, 0.40, 6), (0.70, 0.30, 6), (0.84, 0.16, 12) # == prod actuelle (controle)
 ]
 SWEEP_PROP = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]          # TAU
-SWEEP_SYM  = [  # (TAU_SYM, SOC_SYM_FLOOR) ; TAU (pre-charge) reste au defaut
-    (0.5, 0.40), (0.5, 0.50), (0.5, 0.65),
-    (1.0, 0.40), (1.0, 0.50), (1.0, 0.65),
-    (2.0, 0.50),
-]
-SWEEP_RHO  = [0.0, 0.5, 0.8, 0.95]                     # correlation AR(1) du bruit
-# SoH_bat cross-modulation : sur le SOCLE (levier prevision OFF) -> attribution
-# pure du SoH_bat, runs deterministes.
-SWEEP_SOHBAT = [  # (BETA_FC_BAT, BETA_ELY_BAT)
-    (0.0, 0.0),                                        # socle (controle)
-    (0.0, 0.25), (0.0, 0.5), (0.0, 1.0), (0.0, 2.0),
-    (0.5, 0.5),  (1.0, 1.0),
-]
-# Plafond SoC vieillissement-dependant (Common/get_lol), sur le socle, deterministe.
-# gain g : plafond a SoH_EoL(0.7) = 0.995 - 0.3*g
-SWEEP_SOCWIN = [0.0, 0.2, 0.4, 0.6, 0.8]
-
-# Defauts des flags Common/get_lol (remis a chaque tache)
-LOL_DEFAULTS = {"SOC_MAX_AGED_GAIN": 0.0, "LOL_COMBINED": False}
 
 
 def _load(folder):
@@ -135,15 +111,9 @@ def evaluate(task):
     """Worker picklable : un run complet. task = dict(label, folder, overrides,
     seed, ny). Retourne les metriques + le cout total unifie."""
     from Common.main_init_and_loop_forecast import init_and_run_loop_forecast
-    import Common.get_lol as _gl
-    # Flags Common : remis a leur DEFAUT puis surcharges par la tache (les
-    # workers du pool traitent plusieurs taches -> pas d'etat residuel).
-    for k, v in LOL_DEFAULTS.items():
-        setattr(_gl, k, task["overrides"].get("_lol:" + k, v))
     s = _load(task["folder"])
     for k, v in task["overrides"].items():
-        if not k.startswith("_lol:"):
-            setattr(s, k, v)
+        setattr(s, k, v)
     if hasattr(s, "set_noise_seed"):
         s.set_noise_seed(task["seed"])
     if hasattr(s, "reset"):
@@ -222,8 +192,7 @@ def run_all(strat_list, n_seeds, ny, tag):
 
 
 def main(argv):
-    args = [a for a in argv[1:] if not a.startswith("--")
-            and (argv[argv.index(a) - 1] not in ("--sweep", "--rho"))]
+    args = [a for a in argv[1:] if not a.startswith("--")]
     n_seeds = int(args[0]) if len(args) > 0 else 8
     ny      = int(args[1]) if len(args) > 1 else 25
     quick   = "--quick" in argv
@@ -231,77 +200,25 @@ def main(argv):
     sweep   = None
     if "--sweep" in argv:
         sweep = argv[argv.index("--sweep") + 1]
-    rho = None
-    if "--rho" in argv:
-        rho = float(argv[argv.index("--rho") + 1])
     if quick:
         n_seeds, ny = 2, 1
 
-    socle = ("RB2 socle", os.path.join(HERE, "RB2(Prop)"), {"ENABLE": False})
-
     if sweep == "proba":
-        strats = [socle]
+        strats = [("RB2 socle", os.path.join(HERE, "RB2(Prop)"), {"ENABLE": False})]
         for hi, lo, dwell in SWEEP_PROBA:
             strats.append((f"Proba {hi:.2f}/{lo:.2f} d{dwell}",
                            os.path.join(HERE, "RB2(Proba)"),
                            {"P_HI": hi, "P_LO": lo, "MIN_DWELL": dwell}))
         run_all(strats, n_seeds, ny, "sweep_fable_proba")
     elif sweep == "prop":
-        strats = [socle]
+        strats = [("RB2 socle", os.path.join(HERE, "RB2(Prop)"), {"ENABLE": False})]
         for tau in SWEEP_PROP:
             strats.append((f"Prop TAU={tau:.2f}", os.path.join(HERE, "RB2(Prop)"),
                            {"TAU": tau}))
         run_all(strats, n_seeds, ny, "sweep_fable_prop")
-    elif sweep == "sym":
-        # Reference = RB2(Prop) pur (SYM off) : la difference mesure le levier
-        # symetrique SEUL. Socle inclus pour l'ancrage absolu.
-        strats = [socle,
-                  ("PropSym OFF (=Prop)", os.path.join(HERE, "RB2(PropSym)"),
-                   {"SYM_ENABLE": False})]
-        for tau_s, floor in SWEEP_SYM:
-            strats.append((f"Sym t{tau_s:.1f}/f{floor:.2f}",
-                           os.path.join(HERE, "RB2(PropSym)"),
-                           {"TAU_SYM": tau_s, "SOC_SYM_FLOOR": floor}))
-        run_all(strats, n_seeds, ny, "sweep_fable_sym")
-    elif sweep == "rho":
-        # Robustesse a la CORRELATION du bruit : l'iid (rho=0) est le pire-cas
-        # pour le clignotement ; verifier que le classement des leviers tient.
-        strats = []
-        for r in SWEEP_RHO:
-            strats.append((f"Pred hyst rho={r:.2f}", os.path.join(PRED_DIR, "RB2(Pred)"),
-                           {"NOISE_RHO": r}))
-            strats.append((f"Proba rho={r:.2f}", os.path.join(HERE, "RB2(Proba)"),
-                           {"NOISE_RHO": r}))
-            strats.append((f"Prop rho={r:.2f}", os.path.join(HERE, "RB2(Prop)"),
-                           {"NOISE_RHO": r}))
-        strats.insert(0, socle)
-        run_all(strats, n_seeds, ny, "sweep_fable_rho")
-    elif sweep == "soh_bat":
-        # Attribution PURE du SoH_bat : cross-modulation sur le SOCLE (levier
-        # prevision OFF) -> runs deterministes (1 seed).
-        strats = []
-        for bfc, bely in SWEEP_SOHBAT:
-            strats.append((f"SoHbat bFC={bfc:.2f} bELY={bely:.2f}",
-                           os.path.join(HERE, "RB2(Prop)"),
-                           {"ENABLE": False, "NOISE_ENABLE": False,
-                            "BETA_FC_BAT": bfc, "BETA_ELY_BAT": bely}))
-        run_all(strats, n_seeds, ny, "sweep_fable_sohbat")
-    elif sweep == "socwin":
-        # Plafond SoC vieillissement-dependant (Common/get_lol), socle, deterministe.
-        strats = []
-        for g in SWEEP_SOCWIN:
-            strats.append((f"SoCwin gain={g:.2f}",
-                           os.path.join(HERE, "RB2(Prop)"),
-                           {"ENABLE": False, "NOISE_ENABLE": False,
-                            "_lol:SOC_MAX_AGED_GAIN": g}))
-        run_all(strats, n_seeds, ny, "sweep_fable_socwin")
     else:
         strats = list(BENCH_STRATS) + (list(OMNI_STRATS) if omni else [])
-        if rho is not None:
-            strats = [(lab, fold, dict(ov, NOISE_RHO=rho) if "RB2(Pred)" in fold
-                       or HERE in fold else ov) for lab, fold, ov in strats]
-        run_all(strats, n_seeds, ny, "bench_fable" + ("_quick" if quick else "")
-                + (f"_rho{rho:g}" if rho is not None else ""))
+        run_all(strats, n_seeds, ny, "bench_fable" + ("_quick" if quick else ""))
 
 
 if __name__ == "__main__":

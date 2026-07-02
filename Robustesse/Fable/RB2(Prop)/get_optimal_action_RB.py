@@ -47,10 +47,6 @@ NOISE_ENABLE = True
 BIAS_E_KWH   = -2.32    # biais du backtest a 18h [kWh]
 SIGMA_E_KWH  = 39.38    # ecart-type backtest a 18h [kWh] (valeur de DESIGN)
 SIGMA_INJECT_KWH = None # None -> = SIGMA_E_KWH ; sinon test de misestimation
-# Correlation temporelle du bruit (AR(1)) : eps_t = rho*eps_{t-1} + sqrt(1-rho^2)*xi_t.
-# rho=0.0 (defaut) -> iid strictement identique ; les fenetres 18 h consecutives se
-# recouvrant a 17/18, l'erreur reelle est tres autocorrelee (rho ~0.9+ plausible).
-NOISE_RHO = 0.0
 
 # --- Socle RB2 cost-min (comparaison honnete, cf reopt_pred.txt) --------------
 C_FC_BASE   = 0.440
@@ -66,20 +62,17 @@ BETA_ELY_BAT = 0.0
 TAU = 1.0               # temperature de la sigmoide (en unites de sigma)
 
 _rng = np.random.default_rng(0)
-_eps = 0.0              # etat AR(1) du bruit (utilise si NOISE_RHO > 0)
 
 
 def set_noise_seed(seed):
     """(Re)seede le generateur du bruit de prevision (1 seed / run Monte-Carlo)."""
-    global _rng, _eps
+    global _rng
     _rng = np.random.default_rng(seed)
-    _eps = 0.0
 
 
 def reset():
-    """Reinitialise l'etat AR(1) du bruit (la modulation elle-meme est sans memoire)."""
-    global _eps
-    _eps = 0.0
+    """Pas d'etat interne (modulation sans memoire) ; present pour l'API commune."""
+    pass
 
 
 def _phi(x):
@@ -99,11 +92,8 @@ def _precharge_weight(P_tot_ref_future, SoC_t):
     dt_h = LOAD['Ts'] / 3600.0
     net = float(np.sum(np.asarray(P_tot_ref_future[:H_PRE], dtype=float))) * dt_h  # [Wh]
     if NOISE_ENABLE:
-        global _eps
         sig_inj = SIGMA_E_KWH if SIGMA_INJECT_KWH is None else SIGMA_INJECT_KWH
-        xi = _rng.standard_normal()
-        _eps = NOISE_RHO * _eps + math.sqrt(1.0 - NOISE_RHO ** 2) * xi if NOISE_RHO > 0.0 else xi
-        net += (BIAS_E_KWH + sig_inj * _eps) * 1000.0
+        net += (BIAS_E_KWH + sig_inj * _rng.standard_normal()) * 1000.0
 
     sig_wh = TAU * SIGMA_E_KWH * 1000.0      # echelle de la sigmoide [Wh]
     if sig_wh <= 0.0:

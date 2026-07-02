@@ -17,10 +17,6 @@ Ce dossier contient les prototypes issus de la revue de coherence :
                 coupe en tout-ou-rien. Anti-clignotement PAR CONSTRUCTION,
                 utilise l'AMPLITUDE prevue et pas seulement le signe.
 
-  RB2(PropSym)/ RB2(Prop) + levier SYMETRIQUE de PRE-DECHARGE (sect. 2bis) :
-                avant un surplus confiant, freiner la FC pour aborder le
-                surplus avec un SoC plus bas -> moins d'ecretage a SOC_MAX.
-
   bench_fable.py        banc d'essai Monte-Carlo (common random numbers),
                         memes metriques que sens_pred_noise / reopt_pred.
   run_meso_fable.slurm  job mesocentre.
@@ -42,11 +38,6 @@ LANCER (depuis Fable/, env simu_env, GENIAL_DATA_DIR ou layout Data historique) 
     sbatch run_meso_fable.slurm            # N=200 au mesocentre
     sbatch run_meso_fable.slurm 64 25 --sweep prop    # balayage TAU
     sbatch run_meso_fable.slurm 64 25 --sweep proba   # balayage (P_HI,P_LO,gel)
-    sbatch run_meso_fable.slurm 64 25 --sweep sym     # levier symetrique (sect. 2bis)
-    sbatch run_meso_fable.slurm 32 25 --sweep rho     # bruit correle AR(1) (sect. 2ter)
-    sbatch run_meso_fable.slurm 1 25 --sweep soh_bat  # cross-modulation SoH_bat (sect. 3 P1)
-    sbatch run_meso_fable.slurm 1 25 --sweep socwin   # plafond SoC vieilli (sect. 3 P2)
-    (le bench nominal accepte aussi --rho 0.8 : rejoue les 5 strategies sous bruit correle)
 
 
 1. RB2(Proba) : POURQUOI PASSER EN PROBABILITE
@@ -105,40 +96,6 @@ RB2(Proba) gagnent tous deux, tester ensuite le COMBO (modulation continue +
 petite zone morte).
 
 
-2bis. RB2(PropSym) : LE LEVIER SYMETRIQUE (PRE-DECHARGE AVANT SURPLUS)
---------------------------------------------------------------------------------
-La pre-charge ne traite que les DEFICITS prevus. Le miroir : avant un GROS
-SURPLUS confiant, une batterie deja haute sature a SOC_MAX -> surplus ecrete,
-perdu pour la chaine H2. RB2(PropSym) ajoute a RB2(Prop) :
-    w_sym = Phi( -net_pred / (TAU_SYM*sigma) )   ->  P_fc_set *= (1 - w_sym)
-    (actif seulement si SoC > SOC_SYM_FLOOR = 0.50, marge anti-LPSP)
-Pendant les heures de deficit qui PRECEDENT le surplus, la batterie couvre une
-part plus grande du deficit (la FC est freinee) -> SoC plus bas a l'arrivee du
-surplus -> moins de saturation haute + H2 economise. Effet secondaire favorable
-attendu sur la DEGRADATION BATTERIE : moins de temps passe en zone haute de SoC
-(la plus dommageable, cf. sect. 3). Risques a surveiller : passages au plancher
-(LPSP) si SOC_SYM_FLOOR trop bas ; usure FC en cyclage (part FC ~4 % du cout,
-faible). ATTRIBUTION : SYM_ENABLE=False == RB2(Prop) exact (meme sequence de
-bruit) -> la difference PropSym - Prop = levier symetrique seul.
-Balayage : --sweep sym (TAU_SYM x SOC_SYM_FLOOR).
-
-
-2ter. BRUIT CORRELE AR(1) (--sweep rho)
---------------------------------------------------------------------------------
-Le bruit iid horaire est le PIRE-CAS pour le clignotement (limite notee de
-robustesse_bruit_prevision.txt sect. 7) : les fenetres 18 h consecutives se
-recouvrent a 17/18, l'erreur reelle est fortement autocorrelee. Toutes les
-strategies bruitees (y compris RB2(Pred), modif retro-compatible NOISE_RHO=0.0
-par defaut, iid bit-exact) acceptent desormais :
-    eps_t = rho*eps_{t-1} + sqrt(1-rho^2)*xi_t     (AR(1) stationnaire)
---sweep rho rejoue Pred-hyst / Proba / Prop a rho = 0, 0.5, 0.8, 0.95.
-Enjeu : sous bruit correle le clignotement diminue -> l'avantage relatif du gel
-MIN_DWELL=12 (et de la bande large) devrait fondre, celui des variantes douces
-se maintenir. Si le classement bouge, les parametres de production sont a
-re-caler AVANT redaction (rho realiste a estimer du backtest : correler les
-erreurs d'origines consecutives de pv_profils_backtest_h18).
-
-
 3. INTEGRATION DE SoH_bat DANS RB2 : DECOMPOSITION DU COUT ET PROPOSITIONS
 --------------------------------------------------------------------------------
 Decomposition du cout de degradation 25 ans (couts unitaires du fichier d'init,
@@ -162,9 +119,8 @@ transpose pas. Les leviers doivent donc DEPLACER DU FLUX hors de la batterie,
 pas la "derater". Quatre propositions, de la plus prometteuse a la plus
 speculative (toutes gardent le test nul : SoH_bat=1 -> RB2 exact) :
 
-  (P1) CROSS-MODULATION (implementee en hook dans RB2(Proba)/RB2(Prop)/
-       RB2(PropSym), parametres BETA_FC_BAT / BETA_ELY_BAT, defaut 0=OFF ;
-       BALAYAGE PRET : --sweep soh_bat, attribution pure sur le socle) :
+  (P1) CROSS-MODULATION (implementee en hook dans RB2(Proba)/RB2(Prop),
+       parametres BETA_FC_BAT / BETA_ELY_BAT, defaut 0=OFF) :
            P_fc_set  = c_fc  * Pmax * SoH_fc^g  * SoH_bat^(-BETA_FC_BAT)
            P_ely_set = c_ely * Pmax * SoH_ely^g * SoH_bat^(-BETA_ELY_BAT)
        Quand la batterie vieillit, on REMONTE les setpoints H2 : la chaine H2
@@ -177,18 +133,13 @@ speculative (toutes gardent le test nul : SoH_bat=1 -> RB2 exact) :
        NB : c'est le symetrique exact de RB2(SoH) -> se raconte tres bien dans
        le manuscrit ("modulation croisee des setpoints par l'etat de sante").
 
-  (P2) FENETRE SoC DEPENDANTE DU SoH_bat -- IMPLEMENTEE (--sweep socwin).
-       Le modele de deg batterie est une densite de dommage par niveau de SoC
-       (Cumulative_degradation_bat) ; quantification faite sur la courbe :
-       pente ~137 (zone 0.2-0.6) contre ~880 (0.6-0.8) et ~510 (0.8-1.0),
-       soit ~4-6x PLUS DOMMAGEABLE au-dessus de SoC~0.6. Les bornes de
-       get_lol.py sont desormais parametrables (SOC_MIN/SOC_MAX, defauts
-       historiques exacts) + plafond vieillissement-dependant :
-           soc_max_t = SOC_MAX - SOC_MAX_AGED_GAIN*(1 - SoH_bat_t)
-       (gain g : plafond a SoH_EoL=0.7 -> 0.995 - 0.3g ; ex. g=0.6 -> 0.815).
-       Cout : perte de capacite utile -> LPSP ; l'arbitrage est l'objet du
-       sweep. NB : abaisser le plafond reduit AUSSI la marge de pre-charge ->
-       tester ensuite l'interaction avec RB2(Prop/PropSym).
+  (P2) FENETRE SoC DEPENDANTE DU SoH_bat. Le modele de deg batterie est une
+       densite de dommage par niveau de SoC (Cumulative_degradation_bat) :
+       deplacer/retrecir la fenetre [0.2, 0.995] vers la zone la moins
+       dommageable quand SoH_bat baisse reduit le dommage par kWh cycle.
+       ATTENTION : bornes codees en dur dans get_lol.py (0.2/0.995) ->
+       demande de les promouvoir en parametres module (petit refactor).
+       Cout : perte de capacite utile -> LPSP ; a ne tester qu'apres (P1).
 
   (P3) PRE-CHARGE CONSCIENTE DU SoH_bat (synergie avec la prevision) : la
        marge d'energie utile de la batterie fond comme Q*SoH_bat ; a SoH=0.7
@@ -227,28 +178,24 @@ RUL EN LIGNE (Vieillissement8/Common/main_init_and_loop.py,
     mc_rul_uncertainty.py (les conclusions peuvent bouger un peu ; l'argument
     sigma_RUL(horizon) en U reste valable).
 
-5. POINTS DE LA REVUE : ETAT (maj 2026-07-02)
+5. POINTS NOTES MAIS PAS TOUCHES (choix assume : ne pas invalider l'existant)
 --------------------------------------------------------------------------------
-  a) get_lol "contraintes simultanees" -- TRAITE EN OPT-IN + A VERIFIER.
-     Analyse fine : l'ORDRE des corrections propage deja les contraintes (le
-     bloc SoC corrige P_dc_bat AVANT pmax/storage, qui recalculent leur lol
-     avec les valeurs corrigees) -> le max(...) est probablement tres proche
-     du lol exact. Le flag Common/get_lol.LOL_COMBINED (defaut False =
-     comportement historique) recalcule lol sur l'action FINALE ;
-     check_lol_combined.py compare les deux sur le socle 25 ans. Si l'ecart
-     est negligeable : metrique historique VALIDEE (phrase utile face a un
-     reviewer). Sinon : biais quantifie, a discuter.
-  b) Nommage Predictions/ : notes ajoutees (RB2(SoH+Pred)/readme.txt cree,
-     RB2(SoH)/readme.txt l'expliquait deja). Renommage physique remis a un
-     jour de calme (chemins codes dans sens_pred_noise.py etc.).
-  c) Baselines : readme de RB2(RUL) reecrit (stub perime remplace) avec le
-     resultat honnete (~0 vs cost-min) + le repositionnement "planification
-     des remplacements" + la liste des runs a refaire post-fix RUL.
+  a) get_lol : lol = max(lol_pmax, lol_storage, lol_soc), chaque terme calcule
+     avec les AUTRES ressources non corrigees -> sous-compte l'energie non
+     servie quand DEUX contraintes sont actives au meme pas (batterie au
+     plancher + reservoir vide, typiquement dans les pires creux). Patch
+     suggere (a chiffrer avant adoption, change le LPSP de TOUTES les
+     strategies) : recalculer lol FINAL = 1-(P_bat_corr+P_h2_corr)/P_tot_ref
+     apres toutes les corrections, plutot que le max des trois.
+  b) Nommage Predictions/ : RB2(SoH)/ y contient en realite RB2(SoH)+Pred
+     (bruit+hyst) tandis que RB2(SoH+Pred)/ est la variante binaire sans
+     bruit. A renommer un jour de calme.
+  c) Baselines : ne garder dans le manuscrit que le socle cost-min
+     (80.108) ; le readme de RB2(RUL) cite encore -5.3 % vs le nominal 85.55
+     alors que l'attribution honnete (sweep_rul_attribution) donne ~0.
   d) sigma=39.38 kWh mesure sur sidelec_csv2 (2 ans, conso bruitee) alors que
      la simulation tourne sur l'ancien CSV (1 an, tuile x51) : approximation a
-     assumer dans la redaction (majorant plutot realiste). Complement fait :
-     support du bruit CORRELE AR(1) (sect. 2ter) pour borner l'effet de
-     l'hypothese iid.
+     assumer dans la redaction (majorant plutot realiste).
 
 6. FICHIERS / SORTIES
 --------------------------------------------------------------------------------
@@ -257,16 +204,11 @@ RUL EN LIGNE (Vieillissement8/Common/main_init_and_loop.py,
                              usure FC acceleree x150, verifie que la RUL est
                              re-estimee apres le 2e remplacement (valide OK
                              avec le fix / ECHEC reproduit sur l'ancien code)
-  check_lol_combined.py      verification LPSP historique vs combine (sect. 5a)
   bench_fable.txt            tableau stats (apres run nominal)
   bench_fable_cloud.csv      nuage brut (label;seed;lpsp;deg;eens;total;starts)
-  sweep_fable_prop.txt       balayage TAU            (apres --sweep prop)
-  sweep_fable_proba.txt      balayage seuils/gel     (apres --sweep proba)
-  sweep_fable_sym.txt        balayage pre-decharge   (apres --sweep sym)
-  sweep_fable_rho.txt        balayage bruit correle  (apres --sweep rho)
-  sweep_fable_sohbat.txt     cross-modulation SoH_bat (apres --sweep soh_bat)
-  sweep_fable_socwin.txt     plafond SoC vieilli     (apres --sweep socwin)
-  RB2(Proba)/, RB2(Prop)/, RB2(PropSym)/   strategies (main.py = run unitaire)
+  sweep_fable_prop.txt       balayage TAU        (apres --sweep prop)
+  sweep_fable_proba.txt      balayage seuils/gel (apres --sweep proba)
+  RB2(Proba)/, RB2(Prop)/    strategies (main.py = run unitaire 25 ans + plots)
 
   Lecture du bench : comparer 'total' (deg + VoLL*EENS) a la ref RB2(Pred)
   hyst ; surveiller ELY_starts (clignotement) et sLPSP/sdeg (dispersion MC).

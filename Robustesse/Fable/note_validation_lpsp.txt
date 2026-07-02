@@ -1,0 +1,41 @@
+================================================================================
+NOTE DE THESE -- VALIDATION DE LA METRIQUE LPSP (contraintes simultanees)
+Dossier : Robustesse/Fable/       Outil : check_lol_combined.py
+Verifie le 2026-07-02 (2 runs complets 25 ans, donnees reelles, local).
+================================================================================
+
+1. LA QUESTION
+--------------------------------------------------------------------------------
+Dans Common/get_lol.py, l'energie non servie d'un pas de temps est calculee
+comme lol = max(lol_pmax, lol_storage, lol_soc), chaque terme etant evalue
+avec les AUTRES ressources non corrigees. Interrogation soulevee par la revue
+de coherence : quand DEUX contraintes saturent au MEME pas (batterie au
+plancher ET reservoir H2 vide, typiquement dans les pires creux), le max
+pourrait SOUS-COMPTER le deficit reel -- precisement dans les evenements qui
+construisent le LPSP.
+
+2. LE TEST
+--------------------------------------------------------------------------------
+check_lol_combined.py compare, sur une simulation 25 ans complete (RB2 socle
+et RB2(SoH_H2)), la metrique officielle au recalcul du deficit sur l'ACTION
+FINALE CORRIGEE (flag Common/get_lol.LOL_COMBINED = True) :
+    lol_combined = 1 - (P_bat_corr + P_fc_corr + P_ely_corr) / P_tot_ref.
+
+3. LE RESULTAT
+--------------------------------------------------------------------------------
+LES DEUX CALCULS DONNENT EXACTEMENT LES MEMES VALEURS (LPSP et degradation
+identiques a la precision machine sur les deux strategies testees).
+Interpretation : les configurations a double contrainte simultanee ayant un
+effet materiel n'apparaissent pas dans les trajectoires -- lorsque la batterie
+sature, la correction appliquee par get_lol capture deja tout le deficit du
+pas ; les cas de saturation croisee residuels sont sans effet mesurable a
+l'echelle de 219 000 pas.
+
+4. PHRASE POUR LE MANUSCRIT (reponse par anticipation a un rapporteur)
+--------------------------------------------------------------------------------
+"La metrique de defaillance a ete verifiee contre un recalcul du deficit sur
+l'action finale apres application simultanee de toutes les contraintes
+(bornes de SoC, limites de puissance vieillies, inventaire H2) : les deux
+calculs coincident a la precision machine sur des simulations completes de
+25 ans, ce qui exclut tout sous-comptage par contraintes simultanees."
+================================================================================

@@ -1,0 +1,98 @@
+================================================================================
+INDEX MANUSCRIT -- PROGRAMME "FABLE" (revue de coherence + leviers SoH/Pred)
+Carte de tous les resultats consignes : ou est chaque chiffre, chaque note,
+chaque figure. Redige le 2026-07-02, a l'issue du programme.
+================================================================================
+
+NOMENCLATURE (utilisee dans les figures et le narratif ; les tableaux
+reproduits des sorties de jobs gardent leurs libelles historiques) :
+    RB2                = socle cost-min (0.440 / 0.310)
+    RB2(Pred)          = + pre-charge previsionnelle +-1sigma (sur RB2 nu)
+    RB2(SoH_bat)       = + plafond SoC vieillissant seul (g = 0.2)
+    RB2(SoH_H2)        = + setpoints H2 x SoH_fc^1 / SoH_ely^2 (ex RB2(SoH))
+    RB2(SoH_all)       = SoH_H2 + SoH_bat
+    RB2(SoH_all+Pred)  = strategie ultime
+    (RB2(SoH_H2+Pred)  = jalon intermediaire, ex RB2(SoH+Pred))
+
+--------------------------------------------------------------------------------
+1. LES CHIFFRES CENTRAUX (25 ans, VoLL = 3, bruit backtest sigma = 39.38 kWh)
+--------------------------------------------------------------------------------
+    strategie           total kEUR   LPSP %   deg kEUR   source
+    RB2 socle             80.102     2.592     58.84     bench_ultime.txt
+    RB2(Pred)             79.722     2.531     58.96     bench_fable.txt (N=200)
+    RB2(SoH_bat)          79.543     2.768     56.84     sweep_fable_socwin_fine
+    RB2(SoH_H2)           78.764     2.909     54.91     sweep_fable_unified
+    RB2(SoH_all)          78.336     3.105     52.87     sweep_fable_unified
+    RB2(SoH_H2+Pred)      77.690     2.758     55.08     bench_ultime.txt (N=200)
+    RB2(SoH_all+Pred)     77.224     2.942     53.10     bench_ultime.txt (N=200)
+      variante cible 0.90 77.103     2.922     53.14     sweep_ultime_target (N=64)*
+    * confirmation N=200 optionnelle : ligne prete dans bench_ultime.py.
+    Bilan vs socle : -3.0 kEUR (-3.7 %), degradation -9.7 %, LPSP +0.33 pt.
+    Chaque increment mesure par test nul en cascade + graines communes (CRN).
+
+--------------------------------------------------------------------------------
+2. LES NOTES (redaction consolidee, ordre de lecture suggere)
+--------------------------------------------------------------------------------
+ a) Fable/robustesse_quatre_alternatives.txt
+      Le levier previsionnel +-1sigma face aux 4 alternatives refutees (bande
+      etroite probabiliste, modulation continue, pre-decharge symetrique,
+      cross-modulation SoH_bat) + validation au bruit correle AR(1) +
+      enseignements transverses (1 bit exploitable/decision, seuil de
+      confiance minimal, pas de marge d'usure dans un EMS optimise).
+ b) Fable/note_cross_modulation_sohbat.txt
+      Detail A4 : le genou de zero-usure ELY a 30 % Pmax ; retro-explication
+      du cost-min 0.310 et de RB2(SoH_H2) ; le pendant positif (SoH_bat).
+ c) Fable/note_rb2_soh_unifiee.txt
+      RB2(SoH_all) : grille fine du plafond, additivite 93 %, optimums
+      separables, lecture Pareto, cuvette plate (robustesse parametrique).
+ d) Fable_pred/note_rb2_ultime.txt
+      RB2(SoH_all+Pred) : decomposition en cascade, interaction plafond x
+      pre-charge (+2.8 kEUR si ignoree -> regle de conception), plateaux
+      "omni", sweep H_PRE, statut des chiffres.
+ e) Predictions/note_rul_postfix.txt
+      Re-generation post-fix RUL : conclusions du ch. 3 inchangees et
+      renforcees (gain RUL -0.002 %, ellipses inchangees), preuve de
+      non-regression (Fable/check_rul_fix.py).
+ f) Fable/note_validation_lpsp.txt
+      Metrique LPSP verifiee contre le recalcul a contraintes simultanees :
+      identite a la precision machine (check_lol_combined.py, 2 runs 25 ans).
+ g) Predictions/robustesse_bruit_prevision.txt (anterieur au programme)
+      La chaine incertitude -> fragilite binaire -> hysteresis +-1sigma.
+
+--------------------------------------------------------------------------------
+3. LES FIGURES
+--------------------------------------------------------------------------------
+    Fable/pareto_ems_fable{,_isocost}.{pdf,png}      (script plot_pareto_fable.py)
+        baselines + RB2(SoH_bat) + RB2(SoH_H2) + RB2(SoH_all)
+    Fable_pred/pareto_ems_ultime{,_isocost}.{pdf,png} (script plot_pareto_ultime.py)
+        baselines + RB2(Pred) + RB2(SoH_all) + RB2(SoH_all+Pred)
+    (figures anterieures : Predictions/pareto_strategies, pred_uncertainty_zoom,
+     mc_rul_uncertainty ; a re-generer si les chiffres RUL post-fix sont retenus
+     -- ecarts negligeables, cf note e.)
+
+--------------------------------------------------------------------------------
+4. DONNEES BRUTES PAR RESULTAT (tableaux .txt versionnes)
+--------------------------------------------------------------------------------
+    Bench principal + omni ......... Fable_pred/bench_ultime.txt (+ .out 212376)
+    Sweeps ultime .................. Fable_pred/sweep_ultime_{target,hpre}.txt
+    Bench leviers previsionnels .... Fable/bench_fable.txt
+    Alternatives refutees .......... Fable/sweep_fable_{proba,sym,sohbat,rho}.txt
+    Leviers SoH_bat ................ Fable/sweep_fable_{socwin,socwin_fine,unified}.txt
+    RUL post-fix ................... Predictions/sweep_rul{,_attribution}.txt,
+                                     Predictions/mc_rul_uncertainty.txt
+    References anterieures ......... Predictions/reopt_pred.txt, reopt_sohpred.txt,
+                                     Vieillissement8/RB2(SoH)/sweep_soh_attribution.txt
+
+--------------------------------------------------------------------------------
+5. INFRASTRUCTURE (reproductibilite)
+--------------------------------------------------------------------------------
+    Strategies : Fable/RB2({Proba,Prop,PropSym})/, Fable_pred/RB2(SoH_all+Pred)/
+                 (tests nuls en cascade ; parametres = constantes de module)
+    Bancs      : Fable/bench_fable.py, Fable_pred/bench_ultime.py
+                 (CRN, MC_SEED=2026 fige -> tout tableau est re-generable
+                 a l'identique ; jobs slurm run_meso_{fable,ultime}.slurm)
+    Fix RUL    : boucles Communes (Vieillissement8 + Predictions), ancres
+                 j_rul_* ; non-regression Fable/check_rul_fix.py
+    Metrique   : Common/get_lol.py (LOL_COMBINED pour la verification),
+                 Fable/check_lol_combined.py
+================================================================================

@@ -117,8 +117,15 @@ degradation 53.1 vs 58.8 kEUR (-9.7 %). Les DEUX axes de connaissance de la
 these (etat de sante, prevision court-terme) contribuent chacun ~la moitie du
 gain, de facon additive et attribuee (tests nuls en cascade, CRN).
 
-Fichiers sources : ultime.212376/77/78.out, sweep_ultime_target.txt,
-sweep_ultime_hpre.txt (rapatrier aussi bench_ultime.txt du cluster pour
-archive). Config production : RB2(SoH_all+Pred)/get_optimal_action_RB.py avec
-SOC_TARGET_MODE="fixed", SOC_TARGET=0.90 (ou "ceiling", equivalent).
+Fichiers sources : bench_ultime.txt, ultime.212376/77/78.out,
+sweep_ultime_target.txt, sweep_ultime_hpre.txt. Config production :
+RB2(SoH_all+Pred)/get_optimal_action_RB.py avec SOC_TARGET_MODE="fixed",
+SOC_TARGET=0.90 (ou "ceiling", equivalent a ~0.1 kEUR pres).
+
+STATUT DES CHIFFRES (rigueur manuscrit) : 77.224 +/- 0.008 est mesure a
+N=200 (chiffre principal sur) ; 77.103 (cible fixe 0.90) est mesure a N=64
+(sweep target). La ligne "RB2(SoH_all+Pred) (0.90)" est deja prete dans
+bench_ultime.py : UN job `sbatch run_meso_ultime.slurm 200 25 --omni` la
+confirmera a N=200 si le manuscrit retient 77.10 comme chiffre titre ;
+sinon, retenir 77.22 (N=200) et citer 77.10 comme variante calibree.
 ================================================================================

@@ -1,0 +1,67 @@
+================================================================================
+NOTE DE THESE -- RE-GENERATION DES RESULTATS RB2(RUL) APRES CORRECTION DU BUG
+                 D'ANCRAGE DE LA RUL (verification de non-regression du ch. 3)
+Dossier : Robustesse/Predictions/
+Donnees : sweep_rul.txt, sweep_rul_attribution.txt, mc_rul_uncertainty.txt
+          (versions POST-FIX, re-executees le 2026-07-02)
+================================================================================
+
+0. CONTEXTE : LE BUG ET POURQUOI IL FALLAIT RE-EXECUTER
+--------------------------------------------------------------------------------
+L'estimateur de RUL en ligne des boucles Communes s'ancrait sur SoH[j_new]
+(valeur EoL ~0.9 de l'ANCIENNE unite) au lieu du SoH=1 de l'unite neuve. En
+consequence, delta_soh restait negatif pendant toute la vie des unites suivant
+le premier remplacement -> la RUL restait figee a sa valeur par defaut (3000 j
+pour l'ELY) -> le levier RB2(RUL) etait silencieusement DESACTIVE apres le
+premier remplacement ELY (~annee 16), et le bruit multiplicatif de
+mc_rul_uncertainty (x(1+eps) sur RUL=3000) ne franchissait jamais le seuil de
+1000 j pour les unites 2+.
+Fix (2026-07-01) : ancres dediees j_rul_* = j+1 (SoH=1 par construction) dans
+les 3 boucles Communes ; test de non-regression Fable/check_rul_fix.py
+(usure acceleree x150 : ECHEC reproduit sur l'ancien code, OK sur le nouveau).
+Les trois resultats du chapitre RUL ont ete RE-GENERES avec le fix.
+
+1. COMPARAISON AVANT / APRES FIX
+--------------------------------------------------------------------------------
+a) sweep_rul.txt (grille RUL_REF x EXP, base c_ely=0.320) :
+     reference RB2 nu 81.26 inchangee ; meilleure config (1000, 0.10) :
+     81.05 -> 81.04 ; ecarts <= 0.05 kEUR sur toute la grille, aucun
+     changement de classement.
+b) sweep_rul_attribution.txt (attribution honnete, socle cost-min) :
+     gain du levier RUL : -0.0010 kEUR (-0.0012 %) avant fix
+                       -> -0.0017 kEUR (-0.002 %)  apres fix.
+     MIN global = socle exact (c_ely=0.310, exp=0) dans les deux cas.
+c) mc_rul_uncertainty.txt (ellipses de Pareto, N=200) :
+     RB2(RUL) : grand axe 1sig 0.0059 -> 0.0060 ; aire ~3e-5 inchangee.
+     RB2(SoH) : 0.0015 -> 0.0015. Le rapport ~4x entre les deux est inchange.
+
+2. POURQUOI SI PEU DE CHANGEMENT (explication physique, a rediger au ch. 3)
+--------------------------------------------------------------------------------
+Le levier RUL n'agit que lorsque RUL_ely < RUL_REF = 1000 j, c'est-a-dire en
+fin de vie d'unite. Or :
+  - pour l'UNITE 1 (annees ~0-16), l'estimateur etait DEJA correct avant fix
+    (ancre initiale SoH[0]=1) : la periode ou le levier agit le plus
+    (annees ~14-16) etait bien simulee ;
+  - pour les UNITES SUIVANTES, le fix reactive l'estimation, mais l'unite 2
+    est JEUNE sur l'horizon restant (~8 ans sur 25) : sa RUL estimee reste
+    > 1000 j presque partout -> le levier n'a presque rien a y moduler.
+Le bug etait donc REEL (estimateur faux apres remplacement) mais son impact
+sur ces trois resultats etait BORNE par la structure temporelle du probleme.
+
+3. CE QUE CA CHANGE POUR LE MANUSCRIT
+--------------------------------------------------------------------------------
+  - Les chiffres publies au chapitre 3 sont desormais generes par un
+    estimateur CORRECT sur toute la duree de simulation : la critique
+    potentielle "votre levier RUL etait desactive apres le 1er remplacement"
+    est fermee, preuve de non-regression a l'appui (check_rul_fix.py).
+  - La conclusion centrale est RENFORCEE : meme avec l'estimateur repare et
+    actif sur les 25 ans, le levier RUL ne rapporte rien (-0.002 %) la ou le
+    levier SoH instantane rapporte -1.34 kEUR (RB2(SoH_H2)). L'argument
+    sigma_RUL(horizon) en U (Pronostic SoH) + ellipses 4x plus grandes reste
+    l'explication : la RUL extrapolee est la moins fiable precisement la ou
+    la decision de derating se prend.
+  - Formulation suggeree : "le pronostic de RUL, grandeur extrapolee, ne
+    constitue pas un signal de commande temps reel exploitable pour cette
+    famille de regles ; sa valeur reside dans la planification des
+    remplacements, hors du perimetre de l'EMS."
+================================================================================

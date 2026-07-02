@@ -119,6 +119,15 @@ def init_and_run_loop_forecast(get_optimal_action_RB, H_forecast=48, n_years=25)
     j_new_ely = 0
     _rul_min_steps = int(20 * 3600 // LOAD['Ts'])
 
+    # Ancres RUL : index ou le SoH de l'unite COURANTE vaut 1 (unite neuve).
+    # Distinctes de j_new_* (ancres de telescopage des couts) : un remplacement
+    # decide au pas j ne met le SoH a 1 qu'a l'index j+1. Utiliser SoH[j_new]
+    # (= SoH[j], valeur EoL ~0.9 de l'ANCIENNE unite) rendait delta_soh negatif
+    # pendant toute la vie des unites suivantes -> RUL figee a sa valeur par
+    # defaut apres le 1er remplacement (levier RB2(RUL) desactive en silence).
+    j_rul_fc  = 0
+    j_rul_ely = 0
+
     # Accumulateurs de coût de dégradation (cumul depuis le dernier remplacement).
     cum_bat = 0.0
     cum_fc  = np.zeros(5)
@@ -190,21 +199,21 @@ def init_and_run_loop_forecast(get_optimal_action_RB, H_forecast=48, n_years=25)
                                                    + B * ELY['T'] * np.log(1 - i_ely_max_t / S / ELY['n_parallel'] / ELY['j_L'] / (1 - alpha_ely_t)))
 
         # CALCUL DU RUL OPTIMISÉ (sans get_rul)
-        # Fuel Cell
-        diff_j_fc = j - j_new_fc
+        # Fuel Cell (ancre j_rul_fc : SoH[j_rul_fc] = 1 par construction)
+        diff_j_fc = j - j_rul_fc
         if diff_j_fc >= _rul_min_steps:
-            delta_soh = SoH_fc[j_new_fc] - SoH_fc[j]
+            delta_soh = SoH_fc[j_rul_fc] - SoH_fc[j]
             if delta_soh > 1e-9: # Éviter division par zéro
-                RUL_fc_t = (diff_j_fc * (SoH_fc[j_new_fc] - FC['SoH_EoL']) / delta_soh - diff_j_fc) * LOAD['Ts'] / 3600 / 24
+                RUL_fc_t = (diff_j_fc * (SoH_fc[j_rul_fc] - FC['SoH_EoL']) / delta_soh - diff_j_fc) * LOAD['Ts'] / 3600 / 24
             else: RUL_fc_t = 8000
         else: RUL_fc_t = 8000
 
-        # Électrolyseur
-        diff_j_ely = j - j_new_ely
+        # Électrolyseur (ancre j_rul_ely : SoH[j_rul_ely] = 1 par construction)
+        diff_j_ely = j - j_rul_ely
         if diff_j_ely >= _rul_min_steps:
-            delta_soh_ely = SoH_ely[j_new_ely] - SoH_ely[j]
+            delta_soh_ely = SoH_ely[j_rul_ely] - SoH_ely[j]
             if delta_soh_ely > 1e-9:
-                RUL_ely_t = (diff_j_ely * (SoH_ely[j_new_ely] - ELY['SoH_EoL']) / delta_soh_ely - diff_j_ely) * LOAD['Ts'] / 3600 / 24
+                RUL_ely_t = (diff_j_ely * (SoH_ely[j_rul_ely] - ELY['SoH_EoL']) / delta_soh_ely - diff_j_ely) * LOAD['Ts'] / 3600 / 24
             else: RUL_ely_t = 3000
         else: RUL_ely_t = 3000
 
@@ -274,10 +283,12 @@ def init_and_run_loop_forecast(get_optimal_action_RB, H_forecast=48, n_years=25)
         if SoH_fc_tp1 < FC['SoH_EoL'] :
             SoH_fc_tp1 = 1
             j_new_fc = j
+            j_rul_fc = j + 1   # la nouvelle unite est a SoH=1 a l'index j+1
             cum_fc = np.array(get_cost_fc(alpha_fc[j:j+1], P_fc[j:j+1]))
         if SoH_ely_tp1 < ELY['SoH_EoL'] :
             SoH_ely_tp1 = 1
             j_new_ely = j
+            j_rul_ely = j + 1  # idem
             V_irr_ely, V_rev_ely, d_ss_ely, d_idle_ely = _ely_advance(
                 0.0, 0.0, P_ely[j], P_ely[j], P_ely_max_t, Ts_h)
             V_ss_ely   = d_ss_ely

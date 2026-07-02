@@ -1,0 +1,6 @@
+# bench_ultime (sweep_ultime_hpre) : 25 ans ; VoLL=3.0 ; N=64 graines ; CRN ; base=Unifiee (test nul)
+label ; N ; LPSP(%) ; sLPSP ; deg(kEUR) ; sdeg ; total(kEUR) ; stotal ; dtotal_vs_base(kEUR) ; ELY_starts
+Unifiee (test nul) ; 1 ; 3.1051 ; 0.0000 ; 52.870 ; 0.000 ; 78.336 ; 0.000 ; +0.000 ; 9190
+Ult H_PRE=12 ; 64 ; 3.0791 ; 0.0164 ; 52.812 ; 0.021 ; 78.065 ; 0.127 ; -0.270 ; 8996
+Ult H_PRE=18 ; 64 ; 2.9436 ; 0.0123 ; 53.093 ; 0.015 ; 77.235 ; 0.097 ; -1.101 ; 8996
+Ult H_PRE=24 ; 64 ; 2.9531 ; 0.0116 ; 52.984 ; 0.016 ; 77.203 ; 0.088 ; -1.132 ; 8900

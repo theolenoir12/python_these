@@ -1,0 +1,23 @@
+Job 212355  noeud=node4-26  N=1  n_years=25  extra=--sweep soh_bat
+cpus-per-task=32  debut=Thu Jul  2 05:27:47 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+[bench_fable] 4 runs (25 ans), 4 workers ...
+  [  1/4] RB2 socle              seed=2026   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [  2/4] RB2(Pred) hyst         seed=2026   LPSP=2.3459%  deg=65.071  total=84.311  ELYstarts=8988
+  [  3/4] RB2(Proba)             seed=2026   LPSP=2.5396%  deg=59.223  total=80.051  ELYstarts=9363
+  [  4/4] RB2(Prop)              seed=2026   LPSP=2.9675%  deg=59.005  total=83.343  ELYstarts=10034
+[bench_fable] termine en 64 s
+# bench_fable (bench_fable) : 25 ans ; VoLL=3.0 ; N=1 graines ; seeds communes (CRN) ; base=RB2 socle
+label ; N ; LPSP(%) ; sLPSP ; deg(kEUR) ; sdeg ; total(kEUR) ; stotal ; dtotal_vs_base(kEUR) ; ELY_starts
+RB2 socle ; 1 ; 2.5921 ; 0.0000 ; 58.843 ; 0.000 ; 80.102 ; 0.000 ; +0.000 ; 9199
+RB2(Pred) hyst ; 1 ; 2.3459 ; 0.0000 ; 65.071 ; 0.000 ; 84.311 ; 0.000 ; +4.209 ; 8988
+RB2(Proba) ; 1 ; 2.5396 ; 0.0000 ; 59.223 ; 0.000 ; 80.051 ; 0.000 ; -0.051 ; 9363
+RB2(Prop) ; 1 ; 2.9675 ; 0.0000 ; 59.005 ; 0.000 ; 83.343 ; 0.000 ; +3.241 ; 10034
+
+[bench_fable] -> /Work/Users/tlenoir/genial/Robustesse/Fable/bench_fable.txt
+[bench_fable] -> /Work/Users/tlenoir/genial/Robustesse/Fable/bench_fable_cloud.csv
+
+real	1m4.293s
+user	4m12.681s
+sys	0m0.893s
+fin=Thu Jul  2 05:28:52 CEST 2026

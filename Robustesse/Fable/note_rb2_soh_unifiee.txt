@@ -1,0 +1,112 @@
+================================================================================
+NOTE DE THESE -- RB2(SoH) UNIFIEE : CUMUL DES DEUX LEVIERS "ETAT DE SANTE"
+                 (setpoints H2 par SoH_fc/SoH_ely  x  plafond SoC par SoH_bat)
+Dossier : Robustesse/Fable/
+Donnees : sweep_fable_socwin_fine.txt, sweep_fable_unified.txt
+Runs    : 25 ans, deterministes (aucune prevision), socle cost-min 0.440/0.310,
+          VoLL = 3 EUR/kWh. Redige : 2026-07-02.
+================================================================================
+
+0. RESUME (l'essentiel pour le manuscrit)
+--------------------------------------------------------------------------------
+La RB2(SoH) UNIFIEE -- chaque composant pilote par SON etat de sante :
+    P_fc_set  = 0.440 * Pmax_fc  * SoH_fc^1        (niveau 1, RB2(SoH))
+    P_ely_set = 0.310 * Pmax_ely * SoH_ely^2       (niveau 1, RB2(SoH))
+    soc_max   = 0.995 - 0.2*(1 - SoH_bat)          (niveau 2, fenetre batterie)
+atteint 78.336 kEUR : MEILLEURE STRATEGIE SANS PREVISION de la these
+(-1.77 kEUR / -2.2 % vs socle ; -0.43 vs RB2(SoH) ; deg -10 % a 52.87).
+
+Les deux resultats de structure qui la rendent defendable :
+  1. ADDITIVITE A 93 % : gains separes -1.338 (gammas) et -0.559 (plafond) ;
+     gain cumule mesure -1.767 sur -1.897 additif. Les deux leviers agissent
+     sur des ressources disjointes (setpoints H2 / fenetre batterie) et ne se
+     cannibalisent presque pas (sous-additivite 0.13 kEUR seulement).
+  2. OPTIMUMS SEPARABLES : gamma* = (1,2) reste optimal sous plafond actif,
+     et g* = 0.2 reste optimal sous gammas actifs. Chaque levier se regle
+     independamment sur sa propre grille -- pas d'optimisation croisee requise.
+
+Robustesse parametrique du plafond : cuvette PLATE (g dans [0.15, 0.30] :
+-0.37 a -0.56 kEUR) -> une mesestimation de g de +-50 % conserve l'essentiel
+du gain. Contraste utile avec les seuils previsionnels, plus sensibles.
+
+
+1. GRILLE FINE DU PLAFOND SoC (sweep_fable_socwin_fine, socle seul)
+--------------------------------------------------------------------------------
+soc_max(t) = 0.995 - g*(1 - SoH_bat(t)) ; a SoH_EoL = 0.7 : plafond 0.995-0.3g.
+
+    g    | LPSP(%) | deg(kEUR) | total(kEUR) | dtotal
+    0.00 | 2.5921  |  58.843   |   80.102    |   --
+    0.05 | 2.6554  |  58.342   |   80.120    |  +0.02
+    0.10 | 2.7032  |  57.819   |   79.989    |  -0.11
+    0.15 | 2.7277  |  57.360   |   79.731    |  -0.37
+    0.20 | 2.7679  |  56.842   |   79.543    |  -0.56   <- optimum (plafond EoL 0.935)
+    0.25 | 2.8435  |  56.266   |   79.587    |  -0.51
+    0.30 | 2.9200  |  55.716   |   79.663    |  -0.44
+    0.35 | 2.9818  |  55.302   |   79.758    |  -0.35
+    0.40 | 3.0299  |  54.869   |   79.719    |  -0.38
+
+Lectures :
+  - optimum g* = 0.20, cuvette plate [0.15, 0.30] : levier PEU SENSIBLE a son
+    reglage (argument d'implementabilite pour le manuscrit) ;
+  - g = 0.05 est neutre (+0.02) : le cout LPSP marginal demarre immediatement
+    alors que l'economie de degradation exige un abaissement minimal pour
+    sortir de la zone de dommage haute de la courbe Cumulative_degradation ;
+  - la degradation decroit de facon quasi lineaire avec g (-0.5 kEUR par pas
+    de 0.05) : c'est le LPSP, convexe, qui fixe l'optimum.
+
+
+2. RB2(SoH) UNIFIEE (sweep_fable_unified)
+--------------------------------------------------------------------------------
+Controles d'ancrage (tous exacts) :
+    (g_fc, g_ely, g) = (0,0,0)   -> 80.102  == socle                    OK
+    (0,0,0.2)                    -> 79.543  == socwin seul              OK
+    (1,2,0)                      -> 78.764  == RB2(SoH) pur (attendu
+                                    78.768, sweep_soh_attribution r1)   OK
+
+    config              | LPSP(%) | deg(kEUR) | total(kEUR) | dtotal
+    socle               | 2.5921  |  58.843   |   80.102    |   --
+    RB2(SoH) pur (1,2)  | 2.9091  |  54.906   |   78.764    |  -1.34
+    socwin seul (g=0.2) | 2.7679  |  56.842   |   79.543    |  -0.56
+    UNIFIEE (1,2)x0.1   | 3.0414  |  53.888   |   78.832    |  -1.27
+    UNIFIEE (1,2)x0.2   | 3.1051  |  52.870   |   78.336    |  -1.77  <- OPTIMUM
+    UNIFIEE (1,2)x0.3   | 3.3115  |  51.751   |   78.910    |  -1.19
+    UNIFIEE (1,2)x0.4   | 3.4538  |  50.908   |   79.234    |  -0.87
+    variantes gammas a g=0.2 : (0,2) 79.319 ; (2,2) 79.770 ; (1,3) 80.025 ;
+                               (1,1) 79.773  -> toutes dominees par (1,2).
+
+ADDITIVITE : prediction additive 78.764 - 0.559 = 78.205 ; mesure 78.336 ->
+93 % du gain additif conserve (sous-additivite 0.13 kEUR : les deux leviers
+augmentent chacun un peu le LPSP, et ces couts se cumulent legerement
+sur-lineairement dans les pires semaines).
+
+SEPARABILITE : l'optimum gamma ne bouge pas sous plafond actif, l'optimum g ne
+bouge pas sous gammas actifs (78.832 / 78.336 / 78.910 pour g = 0.1/0.2/0.3 :
+meme cuvette qu'en solo). Reglage INDEPENDANT des deux leviers valide.
+
+LECTURE PARETO (axe degradation) : la famille unifiee etend le front bien
+au-dela de RB2(SoH) : deg 52.87 (LPSP 3.11) a g = 0.2, jusqu'a 50.91 (LPSP
+3.45) a g = 0.4 -- soit -10 a -13 % de degradation vs socle par la seule
+connaissance des etats de sante. Si un plafond de LPSP a ~3 % est requis, le
+repli naturel est g = 0.1 : 78.832 (LPSP 3.04, deg 53.89).
+
+RECIT MANUSCRIT : "chaque composant est pilote par son propre etat de sante --
+les setpoints de la chaine H2 par SoH_fc et SoH_ely (asservissement implicite
+au genou de zero-usure, cf note_cross_modulation_sohbat.txt), la fenetre
+d'usage de la batterie par SoH_bat. Les deux canaux sont physiquement disjoints,
+donc additifs et reglables separement."
+
+
+3. POSITION DANS LA THESE ET ETAPE SUIVANTE
+--------------------------------------------------------------------------------
+    RB2 socle cost-min ................ 80.102   (sans connaissance)
+    RB2(SoH) ......................... 78.764   (+ SoH_fc/SoH_ely)
+    RB2(SoH) UNIFIEE ................. 78.336   (+ SoH_bat)          <- ICI
+    RB2(SoH+Pred) reopt ............... 77.667   (reference actuelle avec prevision)
+
+La pre-charge previsionnelle vaut -1.10 kEUR sur base RB2(SoH) (reopt_sohpred :
+78.768 -> 77.667), contre -0.38 sur socle nu. Si elle conserve cette valeur sur
+la base unifiee, le RB2 ULTIME (unifiee + pre-charge +-1sigma) attendu a
+~77.2-77.4 kEUR : voir Robustesse/Fable Predictions/ (bench_ultime.py).
+Interaction a surveiller (geree dans RB2(Ultime)) : la cible de pre-charge doit
+suivre le plafond VIEILLI (soc_max(t) - marge), pas un SOC_TARGET fixe.
+================================================================================

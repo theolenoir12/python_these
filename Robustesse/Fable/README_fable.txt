@@ -277,6 +277,10 @@ RUL EN LIGNE (Vieillissement8/Common/main_init_and_loop.py,
   note_cross_modulation_sohbat.txt     leviers SoH_bat : cross-modulation
                                        (refutee, genou zero-usure ELY) vs
                                        fenetre SoC vieillissante (validee)
+  note_rb2_soh_unifiee.txt             RB2(SoH) UNIFIEE (78.336 kEUR) :
+                                       additivite 93 %, optimums separables,
+                                       grille fine du plafond ; tremplin vers
+                                       le RB2 ULTIME (../Fable Predictions/)
   RB2(Proba)/, RB2(Prop)/, RB2(PropSym)/   strategies (main.py = run unitaire)
 
   Lecture du bench : comparer 'total' (deg + VoLL*EENS) a la ref RB2(Pred)

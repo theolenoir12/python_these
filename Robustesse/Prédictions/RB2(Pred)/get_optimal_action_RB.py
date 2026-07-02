@@ -64,6 +64,13 @@ SIGMA_E_KWH  = 39.38    # ecart-type du backtest a 18h [kWh] (valeur de DESIGN)
 # sigma : la bande d'hysteresis reste calee sur SIGMA_E_KWH (design fige) tandis
 # que le vrai bruit varie (cf. sens_pred_noise.py, ellipses de sensibilite).
 SIGMA_INJECT_KWH = None
+# Correlation temporelle du bruit (AR(1)) : eps_t = rho*eps_{t-1} + sqrt(1-rho^2)*xi_t.
+# Les fenetres 18 h consecutives se recouvrent a 17/18 -> l'erreur reelle est tres
+# autocorrelee ; le tirage iid (rho=0) est le PIRE-CAS pour le clignotement (cf.
+# robustesse_bruit_prevision.txt sect. 7). rho=0.0 (defaut) -> comportement iid
+# STRICTEMENT identique a l'original (meme tirage standard_normal par pas).
+# Balayage : Fable/bench_fable.py --sweep rho.
+NOISE_RHO = 0.0
 
 # --- Anti-clignotement (robustesse au bruit) ---------------------------------
 # Le bruit fait basculer la decision binaire net>0 d'un pas a l'autre pres du
@@ -96,21 +103,24 @@ MIN_DWELL   = 12        # duree minimale de maintien d'un etat [pas/h]
 _rng      = np.random.default_rng(0)
 _state_on = False       # etat courant de la pre-charge (ELY coupe ?)
 _dwell    = 0           # compteur de maintien restant [pas]
+_eps      = 0.0         # etat AR(1) du bruit (utilise si NOISE_RHO > 0)
 
 
 def set_noise_seed(seed):
     """(Re)seede le generateur du bruit de prevision. A appeler avant chaque run
     Monte-Carlo pour une realisation independante et reproductible."""
-    global _rng
+    global _rng, _eps
     _rng = np.random.default_rng(seed)
+    _eps = 0.0
 
 
 def reset():
     """Reinitialise l'etat de l'hysteresis. A APPELER avant chaque run (les
     workers d'un pool sont reutilises -> sinon l'etat fuit d'un run a l'autre)."""
-    global _state_on, _dwell
+    global _state_on, _dwell, _eps
     _state_on = False
     _dwell    = 0
+    _eps      = 0.0
 
 
 def _precharge(P_tot_ref_future, SoC_t):
@@ -126,9 +136,13 @@ def _precharge(P_tot_ref_future, SoC_t):
     dt_h = LOAD['Ts'] / 3600.0
     net = float(np.sum(np.asarray(P_tot_ref_future[:H_PRE], dtype=float))) * dt_h  # [Wh]
     # Bruit de prevision : net_pred = net_vrai + N(biais, sigma_inject) (kWh -> Wh).
+    # NOISE_RHO=0 -> iid (identique a l'original) ; >0 -> AR(1) stationnaire.
     if NOISE_ENABLE:
+        global _eps
         sig_inj = SIGMA_E_KWH if SIGMA_INJECT_KWH is None else SIGMA_INJECT_KWH
-        net += (BIAS_E_KWH + sig_inj * _rng.standard_normal()) * 1000.0
+        xi = _rng.standard_normal()
+        _eps = NOISE_RHO * _eps + np.sqrt(1.0 - NOISE_RHO ** 2) * xi if NOISE_RHO > 0.0 else xi
+        net += (BIAS_E_KWH + sig_inj * _eps) * 1000.0
 
     if not HYST_ENABLE:
         return net > 0.0  # decision binaire d'origine (P_tot_ref>0 = deficit)

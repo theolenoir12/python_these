@@ -1,8 +1,32 @@
 from .Init_EMR_MG_v16_python import *
 
+# --- Fenetre SoC (parametrable ; DEFAUTS = comportement historique exact) ----
+SOC_MIN = 0.2
+SOC_MAX = 0.995
+# Plafond SoC vieillissement-dependant (levier SoH_bat "fenetre", OFF par defaut) :
+#   soc_max_t = SOC_MAX - SOC_MAX_AGED_GAIN * (1 - SoH_bat_t)   (borne: SOC_MIN+0.1)
+# Motivation : la densite de dommage de Cumulative_degradation_bat est ~4-6x plus
+# forte au-dessus de SoC~0.6 ; abaisser le plafond quand la batterie vieillit
+# confine le cyclage dans la zone la moins chere, au prix de capacite utile
+# (arbitrage deg <-> LPSP a balayer : Fable/bench_fable.py --sweep socwin).
+SOC_MAX_AGED_GAIN = 0.0
+
+# --- LPSP "contraintes simultanees" (OFF par defaut) --------------------------
+# lol = max(lol_pmax, lol_storage, lol_soc) sous-compte l'energie non servie
+# quand DEUX contraintes sont actives au meme pas (chaque terme est calcule avec
+# les autres ressources non corrigees). LOL_COMBINED=True recalcule lol sur
+# l'action FINALE corrigee. NB : change (un peu) le LPSP de TOUTES les
+# strategies -> reserver a l'analyse de sensibilite (Fable/check_lol_combined.py).
+LOL_COMBINED = False
+
 def get_lol(SoC_t,action,P_tot_ref_t,defaillances,E_h2_t,E_h2_init,P_fc_max_t,P_ely_max_t,SoH_bat_t) :
 
         lol = 0
+
+        # Plafond SoC courant (== SOC_MAX tant que SOC_MAX_AGED_GAIN = 0)
+        soc_max_t = SOC_MAX - SOC_MAX_AGED_GAIN * (1.0 - SoH_bat_t)
+        if soc_max_t < SOC_MIN + 0.1 :
+            soc_max_t = SOC_MIN + 0.1
         
         P_dc_bat_t = action[0]
         P_dc_fc_t  = action[1]
@@ -19,13 +43,13 @@ def get_lol(SoC_t,action,P_tot_ref_t,defaillances,E_h2_t,E_h2_init,P_fc_max_t,P_
         
         SoC_tp1 = SoC_t - P_bat_t * LOAD['Ts'] / 3600 * BAT['eff']**np.sign(-P_bat_t) / (BAT['parallel_num']*BAT['series_num']*BAT['Q_bat']*BAT['v_cell_nom']*SoH_bat_t) 
         
-        if SoC_tp1 > 0.995 or SoC_tp1 < 0.2 :
-            if SoC_tp1 > 0.995 :
-                P_bat_t    = (SoC_t - 0.99499) * (BAT['parallel_num']*BAT['series_num']*BAT['Q_bat']*BAT['v_cell_nom']*SoH_bat_t) / BAT['eff']**np.sign(-P_bat_t) * 3600 / LOAD['Ts']
+        if SoC_tp1 > soc_max_t or SoC_tp1 < SOC_MIN :
+            if SoC_tp1 > soc_max_t :
+                P_bat_t    = (SoC_t - (soc_max_t - 0.00001)) * (BAT['parallel_num']*BAT['series_num']*BAT['Q_bat']*BAT['v_cell_nom']*SoH_bat_t) / BAT['eff']**np.sign(-P_bat_t) * 3600 / LOAD['Ts']
                 P_dc_bat_t = P_bat_t * CONV['eta']**np.sign(P_bat_t) 
                 
-            elif SoC_tp1 < 0.2 :
-                P_bat_t   = (SoC_t - 0.20001) * (BAT['parallel_num']*BAT['series_num']*BAT['Q_bat']*BAT['v_cell_nom']*SoH_bat_t) / BAT['eff']**np.sign(-P_bat_t) * 3600 / LOAD['Ts']
+            elif SoC_tp1 < SOC_MIN :
+                P_bat_t   = (SoC_t - (SOC_MIN + 0.00001)) * (BAT['parallel_num']*BAT['series_num']*BAT['Q_bat']*BAT['v_cell_nom']*SoH_bat_t) / BAT['eff']**np.sign(-P_bat_t) * 3600 / LOAD['Ts']
                 P_dc_bat_t = P_bat_t * CONV['eta']**np.sign(P_bat_t) 
 
             lol_soc = 1 - (P_dc_bat_t + P_dc_h2_t) / P_tot_ref_t 
@@ -105,6 +129,14 @@ def get_lol(SoC_t,action,P_tot_ref_t,defaillances,E_h2_t,E_h2_init,P_fc_max_t,P_
             lol_storage = 0
             
         lol = max(lol_pmax,lol_storage,lol_soc)
+
+        if LOL_COMBINED and P_tot_ref_t != 0 :
+            # lol recalcule sur l'action FINALE (toutes corrections appliquees) :
+            # traite le cas ou plusieurs contraintes sont actives au meme pas.
+            lol_comb = 1 - (P_dc_bat_t + P_dc_fc_t + P_dc_ely_t) / P_tot_ref_t
+            if lol_comb < 1e-12 :
+                lol_comb = 0
+            lol = lol_comb
         
         action = (P_dc_bat_t, P_dc_fc_t, P_dc_ely_t)
         

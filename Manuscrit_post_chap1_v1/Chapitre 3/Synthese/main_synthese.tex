@@ -1,0 +1,71 @@
+% ============================================================
+%  CHAPITRE 4 — Section 6 : Synthèse comparative
+% ============================================================
+
+\section{Synthèse comparative}
+\label{sec:synthese_ch4}
+
+Les trois leviers d'augmentation ont été développés séparément. Cette section les replace dans une vue d'ensemble, situe les stratégies augmentées les unes par rapport aux autres et vis-à-vis du front optimal, et dégage l'apport propre à chaque connaissance.
+
+% ------------------------------------------------------------
+\subsection{Vue d'ensemble dans le plan de Pareto}
+% ------------------------------------------------------------
+
+Le Tableau~\ref{tab:synthese} rassemble les performances des stratégies de ce chapitre, et la Figure~\ref{fig:pareto_synthese} les positionne dans le plan de Pareto, avec le front optimal par programmation dynamique introduit au chapitre précédent comme repère.
+
+\begin{table}[h!]
+\centering
+\caption{Synthèse des stratégies augmentées. Le front optimal est la borne par programmation dynamique du chapitre précédent.}
+\label{tab:synthese}
+\begin{tabular}{llccc}
+\hline
+Stratégie & Connaissance mobilisée & LPSP [\%] & Dégradation [k€] & Coût total [k€] \\
+\hline
+RB2 (référence)   & --- (réactive)          & 2,59 & 58,85 & 80,11 \\
+RB2(SoH)          & état de santé           & 2,91 & 54,91 & 78,77 \\
+RB2(RUL)          & durée de vie résiduelle & 2,59 & 58,85 & 80,11 \\
+RB2(Pred)         & prévision de profils    & 2,53 & 58,97 & 79,72 \\
+RB2(SoH+Pred)     & santé et prévision      & 2,75 & 55,08 & 77,67 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth]{Chapitre 3/Synthese/Figures/pareto_strategies.pdf}
+    \caption{Positionnement des stratégies augmentées (RB2(SoH), RB2(RUL), RB2(Pred), RB2(SoH+Pred)) dans le plan de Pareto LPSP--coût de dégradation, vis-à-vis de la référence RB2 et du front de Pareto optimal par programmation dynamique~; agrandissement sur l'amas RB2 en encart.}
+    \label{fig:pareto_synthese}
+\end{figure}
+\FloatBarrier
+
+L'incertitude des stratégies prévisionnelles est faible à l'échelle du plan d'ensemble. Elle est représentée séparément sur un zoom dédié, sous forme d'ellipses d'incertitude $1\sigma/2\sigma$ autour de la moyenne Monte-Carlo (Figure~\ref{fig:pareto_zoom}).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=.7\linewidth]{Chapitre 3/Synthese/Figures/pred_uncertainty_zoom.pdf}
+    \caption{Zoom sur les stratégies prévisionnelles et leur incertitude Monte-Carlo, avec leur base RB2 et RB2(SoH).}
+    \label{fig:pareto_zoom}
+\end{figure}
+\FloatBarrier
+
+% ------------------------------------------------------------
+\subsection{Apport de chaque connaissance}
+% ------------------------------------------------------------
+
+La vue d'ensemble fait apparaître une répartition des rôles entre les trois connaissances, cohérente avec la grandeur sur laquelle chacune agit.
+
+\begin{itemize}
+  \setlength\itemsep{2pt}
+  \item L'état de santé agit sur la durabilité~: RB2(SoH) abaisse le coût de dégradation d'environ $6{,}7\,\%$ (de $58{,}85$ à $54{,}91$~k€) en ménageant l'électrolyseur vieillissant, au prix d'un peu de fiabilité, pour un gain net de $1{,}67\,\%$ sur le coût total.
+  \item La prévision agit sur la fiabilité~: RB2(Pred) améliore la LPSP à dégradation quasi constante, en anticipant les creux de production par la pré-charge de la batterie, pour un gain modéré sur le coût total ($80{,}11 \to 79{,}72$~k€).
+  \item Le pronostic n'apporte, lui, aucun gain~: une fois le socle de RB2 optimisé, le balayage des paramètres de RB2(RUL) retient un exposant nul, si bien que RB2(RUL) se confond exactement avec RB2. La durée de vie résiduelle, redondante avec le SoH et peu fiable en début de vie, n'ajoute pas d'information exploitable au-delà du diagnostic.
+  \item La combinaison santé et prévision, RB2(SoH+Pred), cumule les deux effets et réalise le meilleur coût total du chapitre ($77{,}67$~k€).
+\end{itemize}
+
+Ces apports sont modestes en valeur absolue mais attribuables~: la propriété de test nul, appliquée à socle optimisé (comparaison « best-vs-best »), garantit que chaque écart provient de la connaissance ajoutée, et non d'un socle mal réglé ni d'une refonte de la logique de contrôle. Vis-à-vis du front optimal par programmation dynamique, les stratégies augmentées restent en retrait, ce qui est attendu pour une stratégie en ligne à base de règles, mais les leviers du diagnostic et de la prévision en réduisent l'écart sans renoncer à la simplicité d'implémentation.
+
+% ------------------------------------------------------------
+\subsection{Compromis complexité et gain}
+% ------------------------------------------------------------
+
+Les trois leviers diffèrent par leur coût de mise en œuvre. Les augmentations par le SoH et la RUL ne requièrent que des grandeurs déjà estimées par les outils de diagnostic et de pronostic du chapitre dédié, et ne modifient qu'un coefficient multiplicatif dans la règle. L'augmentation par la prévision est plus exigeante~: elle suppose un modèle de prévision entraîné et maintenu, ainsi qu'un dispositif de robustesse calé sur l'incertitude mesurée, sans lequel le gain s'inverse. Le gain qu'elle procure doit être mis en regard de ce surcroît de complexité.

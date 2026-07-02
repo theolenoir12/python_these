@@ -1,0 +1,112 @@
+% ============================================================
+%  CHAPITRE 4 — Section 2 : État de l'art & positionnement
+% ============================================================
+%
+% NOTE BIBLIOGRAPHIE : la revue sur la prévision PV/consommation (§ Prévision…)
+% reprend l'état de l'art de l'article EnergyCon (LaTeX/EnergyCon26_v1). Les clés
+% de citation utilisées ici (wilson_time_2016, hochreiter_long_1997,
+% kong_short-term_2019, etc.) doivent être fusionnées depuis
+% EnergyCon26_v1/references.bib vers la bibliographie du manuscrit.
+% Les sous-sections « EMS conscientes de la santé » et « prévisions dans les EMS »
+% sont à étoffer (matière à compléter — cf. balises TODO).
+% ============================================================
+
+\section{État de l'art \& positionnement}
+\label{sec:eda_ch4}
+
+L'augmentation d'une stratégie de gestion d'énergie par des connaissances supplémentaires se situe à la croisée de trois courants de la littérature~: l'intégration de l'information de vieillissement (diagnostic et pronostic) dans la décision, la prévision des profils de production et de consommation, et l'exploitation de ces prévisions par des stratégies anticipatives. Cette section passe en revue ces trois courants avant de positionner l'étude.
+
+% ------------------------------------------------------------
+\subsection{Intégration du diagnostic et du pronostic dans les EMS}
+\label{subsec:health_aware_sota}
+% ------------------------------------------------------------
+
+La prise en compte du vieillissement dans la gestion d'énergie a d'abord été abordée de manière implicite, au travers de fonctions de coût pénalisant les sollicitations réputées dégradantes (cycles profonds de la batterie, démarrages-arrêts des composants hydrogène). Une seconde génération d'approches, dites \emph{conscientes de l'état de santé} (\textit{health-aware} ou \textit{health-conscious}), exploite explicitement une estimation en ligne du SoH pour adapter la décision~: la grandeur de santé entre alors soit dans les contraintes (actualisation des bornes de fonctionnement, approche réactive du chapitre précédent), soit dans l'objectif (modulation de la sollicitation selon l'usure courante).
+
+Une troisième génération, plus récente, mobilise non plus l'état présent mais le \emph{pronostic}~: la durée de vie résiduelle (RUL) estimée est injectée dans la décision pour répartir l'effort de dégradation dans le temps, voire pour synchroniser les fins de vie des composants. Ces approches, parfois qualifiées de \textit{prognostics-informed} ou \textit{prognostics-and-health-management} (PHM) appliqué au contrôle, restent peu nombreuses dans le contexte des micro-réseaux multi-sources.
+
+% TODO — à compléter : panorama structuré des EMS health-aware (batterie,
+% pile à combustible, électrolyseur), distinction coût vs contrainte, méthodes
+% (programmation dynamique, MPC, apprentissage par renforcement), et travaux
+% intégrant la RUL dans la décision. Références à ajouter.
+
+\medskip
+\noindent\textit{[Section à étoffer.]}
+
+% ------------------------------------------------------------
+\subsection{Prévision de la production photovoltaïque et de la consommation}
+\label{subsec:forecast_sota}
+% ------------------------------------------------------------
+
+La prévision à court terme de la production photovoltaïque et de la demande conditionne directement la pertinence d'une décision anticipative~: l'intérêt de constituer une réserve dépend de ce que réserve le futur proche. Les méthodes de prévision de séries temporelles énergétiques se répartissent en trois grandes familles, résumées dans le Tableau~\ref{tab:forecast_sota_ch4}.
+
+\begin{table}[h!]
+\centering
+\caption{Synthèse des méthodes de prévision de profils de puissance.}
+\label{tab:forecast_sota_ch4}
+\small
+\begin{tabularx}{\textwidth}{lXX}
+\hline
+\textbf{Catégorie} & \textbf{Méthodes représentatives} & \textbf{Caractéristiques} \\ \hline
+Statistiques / paramétriques &
+  ARMA \cite{wilson_time_2016, chujai_time_nodate},
+  ARIMA/SARIMA \cite{wilson_time_2016, bilgili_gross_2023},
+  lissage exponentiel \cite{hamdoun_energy_2021},
+  modèles gris GM(1,1) \cite{mustafa_forecasting_2025},
+  Prophet \cite{mustafa_forecasting_2025} &
+  Interprétables~; faibles besoins en données~; adaptés aux séries stationnaires ou
+  saisonnières~; représentation non linéaire limitée et précision dégradée aux longs horizons \\ \hline
+Apprentissage automatique « peu profond » &
+  ANN/MLP \cite{hippert_neural_2001, hamdoun_energy_2021},
+  SVR \cite{hamdoun_energy_2021},
+  kNN \cite{hamdoun_energy_2021},
+  séries floues \cite{mustafa_forecasting_2025} &
+  Capacité de représentation non linéaire~; besoins en données modérés~; pas de mémoire
+  temporelle native~; performances sensibles à l'architecture et à l'ingénierie des variables \\ \hline
+Apprentissage profond (récurrent et hybride) &
+  LSTM \cite{hochreiter_long_1997, kong_short-term_2019},
+  LSTM profond \cite{shi_deep_2018},
+  CNN-LSTM \cite{rafi_short-term_2021},
+  ConvLSTM \cite{bai_deep_2022},
+  hybride (VMD+DBN+ARMA) \cite{xie_hybrid_2018} &
+  Dépendances temporelles longues~; gère la non-stationnarité et la forte variabilité~;
+  précision à l'état de l'art sur grands jeux de données~; coût de calcul plus élevé \\ \hline
+\end{tabularx}
+\end{table}
+
+\subsubsection{Approches statistiques (paramétriques)}
+
+Les méthodes classiques reposent sur une représentation mathématique explicite de la structure temporelle du signal et ont dominé la prévision énergétique pendant des décennies. Le modèle ARMA, combinant composantes autorégressive et moyenne mobile, a été formalisé par Box et Jenkins comme cadre général des séries stationnaires \cite{wilson_time_2016} et largement appliqué depuis à la charge électrique comme à la production PV \cite{chujai_time_nodate, mustafa_forecasting_2025}. L'extension ARIMA traite la non-stationnarité par différenciation et demeure une référence de base, tandis que sa variante saisonnière SARIMA ajoute des composantes périodiques particulièrement pertinentes pour les profils de consommation à motifs journaliers ou hebdomadaires \cite{hamdoun_energy_2021, hasan_state---art_2025}. Le lissage exponentiel et son extension de Holt-Winters offrent des alternatives plus simples, à faible nombre de paramètres, bien adaptées à la prévision en ligne lorsque les données sont limitées \cite{hamdoun_energy_2021}.
+
+Ces approches paramétriques sont appréciées pour leur interprétabilité et leurs faibles besoins en données, et peuvent produire des résultats compétitifs sur des séries à court terme, stationnaires ou régulièrement saisonnières \cite{mustafa_forecasting_2025}. Leur limite principale tient à l'hypothèse de linéarité~: elles peinent à représenter les fluctuations abruptes, pilotées par la météo, de la production PV, ainsi que la variabilité non linéaire et multifactorielle de la consommation résidentielle, et leur précision se dégrade avec l'horizon \cite{hamdoun_energy_2021, mustafa_forecasting_2025}. Au-delà de la famille ARIMA, les modèles gris sont spécifiquement conçus pour les jeux de données rares ou incertains, un atout pour les micro-réseaux nouvellement instrumentés \cite{mustafa_forecasting_2025}, tandis que le modèle Prophet décompose une série en tendance, saisonnalité et événements et gère commodément les observations manquantes \cite{mustafa_forecasting_2025, hasan_state---art_2025}.
+
+\subsubsection{Approches fondées sur les données (apprentissage automatique et profond)}
+
+Les méthodes fondées sur les données apprennent la relation entrée--sortie à partir de l'historique sans prescrire de forme fonctionnelle fixe, ce qui les rend mieux adaptées au caractère non linéaire et non stationnaire des séries énergétiques \cite{hamdoun_energy_2021, hasan_state---art_2025}. Les réseaux de neurones « peu profonds » (perceptrons multicouches) ont été parmi les premières alternatives aux modèles statistiques, Hippert \textit{et al.} en ayant établi la pertinence pour la prévision de charge à court terme \cite{hippert_neural_2001}. La régression à vecteurs supports (SVR) et les $k$ plus proches voisins offrent une régression non linéaire sur des jeux de taille modérée, surpassant ARIMA sur certaines tâches résidentielles et PV \cite{hamdoun_energy_2021}~; ces architectures n'ont toutefois pas de mémoire temporelle native et reposent sur des variables de retard construites manuellement.
+
+Une avancée majeure est venue de l'adoption des réseaux récurrents (RNN), la cellule \textit{Long Short-Term Memory} (LSTM) étant aujourd'hui l'une des plus utilisées \cite{hochreiter_long_1997}. Kong \textit{et al.} ont montré des améliorations constantes du LSTM sur ARIMA et MLP pour la charge résidentielle \cite{kong_short-term_2019}, et Shi \textit{et al.} que l'empilement de couches LSTM réduit encore l'erreur \cite{shi_deep_2018}. Côté production, Bai \textit{et al.} ont proposé une architecture ConvLSTM exploitant conjointement un \textit{a priori} de ciel clair et des entrées météorologiques historiques, surpassant huit modèles traditionnels \cite{bai_deep_2022}, et Xie \textit{et al.} ont combiné décomposition modale variationnelle, réseaux de croyance profonds et correction ARMA \cite{xie_hybrid_2018}. Les architectures hybrides convolution--récurrence (CNN-LSTM) ont plus récemment été introduites pour combiner extraction automatique de caractéristiques et modélisation séquentielle \cite{rafi_short-term_2021, hasan_state---art_2025}.
+
+Cet ensemble de travaux indique que les modèles à base de LSTM constituent un point de départ solide pour la prévision conjointe de la production PV et de la consommation~: ils ne sont pas systématiquement supérieurs à toutes les architectures concurrentes, mais offrent un cadre récurrent unifié qui traite naturellement les deux types de séries et bénéficie d'une validation empirique étendue. C'est cette famille qui sera retenue à la section~\ref{sec:prediction}, dans la continuité directe de l'outil LSTM développé au chapitre consacré au pronostic d'état de santé.
+
+% ------------------------------------------------------------
+\subsection{Utilisation des prévisions dans les stratégies de gestion d'énergie}
+\label{subsec:predictive_ems_sota}
+% ------------------------------------------------------------
+
+Disposer d'une prévision n'est utile que si la décision sait l'exploiter. La forme canonique d'EMS anticipative est la commande prédictive (\textit{Model Predictive Control}, MPC), qui résout à chaque pas un problème d'optimisation sur un horizon glissant alimenté par les prévisions de production et de demande. D'autres approches injectent les prévisions dans des règles ou dans des politiques apprises par renforcement. Une question transversale, souvent sous-traitée, est celle de la \emph{propagation de l'incertitude}~: une prévision est imparfaite, et une décision optimale au sens de la prévision moyenne peut se révéler fragile une fois confrontée à l'erreur réelle.
+
+% TODO — à compléter : MPC déterministe vs stochastique pour micro-réseaux,
+% EMS à base de règles enrichies de prévisions, prise en compte explicite de
+% l'incertitude de prévision (robust/chance-constrained MPC), et le peu de
+% travaux quantifiant la dégradation du gain sous incertitude réaliste.
+% Références à ajouter.
+
+\medskip
+\noindent\textit{[Section à étoffer.]}
+
+% ------------------------------------------------------------
+\subsection{Positionnement de l'étude}
+\label{subsec:positionnement_ch4}
+% ------------------------------------------------------------
+
+Le présent chapitre se distingue de la littérature sur trois points. Premièrement, plutôt que de concevoir une stratégie anticipative \textit{ex nihilo}, il \emph{augmente} une stratégie à base de règles éprouvée (RB2), de sorte que chaque connaissance ajoutée constitue un levier isolé et que son apport soit attribuable sans ambiguïté. Deuxièmement, il traite dans un cadre unique et sur le même cas d'étude les trois sources de connaissance (SoH, RUL et prévision de profils), là où la plupart des travaux n'en considèrent qu'une. Troisièmement, il accorde une place centrale à la \emph{robustesse à l'incertitude} des connaissances mobilisées~: l'incertitude de prévision est quantifiée empiriquement, puis l'on montre qu'un levier prometteur sous information parfaite peut être détruit par le bruit réel, et comment un dispositif simple en préserve l'essentiel. Cette articulation entre valeur d'une information et robustesse à son imperfection constitue la contribution méthodologique propre du chapitre.

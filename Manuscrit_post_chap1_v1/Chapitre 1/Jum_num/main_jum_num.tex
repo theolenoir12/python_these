@@ -1,0 +1,15 @@
+\section{Application de la gestion d'état de santé au jumelage numérique}
+
+Les outils de diagnostic et de pronostic présentés précédemment trouvent naturellement leur application dans le cadre du jumelage numérique des systèmes énergétiques. Le concept de jumeau numérique (\textit{Digital Twin}) désigne une représentation virtuelle dynamique d'un système physique, capable de reproduire son comportement en temps réel, d'en suivre l'évolution et de simuler des scénarios futurs \cite{tao_digital_2022}. Dans le contexte du projet ANR GENIAL, cette approche est pertinente pour gérer la complexité des interactions entre les composants (batteries, piles à combustible, électrolyseurs) et l'hétérogénéité de leurs dynamiques de vieillissement.
+
+La valeur ajoutée d'un jumeau numérique repose sur sa capacité à représenter fidèlement l'état réel du système à chaque instant. Cependant, comme souligné précédemment, le vieillissement des composants électrochimiques entraîne inévitablement une dérive des paramètres physiques, créant un écart croissant entre le comportement observé du système réel et les prédictions du modèle nominal initial. Sans mécanisme de recalage, cette divergence invalide les stratégies de supervision et peut conduire à des décisions de gestion énergétique sous-optimales, voire dangereuses.
+
+L'intégration des outils de diagnostic développés dans ce chapitre permet de transformer le jumeau numérique en un outil d'observation adaptatif. En estimant en ligne l'état de santé (SoH), on injecte dans le modèle virtuel les paramètres actualisés reflétant l'état de dégradation courant. Ce suivi précis offre deux avantages majeurs :
+\begin{itemize}
+    \item Le recalage du modèle : Il garantit que le jumeau numérique reste un miroir fidèle de l'installation, assurant ainsi la pertinence des algorithmes de contrôle et d'optimisation.
+    \item La détection précoce de défauts : En comparant la dérive réelle du système à la trajectoire de vieillissement prédite par les outils de pronostic (tels que le réseau LSTM présenté en section 2.5.3), il devient possible d'identifier rapidement des déviations anormales. Un écart significatif entre le vieillissement attendu et le vieillissement observé constitue un indicateur précurseur de défauts naissants, permettant d'intervenir avant que la défaillance ne devienne critique.
+\end{itemize}
+
+Ainsi, le jumeau numérique devient un outil de surveillance de la bonne marche du système. Si l'étude menée ici s'est concentrée sur le suivi du vieillissement nominal, la prise en compte explicite des défaillances brutales et des modes de défauts critiques constituera une étape essentielle pour garantir une plus grande résilience du micro-réseau. Cette problématique de gestion des défaillances dans la stratégie de gestion d'énergie fera sera abordée dans le chapitre suivant.
+
+\newpage

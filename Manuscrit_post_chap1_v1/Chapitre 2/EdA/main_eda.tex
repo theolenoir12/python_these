@@ -1,0 +1,118 @@
+% ============================================================
+%  CHAPITRE 2 — Section 1 : État de l'art
+%  À intégrer dans le chapitre :
+%  \chapter{Méthodologie pour les stratégies de gestion d'énergie
+%           pour une approche réactive au vieillissement}
+% ============================================================
+
+\section{État de l'art}
+\label{sec:eda}
+
+Les stratégies de gestion d'énergie constituent le c\oe{}ur décisionnel des microréseaux hybrides.
+Leur rôle est de déterminer, à chaque instant, comment répartir la puissance entre les différentes sources et les différents stockages afin de satisfaire la demande des utilisateurs, tout en respectant les contraintes physiques et opérationnelles du système.
+La conception d'une EMS efficace nécessite de répondre à deux questions fondamentales~: quels objectifs optimiser, et quelle structure de contrôle adopter pour les atteindre.
+Ces deux questions, qui structurent la littérature sur le sujet, sont abordées successivement dans les sous-sections qui suivent, avant de positionner les travaux présentés dans ce chapitre par rapport à l'état de l'art.
+
+La gestion d'énergie des micro-réseaux, et en particulier de ceux couplant batteries et chaîne hydrogène, constitue un champ de recherche très actif, comme en témoignent plusieurs revues récentes~\cite{zhu_comprehensive_2026}\cite{esparza_review_2025}\cite{chowdhury_optimization_2026}.
+Ces synthèses recensent une grande variété d'objectifs assignés aux EMS, regroupables en quelques grandes familles~: la fiabilité et la continuité de l'alimentation, la performance économique (coût d'exploitation, de carburant ou de remplacement), le rendement énergétique et la qualité de l'énergie fournie, et enfin la durabilité des composants et l'empreinte environnementale du système~\cite{esparza_review_2025}\cite{chowdhury_optimization_2026}.
+Les objectifs poursuivis étant fortement dépendants de l'application considérée, les stratégies de gestion d'énergie sont généralement conçues comme un compromis entre plusieurs critères, souvent antagonistes. Les deux sous-sections suivantes présentent successivement les objectifs les plus fréquemment retenus dans la littérature, puis les principales structures d'EMS proposées pour les atteindre.
+
+% ------------------------------------------------------------
+\subsection{Objectifs des EMS}
+% ------------------------------------------------------------
+
+Les objectifs assignés aux EMS sont fondamentalement dictés par les constantes de temps des phénomènes ciblés.
+Or, celles-ci s'étendent sur plusieurs ordres de grandeur~: de la milliseconde pour la stabilité de la tension du bus continu, à l'heure pour l'équilibre offre-demande, jusqu'à l'année, voire la décennie, pour les phénomènes de vieillissement des composants.
+Cette disparité temporelle est à l'origine d'une segmentation de la littérature, dans laquelle les travaux traitent le plus souvent d'une seule échelle de temps, sans chercher à articuler les différentes dimensions du problème.
+
+\subsubsection{Objectifs à court terme.}
+Une première branche de la littérature se concentre sur la dynamique à court terme, avec pour objectif principal le maintien de la qualité de service et la stabilité du réseau.
+Hu \textit{et al.} proposent ainsi un contrôle sans modèle pour un système autonome photovoltaïque équipé d'un stockage hybride batterie-supercondensateur~: ne s'appuyant que sur les données d'entrée-sortie du système, leur stratégie lisse les fluctuations de puissance tout en maintenant stable la tension du bus continu, sur une échelle de temps allant de la seconde à la minute~\cite{hu_data_based_2024}.
+Dans le même esprit, Asrari \textit{et al.} valident expérimentalement, sur un micro-réseau de laboratoire, un contrôleur de charge programmable couplé à un stockage hybride batterie-supercondensateur et à un suivi du point de puissance maximale (MPPT)~: par rapport à un contrôleur figé, il réduit les fluctuations de courant et le taux de distorsion harmonique d'environ deux tiers, le supercondensateur déchargeant la batterie des transitoires rapides et prolongeant ainsi sa durée de vie~\cite{asrari_experimental_2025}.
+Si ces approches sont efficaces pour l'équilibrage instantané et la qualité de l'énergie, elles reposent sur des limitations de courant heuristiques et ne tiennent pas compte des mécanismes de dégradation à long terme ni des contraintes opérationnelles s'étendant sur des heures ou des jours.
+
+\subsubsection{Objectifs à moyen terme.}
+À une échelle intermédiaire, les travaux se tournent vers l'optimisation économique, l'écrêtage des pics de charge et la coordination sur quelques heures à quelques jours.
+Paulraj \textit{et al.} entraînent un réseau de neurones récurrent de type LSTM pour générer en temps réel la consigne de courant d'un supercondensateur épaulant la batterie d'un véhicule électrique~: sur des cycles de conduite normalisés, le courant de crête de la batterie est réduit de 21 à 33~\%, la puissance de pointe appelée d'environ 30~\% et la consommation énergétique de 6 à 12~\%, allégeant d'autant la sollicitation de la batterie~\cite{paulraj_machine_2025}.
+Cette approche reste toutefois cantonnée à une seule constante de temps et ne rend pas compte du vieillissement cumulé sur des périodes plus longues.
+Dans le contexte des micro-réseaux à hydrogène, Guo \textit{et al.} proposent une commande prédictive économique hiérarchique à deux niveaux~: le niveau supérieur, résolu sur un horizon long, planifie les cycles de démarrage-arrêt de l'électrolyseur et de la pile à combustible ainsi que la trajectoire de SoC de la batterie, tandis que le niveau inférieur réoptimise à court terme le suivi de la demande de puissance, en alignant le fonctionnement sur les prévisions météorologiques et les signaux de marché~\cite{guo_sustainable_2025}.
+Bien que ce cadre relie les échelles horaire et hebdomadaire, il n'intègre pas explicitement la dégradation physique des composants au-delà de l'horizon de planification.
+
+\subsubsection{Objectifs à long terme.}
+Une troisième branche s'attache aux objectifs de long terme, tels que le transfert saisonnier d'énergie ou la préservation des composants sur plusieurs années.
+Qi \textit{et al.} proposent un cadre d'optimisation coordonnée à deux étages, sans recours à la prévision~: une trajectoire annuelle de référence du stockage hydrogène est calculée hors ligne, puis réactualisée en ligne par régression à noyau et suivie au moyen d'un algorithme d'optimisation convexe en ligne à file d'attente virtuelle~\cite{qi_long_term_2025}.
+Sur des jeux de données réels, ce cadre réduit le coût d'exploitation et la défaillance de charge d'environ 60 et 90~\% respectivement par rapport à une commande prédictive, mais il ne représente pas la détérioration physique des organes de stockage.
+À l'opposé, Wang \textit{et al.} placent précisément la dégradation au c\oe{}ur de l'objectif~: leur stratégie de gestion de puissance pour un véhicule hybride pile à combustible-batterie intègre un modèle électrochimique simplifié de perte de surface active de la pile (sous l'effet des transitoires, des démarrages-arrêts, du ralenti et des fortes puissances) ainsi qu'un modèle empirique de perte de capacité de la batterie en fonction du régime de courant~\cite{wang_power_2019}.
+L'inclusion de ces termes de dégradation dans la fonction de coût prolonge la durée de vie de la pile, au prix d'un vieillissement accru de la batterie, pour un coût total d'usage moindre sur la durée de vie.
+Leur modèle suppose néanmoins que le suivi de charge à court terme, fixé ici par le cycle de conduite, est déjà assuré, écartant de fait les fluctuations de puissance en temps réel.
+
+Ce panorama, résumé dans le Tableau~\ref{tab:state_of_art_summary}, met en évidence un manque persistant dans la littérature~: celui d'un cadre méthodologique qui couple explicitement la fiabilité d'alimentation à court terme avec une gestion active et consciente de la santé des composants de stockage sur le long terme.
+
+\begin{table}[h!]
+\centering
+\caption{État de l'art des objectifs des EMS et constantes de temps associées.}
+\label{tab:state_of_art_summary}
+\begin{tabularx}{\textwidth}{lXX}
+\hline
+\textbf{Réf.} & \textbf{Contribution} & \textbf{Lacune identifiée} \\ \hline
+\cite{hu_data_based_2024} & Suivi de charge en temps réel et stabilité du bus continu (secondes à minutes). & Pas de vieillissement à long terme, pas de dynamique au-delà de la minute. \\ \hline
+\cite{asrari_experimental_2025} & Amélioration de la qualité de l'énergie et suivi solaire avec limitations de courant heuristiques. & Limitée à une seule constante de temps court terme, pas de boucle sur le vieillissement. \\ \hline
+\cite{paulraj_machine_2025} & Optimisation du courant de crête de la batterie et de la consommation énergétique (secondes à heures). & Pas de suivi de santé à long terme ; unique constante de temps intermédiaire. \\ \hline
+\cite{guo_sustainable_2025} & MPC économique hiérarchique pour la gestion de l'hydrogène et l'intégration marché/météo. & N'intègre pas explicitement la dégradation physique ni le vieillissement à long terme. \\ \hline
+\cite{qi_long_term_2025} & Coordination du transfert saisonnier d'énergie et de l'intermittence renouvelable sur le long terme. & Ne prend pas en compte la détérioration physique des composants. \\ \hline
+\cite{wang_power_2019} & Réduction de la dégradation électrochimique des PAC et batteries sur plusieurs années. & Suppose que les fluctuations de puissance à court terme sont déjà gérées par une couche externe. \\ \hline
+\end{tabularx}
+\end{table}
+\FloatBarrier
+
+% ------------------------------------------------------------
+\subsection{Structures des EMS}
+% ------------------------------------------------------------
+
+Au-delà des objectifs poursuivis, la conception d'une EMS requiert le choix d'une structure de contrôle adaptée.
+Les approches publiées dans la littérature peuvent être regroupées en trois grandes familles~: (i) les stratégies à base de règles (\textit{rule-based}), (ii) les stratégies à base d'optimisation (\textit{optimization-based}), et (iii) les méthodes pilotées par les données (\textit{data-driven}).
+L'accent est ici mis sur les EMS en ligne, compatibles avec une implémentation en temps réel dans un microréseau réel.
+
+\subsubsection{Stratégies à base d'optimisation.}
+Les approches par optimisation reposent le plus souvent sur la commande prédictive (\textit{Model Predictive Control}, MPC), qui détermine les consignes en résolvant à chaque pas un problème d'optimisation sous contraintes sur un horizon glissant.
+K/bidi \textit{et al.} développent ainsi une stratégie multi-étages pour un micro-réseau photovoltaïque doté d'une batterie, d'une pile à combustible et d'un électrolyseur~: une commande prédictive explicite distribuée assure la gestion de puissance (PMS) tandis qu'une programmation quadratique mixte en nombres entiers résout le problème d'engagement des unités au niveau de la gestion d'énergie (EMS), l'étude portant une attention particulière à l'interaction, souvent négligée, entre ces deux couches afin d'éviter les démarrages intempestifs de la pile et de l'électrolyseur~\cite{kbidi_multistage_2022}.
+Hou \textit{et al.} proposent quant à eux une MPC hiérarchique multi-horizon pour véhicule à pile à combustible~: une couche supérieure planifie sur horizon long la trajectoire de référence du SoC de la batterie, et une couche inférieure réalise l'optimisation temps réel (consommation d'hydrogène, durée de vie des composants, suivi du SoC)~; une paramétrisation des variables de commande réduit le temps de calcul, pour un gain de coût de 4 à 5~\% et une efficacité de calcul améliorée de près de 20~\% par rapport à une MPC classique, validés sur banc \textit{hardware-in-the-loop}~\cite{hou_hierarchical_2025}.
+Si ces méthodes atteignent une efficacité théorique élevée, leurs performances restent tributaires de la qualité des prévisions et exigent une puissance de calcul significative pour une exécution en ligne.
+
+\subsubsection{Méthodes pilotées par les données.}
+Les méthodes pilotées par les données, et au premier chef l'apprentissage par renforcement (\textit{Reinforcement Learning}, RL), apprennent une politique de contrôle par interaction répétée avec un modèle du système, sans formulation explicite du problème d'optimisation.
+Han \textit{et al.} montrent qu'une stratégie de \textit{Double Deep Q-Learning}, dans laquelle la vitesse de variation de puissance de la pile est introduite comme variable d'action, améliore l'économie de carburant d'un autobus à pile à combustible de l'ordre de 15~\% par rapport à des règles standards, y compris sur des scénarios non rencontrés à l'entraînement~\cite{han_reinforcement_2025}.
+Pour pallier les limites de stabilité et de généralisation des approches purement apprises, des structures hybrides combinent apprentissage et méthodes classiques.
+Ren \textit{et al.} couplent un réseau de neurones de prédiction de la demande à une stratégie de minimisation de la consommation équivalente (ECMS), dont un agent d'apprentissage profond ajuste les paramètres pour préserver la batterie, réduisant le débit de charge cumulé d'environ 3~\% à consommation maîtrisée~\cite{ren_battery_2024}.
+Dans le même esprit, Liu \textit{et al.} associent une MPC (garante de la stabilité et du respect des contraintes) à une politique d'apprentissage venant la compenser pour les décisions de long terme~: leur stratégie réduit la dégradation de la pile à combustible de plus de 50~\% au prix d'un léger surcroît de dégradation de la batterie, pour le coût d'exploitation le plus faible des méthodes comparées~\cite{liu_novel_2025}.
+Ces approches sont prometteuses mais restent gourmandes en données d'entraînement et offrent peu de garanties de comportement hors du domaine appris.
+
+\subsubsection{Stratégies à base de règles.}
+Malgré les gains rapportés par les méthodes prédictives et apprises, les stratégies à base de règles demeurent la référence des applications industrielles, par leur transparence et leur faible coût de calcul.
+Le principe en est direct~: la décision de répartition découle de l'état courant du système (signe du bilan de puissance, niveau de SoC, etc.) au travers de seuils et de lois explicites, sans résolution d'un problème d'optimisation ni modèle de prévision.
+Les déclinaisons en sont nombreuses.
+Nivolianiti \textit{et al.} recourent à la logique floue pour répartir la puissance dans un navire à propulsion hydrogène et montrent qu'elle réduit la consommation de carburant mieux que des approches déterministes ou par optimisation, sans nécessiter d'information sur l'avenir~\cite{nivolianiti_fuzzy_2024}.
+Une variante très répandue pilote la répartition par le SoC de la batterie au travers de règles par morceaux, réservant les composants lents (hydrogène) aux régimes extrêmes de charge et confiant la dynamique rapide à la batterie~\cite{koltermann_improved_2024}\cite{yuan_real-time_2022}~: Koltermann \textit{et al.} valident ainsi, sur un système de 6~MW, un algorithme fixant des objectifs de SoC, de débit et de puissance qui lissent les commutations et portent le rendement à environ 82~\%, tandis que Yuan \textit{et al.} calibrent par algorithme génétique les seuils de charge-décharge selon le profil d'usage.
+Une autre famille fait fonctionner la chaîne hydrogène à puissance sensiblement constante, la batterie absorbant le résidu rapide~\cite{wang_comparison_2020}.
+À ces logiques se rattachent les stratégies de répartition statique de puissance (\textit{power splitting}) ou de séparation fréquentielle (\textit{frequency splitting}), où batterie et hydrogène se partagent respectivement les composantes rapides et lentes de la sollicitation~\cite{eldeeb_hybrid_2019}\cite{corapsiz_overview_2023}.
+Ces logiques, dont plusieurs sont reprises comme stratégies de référence dans ce chapitre, sont à la fois simples à implémenter et lisibles pour un opérateur.
+
+L'intérêt des règles ne tient pas qu'à leur simplicité.
+Wang \textit{et al.} comparent une gestion à base de règles et une MPC pour un véhicule hybride pile à combustible-batterie en intégrant la dégradation des deux composants~: de façon contre-intuitive, la stratégie à base de règles atteint un coût total d'usage inférieur sur la durée de vie, alors même que la MPC dispose d'une connaissance anticipée du cycle~; ce résultat s'explique par l'évolution des poids relatifs des facteurs de coût au fil du vieillissement~\cite{wang_comparison_2020}.
+Dans le même sens, Wu \textit{et al.} comparent des stratégies purement à base de règles, par optimisation et hybrides, et concluent que si l'hybridation améliore l'efficacité, les fondations à base de règles offrent la robustesse opérationnelle la plus élevée, notamment en limitant les cycles de démarrage-arrêt de la pile~\cite{wu_rule_2023}.
+C'est cette robustesse, alliée au déterminisme et au faible coût de calcul indispensable aux simulations pluriannuelles, qui motive le choix de cette famille dans le présent travail.
+Le prix à payer est une optimalité théorique moindre que celle des méthodes prédictives~; une conception soignée des règles, complétée par l'exploitation réactive de l'information de vieillissement, permet toutefois d'atteindre des compromis très satisfaisants.
+
+% ------------------------------------------------------------
+\subsection{Positionnement de l'étude}
+% ------------------------------------------------------------
+
+Au regard des travaux recensés, une lacune commune se dégage.
+La plupart des cadres de gestion d'énergie existants privilégient soit l'efficacité opérationnelle à court terme (minimisation du coût instantané, de la consommation ou de la demande non satisfaite), soit la préservation des composants à long terme au travers de termes de coût de dégradation.
+Rares sont les approches traitant ces deux dimensions simultanément, alors même que les phénomènes sous-jacents évoluent sur des échelles de temps fondamentalement différentes~: l'équilibre de puissance et la continuité de service relèvent de la seconde à la minute, tandis que la dégradation des composants se joue sur des mois, voire des années.
+Une troisième échelle, intermédiaire, est plus rarement encore prise en compte~: celle des aléas d'exploitation (défaillance temporaire d'un composant, puis reprise du service), à laquelle se rattache la robustesse de la stratégie. Les travaux présentés dans ce chapitre s'inscrivent dans cette problématique, et la contribution centrale réside dans un cadre d'évaluation capable de juger une même stratégie de gestion d'énergie sur ces trois échelles de temps à la fois. La fiabilité et la durabilité sont quantifiées par deux indicateurs définis en régime nominal, qui permettent de représenter et de comparer les stratégies dans un plan de Pareto~; la robustesse est appréciée séparément, à travers le comportement des stratégies en situation de panne.
+
+Deux éléments de ce chapitre complètent ce cadre.
+D'une part, l'information de SoH issue du diagnostic du chapitre précédent est exploitée de manière réactive, afin de maintenir les composants à l'intérieur de leurs plages de fonctionnement, lesquelles se réduisent avec l'âge~; cette approche réactive, commune à toutes les stratégies comparées, se distingue de l'usage anticipatif développé au chapitre suivant.
+D'autre part, la généralité des conclusions est éprouvée par une analyse de sensibilité aux principales hypothèses de modélisation.
+Les stratégies comparées ne sont, quant à elles, pas individuellement nouvelles~: chacune est une déclinaison représentative d'une logique de contrôle à base de règles présente dans la littérature, et leur intérêt tient à leur comparaison unifiée au sein du cadre proposé.

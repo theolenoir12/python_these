@@ -1,0 +1,326 @@
+%============================================================
+% 1ère PAGE DE COUVERTURE DES THESES UBFC
+%
+% - A l'intention des doctorantes et doctorants de l'UBFC -
+%
+% Fait avec TeXstudio suivant le modèle "Page de garde"
+% fournit au format docx par Mme Pauline Berger le 02/01/2017
+% sur le site du Collège Doctoral de l'UBFC.
+% --> Veuiller consulter ce modèle et ses notes.
+%
+% Auteur de cette page en LaTeX :
+% François-C. Rey, le 19/09/2019
+%
+% Les logos ont leurs propres copyright
+%============================================================
+
+\documentclass[a4paper,french,12pt,twoside,openright]{book}
+
+% --- 1. Encodage et Polices ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% Caractères d'espace Unicode invisibles (issus de copier-coller / Overleaf)
+% non gérés par défaut avec inputenc utf8 -> on les mappe pour éviter
+% "! LaTeX Error: Unicode character (U+2009)" qui fait échouer la compilation.
+\DeclareUnicodeCharacter{2009}{\,}% espace fine (THIN SPACE)
+\DeclareUnicodeCharacter{202F}{\,}% espace fine insécable (NARROW NO-BREAK SPACE)
+\DeclareUnicodeCharacter{2007}{~}% espace tabulaire (FIGURE SPACE)
+\DeclareUnicodeCharacter{2008}{\,}% espace ponctuation (PUNCTUATION SPACE)
+\DeclareUnicodeCharacter{200A}{\,}% espace ultra-fine (HAIR SPACE)
+\usepackage[french]{babel}
+
+% Typographie de haute qualité
+\usepackage{microtype} % Améliore l'espacement des lettres et la justification
+\usepackage{lmodern}   % Police vectorielle de qualité
+% Note : J'ai retiré 'times' car il entrait en conflit avec votre choix de Sans Serif.
+\renewcommand{\familydefault}{\sfdefault} 
+
+% --- 2. Géométrie et Mise en page ---
+\usepackage{geometry}
+\geometry{
+    paper=a4paper,
+    top=2.5cm,
+    bottom=2.5cm,
+    inner=2cm, % Marge intérieure plus large pour la reliure
+    outer=2cm,
+    %bindingoffset=0.5cm, % Espace supplémentaire pour la reliure physique
+    headheight=15pt
+}
+
+\usepackage{setspace}
+%\onehalfspacing
+\setstretch{1.15}
+%\onehalfspacing % Interligne 1.5 : standard pour la lisibilité d'une thèse
+
+% --- 3. En-têtes et Pieds de page (Fancyhdr) ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage} % Numéro de page à gauche sur pages paires, droite sur impaires
+\fancyhead[RE]{\textit{\nouppercase{\leftmark}}}  % Chapitre
+\fancyhead[LO]{\textit{\nouppercase{\rightmark}}} % Section
+\renewcommand{\headrulewidth}{0.4pt} % Ligne fine sous l'en-tête
+
+% --- 4. Mathématiques et Sciences ---
+\usepackage{amsmath, amssymb}
+\usepackage{bbm}
+\usepackage{mhchem}    % Chimie
+\usepackage{siunitx}   % Unités SI
+\sisetup{
+    detect-all,
+    separate-uncertainty = true,
+    locale = FR,
+    range-phrase = { à }
+}
+% Unité monétaire pour siunitx (le symbole € n'est pas une unité par défaut).
+% Permet \SI{65.4}{\kilo\euro}, etc. dans le chapitre 4.
+\DeclareSIUnit{\euro}{\text{€}}
+
+% --- 5. Graphiques et Figures ---
+\usepackage{graphicx}
+\usepackage[export]{adjustbox}
+\usepackage{placeins} % \FloatBarrier
+\usepackage{tikz}
+\usepackage[straightvoltages, RPvoltages]{circuitikz}
+\usetikzlibrary{babel, positioning, fit, arrows.meta, shapes, chains}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+\usepackage{tocloft}
+\setlength{\cftfignumwidth}{3em} %pour que les numéros dans la liste de figures ne chevauchent pas le caption
+
+% Numérotation des figures/équations par section (comme demandé)
+\usepackage{chngcntr}
+\counterwithin{figure}{section}
+\counterwithin{equation}{section}
+\counterwithin{table}{section}
+
+% --- 6. Tableaux ---
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{booktabs} % Pour des tableaux "propres" (toprule, midrule, bottomrule)
+\usepackage{array}
+\usepackage{ragged2e}
+\newcolumntype{L}{>{\RaggedRight\arraybackslash}X}
+\newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
+\renewcommand{\arraystretch}{1.3} % Un peu plus d'air dans les tableaux
+
+% --- 7. Styles des Titres ---
+\usepackage{titlesec}
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{2}
+
+% Personnalisation du style des chapitres (optionnel mais recommandé)
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\sffamily}
+  {\chaptertitlename\ \thechapter}{20pt}{\Huge}
+
+% --- 8. Boîtes et Objets spéciaux ---
+\usepackage[most]{tcolorbox}
+\tcbset{
+    colback=yellow!5!white,
+    colframe=red!40!black,
+    fonttitle=\bfseries,
+    arc=3pt,
+    highlight math style={enhanced, colframe=red, colback=red!5!white, boxsep=2pt}
+}
+
+% Macro personnalisée
+\newcommand{\empt}[2]{$#1^{\langle #2 \rangle}$}
+
+% --- 9. Bibliographie ---
+\usepackage[style=numeric,citestyle=numeric,sorting=none,backend=biber]{biblatex}
+\AtEveryBibitem{\clearfield{urlyear}} 
+\addbibresource{references.bib}
+
+% --- 10. Hyperliens (Toujours en dernier ou presque) ---
+\usepackage[hidelinks, pdfusetitle]{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!40!black,
+    citecolor=green!40!black,
+    urlcolor=blue!40!black
+}
+
+% --- 11. Divers ---
+\usepackage{lipsum}
+\addto\captionsfrench{\renewcommand{\tablename}{Tableau}}
+
+\begin{document}
+\begin{titlepage} % Supprime headers et footers de la page
+\begin{figure}[t]
+	\includegraphics[width=0.3\textwidth]{Couverture/images_logos/logo_umlp.png}\hfill\includegraphics[width=0.3\textwidth]{Couverture/images_logos/logo_femto.png}\hfill\includegraphics[width=0.3\textwidth]{Couverture/images_logos/logo_spim.jpg}
+\end{figure}
+
+\begin{center}
+	
+\vspace*{1.0cm}
+\footnotesize{\textsf{\textbf{THÈSE DE DOCTORAT DE L'UNIVERSITE MARIE ET LOUIS PASTEUR}}}
+
+\vspace{1.0cm}
+École doctorale n\textsuperscript{o} 37 \\~\\
+École Doctorale de Sciences Physiques pour l'Ingénieur et Microtechniques
+
+
+\vspace{1.0cm}
+Doctorat de Génie Électrique
+
+\vspace{1.5cm}
+Par\\~\\Lenoir Théo
+
+\vspace{1.5cm}
+Jumeau numérique pour un contrôle résilient au vieillissement des micro-réseaux à base d'hydrogène
+
+
+\vspace{0.12cm}
+
+
+\begin{flushleft}
+
+\vspace{1.5cm}
+Thèse présentée et soutenue à <Ville>, le <date>
+
+\vspace{1.0cm}
+Composition du Jury~:
+
+\begin{tabbing} %Tabulations avec'\>', positions indiquées par '\='.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\=\\ % Définit les positions des tabulations
+<Civilité><Nom><Prénom> \> <Fonction et établissement d’exercice> \> Président\\
+<Civilité><Nom><Prénom> \> <Fonction et établissement d’exercice> \> Rapporteur\\
+<Civilité><Nom><Prénom> \> <Fonction et établissement d’exercice> \> Rapporteur\\
+<Civilité><Nom><Prénom> \> <Fonction et établissement d’exercice> \> Examinateur\\
+<Civilité><Nom><Prénom> \> <Fonction et établissement d’exercice> \> Examinatrice\\
+<Civilité><Nom><Prénom> \> <Fonction et établissement d’exercice> \> Directeur de thèse\\
+<Civilité><Nom><Prénom> \> <Fonction et établissement d’exercice> \> Codirecteur de thèse\\
+<Civilité><Nom><Prénom> \> <Fonction et établissement d’exercice> \> Invité
+\end{tabbing}
+\end{flushleft}
+\end{center}
+\end{titlepage} % Fin de page de titre
+
+\chapter*{Remerciements}
+\lipsum[1]
+\newpage
+
+\tableofcontents
+\newpage
+\listoffigures
+\newpage
+\listoftables
+\newpage
+\chapter*{Liste des acronymes}
+\noindent
+\begin{longtable}{ll}
+\textbf{ANR}    & Agence Nationale de la Recherche \\
+\textbf{EMS}    & Energy Management Strategy \\
+\textbf{GENIAL} & Gestion d'éNergie d'un mIcro-réseAu à hydrogène résiLient au vieillissement \\
+\textbf{SIDELEC} & Syndicat intercommunal d'électricité de La Réunion \\
+\textbf{Li-ion} & Lithium-ion \\
+\textbf{PEM}    & Proton Exchange Membrane \\
+\textbf{PEMWE}  & Proton Exchange Membrane Water Electrolyzer  \\
+\textbf{PEMFC}  & Proton Exchange Membrane Fuel Cell  \\
+\textbf{MEA}    & Membrane Electrode Assembly \\
+\textbf{PTL}    & Porous Transport Layer \\
+\textbf{GDL}    & Gas Diffusion Layer \\
+\textbf{SEI}    & Solid Electrolyte Interphase \\
+\textbf{OCV}    & Open-Circuit Voltage \\
+\textbf{PV}     & Photovoltaïque \\
+\textbf{SoC}    & State-of-Charge  \\
+\textbf{SoH}    & State-of-Health  \\
+\textbf{ECM}    & Equivalent Circuit Model \\
+\textbf{EKF}    & Extended Kalman Filter \\
+\textbf{SPKF}   & Sigma Point Kalman Filter \\
+\textbf{PF}     & Particle Filter \\
+\textbf{UKF}    & Unscented Kalman Filter \\
+\textbf{SVM}    & Support Vector Machine \\
+\textbf{AST}    & Accelerated Stress Tests \\
+\textbf{HPPC}   & Hybrid Power Pulse Characterization \\
+\textbf{SIE}    & Spectroscopie d'Impédance Électrochimique \\
+\textbf{NMC}    & Nickel-Manganèse-Cobalt \\
+\textbf{LSTM}   & Long Short-Term Memory \\
+\textbf{RLS}    & Recursive Least Squares \\
+\textbf{GP}     & Gaussian Process \\
+\textbf{REM}    & Représentatio Énergétique Macroscopique \\
+\textbf{RUL}    & Remaining Useful Life  \\
+\textbf{RNN}    & Recurrent Neural Network \\ 
+\textbf{ESN}    & Echo State Network \\
+\textbf{MSE}    & Mean Squared Error \\
+\textbf{RMSE}   & Root Mean Squared Error \\
+\end{longtable}
+\vspace{1cm} % Espace avant de reprendre le texte
+\newpage
+\include{Introduction/main_introduction}   
+\newpage
+\include{Chapitre 1/main_chap1}
+\newpage
+\include{Chapitre 2/main_chap2}
+\newpage
+\include{Chapitre 3/main_chap3}
+\newpage
+%\include{Conclusion/main_conclusion}
+%\newpage
+\include{Annexes/main_annexes}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% STRUCTURE 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% \chapter{Intégration de pronostics et prévisions dans la gestion d'énergie}
+%     \section{Propos introductif \& question de recherche}
+%     \lipsum[1]
+%     \section{Axes d'augmentation des EMS}
+%         \subsection{Diagnostic des états de santé}
+%         \lipsum[1]
+%         \subsection{Pronostic des états de santé}
+%         \lipsum[1]
+%         \subsection{Prévisions météorologiques et de consommation des usagers}
+%         \lipsum[1]
+%     \section{Question de recherche}
+%     \lipsum[1]
+%     \section{État de l'art}
+%         \subsection{Intégration du diagnostic \& pronostic d'état de santé dans les EMS}
+%         \lipsum[1]
+%         \subsection{Prévisions de production PV et de consommation}
+%             \subsubsection{Méthodes statistiques et physiques}
+%             \lipsum[1]
+%             \subsubsection{Méthodes basées données (ML/DL)}
+%             \lipsum[1]
+%             \subsubsection{Utilisation des prévisions dans les EMS}
+%             \lipsum[1]
+%         \subsection{Positionnement de l'étude}
+%         \lipsum[1]
+%     \section{Réutilisation du réseau LSTM : un outil généraliste}
+%         \subsection{Rappel de l'architecture LSTM développée au chapitre 1}
+%         \subsection{Adaptation au cas des prévisions PV et consommation}
+%             \subsubsection{Différences avec le cas SoH : nature des données}
+%             \subsubsection{Construction des ensembles de données}
+%             \subsubsection{Hyperparamètres et ré-entraînement}
+%         \subsection{Incertitude des prédictions : Monte-Carlo Dropout appliqué}
+%     \section{Résultats des prédictions}
+%         \subsection{Prévisions PV et consommation}
+%             \subsubsection{Performances sur données de test}
+%             \subsubsection{Analyse des incertitudes}
+%         \subsection{Discussion comparative : fiabilité des deux types de prédictions}
+%     \section{Interface prédictions → EMS : couche anticipative}
+%         \subsection{Architecture générale de la couche anticipative}
+%         \subsection{Intégration des prévisions PV/conso}
+%         \subsection{Intégration du pronostic de SoH}
+%         \subsection{Gestion de l'incertitude dans la prise de décision}
+%     \section{Résultats}
+%         \subsection{Comparaison dans le plan de Pareto (LPSP / Dégradation)}
+%             \subsubsection{EMS réactive (chapitre 2) vs EMS anticipative}
+%         \subsection{Analyse de l'apport de chaque couche}
+%             \subsubsection{Apport des prévisions seules}
+%             \subsubsection{Apport du pronostic seul}
+%             \subsubsection{Apport combiné}
+%         \subsection{Analyse de sensibilité à la qualité des prédictions}
+%     \section{Discussion}
+%         \subsection{Compromis complexité algorithmique / gain de performance}
+%         \subsection{Limites de l'approche}
+%             \subsubsection{Dépendance à la qualité et quantité des données}
+%             \subsubsection{Transférabilité à d'autres micro-réseaux}
+%         \subsection{Perspectives : vers une EMS multi-échelle complète}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\printbibliography[heading=bibintoc]
+\end{document}

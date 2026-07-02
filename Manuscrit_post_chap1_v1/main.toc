@@ -1,0 +1,233 @@
+\babel@toc {french}{}\relax 
+\contentsline {chapter}{\numberline {1}Introduction \& positionnement de l'étude}{17}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Contexte général}{17}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}Contexte écologique \& énergétique}{17}{subsection.1.1.1}%
+\contentsline {subsection}{\numberline {1.1.2}Contexte du projet ANR GENIAL}{18}{subsection.1.1.2}%
+\contentsline {section}{\numberline {1.2}Présentation du système étudié}{20}{section.1.2}%
+\contentsline {subsection}{\numberline {1.2.1}Présentation générale des micro-réseaux électriques}{20}{subsection.1.2.1}%
+\contentsline {subsubsection}{\numberline {1.2.1.1}Définition}{20}{subsubsection.1.2.1.1}%
+\contentsline {subsubsection}{\numberline {1.2.1.2}Applications}{20}{subsubsection.1.2.1.2}%
+\contentsline {subsubsection}{\numberline {1.2.1.3}Architectures de puissance}{21}{subsubsection.1.2.1.3}%
+\contentsline {subsection}{\numberline {1.2.2}Contexte local \& production d'énergie}{21}{subsection.1.2.2}%
+\contentsline {subsubsection}{\numberline {1.2.2.1}L'îlet de Roche Plate}{21}{subsubsection.1.2.2.1}%
+\contentsline {subsubsection}{\numberline {1.2.2.2}Production d'électricité par panneaux photovoltaïques}{22}{subsubsection.1.2.2.2}%
+\contentsline {paragraph}{\numberline {1.2.2.2.1}Contexte \& principes de fonctionnement}{23}{paragraph.1.2.2.2.1}%
+\contentsline {paragraph}{\numberline {1.2.2.2.2}Avantages \& Limitations}{24}{paragraph.1.2.2.2.2}%
+\contentsline {subsection}{\numberline {1.2.3}Généralités sur les batteries}{24}{subsection.1.2.3}%
+\contentsline {subsubsection}{\numberline {1.2.3.1}Contexte d'utilisation}{24}{subsubsection.1.2.3.1}%
+\contentsline {subsubsection}{\numberline {1.2.3.2}Principes de fonctionnement}{25}{subsubsection.1.2.3.2}%
+\contentsline {subsubsection}{\numberline {1.2.3.3}Avantages \& Limitations}{26}{subsubsection.1.2.3.3}%
+\contentsline {subsection}{\numberline {1.2.4}Généralités sur les électrolyseurs}{26}{subsection.1.2.4}%
+\contentsline {subsubsection}{\numberline {1.2.4.1}Contexte d'utilisation}{26}{subsubsection.1.2.4.1}%
+\contentsline {subsubsection}{\numberline {1.2.4.2}Principes de fonctionnement}{27}{subsubsection.1.2.4.2}%
+\contentsline {subsubsection}{\numberline {1.2.4.3}Avantages \& Limitations}{28}{subsubsection.1.2.4.3}%
+\contentsline {subsection}{\numberline {1.2.5}Généralités sur les piles à combustible}{29}{subsection.1.2.5}%
+\contentsline {subsubsection}{\numberline {1.2.5.1}Contexte d'utilisation}{29}{subsubsection.1.2.5.1}%
+\contentsline {subsubsection}{\numberline {1.2.5.2}Principes de fonctionnement}{29}{subsubsection.1.2.5.2}%
+\contentsline {subsubsection}{\numberline {1.2.5.3}Avantages \& Limitations}{30}{subsubsection.1.2.5.3}%
+\contentsline {section}{\numberline {1.3}Vieillissement des composants}{30}{section.1.3}%
+\contentsline {subsection}{\numberline {1.3.1}Batterie}{31}{subsection.1.3.1}%
+\contentsline {subsubsection}{\numberline {1.3.1.1}Vieillissement d'origine physico-chimique}{31}{subsubsection.1.3.1.1}%
+\contentsline {paragraph}{\numberline {1.3.1.1.1}Passivation de l'anode}{31}{paragraph.1.3.1.1.1}%
+\contentsline {paragraph}{\numberline {1.3.1.1.2}Dépôt de lithium mécanique à l'anode}{31}{paragraph.1.3.1.1.2}%
+\contentsline {paragraph}{\numberline {1.3.1.1.3}Modification de la surface cathodique}{31}{paragraph.1.3.1.1.3}%
+\contentsline {subsubsection}{\numberline {1.3.1.2}Vieillissement d'origine mécanique}{32}{subsubsection.1.3.1.2}%
+\contentsline {paragraph}{\numberline {1.3.1.2.1}Matière active}{32}{paragraph.1.3.1.2.1}%
+\contentsline {paragraph}{\numberline {1.3.1.2.2}Électrodes}{32}{paragraph.1.3.1.2.2}%
+\contentsline {subsection}{\numberline {1.3.2}Électrolyseur}{33}{subsection.1.3.2}%
+\contentsline {subsubsection}{\numberline {1.3.2.1}Vieillissement d'origine physico-chimique}{33}{subsubsection.1.3.2.1}%
+\contentsline {paragraph}{\numberline {1.3.2.1.1}Dégradation chimique de la membrane}{33}{paragraph.1.3.2.1.1}%
+\contentsline {paragraph}{\numberline {1.3.2.1.2}Dégradation des couches catalytiques}{34}{paragraph.1.3.2.1.2}%
+\contentsline {paragraph}{\numberline {1.3.2.1.3}Passivation des matériaux et contamination}{34}{paragraph.1.3.2.1.3}%
+\contentsline {subsubsection}{\numberline {1.3.2.2}Vieillissement d'origine thermique}{34}{subsubsection.1.3.2.2}%
+\contentsline {paragraph}{\numberline {1.3.2.2.1}Dégradation aux températures extrêmes}{34}{paragraph.1.3.2.2.1}%
+\contentsline {paragraph}{\numberline {1.3.2.2.2}Cyclage thermique et régimes transitoires}{34}{paragraph.1.3.2.2.2}%
+\contentsline {subsubsection}{\numberline {1.3.2.3}Vieillissement d'origine mécanique}{35}{subsubsection.1.3.2.3}%
+\contentsline {paragraph}{\numberline {1.3.2.3.1}Contraintes de pression et défauts d'assemblage}{35}{paragraph.1.3.2.3.1}%
+\contentsline {paragraph}{\numberline {1.3.2.3.2}Délamination des interfaces et gestion des gaz}{35}{paragraph.1.3.2.3.2}%
+\contentsline {subsection}{\numberline {1.3.3}Pile à combustible}{37}{subsection.1.3.3}%
+\contentsline {subsubsection}{\numberline {1.3.3.1}Dégradation de la couche catalytique}{37}{subsubsection.1.3.3.1}%
+\contentsline {paragraph}{\numberline {1.3.3.1.1}Corrosion du support carboné}{37}{paragraph.1.3.3.1.1}%
+\contentsline {paragraph}{\numberline {1.3.3.1.2}Dissolution, agglomération et migration du platine}{37}{paragraph.1.3.3.1.2}%
+\contentsline {paragraph}{\numberline {1.3.3.1.3}Empoisonnement du catalyseur}{37}{paragraph.1.3.3.1.3}%
+\contentsline {subsubsection}{\numberline {1.3.3.2}Dégradation de la membrane échangeuse de protons}{38}{subsubsection.1.3.3.2}%
+\contentsline {paragraph}{\numberline {1.3.3.2.1}Dégradations chimiques}{38}{paragraph.1.3.3.2.1}%
+\contentsline {paragraph}{\numberline {1.3.3.2.2}Dégradations mécaniques et thermiques}{38}{paragraph.1.3.3.2.2}%
+\contentsline {subsubsection}{\numberline {1.3.3.3}Dégradation de la couche de diffusion des gaz (GDL)}{38}{subsubsection.1.3.3.3}%
+\contentsline {paragraph}{\numberline {1.3.3.3.1}Altérations mécaniques et perte d'hydrophobicité}{38}{paragraph.1.3.3.3.1}%
+\contentsline {subsubsection}{\numberline {1.3.3.4}Dégradation des plaques bipolaires}{38}{subsubsection.1.3.3.4}%
+\contentsline {section}{\numberline {1.4}Objectifs de l'étude}{39}{section.1.4}%
+\contentsline {subsection}{\numberline {1.4.1}Présentation des objectifs de la thèse}{39}{subsection.1.4.1}%
+\contentsline {subsection}{\numberline {1.4.2}Plan du manuscrit}{40}{subsection.1.4.2}%
+\contentsline {chapter}{\numberline {2}Diagnostic et pronostic des états de santé des composants de stockage d'énergie}{43}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Propos introductif \& question de recherche}{43}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Définitions}{43}{subsection.2.1.1}%
+\contentsline {subsubsection}{\numberline {2.1.1.1}État de santé}{43}{subsubsection.2.1.1.1}%
+\contentsline {subsubsection}{\numberline {2.1.1.2}Diagnostic}{44}{subsubsection.2.1.1.2}%
+\contentsline {subsubsection}{\numberline {2.1.1.3}Pronostic}{44}{subsubsection.2.1.1.3}%
+\contentsline {subsection}{\numberline {2.1.2}Question de recherche}{44}{subsection.2.1.2}%
+\contentsline {section}{\numberline {2.2}Diagnostic de l'état de santé des batteries}{45}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Choix de l'indicateur d'état de santé}{45}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}État de l'art des méthodes d'estimation en ligne}{45}{subsection.2.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.2.1}Détermination directe par \textit {current throughput}}{45}{subsubsection.2.2.2.1}%
+\contentsline {subsubsection}{\numberline {2.2.2.2}Détermination de paramètres équivalents}{46}{subsubsection.2.2.2.2}%
+\contentsline {paragraph}{\numberline {2.2.2.2.1}Méthodes basées sur les pulsations de courant}{46}{paragraph.2.2.2.2.1}%
+\contentsline {paragraph}{\numberline {2.2.2.2.2}Spectroscopie d'impédance électrochimique}{47}{paragraph.2.2.2.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.2.3}Autres méthodes}{49}{subsubsection.2.2.2.3}%
+\contentsline {paragraph}{\numberline {2.2.2.3.1}Courbes incrémentales et différentielles}{49}{paragraph.2.2.2.3.1}%
+\contentsline {paragraph}{\numberline {2.2.2.3.2}Méthodes basées sur l'état de charge et observateurs}{50}{paragraph.2.2.2.3.2}%
+\contentsline {paragraph}{\numberline {2.2.2.3.3}Méthodes basées sur les données}{51}{paragraph.2.2.2.3.3}%
+\contentsline {subparagraph}{Réseaux de neurones et Apprentissage profond}{51}{subparagraph*.3}%
+\contentsline {subparagraph}{Machines à vecteur de support et méthodes bayésiennes}{51}{subparagraph*.4}%
+\contentsline {subsubsection}{\numberline {2.2.2.4}Conclusion}{52}{subsubsection.2.2.2.4}%
+\contentsline {subsection}{\numberline {2.2.3}Description de la campagne d'essais réalisée}{53}{subsection.2.2.3}%
+\contentsline {subsubsection}{\numberline {2.2.3.1}Équipements}{54}{subsubsection.2.2.3.1}%
+\contentsline {subsubsection}{\numberline {2.2.3.2}Protocoles}{55}{subsubsection.2.2.3.2}%
+\contentsline {paragraph}{\numberline {2.2.3.2.1}Tests de vieillissements accélérés}{55}{paragraph.2.2.3.2.1}%
+\contentsline {paragraph}{\numberline {2.2.3.2.2}Mesure de la capacité}{55}{paragraph.2.2.3.2.2}%
+\contentsline {paragraph}{\numberline {2.2.3.2.3}Spectroscopie d'impédance électrochimique}{55}{paragraph.2.2.3.2.3}%
+\contentsline {paragraph}{\numberline {2.2.3.2.4}\textit {Hybrid Power Pulse Characterization}}{56}{paragraph.2.2.3.2.4}%
+\contentsline {subsection}{\numberline {2.2.4}Traitement des données \& détermination de la capacité}{56}{subsection.2.2.4}%
+\contentsline {subsubsection}{\numberline {2.2.4.1}Présentation des données}{56}{subsubsection.2.2.4.1}%
+\contentsline {subsubsection}{\numberline {2.2.4.2}Traitement des données HPPC \& diagnostic}{58}{subsubsection.2.2.4.2}%
+\contentsline {subsubsection}{\numberline {2.2.4.3}Traitement des données de SIE \& diagnostic}{60}{subsubsection.2.2.4.3}%
+\contentsline {subsection}{\numberline {2.2.5}Conclusion sur les méthodes de diagnostic de batterie}{65}{subsection.2.2.5}%
+\contentsline {subsubsection}{\numberline {2.2.5.1}Discussion}{65}{subsubsection.2.2.5.1}%
+\contentsline {subsubsection}{\numberline {2.2.5.2}Limitations}{67}{subsubsection.2.2.5.2}%
+\contentsline {section}{\numberline {2.3}Diagnostic de l'état de santé des piles à combustible et électrolyseurs}{68}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Choix de l'indicateur d'état de santé}{68}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}État de l'art des méthodes d'estimation en ligne}{69}{subsection.2.3.2}%
+\contentsline {subsubsection}{\numberline {2.3.2.1}Identification paramétrique en ligne et filtrage récursif}{69}{subsubsection.2.3.2.1}%
+\contentsline {subsubsection}{\numberline {2.3.2.2}Méthodes basées sur la spectroscopie d'impédance électrochimique (SIE)}{70}{subsubsection.2.3.2.2}%
+\contentsline {subsubsection}{\numberline {2.3.2.3}Méthodes orientées données}{70}{subsubsection.2.3.2.3}%
+\contentsline {subsubsection}{\numberline {2.3.2.4}Bilan et positionnement de l'approche retenue}{71}{subsubsection.2.3.2.4}%
+\contentsline {subsection}{\numberline {2.3.3}Modèle de vieillissement des composants}{72}{subsection.2.3.3}%
+\contentsline {paragraph}{\numberline {2.3.3.0.1}Modèle de vieillissement de la PEMFC.}{72}{paragraph.2.3.3.0.1}%
+\contentsline {paragraph}{\numberline {2.3.3.0.2}Modèle de vieillissement du PEMWE.}{73}{paragraph.2.3.3.0.2}%
+\contentsline {subsection}{\numberline {2.3.4}Estimation par filtre de Kalman Étendu}{75}{subsection.2.3.4}%
+\contentsline {subsubsection}{\numberline {2.3.4.1}Principe}{75}{subsubsection.2.3.4.1}%
+\contentsline {subsubsection}{\numberline {2.3.4.2}Application à la pile à combustible et à l'électrolyseur}{76}{subsubsection.2.3.4.2}%
+\contentsline {paragraph}{\numberline {2.3.4.2.1}Application à la PEMFC.}{76}{paragraph.2.3.4.2.1}%
+\contentsline {paragraph}{\numberline {2.3.4.2.2}Application au PEMWE.}{77}{paragraph.2.3.4.2.2}%
+\contentsline {subsection}{\numberline {2.3.5}Discussion}{78}{subsection.2.3.5}%
+\contentsline {subsection}{\numberline {2.3.6}Limitations}{78}{subsection.2.3.6}%
+\contentsline {section}{\numberline {2.4}Pronostic de l'état de santé des composants de stockage d'énergie}{80}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}État de l'art \& choix de la structure algorithmique}{80}{subsection.2.4.1}%
+\contentsline {subsubsection}{\numberline {2.4.1.1}Méthodes basées modèle}{80}{subsubsection.2.4.1.1}%
+\contentsline {subsubsection}{\numberline {2.4.1.2}Méthodes basées données}{80}{subsubsection.2.4.1.2}%
+\contentsline {subsection}{\numberline {2.4.2}Définition du \textit {Remaining Useful Life}}{82}{subsection.2.4.2}%
+\contentsline {subsection}{\numberline {2.4.3}Principe du réseau LSTM}{83}{subsection.2.4.3}%
+\contentsline {paragraph}{\numberline {2.4.3.0.1}Architecture d'un réseau LSTM.}{83}{paragraph.2.4.3.0.1}%
+\contentsline {subsection}{\numberline {2.4.4}Méthode \& gestion des données}{85}{subsection.2.4.4}%
+\contentsline {subsubsection}{\numberline {2.4.4.1}Traitement des données brutes \& construction des ensembles de données}{85}{subsubsection.2.4.4.1}%
+\contentsline {paragraph}{\numberline {2.4.4.1.1}Source des données.}{85}{paragraph.2.4.4.1.1}%
+\contentsline {paragraph}{\numberline {2.4.4.1.2}Normalisation.}{86}{paragraph.2.4.4.1.2}%
+\contentsline {paragraph}{\numberline {2.4.4.1.3}Séquençage des données.}{86}{paragraph.2.4.4.1.3}%
+\contentsline {paragraph}{\numberline {2.4.4.1.4}Construction des ensembles d'entraînement, validation et test}{87}{paragraph.2.4.4.1.4}%
+\contentsline {subsubsection}{\numberline {2.4.4.2}Hyperparamètres}{87}{subsubsection.2.4.4.2}%
+\contentsline {paragraph}{\numberline {2.4.4.2.1}Longueur d'entrée et horizon de prédiction.}{88}{paragraph.2.4.4.2.1}%
+\contentsline {subsubsection}{\numberline {2.4.4.3}Optimiseur.}{88}{subsubsection.2.4.4.3}%
+\contentsline {subsubsection}{\numberline {2.4.4.4}Métriques d'évaluation.}{88}{subsubsection.2.4.4.4}%
+\contentsline {paragraph}{\numberline {2.4.4.4.1}Environnement de travail.}{89}{paragraph.2.4.4.4.1}%
+\contentsline {subsection}{\numberline {2.4.5}Quantification de l'incertitude par Monte-Carlo \textit {dropout}}{89}{subsection.2.4.5}%
+\contentsline {subsubsection}{\numberline {2.4.5.1}Principe}{89}{subsubsection.2.4.5.1}%
+\contentsline {subsubsection}{\numberline {2.4.5.2}Mise en \oe {}uvre.}{89}{subsubsection.2.4.5.2}%
+\contentsline {subsubsection}{\numberline {2.4.5.3}Intervalles de confiance pour le pronostic}{90}{subsubsection.2.4.5.3}%
+\contentsline {subsubsection}{\numberline {2.4.5.4}Application}{91}{subsubsection.2.4.5.4}%
+\contentsline {subsection}{\numberline {2.4.6}Discussion}{92}{subsection.2.4.6}%
+\contentsline {subsection}{\numberline {2.4.7}Limitations}{93}{subsection.2.4.7}%
+\contentsline {section}{\numberline {2.5}Application de la gestion d'état de santé au jumelage numérique}{94}{section.2.5}%
+\contentsline {section}{Conclusion du chapitre}{95}{section.2.5}%
+\contentsline {chapter}{\numberline {3}Méthodologie pour les stratégies de gestion d'énergie et approche réactive au vieillissement}{97}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Propos introductif \& question de recherche}{97}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Définitions}{97}{subsection.3.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.1.1}Stratégie de gestion d'énergie}{97}{subsubsection.3.1.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.1.2}Critères de performance}{98}{subsubsection.3.1.1.2}%
+\contentsline {subsection}{\numberline {3.1.2}Positionnement multi-échelles du problème}{98}{subsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.1.3}Question de recherche}{99}{subsection.3.1.3}%
+\contentsline {section}{\numberline {3.2}État de l'art}{100}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Objectifs des EMS}{100}{subsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.1.1}Objectifs à court terme.}{100}{subsubsection.3.2.1.1}%
+\contentsline {subsubsection}{\numberline {3.2.1.2}Objectifs à moyen terme.}{101}{subsubsection.3.2.1.2}%
+\contentsline {subsubsection}{\numberline {3.2.1.3}Objectifs à long terme.}{101}{subsubsection.3.2.1.3}%
+\contentsline {subsection}{\numberline {3.2.2}Structures des EMS}{102}{subsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.2.1}Stratégies à base d'optimisation.}{102}{subsubsection.3.2.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2.2}Méthodes pilotées par les données.}{103}{subsubsection.3.2.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.2.3}Stratégies à base de règles.}{103}{subsubsection.3.2.2.3}%
+\contentsline {subsection}{\numberline {3.2.3}Positionnement de l'étude}{104}{subsection.3.2.3}%
+\contentsline {section}{\numberline {3.3}Modélisation du système}{105}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Équations d'évolution de l'état du système}{105}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Profils de puissance}{106}{subsection.3.3.2}%
+\contentsline {section}{\numberline {3.4}Définition des indicateurs de performance}{107}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}LPSP}{108}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}Robustesse face aux défaillances}{108}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.3}Dégradations}{111}{subsection.3.4.3}%
+\contentsline {subsubsection}{\numberline {3.4.3.1}Batteries}{112}{subsubsection.3.4.3.1}%
+\contentsline {subsubsection}{\numberline {3.4.3.2}Piles à combustible}{114}{subsubsection.3.4.3.2}%
+\contentsline {subsubsection}{\numberline {3.4.3.3}Électrolyseurs}{116}{subsubsection.3.4.3.3}%
+\contentsline {subsubsection}{\numberline {3.4.3.4}Unification de l'indicateur de dégradations}{117}{subsubsection.3.4.3.4}%
+\contentsline {subsubsection}{\numberline {3.4.3.5}Synthèse}{117}{subsubsection.3.4.3.5}%
+\contentsline {section}{\numberline {3.5}Approche réactive au vieillissement}{118}{section.3.5}%
+\contentsline {section}{\numberline {3.6}Cadre d'évaluation \& comparaison des EMS}{119}{section.3.6}%
+\contentsline {subsection}{\numberline {3.6.1}Représentation dans l'espace de performance (plan de Pareto)}{119}{subsection.3.6.1}%
+\contentsline {subsection}{\numberline {3.6.2}Algorithme de simulation}{120}{subsection.3.6.2}%
+\contentsline {section}{\numberline {3.7}EMS considérées}{122}{section.3.7}%
+\contentsline {subsection}{\numberline {3.7.1}Power-splitting \& frequency splitting}{122}{subsection.3.7.1}%
+\contentsline {subsection}{\numberline {3.7.2}SoC-based}{122}{subsection.3.7.2}%
+\contentsline {subsection}{\numberline {3.7.3}Autres stratégies}{123}{subsection.3.7.3}%
+\contentsline {paragraph}{\numberline {3.7.3.0.1}Stratégie RB1.}{123}{paragraph.3.7.3.0.1}%
+\contentsline {paragraph}{\numberline {3.7.3.0.2}Stratégie RB2.}{123}{paragraph.3.7.3.0.2}%
+\contentsline {subsection}{\numberline {3.7.4}Paramètres de simulation \& hypothèses}{124}{subsection.3.7.4}%
+\contentsline {section}{\numberline {3.8}Résultats préliminaires}{125}{section.3.8}%
+\contentsline {subsection}{\numberline {3.8.1}LPSP et dégradation des composants }{125}{subsection.3.8.1}%
+\contentsline {subsubsection}{\numberline {3.8.1.1}Résultats}{125}{subsubsection.3.8.1.1}%
+\contentsline {subsubsection}{\numberline {3.8.1.2}Discussion}{128}{subsubsection.3.8.1.2}%
+\contentsline {subsection}{\numberline {3.8.2}Robustesse face aux défaillances}{129}{subsection.3.8.2}%
+\contentsline {subsubsection}{\numberline {3.8.2.1}Résultats}{129}{subsubsection.3.8.2.1}%
+\contentsline {subsubsection}{\numberline {3.8.2.2}Discussion}{132}{subsubsection.3.8.2.2}%
+\contentsline {section}{\numberline {3.9}Analyse de sensibilité \& coût total unifié}{134}{section.3.9}%
+\contentsline {subsection}{\numberline {3.9.1}Robustesse de l'approche réactive au bruit d'estimation}{134}{subsection.3.9.1}%
+\contentsline {subsection}{\numberline {3.9.2}Sensibilité à la résolution temporelle}{134}{subsection.3.9.2}%
+\contentsline {subsection}{\numberline {3.9.3}Analyse de sensibilité de Monte-Carlo}{135}{subsection.3.9.3}%
+\contentsline {subsection}{\numberline {3.9.4}Critère de coût total unifié (VoLL)}{136}{subsection.3.9.4}%
+\contentsline {section}{\numberline {3.10}Limites \& conclusion du chapitre}{138}{section.3.10}%
+\contentsline {subsection}{\numberline {3.10.1}Limites de l'étude}{138}{subsection.3.10.1}%
+\contentsline {subsection}{\numberline {3.10.2}Conclusion du chapitre}{139}{subsection.3.10.2}%
+\contentsline {chapter}{\numberline {4}Augmentation des stratégies de gestion d'énergie par le diagnostic, le pronostic et la prévision}{141}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Propos introductif \& question de recherche}{141}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Propos introductif}{141}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Sources de connaissance mobilisées}{142}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}Démarche d'augmentation}{142}{subsection.4.1.3}%
+\contentsline {subsection}{\numberline {4.1.4}Incertitude des connaissances}{142}{subsection.4.1.4}%
+\contentsline {subsection}{\numberline {4.1.5}Question de recherche}{143}{subsection.4.1.5}%
+\contentsline {section}{\numberline {4.2}État de l'art \& positionnement}{143}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Intégration du diagnostic et du pronostic dans les EMS}{144}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Prévision de la production photovoltaïque et de la consommation}{144}{subsection.4.2.2}%
+\contentsline {subsubsection}{\numberline {4.2.2.1}Approches statistiques (paramétriques)}{144}{subsubsection.4.2.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2.2}Approches fondées sur les données (apprentissage automatique et profond)}{145}{subsubsection.4.2.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Utilisation des prévisions dans les stratégies de gestion d'énergie}{146}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}Positionnement de l'étude}{146}{subsection.4.2.4}%
+\contentsline {section}{\numberline {4.3}Augmentation par l'état de santé}{147}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Principe}{147}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Formalisation}{147}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.3}Réglage des exposants}{148}{subsection.4.3.3}%
+\contentsline {subsection}{\numberline {4.3.4}Résultats}{149}{subsection.4.3.4}%
+\contentsline {section}{\numberline {4.4}Augmentation par le pronostic}{151}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Principe}{151}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}Estimation de la RUL et formalisation}{152}{subsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.4.3}Résultats}{153}{subsection.4.4.3}%
+\contentsline {subsection}{\numberline {4.4.4}Sensibilité à l'incertitude du pronostic}{155}{subsection.4.4.4}%
+\contentsline {section}{\numberline {4.5}Augmentation par la prévision des profils de puissance}{157}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Pré-charge de la batterie}{157}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Prévision par réseau LSTM}{158}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {4.5.3}Incertitude de prévision}{159}{subsection.4.5.3}%
+\contentsline {subsection}{\numberline {4.5.4}Effet du bruit de prévision}{160}{subsection.4.5.4}%
+\contentsline {subsection}{\numberline {4.5.5}Robustesse par hystérésis}{160}{subsection.4.5.5}%
+\contentsline {subsection}{\numberline {4.5.6}Combinaison de l'état de santé et de la prévision}{163}{subsection.4.5.6}%
+\contentsline {section}{\numberline {4.6}Synthèse comparative}{164}{section.4.6}%
+\contentsline {subsection}{\numberline {4.6.1}Vue d'ensemble dans le plan de Pareto}{164}{subsection.4.6.1}%
+\contentsline {subsection}{\numberline {4.6.2}Apport de chaque connaissance}{166}{subsection.4.6.2}%
+\contentsline {subsection}{\numberline {4.6.3}Compromis complexité et gain}{167}{subsection.4.6.3}%
+\contentsline {section}{\numberline {4.7}Conclusion du chapitre}{167}{section.4.7}%
+\contentsline {chapter}{Annexes}{169}{chapter*.5}%
+\contentsline {chapter}{Bibliographie}{171}{chapter*.6}%

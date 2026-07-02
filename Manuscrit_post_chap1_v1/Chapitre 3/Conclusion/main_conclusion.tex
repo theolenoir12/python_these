@@ -1,0 +1,16 @@
+% ============================================================
+%  CHAPITRE 4 — Section 7 : Conclusion du chapitre
+% ============================================================
+
+\section{Conclusion du chapitre}
+\label{sec:conclusion_ch4}
+
+Ce chapitre a franchi le pas de l'approche \emph{réactive} à l'approche \emph{anticipative} en gestion d'énergie. Là où le chapitre précédent n'exploitait l'information de vieillissement que de façon défensive, pour maintenir les composants dans leurs limites physiques, il s'est agi ici d'injecter des connaissances supplémentaires directement dans les règles de décision, afin de moduler proactivement la conduite du micro-réseau. Trois sources de connaissance ont été mobilisées et évaluées dans le cadre unifié du chapitre précédent~: l'état de santé (SoH), la durée de vie résiduelle (RUL) et la prévision des profils de production et de consommation.
+
+La démarche a reposé sur un principe méthodologique constant~: \emph{augmenter} la stratégie de référence RB2 plutôt que la refondre, chaque connaissance constituant un levier isolé construit de telle sorte que, en l'absence d'information, la stratégie retombe exactement sur RB2. Cette propriété de test nul a permis d'attribuer sans ambiguïté chaque écart de performance à la connaissance ajoutée.
+
+Trois conclusions principales se dégagent. Premièrement, les connaissances mobilisées se \emph{répartissent les rôles}~: l'état de santé améliore la durabilité (RB2(SoH) réduit le coût de dégradation d'environ \SI{9}{\percent}), tandis que la prévision améliore la fiabilité (RB2(Pred) abaisse la LPSP à dégradation constante)~; combinées, elles cumulent leurs effets. Deuxièmement, ces gains, modestes mais réels, ne dispensent pas de la simplicité~: les stratégies augmentées conservent la robustesse « tout-terrain » de RB2 et la garantie de ne jamais faire pire qu'elle en l'absence d'information.
+
+Troisièmement, et c'est la contribution méthodologique propre du chapitre, la \emph{valeur d'une information ne se mesure qu'à l'aune de son incertitude}. L'exemple de la prévision est éclairant~: un levier apportant un gain net sous prévision parfaite peut devenir activement nuisible une fois confronté au bruit réel, lorsqu'il est exploité par une décision discontinue (clignotement de l'électrolyseur, dégradation accrue). Ce n'est qu'en quantifiant l'incertitude puis en l'intégrant explicitement à la décision, par une hystérésis calée sur l'écart-type mesuré, que l'essentiel du gain potentiel a pu être préservé. La prévision n'a de valeur opérationnelle que rendue robuste à sa propre imperfection.
+
+Plusieurs perspectives prolongent ce travail. La modélisation du bruit de prévision pourrait être affinée (bruit corrélé plutôt qu'indépendant, conditions météorologiques exogènes en entrée du modèle), et la frontière entre règles augmentées et commande prédictive explicite (MPC) explorée pour réduire l'écart résiduel au front optimal. Enfin, l'intégration conjointe du dimensionnement et de ces stratégies augmentées reste une voie ouverte vers une conception véritablement résiliente au vieillissement.

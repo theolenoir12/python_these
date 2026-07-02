@@ -1,0 +1,26 @@
+\section{Propos introductif \& question de recherche}
+La première partie de ce travail vise à étudier le vieillissement des composants utiles au stockage de l'énergie électrique, à savoir les batteries, les électrolyseurs et les piles à combustible. Ceux-ci se dégradent avec l'utilisation et leurs caractéristiques changent avec le temps, et ces phénomènes dépendent des profils de puissance qui leur sont appliqués. Cela implique qu'ils ne pourront possiblement pas maintenir les conditions d'opération pour soutenir les demandes des utilisateurs. L'étude du vieillissement de ces composants répond alors à un objectif double. Elle permet à la fois d'adapter la gestion d'énergie aux nouvelles contraintes physiques des composants et également de réduire le vieillissement dans le futur en intégrant ces connaissances dans la commande. Il est alors nécessaire de savoir comment extraire le vieillissement de l'observation, ainsi que quelle sera son évolution dans le futur. Ce chapitre cherchera à étudier et suivre le vieillissement des composants dans le temps, que ce soit à l'instant présent mais également dans un futur proche. Quelques définitions sont alors nécessaires pour poser une question de recherche.
+
+\subsection{Définitions}
+\subsubsection{État de santé}
+L'état de santé (\textit{state-of-health}, SoH) d'un composant de stockage d'énergie est un nombre réel compris entre 0 et 1 qui cherche à donner une information rapide et facilement interprétable sur l'avancement du vieillissement de ce composant. Un composant qui est neuf aura un état de santé égal à 1, et celui-ci diminuera tout au long de la vie du composant avant qu'il atteigne une valeur critique dite de fin de vie (\textit{end-of-life}, EoL). Cette valeur de fin de vie est à définir en fonction de l'usage et du besoin. L'état de santé peut admettre plusieurs définitions pour chacun des composants du stockage d'énergie en fonction des caractéristiques que l'on peut souhaiter mettre en avant. 
+
+\subsubsection{Diagnostic}
+La notion de diagnostic est une notion large qui peut admettre plusieurs interprétations en fonction du contexte dans lequel elle est utilisée. Fréquemment, dans un contexte de gestion du vieillissement de composants de stockage d'énergie, elle est associée à la détermination d'un défaut présent dans le composant, notamment dans sa nature, ses causes et ses conséquences. Dans le cadre de ce travail, une autre définition plus adaptée est utilisée. En effet, les techniques de détermination de défauts sont applicables à des systèmes que l'on utilise à des échelles de temps qui sont relativement courtes, étant notamment largement associées à des opérations de maintenances. Ce travail se place dans le cadre d'un temps plus long, où l'étude du vieillissement se veut être complémentaire d'une étude de la commande d'un système hybride, notamment à des fins d'adaptation de cette commande. Dans ce travail, le diagnostic est utilisé comme étant une évaluation de l'état de santé actuel des composants de stockage, cette information pouvant alors être utilisé par la suite comme augmentation d'une couche de commande. 
+
+\subsubsection{Pronostic}
+La notion de pronostic enfin se place à la suite de la définition déjà donnée à la notion de diagnostic. Si le diagnostic tel que défini précédemment à pour objectif une évaluation de l'état de santé à un instant donné, le pronostic est alors la détermination des valeurs de cet état de santé pour les instants futurs. 
+
+\subsection{Question de recherche}
+Le cadre de travail et les définitions nécessaires étant posées, la question de recherche suivante peut être introduite :
+\begin{align*}
+    \tcboxmath{
+        \parbox{.93\textwidth}{
+            \centering
+            \textbf{\text{Comment faire le diagnostic l'état de santé des trois composants du stockage}}\\
+            \textbf{\text{à l'instant présent, et comment en faire son pronostic dans le futur ?}}
+        }
+    }
+\end{align*}
+À la fois le diagnostic et le pronostic doit ici être appliqué aux trois composants du stockage. Ce chapitre est alors organisé comme suit. Tout d'abord, les parties dites "de diagnostic" auront traits à la partie évaluation de l'état de santé des composants, et introduiront en premier abord les définitions de ces états de santé pour chaque composants. La partie prédiction est considérée dans la partie pronostic de ces états de santé.
+\newpage

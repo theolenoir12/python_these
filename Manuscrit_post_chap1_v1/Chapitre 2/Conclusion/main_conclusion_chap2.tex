@@ -1,0 +1,40 @@
+% ============================================================
+%  CHAPITRE 2 — Section : Bouclage avec le dimensionnement & conclusion
+% ============================================================
+
+\section{Limites \& conclusion du chapitre}
+\label{sec:conclusion_chap}
+
+% ============================================================
+% [DÉSACTIVÉ] Bouclage avec le dimensionnement du micro-réseau.
+% Mis en commentaire (cf. demande) ; à réactiver ultérieurement.
+% ============================================================
+\iffalse
+% ------------------------------------------------------------
+\subsection{Bouclage avec le dimensionnement du micro-réseau}
+% ------------------------------------------------------------
+
+L'ensemble des analyses de ce chapitre a été conduit à \emph{dimensionnement fixé}~: les calibres des composants ne varient pas d'une stratégie à l'autre, ce qui garantit que les écarts de performance observés sont uniquement imputables aux décisions de contrôle et non à des effets de dimensionnement. Ce choix méthodologique est essentiel pour une comparaison équitable des EMS, mais il appelle deux nuances.
+
+D'une part, le dimensionnement retenu n'est pas issu d'une optimisation~: il a été calé grossièrement à partir des observations de terrain du cas d'étude de La Réunion. En particulier, le champ PV est largement surdimensionné relativement à la demande, ce qui entraîne un électrolyseur surdimensionné par rapport à la pile à combustible, et une capacité de stockage assurant plusieurs jours d'autonomie. Cette configuration n'est donc pas nécessairement optimale sur le plan technico-économique~; elle reflète une installation réelle.
+
+D'autre part, et c'est le point important pour le bouclage, la robustesse du classement des stratégies vis-à-vis du dimensionnement a été explicitement évaluée à la section~\ref{sec:sensibilite}~: sous une perturbation de Monte-Carlo de $\pm\SI{20}{\percent}$ des calibres des composants, l'ordre des stratégies est préservé et RB2 conserve sa position de meilleure stratégie statique. Le classement obtenu reflète donc la logique de contrôle, et non le point de dimensionnement particulier du cas d'étude. Il n'en demeure pas moins qu'une \emph{co-optimisation conjointe} du dimensionnement et de la stratégie de gestion d'énergie apporterait un éclairage complémentaire sur la faisabilité pratique et le passage à l'échelle des EMS proposées. Cet aspect dépasse le cadre du présent chapitre~; il est étudié dans le cadre du projet ANR-22-CE05-0026, dont ces travaux font partie.
+\fi
+
+% ------------------------------------------------------------
+\subsection{Limites de l'étude}
+% ------------------------------------------------------------
+
+Les résultats présentés doivent être tempérés par plusieurs limites inhérentes à la démarche. Premièrement, ils sont fortement liés aux profils de puissance utilisés, issus de données réelles reflétant les habitudes de consommation des populations locales~; ces profils ayant été construits pour refléter la réalité spécifique du cas d'étude, les conclusions chiffrées restent avant tout valables pour ce micro-réseau. Si les positions absolues dans le plan de Pareto sont spécifiques au climat et au dimensionnement (un site plus froid ou plus intermittent les déplacerait et appellerait un dimensionnement différent), la méthodologie proposée et le mécanisme qualitatif sous-jacent au classement des stratégies ont vocation à se transposer à d'autres contextes hors-réseau.
+
+Deuxièmement, l'analyse a été menée à dimensionnement simplifié et fixé~; bien que la robustesse du classement à des variations de $\pm\SI{20}{\percent}$ des calibres ait été vérifiée (section~\ref{sec:sensibilite}), une co-optimisation conjointe du dimensionnement et de la stratégie reste une perspective ouverte. Troisièmement, les dégradations ont été quantifiées à partir des études expérimentales qui ont pû être trouvées dans la littérature. Les fonctions de dégradations qui ont été construites à partir de ces études utilisent forcément des modèles qui ne peuvent pas capturer toutes la complexité des dégradations réelles, et il est donc attendu que les dégradations réelles des composants dans le micro-réseau diffèrent au moins légèrement des dégradations attendues par ces modèles. Il est à noter cependant que les durées de vie des composants obtenues par ces modèles sont cohérentes avec des durées de vie attendues dans la réalité pour ce genre d'applications stationnaires.
+
+% ------------------------------------------------------------
+\subsection{Conclusion du chapitre}
+% ------------------------------------------------------------
+
+Ce chapitre a proposé un cadre méthodologique unifié pour concevoir, simuler et comparer des stratégies de gestion d'énergie à base de règles pour un micro-réseau hybride isolé. Trois indicateurs complémentaires, associés à trois échelles de temps, ont été définis~: la LPSP pour la fiabilité d'alimentation à court terme, un coût de dégradation agrégé pour la durabilité à long terme, et un surcoût de robustesse pour la résilience aux défaillances à moyen terme. Neuf stratégies représentatives de la littérature ont été évaluées dans ce cadre, en intégrant une approche \emph{réactive} au vieillissement~: l'information de SoH issue des outils de diagnostic du chapitre précédent y est exploitée pour maintenir en permanence les composants à l'intérieur de leurs plages de fonctionnement physiques évolutives.
+
+Trois conclusions principales se dégagent. D'abord, la comparaison dans le plan de Pareto désigne la stratégie à base de règles RB2 comme le meilleur compromis statique entre fiabilité et durabilité. Ensuite, l'analyse de robustesse face aux défaillances montre qu'aucune stratégie ne domine simultanément les trois axes de performance, mais que RB2 demeure un excellent compromis « tout-terrain », jamais pris en défaut là où la stratégie « tout-hydrogène » s'effondre. Enfin, l'analyse de sensibilité et le critère de coût total unifié confirment que ce classement est robuste à la grande majorité des hypothèses de modélisation et de dimensionnement~: au sens du coût total, RB2 obtient le meilleur rang moyen et s'impose comme la stratégie statique la plus régulièrement performante, au coude à coude avec la stratégie tout-batterie.
+
+Ce dernier constat fournit le point de départ du chapitre suivant. La stratégie RB2 étant consolidée, la question naturelle devient~: est-il possible de faire mieux qu'une stratégie statique~? L'approche réactive de ce chapitre n'utilise en effet l'information de vieillissement que de façon défensive, pour respecter les limites physiques des composants. Le chapitre suivant franchit un pas supplémentaire en adoptant une approche \emph{anticipative}~: y seront injectées, directement dans les règles de décision de l'EMS, les données de diagnostic et de pronostic d'état de santé (SoH, RUL) développées au chapitre précédent, afin de moduler proactivement la sollicitation des composants en fonction de leur état de santé courant et de leur durée de vie résiduelle estimée. C'est l'objet de la stratégie RB2(SoH), développée au chapitre suivant.

@@ -1,0 +1,7 @@
+# bench_fable (sweep_fable_socwin) : 25 ans ; VoLL=3.0 ; N=1 graines ; seeds communes (CRN) ; base=SoCwin gain=0.00
+label ; N ; LPSP(%) ; sLPSP ; deg(kEUR) ; sdeg ; total(kEUR) ; stotal ; dtotal_vs_base(kEUR) ; ELY_starts
+SoCwin gain=0.00 ; 1 ; 2.5921 ; 0.0000 ; 58.843 ; 0.000 ; 80.102 ; 0.000 ; +0.000 ; 9199
+SoCwin gain=0.20 ; 1 ; 2.7679 ; 0.0000 ; 56.842 ; 0.000 ; 79.543 ; 0.000 ; -0.559 ; 9199
+SoCwin gain=0.40 ; 1 ; 3.0299 ; 0.0000 ; 54.869 ; 0.000 ; 79.719 ; 0.000 ; -0.383 ; 9199
+SoCwin gain=0.60 ; 1 ; 3.5602 ; 0.0000 ; 52.897 ; 0.000 ; 82.096 ; 0.000 ; +1.994 ; 9199
+SoCwin gain=0.80 ; 1 ; 4.7945 ; 0.0000 ; 49.582 ; 0.000 ; 88.904 ; 0.000 ; +8.802 ; 9199

@@ -1,0 +1,600 @@
+Job 212368  noeud=node4-9  N=64  n_years=25  extra=--sweep sym
+cpus-per-task=32  debut=jeu. juil.  2 09:30:13 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+[bench_fable] 576 runs (25 ans), 32 workers ...
+  [  1/576] RB2 socle              seed=2026   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [  2/576] RB2 socle              seed=2027   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [  3/576] RB2 socle              seed=2028   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [  4/576] RB2 socle              seed=2029   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [  5/576] RB2 socle              seed=2030   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [  6/576] RB2 socle              seed=2031   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [  7/576] RB2 socle              seed=2032   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [  8/576] RB2 socle              seed=2033   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [  9/576] RB2 socle              seed=2034   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 10/576] RB2 socle              seed=2035   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 11/576] RB2 socle              seed=2036   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 12/576] RB2 socle              seed=2037   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 13/576] RB2 socle              seed=2038   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 14/576] RB2 socle              seed=2039   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 15/576] RB2 socle              seed=2040   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 16/576] RB2 socle              seed=2041   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 17/576] RB2 socle              seed=2042   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 18/576] RB2 socle              seed=2043   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 19/576] RB2 socle              seed=2044   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 20/576] RB2 socle              seed=2045   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 21/576] RB2 socle              seed=2046   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 22/576] RB2 socle              seed=2047   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 23/576] RB2 socle              seed=2048   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 24/576] RB2 socle              seed=2049   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 25/576] RB2 socle              seed=2050   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 26/576] RB2 socle              seed=2051   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 27/576] RB2 socle              seed=2052   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 28/576] RB2 socle              seed=2053   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 29/576] RB2 socle              seed=2054   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 30/576] RB2 socle              seed=2055   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 31/576] RB2 socle              seed=2056   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 32/576] RB2 socle              seed=2057   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 33/576] RB2 socle              seed=2058   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 34/576] RB2 socle              seed=2059   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 35/576] RB2 socle              seed=2060   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 36/576] RB2 socle              seed=2061   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 37/576] RB2 socle              seed=2062   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 38/576] RB2 socle              seed=2063   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 39/576] RB2 socle              seed=2064   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 40/576] RB2 socle              seed=2065   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 41/576] RB2 socle              seed=2066   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 42/576] RB2 socle              seed=2067   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 43/576] RB2 socle              seed=2068   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 44/576] RB2 socle              seed=2069   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 45/576] RB2 socle              seed=2070   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 46/576] RB2 socle              seed=2071   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 47/576] RB2 socle              seed=2072   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 48/576] RB2 socle              seed=2073   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 49/576] RB2 socle              seed=2074   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 50/576] RB2 socle              seed=2075   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 51/576] RB2 socle              seed=2076   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 52/576] RB2 socle              seed=2077   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 53/576] RB2 socle              seed=2078   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 54/576] RB2 socle              seed=2079   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 55/576] RB2 socle              seed=2080   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 56/576] RB2 socle              seed=2081   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 57/576] RB2 socle              seed=2082   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 58/576] RB2 socle              seed=2083   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 59/576] RB2 socle              seed=2084   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 60/576] RB2 socle              seed=2085   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 61/576] RB2 socle              seed=2086   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 62/576] RB2 socle              seed=2087   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 63/576] RB2 socle              seed=2088   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 64/576] RB2 socle              seed=2089   LPSP=2.5921%  deg=58.843  total=80.102  ELYstarts=9199
+  [ 65/576] PropSym OFF (=Prop)    seed=2026   LPSP=2.9675%  deg=59.005  total=83.343  ELYstarts=10034
+  [ 66/576] PropSym OFF (=Prop)    seed=2027   LPSP=2.9735%  deg=58.964  total=83.351  ELYstarts=10029
+  [ 67/576] PropSym OFF (=Prop)    seed=2028   LPSP=2.9458%  deg=59.006  total=83.167  ELYstarts=10068
+  [ 68/576] PropSym OFF (=Prop)    seed=2029   LPSP=2.9664%  deg=58.980  total=83.309  ELYstarts=10048
+  [ 69/576] PropSym OFF (=Prop)    seed=2030   LPSP=2.9806%  deg=58.953  total=83.399  ELYstarts=10035
+  [ 70/576] PropSym OFF (=Prop)    seed=2031   LPSP=2.9782%  deg=58.988  total=83.414  ELYstarts=10038
+  [ 71/576] PropSym OFF (=Prop)    seed=2032   LPSP=2.9849%  deg=58.949  total=83.429  ELYstarts=10039
+  [ 72/576] PropSym OFF (=Prop)    seed=2033   LPSP=2.9832%  deg=58.967  total=83.434  ELYstarts=10050
+  [ 73/576] PropSym OFF (=Prop)    seed=2034   LPSP=2.9804%  deg=58.973  total=83.416  ELYstarts=10023
+  [ 74/576] PropSym OFF (=Prop)    seed=2035   LPSP=2.9895%  deg=58.989  total=83.507  ELYstarts=10082
+  [ 75/576] PropSym OFF (=Prop)    seed=2036   LPSP=2.9854%  deg=58.973  total=83.457  ELYstarts=10023
+  [ 76/576] PropSym OFF (=Prop)    seed=2037   LPSP=3.0012%  deg=58.951  total=83.565  ELYstarts=10054
+  [ 77/576] PropSym OFF (=Prop)    seed=2038   LPSP=2.9700%  deg=58.998  total=83.356  ELYstarts=10066
+  [ 78/576] PropSym OFF (=Prop)    seed=2039   LPSP=2.9647%  deg=58.960  total=83.274  ELYstarts=10030
+  [ 79/576] PropSym OFF (=Prop)    seed=2040   LPSP=2.9752%  deg=58.972  total=83.373  ELYstarts=10061
+  [ 80/576] PropSym OFF (=Prop)    seed=2041   LPSP=2.9802%  deg=58.958  total=83.400  ELYstarts=10012
+  [ 81/576] PropSym OFF (=Prop)    seed=2042   LPSP=2.9691%  deg=58.951  total=83.303  ELYstarts=9977
+  [ 82/576] PropSym OFF (=Prop)    seed=2043   LPSP=2.9667%  deg=58.976  total=83.307  ELYstarts=10049
+  [ 83/576] PropSym OFF (=Prop)    seed=2044   LPSP=2.9745%  deg=58.984  total=83.379  ELYstarts=10039
+  [ 84/576] PropSym OFF (=Prop)    seed=2045   LPSP=2.9558%  deg=58.939  total=83.181  ELYstarts=10022
+  [ 85/576] PropSym OFF (=Prop)    seed=2046   LPSP=2.9680%  deg=58.971  total=83.313  ELYstarts=10030
+  [ 86/576] PropSym OFF (=Prop)    seed=2047   LPSP=2.9717%  deg=58.953  total=83.325  ELYstarts=10052
+  [ 87/576] PropSym OFF (=Prop)    seed=2048   LPSP=2.9647%  deg=59.008  total=83.323  ELYstarts=10058
+  [ 88/576] PropSym OFF (=Prop)    seed=2049   LPSP=2.9891%  deg=58.959  total=83.474  ELYstarts=10072
+  [ 89/576] PropSym OFF (=Prop)    seed=2050   LPSP=2.9691%  deg=58.962  total=83.313  ELYstarts=10032
+  [ 90/576] PropSym OFF (=Prop)    seed=2051   LPSP=2.9580%  deg=59.008  total=83.268  ELYstarts=10058
+  [ 91/576] PropSym OFF (=Prop)    seed=2052   LPSP=2.9635%  deg=59.000  total=83.305  ELYstarts=10060
+  [ 92/576] PropSym OFF (=Prop)    seed=2053   LPSP=2.9730%  deg=58.978  total=83.361  ELYstarts=10052
+  [ 93/576] PropSym OFF (=Prop)    seed=2054   LPSP=2.9768%  deg=58.961  total=83.375  ELYstarts=10030
+  [ 94/576] PropSym OFF (=Prop)    seed=2055   LPSP=2.9818%  deg=58.948  total=83.403  ELYstarts=10028
+  [ 95/576] PropSym OFF (=Prop)    seed=2056   LPSP=2.9450%  deg=58.980  total=83.133  ELYstarts=10057
+  [ 96/576] PropSym OFF (=Prop)    seed=2057   LPSP=2.9650%  deg=59.009  total=83.327  ELYstarts=10058
+  [ 97/576] PropSym OFF (=Prop)    seed=2058   LPSP=2.9637%  deg=58.988  total=83.295  ELYstarts=10065
+  [ 98/576] PropSym OFF (=Prop)    seed=2059   LPSP=2.9680%  deg=58.965  total=83.307  ELYstarts=10023
+  [ 99/576] PropSym OFF (=Prop)    seed=2060   LPSP=2.9561%  deg=58.983  total=83.227  ELYstarts=10011
+  [100/576] PropSym OFF (=Prop)    seed=2061   LPSP=2.9751%  deg=58.970  total=83.370  ELYstarts=10026
+  [101/576] PropSym OFF (=Prop)    seed=2062   LPSP=2.9679%  deg=58.995  total=83.336  ELYstarts=10077
+  [102/576] PropSym OFF (=Prop)    seed=2063   LPSP=2.9692%  deg=59.008  total=83.359  ELYstarts=10088
+  [103/576] PropSym OFF (=Prop)    seed=2064   LPSP=2.9834%  deg=58.946  total=83.414  ELYstarts=10026
+  [104/576] PropSym OFF (=Prop)    seed=2065   LPSP=2.9711%  deg=58.960  total=83.328  ELYstarts=10060
+  [105/576] PropSym OFF (=Prop)    seed=2066   LPSP=2.9719%  deg=58.951  total=83.325  ELYstarts=10016
+  [106/576] PropSym OFF (=Prop)    seed=2067   LPSP=2.9585%  deg=58.967  total=83.231  ELYstarts=10010
+  [107/576] PropSym OFF (=Prop)    seed=2068   LPSP=2.9706%  deg=58.967  total=83.330  ELYstarts=10040
+  [108/576] PropSym OFF (=Prop)    seed=2069   LPSP=2.9496%  deg=59.000  total=83.191  ELYstarts=10057
+  [109/576] PropSym OFF (=Prop)    seed=2070   LPSP=2.9864%  deg=59.006  total=83.499  ELYstarts=10083
+  [110/576] PropSym OFF (=Prop)    seed=2071   LPSP=2.9885%  deg=58.965  total=83.475  ELYstarts=10046
+  [111/576] PropSym OFF (=Prop)    seed=2072   LPSP=2.9742%  deg=58.979  total=83.372  ELYstarts=10041
+  [112/576] PropSym OFF (=Prop)    seed=2073   LPSP=2.9639%  deg=58.964  total=83.272  ELYstarts=10037
+  [113/576] PropSym OFF (=Prop)    seed=2074   LPSP=2.9621%  deg=58.981  total=83.274  ELYstarts=10032
+  [114/576] PropSym OFF (=Prop)    seed=2075   LPSP=2.9790%  deg=59.009  total=83.441  ELYstarts=10055
+  [115/576] PropSym OFF (=Prop)    seed=2076   LPSP=2.9734%  deg=58.995  total=83.381  ELYstarts=10018
+  [116/576] PropSym OFF (=Prop)    seed=2077   LPSP=2.9591%  deg=58.937  total=83.206  ELYstarts=10034
+  [117/576] PropSym OFF (=Prop)    seed=2078   LPSP=2.9780%  deg=58.967  total=83.390  ELYstarts=10000
+  [118/576] PropSym OFF (=Prop)    seed=2079   LPSP=2.9829%  deg=58.991  total=83.455  ELYstarts=10055
+  [119/576] PropSym OFF (=Prop)    seed=2080   LPSP=2.9635%  deg=58.993  total=83.298  ELYstarts=10033
+  [120/576] PropSym OFF (=Prop)    seed=2081   LPSP=2.9452%  deg=59.000  total=83.155  ELYstarts=10080
+  [121/576] PropSym OFF (=Prop)    seed=2082   LPSP=2.9636%  deg=58.994  total=83.299  ELYstarts=10057
+  [122/576] PropSym OFF (=Prop)    seed=2083   LPSP=2.9672%  deg=58.989  total=83.324  ELYstarts=10003
+  [123/576] PropSym OFF (=Prop)    seed=2084   LPSP=2.9759%  deg=58.963  total=83.370  ELYstarts=10041
+  [124/576] PropSym OFF (=Prop)    seed=2085   LPSP=2.9577%  deg=58.949  total=83.207  ELYstarts=10033
+  [125/576] PropSym OFF (=Prop)    seed=2086   LPSP=2.9774%  deg=58.962  total=83.381  ELYstarts=10043
+  [126/576] PropSym OFF (=Prop)    seed=2087   LPSP=2.9770%  deg=58.922  total=83.338  ELYstarts=10000
+  [127/576] PropSym OFF (=Prop)    seed=2088   LPSP=2.9633%  deg=58.947  total=83.251  ELYstarts=9986
+  [128/576] PropSym OFF (=Prop)    seed=2089   LPSP=2.9729%  deg=58.981  total=83.363  ELYstarts=10017
+  [129/576] Sym t0.5/f0.40         seed=2026   LPSP=3.6243%  deg=65.648  total=95.372  ELYstarts=9895
+  [130/576] Sym t0.5/f0.40         seed=2027   LPSP=3.6063%  deg=65.624  total=95.201  ELYstarts=9882
+  [131/576] Sym t0.5/f0.40         seed=2028   LPSP=3.6165%  deg=65.663  total=95.324  ELYstarts=9868
+  [132/576] Sym t0.5/f0.40         seed=2029   LPSP=3.5820%  deg=65.712  total=95.089  ELYstarts=9915
+  [133/576] Sym t0.5/f0.40         seed=2030   LPSP=3.6129%  deg=65.663  total=95.294  ELYstarts=9910
+  [134/576] Sym t0.5/f0.40         seed=2031   LPSP=3.6105%  deg=65.695  total=95.306  ELYstarts=9926
+  [135/576] Sym t0.5/f0.40         seed=2032   LPSP=3.6362%  deg=65.665  total=95.487  ELYstarts=9935
+  [136/576] Sym t0.5/f0.40         seed=2033   LPSP=3.6133%  deg=65.668  total=95.302  ELYstarts=9898
+  [137/576] Sym t0.5/f0.40         seed=2034   LPSP=3.6044%  deg=65.654  total=95.216  ELYstarts=9882
+  [138/576] Sym t0.5/f0.40         seed=2035   LPSP=3.6211%  deg=65.685  total=95.383  ELYstarts=9937
+  [139/576] Sym t0.5/f0.40         seed=2036   LPSP=3.6202%  deg=65.675  total=95.366  ELYstarts=9926
+  [140/576] Sym t0.5/f0.40         seed=2037   LPSP=3.6135%  deg=65.617  total=95.253  ELYstarts=9893
+  [141/576] Sym t0.5/f0.40         seed=2038   LPSP=3.6298%  deg=65.724  total=95.494  ELYstarts=9934
+  [142/576] Sym t0.5/f0.40         seed=2039   LPSP=3.6288%  deg=65.639  total=95.400  ELYstarts=9920
+  [143/576] Sym t0.5/f0.40         seed=2040   LPSP=3.6200%  deg=65.662  total=95.351  ELYstarts=9922
+  [144/576] Sym t0.5/f0.40         seed=2041   LPSP=3.6206%  deg=65.657  total=95.351  ELYstarts=9939
+  [145/576] Sym t0.5/f0.40         seed=2042   LPSP=3.6341%  deg=65.655  total=95.460  ELYstarts=9928
+  [146/576] Sym t0.5/f0.40         seed=2043   LPSP=3.6406%  deg=65.636  total=95.494  ELYstarts=9909
+  [147/576] Sym t0.5/f0.40         seed=2044   LPSP=3.5863%  deg=65.676  total=95.089  ELYstarts=9871
+  [148/576] Sym t0.5/f0.40         seed=2045   LPSP=3.6147%  deg=65.612  total=95.257  ELYstarts=9891
+  [149/576] Sym t0.5/f0.40         seed=2046   LPSP=3.6238%  deg=65.688  total=95.408  ELYstarts=9886
+  [150/576] Sym t0.5/f0.40         seed=2047   LPSP=3.6380%  deg=65.645  total=95.482  ELYstarts=9927
+  [151/576] Sym t0.5/f0.40         seed=2048   LPSP=3.6238%  deg=65.603  total=95.323  ELYstarts=9886
+  [152/576] Sym t0.5/f0.40         seed=2049   LPSP=3.6610%  deg=65.591  total=95.617  ELYstarts=9903
+  [153/576] Sym t0.5/f0.40         seed=2050   LPSP=3.5980%  deg=65.678  total=95.187  ELYstarts=9885
+  [154/576] Sym t0.5/f0.40         seed=2051   LPSP=3.6182%  deg=65.685  total=95.359  ELYstarts=9902
+  [155/576] Sym t0.5/f0.40         seed=2052   LPSP=3.6220%  deg=65.657  total=95.363  ELYstarts=9910
+  [156/576] Sym t0.5/f0.40         seed=2053   LPSP=3.6401%  deg=65.657  total=95.511  ELYstarts=9935
+  [157/576] Sym t0.5/f0.40         seed=2054   LPSP=3.5995%  deg=65.636  total=95.157  ELYstarts=9902
+  [158/576] Sym t0.5/f0.40         seed=2055   LPSP=3.6092%  deg=65.642  total=95.243  ELYstarts=9888
+  [159/576] Sym t0.5/f0.40         seed=2056   LPSP=3.6382%  deg=65.631  total=95.469  ELYstarts=9868
+  [160/576] Sym t0.5/f0.40         seed=2057   LPSP=3.6171%  deg=65.652  total=95.317  ELYstarts=9891
+  [161/576] Sym t0.5/f0.40         seed=2058   LPSP=3.6306%  deg=65.648  total=95.424  ELYstarts=9938
+  [162/576] Sym t0.5/f0.40         seed=2059   LPSP=3.6164%  deg=65.629  total=95.289  ELYstarts=9899
+  [163/576] Sym t0.5/f0.40         seed=2060   LPSP=3.6164%  deg=65.655  total=95.315  ELYstarts=9927
+  [164/576] Sym t0.5/f0.40         seed=2061   LPSP=3.6452%  deg=65.646  total=95.543  ELYstarts=9889
+  [165/576] Sym t0.5/f0.40         seed=2062   LPSP=3.5904%  deg=65.680  total=95.127  ELYstarts=9867
+  [166/576] Sym t0.5/f0.40         seed=2063   LPSP=3.5913%  deg=65.651  total=95.105  ELYstarts=9898
+  [167/576] Sym t0.5/f0.40         seed=2064   LPSP=3.6192%  deg=65.624  total=95.306  ELYstarts=9914
+  [168/576] Sym t0.5/f0.40         seed=2065   LPSP=3.5995%  deg=65.702  total=95.223  ELYstarts=9940
+  [169/576] Sym t0.5/f0.40         seed=2066   LPSP=3.6021%  deg=65.669  total=95.211  ELYstarts=9902
+  [170/576] Sym t0.5/f0.40         seed=2067   LPSP=3.6061%  deg=65.692  total=95.266  ELYstarts=9930
+  [171/576] Sym t0.5/f0.40         seed=2068   LPSP=3.6277%  deg=65.607  total=95.359  ELYstarts=9897
+  [172/576] Sym t0.5/f0.40         seed=2069   LPSP=3.6302%  deg=65.597  total=95.370  ELYstarts=9881
+  [173/576] Sym t0.5/f0.40         seed=2070   LPSP=3.6166%  deg=65.676  total=95.337  ELYstarts=9943
+  [174/576] Sym t0.5/f0.40         seed=2071   LPSP=3.5955%  deg=65.649  total=95.137  ELYstarts=9883
+  [175/576] Sym t0.5/f0.40         seed=2072   LPSP=3.6088%  deg=65.658  total=95.255  ELYstarts=9870
+  [176/576] Sym t0.5/f0.40         seed=2073   LPSP=3.6074%  deg=65.616  total=95.202  ELYstarts=9890
+  [177/576] Sym t0.5/f0.40         seed=2074   LPSP=3.6227%  deg=65.663  total=95.374  ELYstarts=9892
+  [178/576] Sym t0.5/f0.40         seed=2075   LPSP=3.6323%  deg=65.613  total=95.402  ELYstarts=9914
+  [179/576] Sym t0.5/f0.40         seed=2076   LPSP=3.6160%  deg=65.611  total=95.267  ELYstarts=9880
+  [180/576] Sym t0.5/f0.40         seed=2077   LPSP=3.6188%  deg=65.623  total=95.302  ELYstarts=9916
+  [181/576] Sym t0.5/f0.40         seed=2078   LPSP=3.6019%  deg=65.707  total=95.248  ELYstarts=9913
+  [182/576] Sym t0.5/f0.40         seed=2079   LPSP=3.6328%  deg=65.635  total=95.428  ELYstarts=9884
+  [183/576] Sym t0.5/f0.40         seed=2080   LPSP=3.6182%  deg=65.637  total=95.312  ELYstarts=9913
+  [184/576] Sym t0.5/f0.40         seed=2081   LPSP=3.6237%  deg=65.627  total=95.346  ELYstarts=9918
+  [185/576] Sym t0.5/f0.40         seed=2082   LPSP=3.5855%  deg=65.680  total=95.086  ELYstarts=9894
+  [186/576] Sym t0.5/f0.40         seed=2083   LPSP=3.5968%  deg=65.676  total=95.175  ELYstarts=9884
+  [187/576] Sym t0.5/f0.40         seed=2084   LPSP=3.6107%  deg=65.654  total=95.267  ELYstarts=9940
+  [188/576] Sym t0.5/f0.40         seed=2085   LPSP=3.6198%  deg=65.633  total=95.321  ELYstarts=9880
+  [189/576] Sym t0.5/f0.40         seed=2086   LPSP=3.6284%  deg=65.667  total=95.425  ELYstarts=9904
+  [190/576] Sym t0.5/f0.40         seed=2087   LPSP=3.6147%  deg=65.630  total=95.275  ELYstarts=9901
+  [191/576] Sym t0.5/f0.40         seed=2088   LPSP=3.6131%  deg=65.663  total=95.296  ELYstarts=9895
+  [192/576] Sym t0.5/f0.40         seed=2089   LPSP=3.5988%  deg=65.643  total=95.159  ELYstarts=9914
+  [193/576] Sym t0.5/f0.50         seed=2026   LPSP=3.2552%  deg=64.493  total=91.190  ELYstarts=9969
+  [194/576] Sym t0.5/f0.50         seed=2027   LPSP=3.2393%  deg=64.464  total=91.030  ELYstarts=9978
+  [195/576] Sym t0.5/f0.50         seed=2028   LPSP=3.2439%  deg=64.490  total=91.094  ELYstarts=9940
+  [196/576] Sym t0.5/f0.50         seed=2029   LPSP=3.2203%  deg=64.553  total=90.964  ELYstarts=10014
+  [197/576] Sym t0.5/f0.50         seed=2030   LPSP=3.2444%  deg=64.511  total=91.120  ELYstarts=9984
+  [198/576] Sym t0.5/f0.50         seed=2031   LPSP=3.2354%  deg=64.525  total=91.060  ELYstarts=9995
+  [199/576] Sym t0.5/f0.50         seed=2032   LPSP=3.2686%  deg=64.487  total=91.294  ELYstarts=10010
+  [200/576] Sym t0.5/f0.50         seed=2033   LPSP=3.2387%  deg=64.506  total=91.068  ELYstarts=9976
+  [201/576] Sym t0.5/f0.50         seed=2034   LPSP=3.2418%  deg=64.490  total=91.077  ELYstarts=9975
+  [202/576] Sym t0.5/f0.50         seed=2035   LPSP=3.2586%  deg=64.511  total=91.236  ELYstarts=10008
+  [203/576] Sym t0.5/f0.50         seed=2036   LPSP=3.2569%  deg=64.485  total=91.196  ELYstarts=10006
+  [204/576] Sym t0.5/f0.50         seed=2037   LPSP=3.2495%  deg=64.459  total=91.110  ELYstarts=9982
+  [205/576] Sym t0.5/f0.50         seed=2038   LPSP=3.2627%  deg=64.519  total=91.278  ELYstarts=10015
+  [206/576] Sym t0.5/f0.50         seed=2039   LPSP=3.2607%  deg=64.468  total=91.210  ELYstarts=10007
+  [207/576] Sym t0.5/f0.50         seed=2040   LPSP=3.2523%  deg=64.494  total=91.168  ELYstarts=10016
+  [208/576] Sym t0.5/f0.50         seed=2041   LPSP=3.2365%  deg=64.496  total=91.040  ELYstarts=10015
+  [209/576] Sym t0.5/f0.50         seed=2042   LPSP=3.2762%  deg=64.508  total=91.377  ELYstarts=10011
+  [210/576] Sym t0.5/f0.50         seed=2043   LPSP=3.2586%  deg=64.473  total=91.198  ELYstarts=10002
+  [211/576] Sym t0.5/f0.50         seed=2044   LPSP=3.2214%  deg=64.533  total=90.953  ELYstarts=9955
+  [212/576] Sym t0.5/f0.50         seed=2045   LPSP=3.2542%  deg=64.458  total=91.147  ELYstarts=9989
+  [213/576] Sym t0.5/f0.50         seed=2046   LPSP=3.2532%  deg=64.525  total=91.206  ELYstarts=9972
+  [214/576] Sym t0.5/f0.50         seed=2047   LPSP=3.2655%  deg=64.485  total=91.267  ELYstarts=10007
+  [215/576] Sym t0.5/f0.50         seed=2048   LPSP=3.2568%  deg=64.442  total=91.152  ELYstarts=9980
+  [216/576] Sym t0.5/f0.50         seed=2049   LPSP=3.2783%  deg=64.428  total=91.314  ELYstarts=9993
+  [217/576] Sym t0.5/f0.50         seed=2050   LPSP=3.2413%  deg=64.499  total=91.083  ELYstarts=9992
+  [218/576] Sym t0.5/f0.50         seed=2051   LPSP=3.2552%  deg=64.518  total=91.215  ELYstarts=9987
+  [219/576] Sym t0.5/f0.50         seed=2052   LPSP=3.2482%  deg=64.494  total=91.134  ELYstarts=9997
+  [220/576] Sym t0.5/f0.50         seed=2053   LPSP=3.2755%  deg=64.489  total=91.352  ELYstarts=10026
+  [221/576] Sym t0.5/f0.50         seed=2054   LPSP=3.2347%  deg=64.486  total=91.015  ELYstarts=9987
+  [222/576] Sym t0.5/f0.50         seed=2055   LPSP=3.2431%  deg=64.465  total=91.063  ELYstarts=9977
+  [223/576] Sym t0.5/f0.50         seed=2056   LPSP=3.2692%  deg=64.451  total=91.263  ELYstarts=9960
+  [224/576] Sym t0.5/f0.50         seed=2057   LPSP=3.2463%  deg=64.488  total=91.111  ELYstarts=9978
+  [225/576] Sym t0.5/f0.50         seed=2058   LPSP=3.2523%  deg=64.471  total=91.145  ELYstarts=10012
+  [226/576] Sym t0.5/f0.50         seed=2059   LPSP=3.2519%  deg=64.479  total=91.150  ELYstarts=9981
+  [227/576] Sym t0.5/f0.50         seed=2060   LPSP=3.2421%  deg=64.500  total=91.090  ELYstarts=10016
+  [228/576] Sym t0.5/f0.50         seed=2061   LPSP=3.2653%  deg=64.452  total=91.232  ELYstarts=9979
+  [229/576] Sym t0.5/f0.50         seed=2062   LPSP=3.2283%  deg=64.506  total=90.983  ELYstarts=9949
+  [230/576] Sym t0.5/f0.50         seed=2063   LPSP=3.2326%  deg=64.479  total=90.991  ELYstarts=9989
+  [231/576] Sym t0.5/f0.50         seed=2064   LPSP=3.2500%  deg=64.470  total=91.125  ELYstarts=10006
+  [232/576] Sym t0.5/f0.50         seed=2065   LPSP=3.2321%  deg=64.536  total=91.045  ELYstarts=10022
+  [233/576] Sym t0.5/f0.50         seed=2066   LPSP=3.2384%  deg=64.509  total=91.068  ELYstarts=9994
+  [234/576] Sym t0.5/f0.50         seed=2067   LPSP=3.2402%  deg=64.515  total=91.089  ELYstarts=10015
+  [235/576] Sym t0.5/f0.50         seed=2068   LPSP=3.2584%  deg=64.425  total=91.149  ELYstarts=9978
+  [236/576] Sym t0.5/f0.50         seed=2069   LPSP=3.2612%  deg=64.461  total=91.207  ELYstarts=9982
+  [237/576] Sym t0.5/f0.50         seed=2070   LPSP=3.2510%  deg=64.519  total=91.181  ELYstarts=10019
+  [238/576] Sym t0.5/f0.50         seed=2071   LPSP=3.2248%  deg=64.481  total=90.929  ELYstarts=9948
+  [239/576] Sym t0.5/f0.50         seed=2072   LPSP=3.2445%  deg=64.459  total=91.069  ELYstarts=9940
+  [240/576] Sym t0.5/f0.50         seed=2073   LPSP=3.2282%  deg=64.470  total=90.946  ELYstarts=9967
+  [241/576] Sym t0.5/f0.50         seed=2074   LPSP=3.2617%  deg=64.469  total=91.220  ELYstarts=9979
+  [242/576] Sym t0.5/f0.50         seed=2075   LPSP=3.2661%  deg=64.464  total=91.251  ELYstarts=10000
+  [243/576] Sym t0.5/f0.50         seed=2076   LPSP=3.2518%  deg=64.441  total=91.111  ELYstarts=9979
+  [244/576] Sym t0.5/f0.50         seed=2077   LPSP=3.2513%  deg=64.471  total=91.136  ELYstarts=10008
+  [245/576] Sym t0.5/f0.50         seed=2078   LPSP=3.2324%  deg=64.539  total=91.049  ELYstarts=9999
+  [246/576] Sym t0.5/f0.50         seed=2079   LPSP=3.2597%  deg=64.442  total=91.176  ELYstarts=9959
+  [247/576] Sym t0.5/f0.50         seed=2080   LPSP=3.2439%  deg=64.465  total=91.070  ELYstarts=10003
+  [248/576] Sym t0.5/f0.50         seed=2081   LPSP=3.2469%  deg=64.472  total=91.101  ELYstarts=10008
+  [249/576] Sym t0.5/f0.50         seed=2082   LPSP=3.2229%  deg=64.532  total=90.964  ELYstarts=9989
+  [250/576] Sym t0.5/f0.50         seed=2083   LPSP=3.2306%  deg=64.518  total=91.013  ELYstarts=9965
+  [251/576] Sym t0.5/f0.50         seed=2084   LPSP=3.2488%  deg=64.518  total=91.163  ELYstarts=10031
+  [252/576] Sym t0.5/f0.50         seed=2085   LPSP=3.2584%  deg=64.452  total=91.175  ELYstarts=9982
+  [253/576] Sym t0.5/f0.50         seed=2086   LPSP=3.2544%  deg=64.519  total=91.210  ELYstarts=9988
+  [254/576] Sym t0.5/f0.50         seed=2087   LPSP=3.2452%  deg=64.479  total=91.094  ELYstarts=9993
+  [255/576] Sym t0.5/f0.50         seed=2088   LPSP=3.2587%  deg=64.509  total=91.235  ELYstarts=9972
+  [256/576] Sym t0.5/f0.50         seed=2089   LPSP=3.2403%  deg=64.490  total=91.065  ELYstarts=9995
+  [257/576] Sym t0.5/f0.65         seed=2026   LPSP=2.9498%  deg=62.941  total=87.133  ELYstarts=9998
+  [258/576] Sym t0.5/f0.65         seed=2027   LPSP=2.9179%  deg=62.925  total=86.856  ELYstarts=9999
+  [259/576] Sym t0.5/f0.65         seed=2028   LPSP=2.9399%  deg=62.945  total=87.057  ELYstarts=9967
+  [260/576] Sym t0.5/f0.65         seed=2029   LPSP=2.9155%  deg=63.030  total=86.942  ELYstarts=10058
+  [261/576] Sym t0.5/f0.65         seed=2030   LPSP=2.9369%  deg=62.977  total=87.064  ELYstarts=10021
+  [262/576] Sym t0.5/f0.65         seed=2031   LPSP=2.9256%  deg=62.974  total=86.968  ELYstarts=10036
+  [263/576] Sym t0.5/f0.65         seed=2032   LPSP=2.9534%  deg=62.956  total=87.178  ELYstarts=10047
+  [264/576] Sym t0.5/f0.65         seed=2033   LPSP=2.9248%  deg=62.985  total=86.972  ELYstarts=10014
+  [265/576] Sym t0.5/f0.65         seed=2034   LPSP=2.9255%  deg=62.945  total=86.938  ELYstarts=10002
+  [266/576] Sym t0.5/f0.65         seed=2035   LPSP=2.9464%  deg=62.967  total=87.131  ELYstarts=10042
+  [267/576] Sym t0.5/f0.65         seed=2036   LPSP=2.9535%  deg=62.940  total=87.164  ELYstarts=10019
+  [268/576] Sym t0.5/f0.65         seed=2037   LPSP=2.9402%  deg=62.908  total=87.022  ELYstarts=10004
+  [269/576] Sym t0.5/f0.65         seed=2038   LPSP=2.9511%  deg=62.971  total=87.174  ELYstarts=10028
+  [270/576] Sym t0.5/f0.65         seed=2039   LPSP=2.9485%  deg=62.946  total=87.128  ELYstarts=10037
+  [271/576] Sym t0.5/f0.65         seed=2040   LPSP=2.9368%  deg=62.951  total=87.037  ELYstarts=10041
+  [272/576] Sym t0.5/f0.65         seed=2041   LPSP=2.9251%  deg=62.968  total=86.958  ELYstarts=10059
+  [273/576] Sym t0.5/f0.65         seed=2042   LPSP=2.9594%  deg=62.970  total=87.241  ELYstarts=10047
+  [274/576] Sym t0.5/f0.65         seed=2043   LPSP=2.9438%  deg=62.942  total=87.086  ELYstarts=10027
+  [275/576] Sym t0.5/f0.65         seed=2044   LPSP=2.9099%  deg=62.982  total=86.847  ELYstarts=9991
+  [276/576] Sym t0.5/f0.65         seed=2045   LPSP=2.9465%  deg=62.929  total=87.094  ELYstarts=10010
+  [277/576] Sym t0.5/f0.65         seed=2046   LPSP=2.9418%  deg=62.960  total=87.087  ELYstarts=9991
+  [278/576] Sym t0.5/f0.65         seed=2047   LPSP=2.9497%  deg=62.972  total=87.164  ELYstarts=10040
+  [279/576] Sym t0.5/f0.65         seed=2048   LPSP=2.9400%  deg=62.925  total=87.037  ELYstarts=10013
+  [280/576] Sym t0.5/f0.65         seed=2049   LPSP=2.9538%  deg=62.888  total=87.113  ELYstarts=10018
+  [281/576] Sym t0.5/f0.65         seed=2050   LPSP=2.9283%  deg=62.963  total=86.979  ELYstarts=10022
+  [282/576] Sym t0.5/f0.65         seed=2051   LPSP=2.9394%  deg=62.969  total=87.077  ELYstarts=10008
+  [283/576] Sym t0.5/f0.65         seed=2052   LPSP=2.9468%  deg=62.977  total=87.145  ELYstarts=10032
+  [284/576] Sym t0.5/f0.65         seed=2053   LPSP=2.9670%  deg=62.977  total=87.311  ELYstarts=10062
+  [285/576] Sym t0.5/f0.65         seed=2054   LPSP=2.9309%  deg=62.960  total=86.998  ELYstarts=10019
+  [286/576] Sym t0.5/f0.65         seed=2055   LPSP=2.9442%  deg=62.961  total=87.108  ELYstarts=10010
+  [287/576] Sym t0.5/f0.65         seed=2056   LPSP=2.9494%  deg=62.909  total=87.098  ELYstarts=9982
+  [288/576] Sym t0.5/f0.65         seed=2057   LPSP=2.9435%  deg=62.962  total=87.103  ELYstarts=10022
+  [289/576] Sym t0.5/f0.65         seed=2058   LPSP=2.9398%  deg=62.932  total=87.043  ELYstarts=10045
+  [290/576] Sym t0.5/f0.65         seed=2059   LPSP=2.9348%  deg=62.937  total=87.007  ELYstarts=9993
+  [291/576] Sym t0.5/f0.65         seed=2060   LPSP=2.9323%  deg=62.959  total=87.008  ELYstarts=10050
+  [292/576] Sym t0.5/f0.65         seed=2061   LPSP=2.9452%  deg=62.925  total=87.080  ELYstarts=10003
+  [293/576] Sym t0.5/f0.65         seed=2062   LPSP=2.9070%  deg=62.964  total=86.805  ELYstarts=9979
+  [294/576] Sym t0.5/f0.65         seed=2063   LPSP=2.9297%  deg=62.958  total=86.986  ELYstarts=10011
+  [295/576] Sym t0.5/f0.65         seed=2064   LPSP=2.9371%  deg=62.943  total=87.031  ELYstarts=10035
+  [296/576] Sym t0.5/f0.65         seed=2065   LPSP=2.9318%  deg=63.002  total=87.047  ELYstarts=10057
+  [297/576] Sym t0.5/f0.65         seed=2066   LPSP=2.9253%  deg=62.974  total=86.966  ELYstarts=10029
+  [298/576] Sym t0.5/f0.65         seed=2067   LPSP=2.9297%  deg=62.986  total=87.013  ELYstarts=10047
+  [299/576] Sym t0.5/f0.65         seed=2068   LPSP=2.9495%  deg=62.910  total=87.100  ELYstarts=10016
+  [300/576] Sym t0.5/f0.65         seed=2069   LPSP=2.9510%  deg=62.916  total=87.118  ELYstarts=10006
+  [301/576] Sym t0.5/f0.65         seed=2070   LPSP=2.9508%  deg=62.971  total=87.172  ELYstarts=10045
+  [302/576] Sym t0.5/f0.65         seed=2071   LPSP=2.9123%  deg=62.941  total=86.826  ELYstarts=9985
+  [303/576] Sym t0.5/f0.65         seed=2072   LPSP=2.9360%  deg=62.912  total=86.991  ELYstarts=9980
+  [304/576] Sym t0.5/f0.65         seed=2073   LPSP=2.9302%  deg=62.942  total=86.974  ELYstarts=9991
+  [305/576] Sym t0.5/f0.65         seed=2074   LPSP=2.9461%  deg=62.925  total=87.087  ELYstarts=10005
+  [306/576] Sym t0.5/f0.65         seed=2075   LPSP=2.9509%  deg=62.953  total=87.155  ELYstarts=10031
+  [307/576] Sym t0.5/f0.65         seed=2076   LPSP=2.9398%  deg=62.933  total=87.043  ELYstarts=10027
+  [308/576] Sym t0.5/f0.65         seed=2077   LPSP=2.9458%  deg=62.954  total=87.113  ELYstarts=10029
+  [309/576] Sym t0.5/f0.65         seed=2078   LPSP=2.9287%  deg=63.011  total=87.030  ELYstarts=10028
+  [310/576] Sym t0.5/f0.65         seed=2079   LPSP=2.9479%  deg=62.904  total=87.081  ELYstarts=9984
+  [311/576] Sym t0.5/f0.65         seed=2080   LPSP=2.9406%  deg=62.932  total=87.049  ELYstarts=10030
+  [312/576] Sym t0.5/f0.65         seed=2081   LPSP=2.9349%  deg=62.925  total=86.995  ELYstarts=10033
+  [313/576] Sym t0.5/f0.65         seed=2082   LPSP=2.9193%  deg=63.006  total=86.948  ELYstarts=10024
+  [314/576] Sym t0.5/f0.65         seed=2083   LPSP=2.9309%  deg=62.964  total=87.001  ELYstarts=9991
+  [315/576] Sym t0.5/f0.65         seed=2084   LPSP=2.9401%  deg=62.975  total=87.088  ELYstarts=10064
+  [316/576] Sym t0.5/f0.65         seed=2085   LPSP=2.9527%  deg=62.885  total=87.101  ELYstarts=10003
+  [317/576] Sym t0.5/f0.65         seed=2086   LPSP=2.9361%  deg=62.982  total=87.062  ELYstarts=10009
+  [318/576] Sym t0.5/f0.65         seed=2087   LPSP=2.9373%  deg=62.934  total=87.024  ELYstarts=10016
+  [319/576] Sym t0.5/f0.65         seed=2088   LPSP=2.9471%  deg=62.987  total=87.157  ELYstarts=10003
+  [320/576] Sym t0.5/f0.65         seed=2089   LPSP=2.9279%  deg=62.953  total=86.966  ELYstarts=10025
+  [321/576] Sym t1.0/f0.40         seed=2026   LPSP=3.6034%  deg=66.912  total=96.465  ELYstarts=9946
+  [322/576] Sym t1.0/f0.40         seed=2027   LPSP=3.5864%  deg=66.927  total=96.341  ELYstarts=9935
+  [323/576] Sym t1.0/f0.40         seed=2028   LPSP=3.5941%  deg=66.928  total=96.405  ELYstarts=9913
+  [324/576] Sym t1.0/f0.40         seed=2029   LPSP=3.5553%  deg=67.011  total=96.170  ELYstarts=9981
+  [325/576] Sym t1.0/f0.40         seed=2030   LPSP=3.5913%  deg=66.968  total=96.422  ELYstarts=9957
+  [326/576] Sym t1.0/f0.40         seed=2031   LPSP=3.5914%  deg=67.005  total=96.460  ELYstarts=9964
+  [327/576] Sym t1.0/f0.40         seed=2032   LPSP=3.6145%  deg=66.999  total=96.643  ELYstarts=9975
+  [328/576] Sym t1.0/f0.40         seed=2033   LPSP=3.5892%  deg=66.950  total=96.386  ELYstarts=9943
+  [329/576] Sym t1.0/f0.40         seed=2034   LPSP=3.5879%  deg=66.963  total=96.389  ELYstarts=9938
+  [330/576] Sym t1.0/f0.40         seed=2035   LPSP=3.5999%  deg=67.027  total=96.551  ELYstarts=9977
+  [331/576] Sym t1.0/f0.40         seed=2036   LPSP=3.5979%  deg=66.970  total=96.478  ELYstarts=9973
+  [332/576] Sym t1.0/f0.40         seed=2037   LPSP=3.5908%  deg=66.945  total=96.395  ELYstarts=9948
+  [333/576] Sym t1.0/f0.40         seed=2038   LPSP=3.6079%  deg=66.936  total=96.525  ELYstarts=9974
+  [334/576] Sym t1.0/f0.40         seed=2039   LPSP=3.6087%  deg=66.980  total=96.576  ELYstarts=9963
+  [335/576] Sym t1.0/f0.40         seed=2040   LPSP=3.5999%  deg=66.975  total=96.499  ELYstarts=9971
+  [336/576] Sym t1.0/f0.40         seed=2041   LPSP=3.6050%  deg=66.975  total=96.541  ELYstarts=9979
+  [337/576] Sym t1.0/f0.40         seed=2042   LPSP=3.6174%  deg=66.998  total=96.666  ELYstarts=9971
+  [338/576] Sym t1.0/f0.40         seed=2043   LPSP=3.6168%  deg=66.945  total=96.608  ELYstarts=9952
+  [339/576] Sym t1.0/f0.40         seed=2044   LPSP=3.5717%  deg=66.971  total=96.264  ELYstarts=9910
+  [340/576] Sym t1.0/f0.40         seed=2045   LPSP=3.5923%  deg=66.970  total=96.432  ELYstarts=9946
+  [341/576] Sym t1.0/f0.40         seed=2046   LPSP=3.5986%  deg=66.993  total=96.507  ELYstarts=9930
+  [342/576] Sym t1.0/f0.40         seed=2047   LPSP=3.6115%  deg=66.941  total=96.560  ELYstarts=9970
+  [343/576] Sym t1.0/f0.40         seed=2048   LPSP=3.6093%  deg=66.901  total=96.502  ELYstarts=9938
+  [344/576] Sym t1.0/f0.40         seed=2049   LPSP=3.6406%  deg=66.910  total=96.768  ELYstarts=9953
+  [345/576] Sym t1.0/f0.40         seed=2050   LPSP=3.5853%  deg=66.955  total=96.360  ELYstarts=9937
+  [346/576] Sym t1.0/f0.40         seed=2051   LPSP=3.5971%  deg=66.952  total=96.453  ELYstarts=9951
+  [347/576] Sym t1.0/f0.40         seed=2052   LPSP=3.6047%  deg=66.971  total=96.534  ELYstarts=9959
+  [348/576] Sym t1.0/f0.40         seed=2053   LPSP=3.6231%  deg=66.922  total=96.637  ELYstarts=9974
+  [349/576] Sym t1.0/f0.40         seed=2054   LPSP=3.5815%  deg=66.947  total=96.321  ELYstarts=9943
+  [350/576] Sym t1.0/f0.40         seed=2055   LPSP=3.5949%  deg=66.987  total=96.470  ELYstarts=9950
+  [351/576] Sym t1.0/f0.40         seed=2056   LPSP=3.6248%  deg=66.897  total=96.626  ELYstarts=9913
+  [352/576] Sym t1.0/f0.40         seed=2057   LPSP=3.5995%  deg=66.944  total=96.465  ELYstarts=9939
+  [353/576] Sym t1.0/f0.40         seed=2058   LPSP=3.6089%  deg=66.935  total=96.534  ELYstarts=9985
+  [354/576] Sym t1.0/f0.40         seed=2059   LPSP=3.5996%  deg=66.890  total=96.412  ELYstarts=9933
+  [355/576] Sym t1.0/f0.40         seed=2060   LPSP=3.5942%  deg=66.987  total=96.464  ELYstarts=9977
+  [356/576] Sym t1.0/f0.40         seed=2061   LPSP=3.6204%  deg=66.939  total=96.632  ELYstarts=9940
+  [357/576] Sym t1.0/f0.40         seed=2062   LPSP=3.5732%  deg=66.995  total=96.301  ELYstarts=9915
+  [358/576] Sym t1.0/f0.40         seed=2063   LPSP=3.5739%  deg=66.954  total=96.265  ELYstarts=9947
+  [359/576] Sym t1.0/f0.40         seed=2064   LPSP=3.6015%  deg=66.937  total=96.474  ELYstarts=9966
+  [360/576] Sym t1.0/f0.40         seed=2065   LPSP=3.5792%  deg=67.007  total=96.361  ELYstarts=9991
+  [361/576] Sym t1.0/f0.40         seed=2066   LPSP=3.5853%  deg=66.948  total=96.353  ELYstarts=9961
+  [362/576] Sym t1.0/f0.40         seed=2067   LPSP=3.5899%  deg=67.019  total=96.462  ELYstarts=9976
+  [363/576] Sym t1.0/f0.40         seed=2068   LPSP=3.6136%  deg=66.931  total=96.567  ELYstarts=9938
+  [364/576] Sym t1.0/f0.40         seed=2069   LPSP=3.6101%  deg=66.948  total=96.556  ELYstarts=9939
+  [365/576] Sym t1.0/f0.40         seed=2070   LPSP=3.5971%  deg=66.968  total=96.470  ELYstarts=9990
+  [366/576] Sym t1.0/f0.40         seed=2071   LPSP=3.5706%  deg=66.961  total=96.244  ELYstarts=9927
+  [367/576] Sym t1.0/f0.40         seed=2072   LPSP=3.5966%  deg=66.932  total=96.430  ELYstarts=9904
+  [368/576] Sym t1.0/f0.40         seed=2073   LPSP=3.5810%  deg=66.944  total=96.313  ELYstarts=9934
+  [369/576] Sym t1.0/f0.40         seed=2074   LPSP=3.6122%  deg=66.958  total=96.583  ELYstarts=9943
+  [370/576] Sym t1.0/f0.40         seed=2075   LPSP=3.6126%  deg=66.944  total=96.572  ELYstarts=9956
+  [371/576] Sym t1.0/f0.40         seed=2076   LPSP=3.5975%  deg=66.929  total=96.434  ELYstarts=9936
+  [372/576] Sym t1.0/f0.40         seed=2077   LPSP=3.6021%  deg=66.937  total=96.479  ELYstarts=9963
+  [373/576] Sym t1.0/f0.40         seed=2078   LPSP=3.5828%  deg=66.967  total=96.352  ELYstarts=9966
+  [374/576] Sym t1.0/f0.40         seed=2079   LPSP=3.6136%  deg=66.937  total=96.573  ELYstarts=9932
+  [375/576] Sym t1.0/f0.40         seed=2080   LPSP=3.5994%  deg=66.964  total=96.484  ELYstarts=9967
+  [376/576] Sym t1.0/f0.40         seed=2081   LPSP=3.5985%  deg=66.939  total=96.452  ELYstarts=9969
+  [377/576] Sym t1.0/f0.40         seed=2082   LPSP=3.5636%  deg=66.955  total=96.181  ELYstarts=9950
+  [378/576] Sym t1.0/f0.40         seed=2083   LPSP=3.5713%  deg=66.952  total=96.241  ELYstarts=9926
+  [379/576] Sym t1.0/f0.40         seed=2084   LPSP=3.5883%  deg=66.986  total=96.415  ELYstarts=9997
+  [380/576] Sym t1.0/f0.40         seed=2085   LPSP=3.6039%  deg=66.923  total=96.479  ELYstarts=9951
+  [381/576] Sym t1.0/f0.40         seed=2086   LPSP=3.6071%  deg=66.956  total=96.539  ELYstarts=9953
+  [382/576] Sym t1.0/f0.40         seed=2087   LPSP=3.6012%  deg=66.968  total=96.503  ELYstarts=9945
+  [383/576] Sym t1.0/f0.40         seed=2088   LPSP=3.5933%  deg=66.957  total=96.427  ELYstarts=9939
+  [384/576] Sym t1.0/f0.40         seed=2089   LPSP=3.5760%  deg=66.938  total=96.266  ELYstarts=9958
+  [385/576] Sym t1.0/f0.50         seed=2026   LPSP=3.2478%  deg=64.880  total=91.516  ELYstarts=9976
+  [386/576] Sym t1.0/f0.50         seed=2027   LPSP=3.2258%  deg=64.857  total=91.313  ELYstarts=9983
+  [387/576] Sym t1.0/f0.50         seed=2028   LPSP=3.2329%  deg=64.876  total=91.391  ELYstarts=9946
+  [388/576] Sym t1.0/f0.50         seed=2029   LPSP=3.2106%  deg=64.968  total=91.299  ELYstarts=10021
+  [389/576] Sym t1.0/f0.50         seed=2030   LPSP=3.2348%  deg=64.917  total=91.447  ELYstarts=9998
+  [390/576] Sym t1.0/f0.50         seed=2031   LPSP=3.2266%  deg=64.921  total=91.384  ELYstarts=10008
+  [391/576] Sym t1.0/f0.50         seed=2032   LPSP=3.2583%  deg=64.926  total=91.648  ELYstarts=10029
+  [392/576] Sym t1.0/f0.50         seed=2033   LPSP=3.2281%  deg=64.909  total=91.384  ELYstarts=9985
+  [393/576] Sym t1.0/f0.50         seed=2034   LPSP=3.2321%  deg=64.876  total=91.384  ELYstarts=9991
+  [394/576] Sym t1.0/f0.50         seed=2035   LPSP=3.2515%  deg=64.940  total=91.607  ELYstarts=10018
+  [395/576] Sym t1.0/f0.50         seed=2036   LPSP=3.2481%  deg=64.871  total=91.510  ELYstarts=10007
+  [396/576] Sym t1.0/f0.50         seed=2037   LPSP=3.2401%  deg=64.896  total=91.469  ELYstarts=9992
+  [397/576] Sym t1.0/f0.50         seed=2038   LPSP=3.2479%  deg=64.870  total=91.507  ELYstarts=10030
+  [398/576] Sym t1.0/f0.50         seed=2039   LPSP=3.2526%  deg=64.902  total=91.579  ELYstarts=10019
+  [399/576] Sym t1.0/f0.50         seed=2040   LPSP=3.2395%  deg=64.922  total=91.490  ELYstarts=10028
+  [400/576] Sym t1.0/f0.50         seed=2041   LPSP=3.2279%  deg=64.913  total=91.386  ELYstarts=10024
+  [401/576] Sym t1.0/f0.50         seed=2042   LPSP=3.2608%  deg=64.925  total=91.668  ELYstarts=10028
+  [402/576] Sym t1.0/f0.50         seed=2043   LPSP=3.2501%  deg=64.872  total=91.528  ELYstarts=10009
+  [403/576] Sym t1.0/f0.50         seed=2044   LPSP=3.2096%  deg=64.934  total=91.257  ELYstarts=9963
+  [404/576] Sym t1.0/f0.50         seed=2045   LPSP=3.2406%  deg=64.901  total=91.478  ELYstarts=9989
+  [405/576] Sym t1.0/f0.50         seed=2046   LPSP=3.2452%  deg=64.908  total=91.523  ELYstarts=9974
+  [406/576] Sym t1.0/f0.50         seed=2047   LPSP=3.2561%  deg=64.882  total=91.586  ELYstarts=10023
+  [407/576] Sym t1.0/f0.50         seed=2048   LPSP=3.2491%  deg=64.869  total=91.517  ELYstarts=9990
+  [408/576] Sym t1.0/f0.50         seed=2049   LPSP=3.2708%  deg=64.854  total=91.679  ELYstarts=10005
+  [409/576] Sym t1.0/f0.50         seed=2050   LPSP=3.2281%  deg=64.880  total=91.354  ELYstarts=9994
+  [410/576] Sym t1.0/f0.50         seed=2051   LPSP=3.2444%  deg=64.877  total=91.486  ELYstarts=9990
+  [411/576] Sym t1.0/f0.50         seed=2052   LPSP=3.2387%  deg=64.927  total=91.489  ELYstarts=10007
+  [412/576] Sym t1.0/f0.50         seed=2053   LPSP=3.2576%  deg=64.875  total=91.591  ELYstarts=10042
+  [413/576] Sym t1.0/f0.50         seed=2054   LPSP=3.2242%  deg=64.877  total=91.320  ELYstarts=9997
+  [414/576] Sym t1.0/f0.50         seed=2055   LPSP=3.2329%  deg=64.915  total=91.430  ELYstarts=9995
+  [415/576] Sym t1.0/f0.50         seed=2056   LPSP=3.2590%  deg=64.862  total=91.590  ELYstarts=9970
+  [416/576] Sym t1.0/f0.50         seed=2057   LPSP=3.2329%  deg=64.904  total=91.418  ELYstarts=9990
+  [417/576] Sym t1.0/f0.50         seed=2058   LPSP=3.2399%  deg=64.874  total=91.446  ELYstarts=10024
+  [418/576] Sym t1.0/f0.50         seed=2059   LPSP=3.2401%  deg=64.874  total=91.448  ELYstarts=9981
+  [419/576] Sym t1.0/f0.50         seed=2060   LPSP=3.2328%  deg=64.936  total=91.449  ELYstarts=10026
+  [420/576] Sym t1.0/f0.50         seed=2061   LPSP=3.2518%  deg=64.872  total=91.542  ELYstarts=9992
+  [421/576] Sym t1.0/f0.50         seed=2062   LPSP=3.2151%  deg=64.903  total=91.271  ELYstarts=9956
+  [422/576] Sym t1.0/f0.50         seed=2063   LPSP=3.2215%  deg=64.886  total=91.306  ELYstarts=9999
+  [423/576] Sym t1.0/f0.50         seed=2064   LPSP=3.2381%  deg=64.900  total=91.457  ELYstarts=10015
+  [424/576] Sym t1.0/f0.50         seed=2065   LPSP=3.2278%  deg=64.948  total=91.421  ELYstarts=10037
+  [425/576] Sym t1.0/f0.50         seed=2066   LPSP=3.2301%  deg=64.883  total=91.374  ELYstarts=10003
+  [426/576] Sym t1.0/f0.50         seed=2067   LPSP=3.2308%  deg=64.938  total=91.436  ELYstarts=10023
+  [427/576] Sym t1.0/f0.50         seed=2068   LPSP=3.2473%  deg=64.862  total=91.495  ELYstarts=9995
+  [428/576] Sym t1.0/f0.50         seed=2069   LPSP=3.2518%  deg=64.896  total=91.565  ELYstarts=9989
+  [429/576] Sym t1.0/f0.50         seed=2070   LPSP=3.2442%  deg=64.910  total=91.517  ELYstarts=10028
+  [430/576] Sym t1.0/f0.50         seed=2071   LPSP=3.2099%  deg=64.890  total=91.216  ELYstarts=9962
+  [431/576] Sym t1.0/f0.50         seed=2072   LPSP=3.2376%  deg=64.869  total=91.423  ELYstarts=9961
+  [432/576] Sym t1.0/f0.50         seed=2073   LPSP=3.2184%  deg=64.891  total=91.286  ELYstarts=9974
+  [433/576] Sym t1.0/f0.50         seed=2074   LPSP=3.2523%  deg=64.888  total=91.562  ELYstarts=9989
+  [434/576] Sym t1.0/f0.50         seed=2075   LPSP=3.2566%  deg=64.905  total=91.614  ELYstarts=10013
+  [435/576] Sym t1.0/f0.50         seed=2076   LPSP=3.2453%  deg=64.891  total=91.507  ELYstarts=10001
+  [436/576] Sym t1.0/f0.50         seed=2077   LPSP=3.2441%  deg=64.873  total=91.479  ELYstarts=10016
+  [437/576] Sym t1.0/f0.50         seed=2078   LPSP=3.2249%  deg=64.903  total=91.352  ELYstarts=10005
+  [438/576] Sym t1.0/f0.50         seed=2079   LPSP=3.2490%  deg=64.849  total=91.495  ELYstarts=9967
+  [439/576] Sym t1.0/f0.50         seed=2080   LPSP=3.2383%  deg=64.896  total=91.455  ELYstarts=10010
+  [440/576] Sym t1.0/f0.50         seed=2081   LPSP=3.2382%  deg=64.870  total=91.428  ELYstarts=10012
+  [441/576] Sym t1.0/f0.50         seed=2082   LPSP=3.2122%  deg=64.924  total=91.268  ELYstarts=10002
+  [442/576] Sym t1.0/f0.50         seed=2083   LPSP=3.2180%  deg=64.894  total=91.286  ELYstarts=9978
+  [443/576] Sym t1.0/f0.50         seed=2084   LPSP=3.2371%  deg=64.921  total=91.470  ELYstarts=10048
+  [444/576] Sym t1.0/f0.50         seed=2085   LPSP=3.2473%  deg=64.860  total=91.493  ELYstarts=9989
+  [445/576] Sym t1.0/f0.50         seed=2086   LPSP=3.2464%  deg=64.889  total=91.514  ELYstarts=9998
+  [446/576] Sym t1.0/f0.50         seed=2087   LPSP=3.2388%  deg=64.912  total=91.475  ELYstarts=9998
+  [447/576] Sym t1.0/f0.50         seed=2088   LPSP=3.2468%  deg=64.903  total=91.532  ELYstarts=9981
+  [448/576] Sym t1.0/f0.50         seed=2089   LPSP=3.2275%  deg=64.882  total=91.353  ELYstarts=10015
+  [449/576] Sym t1.0/f0.65         seed=2026   LPSP=2.9462%  deg=62.422  total=86.585  ELYstarts=9997
+  [450/576] Sym t1.0/f0.65         seed=2027   LPSP=2.9191%  deg=62.417  total=86.357  ELYstarts=9996
+  [451/576] Sym t1.0/f0.65         seed=2028   LPSP=2.9368%  deg=62.416  total=86.503  ELYstarts=9962
+  [452/576] Sym t1.0/f0.65         seed=2029   LPSP=2.9205%  deg=62.512  total=86.464  ELYstarts=10049
+  [453/576] Sym t1.0/f0.65         seed=2030   LPSP=2.9366%  deg=62.457  total=86.542  ELYstarts=10019
+  [454/576] Sym t1.0/f0.65         seed=2031   LPSP=2.9285%  deg=62.477  total=86.495  ELYstarts=10036
+  [455/576] Sym t1.0/f0.65         seed=2032   LPSP=2.9556%  deg=62.441  total=86.682  ELYstarts=10050
+  [456/576] Sym t1.0/f0.65         seed=2033   LPSP=2.9227%  deg=62.448  total=86.418  ELYstarts=10014
+  [457/576] Sym t1.0/f0.65         seed=2034   LPSP=2.9301%  deg=62.424  total=86.455  ELYstarts=10000
+  [458/576] Sym t1.0/f0.65         seed=2035   LPSP=2.9456%  deg=62.473  total=86.632  ELYstarts=10045
+  [459/576] Sym t1.0/f0.65         seed=2036   LPSP=2.9518%  deg=62.429  total=86.637  ELYstarts=10020
+  [460/576] Sym t1.0/f0.65         seed=2037   LPSP=2.9375%  deg=62.424  total=86.515  ELYstarts=10000
+  [461/576] Sym t1.0/f0.65         seed=2038   LPSP=2.9453%  deg=62.426  total=86.581  ELYstarts=10032
+  [462/576] Sym t1.0/f0.65         seed=2039   LPSP=2.9497%  deg=62.460  total=86.652  ELYstarts=10036
+  [463/576] Sym t1.0/f0.65         seed=2040   LPSP=2.9338%  deg=62.458  total=86.520  ELYstarts=10034
+  [464/576] Sym t1.0/f0.65         seed=2041   LPSP=2.9244%  deg=62.456  total=86.440  ELYstarts=10056
+  [465/576] Sym t1.0/f0.65         seed=2042   LPSP=2.9577%  deg=62.463  total=86.720  ELYstarts=10047
+  [466/576] Sym t1.0/f0.65         seed=2043   LPSP=2.9423%  deg=62.413  total=86.544  ELYstarts=10030
+  [467/576] Sym t1.0/f0.65         seed=2044   LPSP=2.9175%  deg=62.446  total=86.373  ELYstarts=9991
+  [468/576] Sym t1.0/f0.65         seed=2045   LPSP=2.9423%  deg=62.440  total=86.570  ELYstarts=10016
+  [469/576] Sym t1.0/f0.65         seed=2046   LPSP=2.9422%  deg=62.439  total=86.570  ELYstarts=9994
+  [470/576] Sym t1.0/f0.65         seed=2047   LPSP=2.9507%  deg=62.431  total=86.631  ELYstarts=10038
+  [471/576] Sym t1.0/f0.65         seed=2048   LPSP=2.9402%  deg=62.414  total=86.528  ELYstarts=10011
+  [472/576] Sym t1.0/f0.65         seed=2049   LPSP=2.9595%  deg=62.380  total=86.652  ELYstarts=10017
+  [473/576] Sym t1.0/f0.65         seed=2050   LPSP=2.9263%  deg=62.457  total=86.457  ELYstarts=10018
+  [474/576] Sym t1.0/f0.65         seed=2051   LPSP=2.9371%  deg=62.428  total=86.516  ELYstarts=10008
+  [475/576] Sym t1.0/f0.65         seed=2052   LPSP=2.9428%  deg=62.474  total=86.610  ELYstarts=10032
+  [476/576] Sym t1.0/f0.65         seed=2053   LPSP=2.9619%  deg=62.436  total=86.727  ELYstarts=10060
+  [477/576] Sym t1.0/f0.65         seed=2054   LPSP=2.9319%  deg=62.434  total=86.479  ELYstarts=10019
+  [478/576] Sym t1.0/f0.65         seed=2055   LPSP=2.9471%  deg=62.473  total=86.643  ELYstarts=10009
+  [479/576] Sym t1.0/f0.65         seed=2056   LPSP=2.9517%  deg=62.425  total=86.633  ELYstarts=9984
+  [480/576] Sym t1.0/f0.65         seed=2057   LPSP=2.9397%  deg=62.434  total=86.544  ELYstarts=10020
+  [481/576] Sym t1.0/f0.65         seed=2058   LPSP=2.9362%  deg=62.415  total=86.496  ELYstarts=10044
+  [482/576] Sym t1.0/f0.65         seed=2059   LPSP=2.9305%  deg=62.425  total=86.459  ELYstarts=9990
+  [483/576] Sym t1.0/f0.65         seed=2060   LPSP=2.9280%  deg=62.467  total=86.481  ELYstarts=10051
+  [484/576] Sym t1.0/f0.65         seed=2061   LPSP=2.9406%  deg=62.420  total=86.537  ELYstarts=10004
+  [485/576] Sym t1.0/f0.65         seed=2062   LPSP=2.9179%  deg=62.437  total=86.367  ELYstarts=9975
+  [486/576] Sym t1.0/f0.65         seed=2063   LPSP=2.9256%  deg=62.458  total=86.453  ELYstarts=10011
+  [487/576] Sym t1.0/f0.65         seed=2064   LPSP=2.9343%  deg=62.432  total=86.497  ELYstarts=10038
+  [488/576] Sym t1.0/f0.65         seed=2065   LPSP=2.9325%  deg=62.479  total=86.530  ELYstarts=10057
+  [489/576] Sym t1.0/f0.65         seed=2066   LPSP=2.9293%  deg=62.448  total=86.472  ELYstarts=10026
+  [490/576] Sym t1.0/f0.65         seed=2067   LPSP=2.9267%  deg=62.456  total=86.460  ELYstarts=10039
+  [491/576] Sym t1.0/f0.65         seed=2068   LPSP=2.9520%  deg=62.409  total=86.619  ELYstarts=10016
+  [492/576] Sym t1.0/f0.65         seed=2069   LPSP=2.9495%  deg=62.441  total=86.632  ELYstarts=10007
+  [493/576] Sym t1.0/f0.65         seed=2070   LPSP=2.9506%  deg=62.447  total=86.646  ELYstarts=10044
+  [494/576] Sym t1.0/f0.65         seed=2071   LPSP=2.9074%  deg=62.418  total=86.263  ELYstarts=9981
+  [495/576] Sym t1.0/f0.65         seed=2072   LPSP=2.9383%  deg=62.410  total=86.508  ELYstarts=9976
+  [496/576] Sym t1.0/f0.65         seed=2073   LPSP=2.9306%  deg=62.430  total=86.465  ELYstarts=9987
+  [497/576] Sym t1.0/f0.65         seed=2074   LPSP=2.9457%  deg=62.400  total=86.559  ELYstarts=10003
+  [498/576] Sym t1.0/f0.65         seed=2075   LPSP=2.9508%  deg=62.444  total=86.645  ELYstarts=10031
+  [499/576] Sym t1.0/f0.65         seed=2076   LPSP=2.9405%  deg=62.450  total=86.566  ELYstarts=10027
+  [500/576] Sym t1.0/f0.65         seed=2077   LPSP=2.9431%  deg=62.424  total=86.561  ELYstarts=10031
+  [501/576] Sym t1.0/f0.65         seed=2078   LPSP=2.9290%  deg=62.449  total=86.472  ELYstarts=10024
+  [502/576] Sym t1.0/f0.65         seed=2079   LPSP=2.9448%  deg=62.394  total=86.546  ELYstarts=9982
+  [503/576] Sym t1.0/f0.65         seed=2080   LPSP=2.9420%  deg=62.463  total=86.592  ELYstarts=10024
+  [504/576] Sym t1.0/f0.65         seed=2081   LPSP=2.9338%  deg=62.411  total=86.473  ELYstarts=10030
+  [505/576] Sym t1.0/f0.65         seed=2082   LPSP=2.9167%  deg=62.467  total=86.388  ELYstarts=10025
+  [506/576] Sym t1.0/f0.65         seed=2083   LPSP=2.9278%  deg=62.437  total=86.449  ELYstarts=9989
+  [507/576] Sym t1.0/f0.65         seed=2084   LPSP=2.9415%  deg=62.465  total=86.590  ELYstarts=10062
+  [508/576] Sym t1.0/f0.65         seed=2085   LPSP=2.9512%  deg=62.399  total=86.604  ELYstarts=9999
+  [509/576] Sym t1.0/f0.65         seed=2086   LPSP=2.9407%  deg=62.446  total=86.564  ELYstarts=10008
+  [510/576] Sym t1.0/f0.65         seed=2087   LPSP=2.9377%  deg=62.448  total=86.541  ELYstarts=10015
+  [511/576] Sym t1.0/f0.65         seed=2088   LPSP=2.9470%  deg=62.449  total=86.618  ELYstarts=10000
+  [512/576] Sym t1.0/f0.65         seed=2089   LPSP=2.9263%  deg=62.413  total=86.413  ELYstarts=10023
+  [513/576] Sym t2.0/f0.50         seed=2026   LPSP=3.2314%  deg=61.901  total=88.403  ELYstarts=9975
+  [514/576] Sym t2.0/f0.50         seed=2027   LPSP=3.2109%  deg=61.902  total=88.236  ELYstarts=9978
+  [515/576] Sym t2.0/f0.50         seed=2028   LPSP=3.2170%  deg=61.891  total=88.275  ELYstarts=9953
+  [516/576] Sym t2.0/f0.50         seed=2029   LPSP=3.1889%  deg=61.974  total=88.128  ELYstarts=10024
+  [517/576] Sym t2.0/f0.50         seed=2030   LPSP=3.2242%  deg=61.943  total=88.387  ELYstarts=9996
+  [518/576] Sym t2.0/f0.50         seed=2031   LPSP=3.2141%  deg=61.937  total=88.297  ELYstarts=10010
+  [519/576] Sym t2.0/f0.50         seed=2032   LPSP=3.2419%  deg=61.915  total=88.504  ELYstarts=10025
+  [520/576] Sym t2.0/f0.50         seed=2033   LPSP=3.2124%  deg=61.918  total=88.264  ELYstarts=9991
+  [521/576] Sym t2.0/f0.50         seed=2034   LPSP=3.2161%  deg=61.908  total=88.285  ELYstarts=9992
+  [522/576] Sym t2.0/f0.50         seed=2035   LPSP=3.2348%  deg=61.923  total=88.453  ELYstarts=10021
+  [523/576] Sym t2.0/f0.50         seed=2036   LPSP=3.2382%  deg=61.892  total=88.450  ELYstarts=10010
+  [524/576] Sym t2.0/f0.50         seed=2037   LPSP=3.2195%  deg=61.916  total=88.321  ELYstarts=9993
+  [525/576] Sym t2.0/f0.50         seed=2038   LPSP=3.2324%  deg=61.918  total=88.428  ELYstarts=10021
+  [526/576] Sym t2.0/f0.50         seed=2039   LPSP=3.2323%  deg=61.939  total=88.449  ELYstarts=10022
+  [527/576] Sym t2.0/f0.50         seed=2040   LPSP=3.2259%  deg=61.931  total=88.388  ELYstarts=10025
+  [528/576] Sym t2.0/f0.50         seed=2041   LPSP=3.2138%  deg=61.924  total=88.282  ELYstarts=10023
+  [529/576] Sym t2.0/f0.50         seed=2042   LPSP=3.2442%  deg=61.906  total=88.512  ELYstarts=10026
+  [530/576] Sym t2.0/f0.50         seed=2043   LPSP=3.2335%  deg=61.902  total=88.422  ELYstarts=10015
+  [531/576] Sym t2.0/f0.50         seed=2044   LPSP=3.1938%  deg=61.924  total=88.118  ELYstarts=9965
+  [532/576] Sym t2.0/f0.50         seed=2045   LPSP=3.2229%  deg=61.898  total=88.331  ELYstarts=9995
+  [533/576] Sym t2.0/f0.50         seed=2046   LPSP=3.2252%  deg=61.943  total=88.394  ELYstarts=9978
+  [534/576] Sym t2.0/f0.50         seed=2047   LPSP=3.2400%  deg=61.923  total=88.495  ELYstarts=10021
+  [535/576] Sym t2.0/f0.50         seed=2048   LPSP=3.2317%  deg=61.880  total=88.384  ELYstarts=9991
+  [536/576] Sym t2.0/f0.50         seed=2049   LPSP=3.2507%  deg=61.867  total=88.527  ELYstarts=10006
+  [537/576] Sym t2.0/f0.50         seed=2050   LPSP=3.2075%  deg=61.929  total=88.235  ELYstarts=10005
+  [538/576] Sym t2.0/f0.50         seed=2051   LPSP=3.2274%  deg=61.913  total=88.383  ELYstarts=9994
+  [539/576] Sym t2.0/f0.50         seed=2052   LPSP=3.2175%  deg=61.938  total=88.326  ELYstarts=10015
+  [540/576] Sym t2.0/f0.50         seed=2053   LPSP=3.2422%  deg=61.916  total=88.507  ELYstarts=10037
+  [541/576] Sym t2.0/f0.50         seed=2054   LPSP=3.2135%  deg=61.930  total=88.286  ELYstarts=10003
+  [542/576] Sym t2.0/f0.50         seed=2055   LPSP=3.2177%  deg=61.931  total=88.320  ELYstarts=9997
+  [543/576] Sym t2.0/f0.50         seed=2056   LPSP=3.2399%  deg=61.883  total=88.455  ELYstarts=9967
+  [544/576] Sym t2.0/f0.50         seed=2057   LPSP=3.2178%  deg=61.905  total=88.296  ELYstarts=9990
+  [545/576] Sym t2.0/f0.50         seed=2058   LPSP=3.2259%  deg=61.912  total=88.369  ELYstarts=10022
+  [546/576] Sym t2.0/f0.50         seed=2059   LPSP=3.2232%  deg=61.908  total=88.343  ELYstarts=9982
+  [547/576] Sym t2.0/f0.50         seed=2060   LPSP=3.2131%  deg=61.941  total=88.293  ELYstarts=10034
+  [548/576] Sym t2.0/f0.50         seed=2061   LPSP=3.2269%  deg=61.898  total=88.362  ELYstarts=9990
+  [549/576] Sym t2.0/f0.50         seed=2062   LPSP=3.1970%  deg=61.926  total=88.145  ELYstarts=9961
+  [550/576] Sym t2.0/f0.50         seed=2063   LPSP=3.2052%  deg=61.915  total=88.202  ELYstarts=9996
+  [551/576] Sym t2.0/f0.50         seed=2064   LPSP=3.2219%  deg=61.899  total=88.324  ELYstarts=10013
+  [552/576] Sym t2.0/f0.50         seed=2065   LPSP=3.2171%  deg=61.971  total=88.356  ELYstarts=10039
+  [553/576] Sym t2.0/f0.50         seed=2066   LPSP=3.2089%  deg=61.950  total=88.267  ELYstarts=10003
+  [554/576] Sym t2.0/f0.50         seed=2067   LPSP=3.2168%  deg=61.926  total=88.308  ELYstarts=10019
+  [555/576] Sym t2.0/f0.50         seed=2068   LPSP=3.2370%  deg=61.902  total=88.450  ELYstarts=9994
+  [556/576] Sym t2.0/f0.50         seed=2069   LPSP=3.2391%  deg=61.892  total=88.457  ELYstarts=9987
+  [557/576] Sym t2.0/f0.50         seed=2070   LPSP=3.2350%  deg=61.955  total=88.487  ELYstarts=10030
+  [558/576] Sym t2.0/f0.50         seed=2071   LPSP=3.1943%  deg=61.880  total=88.078  ELYstarts=9957
+  [559/576] Sym t2.0/f0.50         seed=2072   LPSP=3.2229%  deg=61.871  total=88.303  ELYstarts=9963
+  [560/576] Sym t2.0/f0.50         seed=2073   LPSP=3.2089%  deg=61.923  total=88.240  ELYstarts=9976
+  [561/576] Sym t2.0/f0.50         seed=2074   LPSP=3.2366%  deg=61.884  total=88.429  ELYstarts=9981
+  [562/576] Sym t2.0/f0.50         seed=2075   LPSP=3.2378%  deg=61.924  total=88.479  ELYstarts=10013
+  [563/576] Sym t2.0/f0.50         seed=2076   LPSP=3.2303%  deg=61.886  total=88.379  ELYstarts=10007
+  [564/576] Sym t2.0/f0.50         seed=2077   LPSP=3.2260%  deg=61.900  total=88.357  ELYstarts=10015
+  [565/576] Sym t2.0/f0.50         seed=2078   LPSP=3.2093%  deg=61.963  total=88.284  ELYstarts=10011
+  [566/576] Sym t2.0/f0.50         seed=2079   LPSP=3.2337%  deg=61.890  total=88.411  ELYstarts=9967
+  [567/576] Sym t2.0/f0.50         seed=2080   LPSP=3.2269%  deg=61.920  total=88.385  ELYstarts=10010
+  [568/576] Sym t2.0/f0.50         seed=2081   LPSP=3.2245%  deg=61.898  total=88.344  ELYstarts=10013
+  [569/576] Sym t2.0/f0.50         seed=2082   LPSP=3.2017%  deg=61.929  total=88.188  ELYstarts=9999
+  [570/576] Sym t2.0/f0.50         seed=2083   LPSP=3.2077%  deg=61.916  total=88.224  ELYstarts=9981
+  [571/576] Sym t2.0/f0.50         seed=2084   LPSP=3.2186%  deg=61.976  total=88.372  ELYstarts=10047
+  [572/576] Sym t2.0/f0.50         seed=2085   LPSP=3.2357%  deg=61.896  total=88.433  ELYstarts=9995
+  [573/576] Sym t2.0/f0.50         seed=2086   LPSP=3.2301%  deg=61.929  total=88.421  ELYstarts=9999
+  [574/576] Sym t2.0/f0.50         seed=2087   LPSP=3.2230%  deg=61.919  total=88.352  ELYstarts=10001
+  [575/576] Sym t2.0/f0.50         seed=2088   LPSP=3.2298%  deg=61.930  total=88.419  ELYstarts=9985
+  [576/576] Sym t2.0/f0.50         seed=2089   LPSP=3.2096%  deg=61.923  total=88.247  ELYstarts=10012
+[bench_fable] termine en 1375 s
+# bench_fable (sweep_fable_sym) : 25 ans ; VoLL=3.0 ; N=64 graines ; seeds communes (CRN) ; base=RB2 socle
+label ; N ; LPSP(%) ; sLPSP ; deg(kEUR) ; sdeg ; total(kEUR) ; stotal ; dtotal_vs_base(kEUR) ; ELY_starts
+RB2 socle ; 64 ; 2.5921 ; 0.0000 ; 58.843 ; 0.000 ; 80.102 ; 0.000 ; +0.000 ; 9199
+PropSym OFF (=Prop) ; 64 ; 2.9709 ; 0.0111 ; 58.975 ; 0.021 ; 83.340 ; 0.088 ; +3.238 ; 10040
+Sym t0.5/f0.40 ; 64 ; 3.6166 ; 0.0153 ; 65.652 ; 0.029 ; 95.314 ; 0.117 ; +15.211 ; 9904
+Sym t0.5/f0.50 ; 64 ; 3.2487 ; 0.0135 ; 64.488 ; 0.028 ; 91.132 ; 0.100 ; +11.029 ; 9990
+Sym t0.5/f0.65 ; 64 ; 2.9383 ; 0.0121 ; 62.953 ; 0.029 ; 87.051 ; 0.093 ; +6.949 ; 10019
+Sym t1.0/f0.40 ; 64 ; 3.5970 ; 0.0156 ; 66.956 ; 0.029 ; 96.457 ; 0.121 ; +16.355 ; 9952
+Sym t1.0/f0.50 ; 64 ; 3.2385 ; 0.0135 ; 64.895 ; 0.025 ; 91.456 ; 0.105 ; +11.353 ; 10000
+Sym t1.0/f0.65 ; 64 ; 2.9379 ; 0.0115 ; 62.439 ; 0.024 ; 86.533 ; 0.092 ; +6.431 ; 10018
+Sym t2.0/f0.50 ; 64 ; 3.2227 ; 0.0132 ; 61.917 ; 0.024 ; 88.348 ; 0.102 ; +8.245 ; 10001
+
+[bench_fable] -> /Work/Users/tlenoir/genial/Robustesse/Fable/sweep_fable_sym.txt
+[bench_fable] -> /Work/Users/tlenoir/genial/Robustesse/Fable/sweep_fable_sym_cloud.csv
+
+real	22m55,287s
+user	705m38,139s
+sys	0m34,365s
+fin=jeu. juil.  2 09:53:09 CEST 2026

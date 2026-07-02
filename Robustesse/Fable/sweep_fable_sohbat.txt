@@ -1,0 +1,9 @@
+# bench_fable (sweep_fable_sohbat) : 25 ans ; VoLL=3.0 ; N=1 graines ; seeds communes (CRN) ; base=SoHbat bFC=0.00 bELY=0.00
+label ; N ; LPSP(%) ; sLPSP ; deg(kEUR) ; sdeg ; total(kEUR) ; stotal ; dtotal_vs_base(kEUR) ; ELY_starts
+SoHbat bFC=0.00 bELY=0.00 ; 1 ; 2.5921 ; 0.0000 ; 58.843 ; 0.000 ; 80.102 ; 0.000 ; +0.000 ; 9199
+SoHbat bFC=0.00 bELY=0.25 ; 1 ; 2.5152 ; 0.0000 ; 62.509 ; 0.000 ; 83.137 ; 0.000 ; +3.035 ; 9166
+SoHbat bFC=0.00 bELY=0.50 ; 1 ; 2.5117 ; 0.0000 ; 67.550 ; 0.000 ; 88.150 ; 0.000 ; +8.047 ; 9172
+SoHbat bFC=0.00 bELY=1.00 ; 1 ; 2.4885 ; 0.0000 ; 75.936 ; 0.000 ; 96.345 ; 0.000 ; +16.243 ; 9163
+SoHbat bFC=0.00 bELY=2.00 ; 1 ; 2.4106 ; 0.0000 ; 89.814 ; 0.000 ; 109.584 ; 0.000 ; +29.482 ; 9036
+SoHbat bFC=0.50 bELY=0.50 ; 1 ; 2.6013 ; 0.0000 ; 67.810 ; 0.000 ; 89.145 ; 0.000 ; +9.042 ; 9189
+SoHbat bFC=1.00 bELY=1.00 ; 1 ; 2.7469 ; 0.0000 ; 80.243 ; 0.000 ; 102.772 ; 0.000 ; +22.670 ; 9186

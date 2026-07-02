@@ -2,5 +2,5 @@
 # bruit hebdomadaire ; RUL sigma_rel(horizon) interpole sur sigma_rul_vs_horizon.csv ;
 # SoH sigma_abs interpole (idem) ; EXP_ELY=0.10 ; RUL_ELY_REF=1000 ; N=200/strat
 strat ; LPSP_nom ; deg_nom ; LPSP_mean ; LPSP_std ; deg_mean ; deg_std ; aire_ellipse_1sig ; grand_axe_1sig
-RB2(RUL) ; 2.5763 ; 59.922 ; 2.5752 ; 0.0015 ; 59.921 ; 0.006 ; 0.00003 ; 0.0059
-RB2(SoH) ; 2.5475 ; 59.364 ; 2.5472 ; 0.0006 ; 59.365 ; 0.002 ; 0.00000 ; 0.0015
+RB2(RUL) ; 2.5761 ; 59.917 ; 2.5757 ; 0.0015 ; 59.916 ; 0.006 ; 0.00003 ; 0.0060
+RB2(SoH) ; 2.5474 ; 59.359 ; 2.5472 ; 0.0005 ; 59.359 ; 0.001 ; 0.00000 ; 0.0015

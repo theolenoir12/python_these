@@ -1,0 +1,32 @@
+--- RB1(Pred) sous defaillance : RB1-opt=(0.40, 0.75), 200 tirages, 15 taches (7 workers) ---
+  nu    FC_total  : LPSP moy=2.569%
+  nu    FC_50     : LPSP moy=1.187%
+  nu    ELY_total : LPSP moy=1.424%
+  nu    ELY_50    : LPSP moy=0.743%
+  omni  FC_total  : LPSP moy=2.571%
+  omni  FC_50     : LPSP moy=1.185%
+  omni  ELY_total : LPSP moy=1.427%
+  omni  ELY_50    : LPSP moy=0.750%
+  hyst  FC_total  : LPSP moy=2.571%
+  hyst  FC_50     : LPSP moy=1.185%
+  hyst  ELY_total : LPSP moy=1.425%
+  hyst  ELY_50    : LPSP moy=0.746%
+  nu    __nom__   : LPSP moy=0.743%
+  omni  __nom__   : LPSP moy=0.750%
+  hyst  __nom__   : LPSP moy=0.746%
+--- 23s ---
+
+RB1(Pred) sous defaillance -- RB1-opt=(0.40, 0.75)  N_DRAWS=200  EVAL_HOURS=672
+LPSP-panne moyenne [%] par scenario ; gain = nu - variante (positif = mieux)
+
+  scenario     nu        omni      hyst        gain_omni  gain_hyst  %recup
+  FC_total     2.569     2.571     2.571         -0.002    -0.002     89%
+  FC_50        1.187     1.185     1.185         +0.002    +0.002     83%
+  ELY_total    1.424     1.427     1.425         -0.004    -0.002     43%
+  ELY_50       0.743     0.750     0.746         -0.008    -0.004     47%
+  ----------------------------------------------------------------------------
+  MOYENNE      1.481     1.484     1.482         -0.003    -0.001     46%
+
+  nominal (sans panne) : nu=0.743%  omni=0.750%  hyst=0.746%
+
+Texte -> run_rb1_pred.txt

@@ -1,0 +1,30 @@
+--- Ellipse : 30 repetitions x 200 tirages (7 workers) ---
+  (265s)
+--- Sensibilite sigma : 5 valeurs ---
+
+MC bruit RB1(Pred) -- ELLIPSE + sensibilite sigma
+Config deployable : b_reserve=0.99 h_pre=18 M_SIGMA=2.0 MIN_DWELL=12 h2_gate=0.5
+sigma_design=39.38 kWh ; 30 repetitions de bruit
+
+REFERENCE nu       : score=1.481  [FC_total=2.569  FC_50=1.187  ELY_total=1.424  ELY_50=0.743]
+REFERENCE omni     : score=1.433  (gain omniscient +0.047)
+
+--- ELLIPSE (moyenne +/- ecart-type sur 30 realisations) ---
+  score deployable = 1.455 +/- 0.003 %   (gain = +0.026 +/- 0.003 vs nu)
+  => 55% du gain omniscient recupere en moyenne ; dispersion du bruit tres faible
+    FC_total   : 2.547 +/- 0.002   (nu 2.569, gain +0.022)
+    FC_50      : 1.144 +/- 0.004   (nu 1.187, gain +0.044)
+    ELY_total  : 1.417 +/- 0.005   (nu 1.424, gain +0.007)
+    ELY_50     : 0.713 +/- 0.003   (nu 0.743, gain +0.030)
+
+--- MISESTIMATION DE SIGMA (bande figee a sigma_design) ---
+  sig/sig0  score    gain     FC_total   FC_50      ELY_total  ELY_50   
+  0.50        1.480  +0.001       2.569      1.186      1.424      0.740
+  0.75        1.466  +0.015       2.557      1.166      1.418      0.723
+  1.00        1.460  +0.021       2.551      1.148      1.424      0.716
+  1.25        1.459  +0.021       2.549      1.139      1.437      0.713
+  1.50        1.475  +0.005       2.561      1.152      1.458      0.730
+
+  gain min sur la plage sigma = +0.001 -> le levier reste benefique.
+
+Texte -> mc_rb1_pred_ellipse.txt

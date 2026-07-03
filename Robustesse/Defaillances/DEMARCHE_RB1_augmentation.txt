@@ -1,0 +1,224 @@
+================================================================================
+DEMARCHE : OPTIMISATION DE RB1 ET AUGMENTATION PAR PREVISION, SOUS DEFAILLANCE
+Dossier : Robustesse/Defaillances/          Maj : 2026-07-04
+Source 100% ASCII (volontaire, cf. robustesse_common.py) : evite tout mojibake.
+================================================================================
+
+0. OBJECTIF
+--------------------------------------------------------------------------------
+Ameliorer les EMS sur l'axe des DEFAILLANCES (echelle moyen terme). On NE se sert
+PAS du SoH (pas d'evolution notable sur les 4 semaines considerees) mais des
+PREVISIONS DE PROFILS DE PUISSANCE. Constat de depart (results/robustesse_summary
+d'origine) : parmi les strategies rule-based, c'est RB1 qui encaisse le mieux les
+pannes H2. Demarche en deux etapes :
+  ETAPE 1 : sweeper les parametres de RB1 pour maximiser sa robustesse a la panne.
+  ETAPE 2 : augmenter cette "RB1-opt" par la prevision, pour montrer un gain
+            supplementaire attribuable a la seule prevision.
+
+Cadre d'evaluation reutilise TEL QUEL (cf. README.md du dossier) : baseline RB2
+figee (regime permanent 2 ans), Monte-Carlo de 200 instants de panne (memes
+tirages pour toutes les variantes -> comparaison APPARIEE), panne 1 semaine +
+3 semaines de reprise (EVAL_HOURS = 4*168 h), panne DETECTEE (deficit reroute
+vers la batterie), metrique = LPSP sur la fenetre. 4 scenarios : PEMFC totale,
+PEMFC 50%, PEMWE totale, PEMWE 50%.
+
+
+1. STRUCTURE DE RB1 (ce qu'on optimise)
+--------------------------------------------------------------------------------
+RB1 (Vieillissement8/RB1/get_optimal_action_RB.py) est parametree implicitement
+par DEUX seuils de SoC = les deux genoux d'une bande de melange lineaire bat/H2 :
+  - SoC_low  : en dessous, la FC couvre TOUT le deficit (batterie protegee) ;
+  - SoC_high : au-dessus, la batterie couvre TOUT le deficit (FC coupee), ET
+               l'ELY commence a absorber le surplus.
+  - entre les deux (decharge), fraction batterie = (SoC - low)/(high - low) ;
+  - au-dessus de high (charge), fraction batterie = (1 - SoC)/(1 - high).
+Reglage historique : (0.20, 0.60). Les pentes "5/2" du code d'origine en
+decoulent : 1/(0.6-0.2) = 1/(1-0.6) = 2.5.
+
+C'est l'espace de sweep naturel (comme RB2 est parametree par ses deux setpoints
+P_fc_set / P_ely_set dans batch_optimize_rb2.py).
+
+
+2. ETAPE 1 -- SWEEP DE RB1 (sweep_rb1.py)
+--------------------------------------------------------------------------------
+Methode. Factory make_rb1(SoC_low, SoC_high) (miroir de make_rb2), evaluee A
+TRAVERS LE HARNESS de defaillance (memes 200 tirages, baseline RB2). Grille 2D
+sur (a=SoC_low, b=SoC_high) avec contrainte b-a >= 0.15. Le point (0.20, 0.60)
+est INCLUS -> reference RB1 nu (verif : reproduit exactement la ligne RB1 du
+summary, LPSP_nom = 1.053%).
+
+Score. Moyenne, sur les 4 scenarios, de la LPSP-panne moyenne (choix valide).
+Garde-fou : ne retenir que les variantes dont la LPSP NOMINALE ne se degrade pas
+au-dela de RB1(0.20,0.60) + 0.02.
+
+Resultat. OPTIMUM RB1-opt = (SoC_low=0.40, SoC_high=0.75).
+  score panne : 1.481% (vs 1.669% pour RB1 nu)  -> -11%.
+  LPSP nominale : 0.743% (vs 1.053%)            -> amelioree AUSSI.
+  detail : FC_total 2.569 | FC_50 1.187 | ELY_total 1.424 | ELY_50 0.743.
+  Plateau large (a=0.35-0.45, b=0.75-0.85, score 1.481-1.487) -> pas un coin
+  degenere ; b=0.75 reste modere (l'ELY sert encore au-dela de 0.75).
+Lecture physique. RB1-opt s'appuie PLUS sur la FC en decharge (a=0.40 -> batterie
+preservee) et garde PLUS de surplus en batterie (b=0.75). Ameliore panne ET
+nominal, donc pas de compromis cote LPSP.
+Le seul scenario ou RB1-opt cede un peu : PEMWE totale (1.29 -> 1.42), largement
+compense ailleurs.
+
+Application. Vieillissement8/RB1/get_optimal_action_RB.py a ete EDITE : constantes
+nommees SOC_LOW=0.40, SOC_HIGH=0.75 (ancien reglage documente en commentaire).
+=> ATTENTION : cela redefinit RB1 PARTOUT (plans de Pareto, autres etudes).
+   Reversible via git. results/robustesse_summary.txt a ete regenere avec RB1-opt
+   (run_robustesse.py) -> RB1 est desormais 1re dans les 4 scenarios.
+
+Sorties : sweep_rb1.txt, results/sweep_rb1_heatmap.pdf.
+
+
+3. ETAPE 2 -- AUGMENTATION PAR PREVISION (RB1(Pred))
+--------------------------------------------------------------------------------
+Entree previsionnelle = LA MEME que pour RB2(Pred) : l'ENERGIE NETTE (a consommer
+- a produire) prevue sur un horizon H, net_future = somme(P_tot_ref[j:j+H]).
+
+3.1 POURQUOI LE LEVIER DE RB2(Pred) NE MARCHE PAS SUR RB1
+    RB2(Pred) declenche une PRE-CHARGE batterie : si un deficit net est prevu, on
+    COUPE l'ELY -> le surplus courant reste en batterie. Marche sur RB2 car RB2
+    utilise un SETPOINT ELY FIXE, aveugle au SoC. Or RB1 est DEJA adaptative au
+    SoC sur la charge (elle garde deja tout le surplus en batterie sous SoC_high).
+    => Porte tel quel, ce levier est REDONDANT avec l'etat : gain MESURE ~0
+       (verifie : omniscient 2.914 -> 2.914 sur FC_total). La prevision n'ajoute
+       rien que le SoC courant n'encode deja.
+
+3.2 LE LEVIER ORTHOGONAL : RESERVE ANTICIPEE (cote DECHARGE)
+    RB1 decide le partage FC/batterie selon le SEUL SoC instantane, aveugle a ce
+    qui arrive. Si un DEFICIT SOUTENU est prevu sur H, vider la batterie juste
+    parce que le SoC est haut est imprudent. Levier : deficit prevu -> ELARGIR la
+    bande de decharge (b=SoC_high -> b_reserve) pour ENGAGER LA FC PLUS TOT et
+    PRESERVER une reserve batterie pour le creux a venir. C'est une information
+    ABSENTE du SoC instantane -> non redondante.
+    Test nul preserve : prevision neutre / levier off -> RB1-opt nu a l'identique.
+    (Implementation : rb1_pred_common.py, make_rb1_pred + run_week_pred qui, en
+    plus du harness standard, construit P_tot_ref_future = net[j:j+H] et le passe
+    a la strategie ; l'etat hysteresis/bruit est reset par semaine, seede par
+    tirage.)
+
+3.3 OPTIMISATION OMNISCIENTE DE LA GEOMETRIE (sweep_rb1_pred.py)
+    Demarche (validee) : on optimise D'ABORD en supposant la prevision PARFAITE
+    (omnisciente : on lit le vrai futur, pas de bruit) -> borne superieure du
+    potentiel et meilleure GEOMETRIE. Le bruit vient ensuite (3.4).
+    Sweep b_reserve x h_pre (gate H2 = 0, dispositif anti-bruit inutile en omni).
+    OPTIMUM OMNISCIENT : b_reserve = 0.99, h_pre = 18 h.
+      score = 1.433% (gain +0.047, -3.2% vs nu) ; les 4 scenarios + la nominale
+      s'ameliorent.
+    Enseignements :
+      - h_pre = 18 h est l'optimum NET (18 > 24 > 12 > 48 > 72 > 6) : horizon
+        DIURNE, exactement celui trouve pour RB2(Pred). Trop court (6 h) declenche
+        sur des deficits transitoires et abime ELY_total ; trop long (72 h) dilue.
+      - b_reserve monotone jusqu'a 0.99 : quand on SAIT qu'un deficit arrive, il
+        faut preserver la batterie AU MAXIMUM et s'appuyer sur FC/H2 (la batterie,
+        reponse rapide, est gardee pour ce que la FC ne pourra pas encaisser).
+    Sorties : sweep_rb1_pred.txt, results/sweep_rb1_pred_heatmap.pdf.
+
+3.4 ROBUSTESSE AU BRUIT DE PREVISION REEL (mc_rb1_pred_noise.py + _ellipse.py)
+    On DEGRADE la prevision par le bruit LSTM empirique (backtest 18 h) :
+      net_pred = net_vrai + N(biais = -2.32 kWh, sigma = 39.38 kWh).
+    Deux dispositifs de robustesse (geometrie 0.99/18 FIGEE) :
+      - HYSTERESIS a deux seuils : demi-bande = M_SIGMA * sigma, maintien
+        MIN_DWELL (rejette le bruit pres du seuil, borne le clignotement) ;
+      - GARDE H2 : le levier ne s'active que si E_h2 > h2_gate * E_h2_init. Le
+        levier "preserve la batterie en brulant du H2" est FATAL sous panne ELY
+        (H2 non reconstitue) si le bruit le declenche a tort -> la garde coupe le
+        levier quand le reservoir est bas.
+
+    Reglage (mc_rb1_pred_noise.py, sweep gate x M_SIGMA, MIN_DWELL=12, passe
+    unique). CONFIG DEPLOYABLE RETENUE (meilleure SANS regression sur un scenario) :
+        b_reserve=0.99, h_pre=18, M_SIGMA=2.0, MIN_DWELL=12, h2_gate=0.5.
+    Enseignement CLE : il faut une bande LARGE ~ +/-2 sigma (vs +/-1 sigma pour
+    RB2(Pred)) parce que le levier DECHARGE est PLUS PUNITIF sur un faux
+    declenchement (une reserve agressive declenchee a tort rationne la batterie et
+    affame la FC). Bande etroite (M_SIGMA=0.5) -> ELY_total explose.
+
+    Monte-Carlo + ellipse (mc_rb1_pred_ellipse.py, 30 realisations de bruit
+    independantes) :
+        score deployable = 1.455 +/- 0.003 %  ->  gain +0.026 +/- 0.003 vs nu.
+        => 55% du gain omniscient (+0.047) recupere.
+        => les 4 scenarios s'ameliorent, ZERO regression :
+             FC_total +0.022 | FC_50 +0.044 | ELY_total +0.007 | ELY_50 +0.030.
+        => dispersion NEGLIGEABLE (+/-0.003) : l'agregat 200 tirages x 30
+           realisations auto-moyenne le bruit horaire -> gain stable (meme
+           phenomene que les ellipses minuscules de RB2(Pred)).
+
+    Sensibilite a une MISESTIMATION de sigma (bande figee au sigma de design,
+    sigma_inject variable) :
+        sig/sig0 :  0.50   0.75   1.00   1.25   1.50
+        gain     : +0.001 +0.015 +0.021 +0.021 +0.005
+        => gain POSITIF sur toute la plage (min +0.001). A sigma sous-estime
+           (0.5x) la bande +/-2 sigma est trop large -> le levier se tait et
+           retombe sur nu (pas de perte) ; a sigma sur-estime (1.5x) il tient.
+           Jamais fragile.
+
+
+4. SYNTHESE CHIFFREE (score = LPSP-panne moyenne 4 scenarios, %)
+--------------------------------------------------------------------------------
+  RB1 nu historique (0.20/0.60) .................... 1.669
+  RB1-opt (0.40/0.75) [ETAPE 1] ................... 1.481   (-11% vs historique)
+  RB1-opt(Pred) OMNISCIENT (0.99/18) [ETAPE 2] .... 1.433   (gain +0.047 vs opt)
+  RB1-opt(Pred) DEPLOYABLE (bruit+hyst+garde) ..... 1.455   (gain +0.026, 55% recup)
+
+  Config deployable finale : SoC_low=0.40, SoC_high=0.75, b_reserve=0.99,
+  h_pre=18, M_SIGMA=2.0, MIN_DWELL=12, h2_gate=0.5.
+
+
+5. RECIT (pour le manuscrit)
+--------------------------------------------------------------------------------
+  (i)   La MEME donnee que RB2 (energie nette prevue a horizon N) mais un usage
+        OPPOSE : le port direct (couper l'ELY) est REDONDANT avec l'adaptativite
+        -SoC de RB1 -> gain nul. La valeur de la prevision depend de la STRUCTURE
+        de la regle a augmenter.
+  (ii)  Sur RB1, la prevision cree de la valeur par un levier ORTHOGONAL cote
+        DECHARGE : anticiper un deficit soutenu -> engager la FC plus tot ->
+        preserver une reserve batterie que le SoC instantane ne "voit" pas.
+        Horizon optimal diurne (18 h), coherent avec RB2(Pred).
+  (iii) La valeur previsionnelle n'est recuperable qu'avec les BONS DISPOSITIFS
+        DE ROBUSTESSE : le levier a un risque physique (rationner la batterie
+        brule du H2, fatal sous panne ELY), amplifie par le bruit. Il faut une
+        hysteresis LARGE (+/-2 sigma) ET une garde sur le reservoir H2. Alors
+        55% du potentiel omniscient survit, sans degrader aucun scenario, et de
+        maniere robuste a une misestimation du niveau de bruit.
+
+
+6. FICHIERS
+--------------------------------------------------------------------------------
+  ETAPE 1
+    sweep_rb1.py ..................... sweep 2D (SoC_low, SoC_high)
+    sweep_rb1.txt ................... tableau trie
+    results/sweep_rb1_heatmap.pdf ... carte du score
+    (edition) Vieillissement8/RB1/get_optimal_action_RB.py -> (0.40, 0.75)
+    (regen)  run_robustesse.py -> results/robustesse_summary.txt + figures
+
+  ETAPE 2
+    rb1_pred_common.py .............. make_rb1_pred (2 leviers : precharge +
+                                      reserve, garde H2) + run_week_pred (harness
+                                      defaillance AVEC fenetre de prevision)
+    run_rb1_pred.py / .txt .......... comparaison nu / reserve / precharge par
+                                      scenario (mise en evidence redondance
+                                      precharge, effet reserve)
+    sweep_rb1_pred.py / .txt ........ optimisation OMNISCIENTE (b_reserve x h_pre)
+    results/sweep_rb1_pred_heatmap.pdf
+    mc_rb1_pred_noise.py / .txt ..... reglage anti-bruit (gate x M_SIGMA)
+    mc_rb1_pred_ellipse.py / .txt ... ellipse Monte-Carlo + sensibilite sigma
+
+  Tous les scripts : env conda simu_env, a lancer depuis ce dossier. Baseline RB2
+  et instants de panne mis en cache (results/baseline_rb2_2y.npz, mc_setup.npz),
+  partages entre toutes les etudes -> comparaison appariee garantie.
+
+
+7. LIMITES / NON FAIT (pistes)
+--------------------------------------------------------------------------------
+  - On N'utilise RB1(Pred) QUE sur l'horizon 1+3 semaines de la defaillance (pas
+    de simu longue 25 ans : hors scope, choix de l'auteur).
+  - Le levier reserve est BINAIRE (deficit prevu oui/non) + hysteresis ; une
+    version proportionnelle a l'ampleur du deficit prevu n'a pas ete testee.
+  - b_reserve optimum a la BORNE (0.99) : borne physique ~1.0, non depassable.
+  - Figures de synthese "manuscrit" (barres de gain par scenario, ellipse facon
+    pred_uncertainty_zoom) pas encore tracees.
+  - VoLL non touche (=3, sensibilite tout a la fin) ; pas d'angle saisonnier
+    (contexte equatorial) -- contraintes projet.
+================================================================================

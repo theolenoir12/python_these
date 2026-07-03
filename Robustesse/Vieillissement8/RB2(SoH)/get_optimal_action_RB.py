@@ -11,8 +11,8 @@ def get_optimal_action_RB(SoC_t,P_tot_ref_t,defaillances,lol_tab,alpha_fc_t,alph
     # P_ely_max_t = 1080197.5679*(SoH_ely_t-0.9)**3 + 178892.0120*(SoH_ely_t-0.9)**2 + 10227.1595*(SoH_ely_t-0.9) + 12145.1654
     ######################### RULES ##########################
     # Setpoints nominaux
-    P_fc_set  = 0.440 * FC['P_fc_max'] * SoH_fc_t ** 0
-    P_ely_set = 0.320 * ELY['P_ely_max'] * SoH_ely_t ** 0.5
+    P_fc_set  = 0.440 * FC['P_fc_max'] * SoH_fc_t ** 1
+    P_ely_set = 0.310 * ELY['P_ely_max'] * SoH_ely_t ** 2
 
     # Plafonds imposés par l'état du réservoir H2 sur ce pas de temps :
     #  - la FC ne peut sortir que l'H2 disponible        (E_h2_t)

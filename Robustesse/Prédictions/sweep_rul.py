@@ -41,11 +41,15 @@ VOLL = 3.0   # EUR/kWh -- coherent avec le manuscrit (cout total unifie)
 # --- Grille de balayage (editable) ------------------------------------------
 # RUL_ELY_REF : seuil de RUL [jours] sous lequel le derating ELY s'active.
 # EXP_ELY     : exposant de la loi puissance (0 = pas de derating = RB2 nu).
-REF_GRID = [500.0, 750.0, 1000.0, 1500.0, 2000.0]   # [jours]
-EXP_GRID = [0.0, 0.05, 0.1, 0.2, 0.5, 1.0]
+# Etendue jusqu'a la duree de vie reelle de l'ELY (~4500-5500 j, mesuree sur run
+# 25 ans) et au-dela (mediane du RUL extrapole ~8000 j). Avec l'ancienne grille
+# [500-2000], le derating ne s'activait que <10 % du temps (tout en fin de vie),
+# d'ou un gain marginal ; ces seuils exercent le levier sur une part reelle de la vie.
+REF_GRID = [3000.0, 5000.0, 7000.0, 9000.0]   # [jours]
+EXP_GRID = [0.0, 0.1, 0.2, 0.3, 0.4]
 
-OUT_CSV = os.path.join(HERE, "sweep_rul.csv")
-OUT_TXT = os.path.join(HERE, "sweep_rul.txt")
+OUT_CSV = os.path.join(HERE, "sweep_rul2.csv")
+OUT_TXT = os.path.join(HERE, "sweep_rul2.txt")
 STRAT_FOLDER = "RB2(RUL)"
 
 

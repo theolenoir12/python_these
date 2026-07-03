@@ -1,0 +1,24 @@
+# bench_socwin_fixed : 25 ans ; VoLL=3.0 ; deterministe (socle) ; base=socle ; plafond FIXE (soc_max=0.995-g) vs VIEILLISSANT (0.995-g*(1-SoH))
+label ; LPSP(%) ; deg(kEUR) ; EENS(kWh) ; total(kEUR) ; dtotal_vs_socle(kEUR) ; ELY_starts
+socle (g=0) ; 2.5921 ; 58.843 ; 7086.4 ; 80.102 ; +0.000 ; 9199
+FIXE  soc_max=0.975 (g=0.020) ; 2.7150 ; 57.626 ; 7422.2 ; 79.893 ; -0.209 ; 9199
+FIXE  soc_max=0.945 (g=0.050) ; 2.8565 ; 55.659 ; 7809.2 ; 79.086 ; -1.016 ; 9199
+FIXE  soc_max=0.920 (g=0.075) ; 2.9951 ; 54.252 ; 8188.1 ; 78.817 ; -1.285 ; 9199
+FIXE  soc_max=0.895 (g=0.100) ; 3.1710 ; 52.671 ; 8668.8 ; 78.678 ; -1.424 ; 9199
+FIXE  soc_max=0.845 (g=0.150) ; 3.7385 ; 48.686 ; 10220.4 ; 79.347 ; -0.755 ; 9199
+FIXE  soc_max=0.795 (g=0.200) ; 4.6113 ; 44.825 ; 12606.5 ; 82.644 ; +2.542 ; 9199
+SoH   g=0.10 (soc_max 0.995->0.965) ; 2.7032 ; 57.819 ; 7390.1 ; 79.989 ; -0.113 ; 9199
+SoH   g=0.20 (soc_max 0.995->0.935) ; 2.7679 ; 56.842 ; 7567.0 ; 79.543 ; -0.559 ; 9199
+SoH   g=0.40 (soc_max 0.995->0.875) ; 3.0299 ; 54.869 ; 8283.3 ; 79.719 ; -0.383 ; 9199
+
+# === VERDICT : plafond FIXE vs VIEILLISSANT, A ISO-LPSP (VoLL=3) ===
+# socle : LPSP=2.5921%  total=80.102 kEUR
+# pour chaque reglage SoH : on lit le total d'un plafond FIXE amene au MEME LPSP.
+# reglage SoH        LPSP_SoH   total_SoH   total_FIXE@memeLPSP   valeur_info_SoH
+#   SoH   g=0.10 (so   2.7032%    79.989     79.913            -0.076 kEUR
+#   SoH   g=0.20 (so   2.7679%    79.543     79.591            +0.048 kEUR
+#   SoH   g=0.40 (so   3.0299%    79.719     78.789            -0.930 kEUR
+# Lecture de 'valeur_info_SoH' = total(plafond fixe au meme LPSP) - total(SoH) :
+#   > 0  -> a LPSP egal le levier SoH fait mieux : l'info SoH a une valeur propre.
+#   ~ 0  -> un simple plafond fixe reproduit le gain : l'info SoH n'apporte rien.
+#   < 0  -> le plafond fixe fait meme mieux a LPSP egal : inclure le SoH est contre-productif.

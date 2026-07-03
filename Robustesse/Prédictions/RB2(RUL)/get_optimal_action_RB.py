@@ -13,8 +13,8 @@ from Common.get_lol import *
 #   RUL_ELY_REF = 1000 j, EXP_ELY = 0.1  -> total 81.05 kEUR
 #   (LPSP 2.58 %, deg 59.92) : -5.3 % vs RB2 nu (85.55).
 # La FC n'est pas modulee (EXP_FC = 0), comme dans RB2(SoH).
-RUL_ELY_REF = 1000.0   # [jours] normalisation du RUL ELY
-EXP_ELY     = 0.1      # exposant de modulation ELY
+RUL_ELY_REF = 8000.0   # [jours] normalisation du RUL ELY
+EXP_ELY     = 0.05      # exposant de modulation ELY
 
 
 def get_optimal_action_RB(SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t,
@@ -24,7 +24,7 @@ def get_optimal_action_RB(SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t,
     # Modulation du setpoint ELY par le RUL normalise (borne a 1, comme le SoH)
     f_ely     = min(max(RUL_ely_t, 0.0) / RUL_ELY_REF, 1.0) ** EXP_ELY
     P_fc_set  = 0.440 * FC['P_fc_max']
-    P_ely_set = 0.320 * ELY['P_ely_max'] * f_ely
+    P_ely_set = 0.310 * ELY['P_ely_max'] * f_ely
 
     # Plafonds imposes par l'etat du reservoir H2 sur ce pas de temps
     dt_h         = LOAD['Ts'] / 3600.0

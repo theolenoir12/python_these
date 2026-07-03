@@ -13,7 +13,7 @@ Ne remplace aucun fichier existant."""
 import os, sys
 import numpy as np
 import matplotlib
-matplotlib.use("Agg")
+# matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.patheffects as pe
@@ -54,27 +54,27 @@ points = np.array([
     [3.8032, 59.6765],     # 75-25
     [2.4851, 66.4122],     # 100-0
     [2.5920, 58.8499],     # RB2  (cost-min 0.440/0.310)
-    [2.9089, 54.9115],     # RB2(SoH_H2)  (0.440*SoH_fc^1 / 0.310*SoH_ely^2, ex RB2(SoH))
-    [SOCMAX[0], SOCMAX[1]],    # RB2(SoCmax) : plafond SoC vieillissant seul
-    [UNIFIEE[0], UNIFIEE[1]],  # RB2(SoH_all) : gammas + plafond
+    [2.9089, 54.9115],     # RB2(SoH)  (0.440*SoH_fc^1 / 0.310*SoH_ely^2)
+    
     [1.2597, 80.1562],     # RB1
     [1.3389, 140.6745],    # SoC1
     [29.4642, 109.2535],   # SoC06
     [0.0000, 0.0000]       # Ideal
 ])
-labels = ['0-100', '25-75', '50-50', '75-25', '100-0', 'RB2', 'RB2(SoH_H2)',
-          'RB2(SoH_bat)', 'RB2(SoH_all)', 'RB1', 'SoC1', 'SoC06', 'Ideal']
+
+# labels = ['0-100', '25-75', '50-50', '75-25', '100-0', 'RB2', 'RB2(SoH_H2)',
+#           'RB2(SoH_bat)', 'RB2(SoH_all)', 'RB1', 'SoC1', 'SoC06', 'Ideal']
+labels = ['0-100', '25-75', '50-50', '75-25', '100-0', 'RB2', 'RB2(SoH)',
+          'RB1', 'SoC1', 'SoC06', 'Ideal']
 
 STRAT_ORDER = ['0-100', '25-75', '50-50', '75-25', '100-0',
-               'RB2', 'RB2(SoH_H2)', 'RB1', 'SoC1', 'SoC06']
+               'RB2', 'RB2(SoH)', 'RB1', 'SoC1', 'SoC06']
 COLORS = {s: c for s, c in zip(STRAT_ORDER, plt.cm.tab10(np.linspace(0, 1, 10)))}
-EXTRA_COLORS = {'RB2(SoH_bat)': '#1b9e77', 'RB2(SoH_all)': '#d95f02'}
 IDEAL_COLOR = '0.3'
 
 
 def color_of(label):
-    if label in EXTRA_COLORS:
-        return darken(EXTRA_COLORS[label], 0.9)
+
     return darken(COLORS.get(label, IDEAL_COLOR), 0.7)
 
 
@@ -92,24 +92,28 @@ def draw_isocost(axis, C_levels, xlim, ylim, label_y=None, inset=False):
 
 
 def build_figure(iso_cost):
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(10, 6))
     for i, label in enumerate(labels):
         ax.scatter(points[i, 0], points[i, 1], color=color_of(label), s=60, alpha=0.9)
     for i, label in enumerate(labels):
         col = color_of(label)
-        if label in ('RB2', '75-25'):
-            pass   # etiquetes dans le zoom uniquement (cluster dense)
+        if label in ('RB2'):
+            ax.text(points[i, 0] - 2, points[i, 1] - 3, label, fontsize=14, color=col,
+                    weight='bold', path_effects=LABEL_STROKE, verticalalignment='top')
         elif label == 'SoC06':
             ax.text(points[i, 0] - 2, points[i, 1] - 3, label, fontsize=14, color=col,
                     weight='bold', path_effects=LABEL_STROKE, verticalalignment='top')
-        elif label in ('RB2(SoH_bat)', 'RB2(SoH_all)', 'RB2(SoH_H2)'):
-            pass   # etiquetes uniquement dans le zoom (cluster dense)
+        elif label == '75-25':
+            ax.text(points[i, 0] +0.5, points[i, 1] + 2.5, label, fontsize=14, color=col,
+                    weight='bold', path_effects=LABEL_STROKE, verticalalignment='top')
+        elif label == 'RB2(SoH)':
+            ax.text(points[i, 0] + 0.5 , points[i, 1] - 1, label, fontsize=14, color=col,
+                    weight='bold', path_effects=LABEL_STROKE, verticalalignment='top')
         else:
             ax.text(points[i, 0] + 0.5, points[i, 1] + 0.5, label, fontsize=14, color=col,
                     weight='bold', path_effects=LABEL_STROKE)
 
-    zoom_labels = ['75-25', '100-0', 'RB2', 'RB2(SoH_H2)', 'RB2(SoH_bat)',
-                   'RB2(SoH_all)', 'RB1']
+    zoom_labels = ['75-25', '100-0', 'RB2', 'RB2(SoH)', 'RB1']
     axins = ax.inset_axes([0.45, 0.10, 0.52, 0.46])
     for i, label in enumerate(labels):
         if label in zoom_labels:
@@ -118,9 +122,7 @@ def build_figure(iso_cost):
         'RB1':            (0.10,  0.0, 'left',   'center'),
         '100-0':          (0.10,  1.0, 'left',   'bottom'),
         'RB2':            (0.12,  0.4, 'left',   'bottom'),
-        'RB2(SoH_H2)':    (0.12, -0.4, 'left',   'top'),
-        'RB2(SoH_bat)':   (0.12,  0.4, 'left',   'bottom'),
-        'RB2(SoH_all)':   (-0.12, -0.1, 'right',  'top'),
+        'RB2(SoH)':       (0.12, -0.4, 'left',   'top'),
         '75-25':          (0.10,  0.0, 'left',   'center'),
     }
     for i, label in enumerate(labels):
@@ -149,6 +151,7 @@ def build_figure(iso_cost):
     outdir = os.path.dirname(os.path.abspath(__file__))
     plt.savefig(os.path.join(outdir, stem + ".pdf"), format='pdf', bbox_inches='tight')
     plt.savefig(os.path.join(outdir, stem + ".png"), format='png', dpi=150, bbox_inches='tight')
+    plt.show()
     plt.close(fig)
     print("saved ->", stem + ".pdf / .png")
 

@@ -9,3 +9,27 @@ SoCwin gain=0.25 ; 1 ; 2.8435 ; 0.0000 ; 56.266 ; 0.000 ; 79.587 ; 0.000 ; -0.51
 SoCwin gain=0.30 ; 1 ; 2.9200 ; 0.0000 ; 55.716 ; 0.000 ; 79.663 ; 0.000 ; -0.439 ; 9199
 SoCwin gain=0.35 ; 1 ; 2.9818 ; 0.0000 ; 55.302 ; 0.000 ; 79.758 ; 0.000 ; -0.345 ; 9199
 SoCwin gain=0.40 ; 1 ; 3.0299 ; 0.0000 ; 54.869 ; 0.000 ; 79.719 ; 0.000 ; -0.383 ; 9199
+
+# ============================================================================
+# CONTROLE (ajout 2026-07-03) : plafond SoC vieillissant vs plafond FIXE.
+# Question : le gain de ce balayage (optimum g*~0.20, -0.559 kEUR) vient-il de
+# l'INFO SoH, ou juste d'ABAISSER le plafond ? Test via Fable/bench_socwin_fixed.py
+# (plafond FIXE soc_max = 0.995 - g, sans (1-SoH) ; meme moteur/metrique/graines,
+# socle deterministe, 25 ans). Les deux familles tracent le MEME arbitrage
+# LPSP <-> total ; a LPSP egal elles sont indiscernables.
+#
+# Comparaison A ISO-LPSP (on lit le plafond FIXE amene au LPSP de chaque g SoH) :
+#   g SoH   LPSP(%)   total_SoH   total_FIXE@memeLPSP   valeur_info_SoH
+#    0.10   2.7032    79.989      79.913                -0.076   (fixe meilleur)
+#    0.20   2.7679    79.543      79.591                +0.048   (~egal, dans le bruit)
+#    0.40   3.0299    79.719      78.789                -0.930   (fixe meilleur)
+# Front du plafond FIXE : min total = 78.678 kEUR a soc_max=0.895 (LPSP 3.17 %),
+# soit ~0.87 kEUR SOUS le meilleur point SoH (79.543) -> le levier vieillissant
+# n'atteint jamais ce front.
+#
+# CONCLUSION : au point retenu (g=0.20) l'avantage propre du SoH est +0.048 kEUR
+# (0.06 %), negligeable ; ailleurs le plafond FIXE fait mieux a iso-LPSP. Le gain
+# du levier "plafond SoC vieillissant" est celui d'un simple plafonnement de SoC ;
+# l'information SoH batterie n'y ajoute rien de mesurable (charge fixe, VoLL=3,
+# 25 ans, deterministe). Donnees brutes : Fable/bench_socwin_fixed.txt.
+# ============================================================================

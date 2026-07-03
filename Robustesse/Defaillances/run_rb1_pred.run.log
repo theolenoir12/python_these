@@ -1,32 +1,37 @@
---- RB1(Pred) sous defaillance : RB1-opt=(0.40, 0.75), 200 tirages, 15 taches (7 workers) ---
+--- RB1(Pred) sous defaillance : RB1-opt=(0.40, 0.75), 200 tirages, 20 taches (7 workers) ---
   nu    FC_total  : LPSP moy=2.569%
   nu    FC_50     : LPSP moy=1.187%
   nu    ELY_total : LPSP moy=1.424%
   nu    ELY_50    : LPSP moy=0.743%
-  omni  FC_total  : LPSP moy=2.571%
-  omni  FC_50     : LPSP moy=1.185%
-  omni  ELY_total : LPSP moy=1.427%
-  omni  ELY_50    : LPSP moy=0.750%
-  hyst  FC_total  : LPSP moy=2.571%
-  hyst  FC_50     : LPSP moy=1.185%
-  hyst  ELY_total : LPSP moy=1.425%
-  hyst  ELY_50    : LPSP moy=0.746%
+  reserve_omni FC_total  : LPSP moy=2.544%
+  reserve_omni FC_50     : LPSP moy=1.124%
+  reserve_omni ELY_total : LPSP moy=1.405%
+  reserve_omni ELY_50    : LPSP moy=0.709%
+  reserve_hyst FC_total  : LPSP moy=2.556%
+  reserve_hyst FC_50     : LPSP moy=1.143%
+  reserve_hyst ELY_total : LPSP moy=1.438%
+  reserve_hyst ELY_50    : LPSP moy=0.726%
+  both_hyst FC_total  : LPSP moy=2.555%
+  both_hyst FC_50     : LPSP moy=1.140%
+  both_hyst ELY_total : LPSP moy=1.440%
+  both_hyst ELY_50    : LPSP moy=0.729%
   nu    __nom__   : LPSP moy=0.743%
-  omni  __nom__   : LPSP moy=0.750%
-  hyst  __nom__   : LPSP moy=0.746%
---- 23s ---
+  reserve_omni __nom__   : LPSP moy=0.707%
+  reserve_hyst __nom__   : LPSP moy=0.723%
+  both_hyst __nom__   : LPSP moy=0.726%
+--- 42s ---
 
 RB1(Pred) sous defaillance -- RB1-opt=(0.40, 0.75)  N_DRAWS=200  EVAL_HOURS=672
 LPSP-panne moyenne [%] par scenario ; gain = nu - variante (positif = mieux)
 
-  scenario     nu        omni      hyst        gain_omni  gain_hyst  %recup
-  FC_total     2.569     2.571     2.571         -0.002    -0.002     89%
-  FC_50        1.187     1.185     1.185         +0.002    +0.002     83%
-  ELY_total    1.424     1.427     1.425         -0.004    -0.002     43%
-  ELY_50       0.743     0.750     0.746         -0.008    -0.004     47%
+  scenario     nu        reserve_omnireserve_hystboth_hyst   gain_omni  gain_hyst  %recup
+  FC_total     2.569     2.544     2.556     2.555         +0.025    +0.013     53%
+  FC_50        1.187     1.124     1.143     1.140         +0.063    +0.044     69%
+  ELY_total    1.424     1.405     1.438     1.440         +0.019    -0.015    -78%
+  ELY_50       0.743     0.709     0.726     0.729         +0.033    +0.017     50%
   ----------------------------------------------------------------------------
-  MOYENNE      1.481     1.484     1.482         -0.003    -0.001     46%
+  MOYENNE      1.481     1.446     1.466     1.466         +0.035    +0.015     42%
 
-  nominal (sans panne) : nu=0.743%  omni=0.750%  hyst=0.746%
+  nominal (sans panne) : nu=0.743%  reserve_omni=0.707%  reserve_hyst=0.723%  both_hyst=0.726%
 
 Texte -> run_rb1_pred.txt

@@ -1,0 +1,51 @@
+--- Sweep RB1(Pred) OMNISCIENT : 36 couples (b_reserve, h_pre) x 200 tirages x (4 scenarios + nominal) (7 workers) ---
+    b_reserve=[0.75 0.8  0.85 0.9  0.95 0.99]  (0.75 = levier OFF = RB1-opt nu)
+    h_pre=[ 6 12 18 24 48 72]
+
+  [ 1/36] b_res=0.75 h_pre= 6 -> score=1.481%  LPSP_nom=0.743%
+  [ 2/36] b_res=0.75 h_pre=12 -> score=1.481%  LPSP_nom=0.743%
+  [ 3/36] b_res=0.75 h_pre=18 -> score=1.481%  LPSP_nom=0.743%
+  [ 4/36] b_res=0.75 h_pre=24 -> score=1.481%  LPSP_nom=0.743%
+  [ 5/36] b_res=0.75 h_pre=48 -> score=1.481%  LPSP_nom=0.743%
+  [ 6/36] b_res=0.75 h_pre=72 -> score=1.481%  LPSP_nom=0.743%
+  [ 7/36] b_res=0.80 h_pre= 6 -> score=1.485%  LPSP_nom=0.741%
+  [ 8/36] b_res=0.80 h_pre=12 -> score=1.473%  LPSP_nom=0.733%
+  [ 9/36] b_res=0.80 h_pre=18 -> score=1.475%  LPSP_nom=0.738%
+  [10/36] b_res=0.80 h_pre=24 -> score=1.476%  LPSP_nom=0.739%
+  [11/36] b_res=0.80 h_pre=48 -> score=1.487%  LPSP_nom=0.751%
+  [12/36] b_res=0.80 h_pre=72 -> score=1.489%  LPSP_nom=0.751%
+  [13/36] b_res=0.85 h_pre= 6 -> score=1.474%  LPSP_nom=0.720%
+  [14/36] b_res=0.85 h_pre=12 -> score=1.459%  LPSP_nom=0.717%
+  [15/36] b_res=0.85 h_pre=18 -> score=1.453%  LPSP_nom=0.715%
+  [16/36] b_res=0.85 h_pre=24 -> score=1.455%  LPSP_nom=0.715%
+  [17/36] b_res=0.85 h_pre=48 -> score=1.470%  LPSP_nom=0.730%
+  [18/36] b_res=0.85 h_pre=72 -> score=1.487%  LPSP_nom=0.751%
+  [19/36] b_res=0.90 h_pre= 6 -> score=1.484%  LPSP_nom=0.720%
+  [20/36] b_res=0.90 h_pre=12 -> score=1.453%  LPSP_nom=0.708%
+  [21/36] b_res=0.90 h_pre=18 -> score=1.450%  LPSP_nom=0.714%
+  [22/36] b_res=0.90 h_pre=24 -> score=1.454%  LPSP_nom=0.715%
+  [23/36] b_res=0.90 h_pre=48 -> score=1.485%  LPSP_nom=0.750%
+  [24/36] b_res=0.90 h_pre=72 -> score=1.496%  LPSP_nom=0.762%
+  [25/36] b_res=0.95 h_pre= 6 -> score=1.482%  LPSP_nom=0.707%
+  [26/36] b_res=0.95 h_pre=12 -> score=1.459%  LPSP_nom=0.712%
+  [27/36] b_res=0.95 h_pre=18 -> score=1.438%  LPSP_nom=0.699%
+  [28/36] b_res=0.95 h_pre=24 -> score=1.446%  LPSP_nom=0.707%
+  [29/36] b_res=0.95 h_pre=48 -> score=1.476%  LPSP_nom=0.741%
+  [30/36] b_res=0.95 h_pre=72 -> score=1.500%  LPSP_nom=0.768%
+  [31/36] b_res=0.99 h_pre= 6 -> score=1.490%  LPSP_nom=0.706%
+  [32/36] b_res=0.99 h_pre=12 -> score=1.448%  LPSP_nom=0.693%
+  [33/36] b_res=0.99 h_pre=18 -> score=1.433%  LPSP_nom=0.695%
+  [34/36] b_res=0.99 h_pre=24 -> score=1.438%  LPSP_nom=0.696%
+  [35/36] b_res=0.99 h_pre=48 -> score=1.480%  LPSP_nom=0.744%
+  [36/36] b_res=0.99 h_pre=72 -> score=1.503%  LPSP_nom=0.770%
+--- 36 sims en 427s ---
+
+Reference RB1-opt nu (b_reserve=0.75) : score=1.481%  LPSP_nom=0.743%
+
+=== MEILLEUR (omniscient, feasible) ===
+  >>> b_reserve=0.99  h_pre=18
+      score=1.433%  gain +0.047 vs nu (1.481%)  |  LPSP_nom=0.695% (nu 0.743%)
+      detail : FC_total=2.536  FC_50=1.110  ELY_total=1.393  ELY_50=0.695
+
+Texte  -> sweep_rb1_pred.txt
+Figure -> /home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Defaillances/results/sweep_rb1_pred_heatmap.pdf

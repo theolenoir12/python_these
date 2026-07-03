@@ -45,16 +45,38 @@ MIN_DWELL_DEF   = 12       # duree minimale de maintien [pas/h]
 # =============================================================================
 # RB1(Pred) PARAMETREE : factory avec etat de bruit/hysteresis ENCAPSULE
 # =============================================================================
-def make_rb1_pred(a, b, enable=True, noise=True, hyst=True,
+# DEUX leviers pilotes par le MEME signal previsionnel `net_future` = energie
+# nette voulue sur l'horizon H_PRE (== l'entree de RB2(Pred)) :
+#
+#   (1) PRE-CHARGE (charge)   -- le port direct de RB2(Pred). Si un deficit net
+#       est prevu, on COUPE l'ELY -> le surplus courant reste en BATTERIE.
+#       NB : redondant avec l'adaptativite-SoC de RB1 (RB1 garde deja tout le
+#       surplus en batterie sous SoC_high) -> marge faible, garde pour memoire.
+#
+#   (2) RESERVE ANTICIPEE (decharge) -- LEVIER ORTHOGONAL, propre a RB1. RB1
+#       decide le partage FC/batterie selon le SEUL SoC instantane : au-dessus de
+#       SoC_high il vide la batterie (FC coupee). Si un deficit SOUTENU est prevu,
+#       vider la batterie parce que le SoC est haut est imprudent -> on ELARGIT la
+#       bande vers le haut (b -> b_reserve) pour ENGAGER LA FC plus tot et
+#       PRESERVER une reserve batterie pour le creux a venir. Info absente du SoC.
+#
+# Les deux partagent l'etat d'hysteresis (deficit_ahead) : robuste au bruit LSTM,
+# et si la prevision est neutre / enable=False -> RB1(a,b) nu (test nul preserve).
+def make_rb1_pred(a, b, precharge=True, reserve=False, b_reserve=0.95,
+                  h2_gate=0.0, enable=True, noise=True, hyst=True,
                   h_pre=H_PRE_DEFAULT, m_sigma=M_SIGMA_DEFAULT,
                   min_dwell=MIN_DWELL_DEF, sigma_inject=None):
-    """RB1(a,b) + pre-charge previsionnelle. Renvoie une fonction d'action
+    """RB1(a,b) augmentee des leviers previsionnels. Renvoie une fonction d'action
     acceptant P_tot_ref_future en 16e argument, DOTEE de deux methodes :
         .reset()            -> reinitialise l'hysteresis (a appeler par semaine) ;
         .set_noise_seed(s)  -> reseede le bruit (par tirage, reproductible).
-    enable=False -> RB1(a,b) nu (test nul). noise=False -> prevision OMNISCIENTE.
-    hyst=False   -> decision binaire net>0 (borne haute fragile)."""
-    a = float(a); b = float(b)
+    precharge/reserve : active chaque levier. enable=False (ou les deux off)
+    -> RB1(a,b) nu (test nul). noise=False -> prevision OMNISCIENTE.
+    hyst=False -> decision binaire net>0. b_reserve : seuil haut en mode reserve.
+    h2_gate : le levier RESERVE (qui preserve la batterie en brulant du H2) ne
+    s'active que si le reservoir est au-dessus de h2_gate*E_h2_init -> evite la
+    famine FC sous panne ELY (H2 non reconstitue) et la fragilite au bruit."""
+    a = float(a); b = float(b); b_res = float(b_reserve); h2g = float(h2_gate)
     dt_h   = I.LOAD['Ts'] / 3600.0
     sig_inj = SIGMA_E_KWH if sigma_inject is None else float(sigma_inject)
     th = m_sigma * SIGMA_E_KWH * 1000.0            # demi-bande hysteresis [Wh]
@@ -67,10 +89,10 @@ def make_rb1_pred(a, b, enable=True, noise=True, hyst=True,
     def set_noise_seed(s):
         st["rng"] = np.random.default_rng(s)
 
-    def _precharge(P_future, SoC_t):
+    def _deficit_ahead(P_future):
+        """True si un DEFICIT net est prevu (confiant) sur l'horizon h_pre.
+        Signal previsionnel commun aux deux leviers (independant du SoC)."""
         if not enable or P_future is None or len(P_future) == 0:
-            return False
-        if SoC_t >= SOC_TARGET:
             return False
         net = float(np.sum(np.asarray(P_future[:h_pre], dtype=float))) * dt_h  # [Wh]
         if noise:
@@ -89,22 +111,28 @@ def make_rb1_pred(a, b, enable=True, noise=True, hyst=True,
                               alpha_ely_t, SoH_bat_t, E_h2_t, E_h2_init, P_fc_max_t,
                               P_ely_max_t, RUL_fc_t, RUL_ely_t, SoH_fc_t, SoH_ely_t,
                               P_tot_ref_future=None):
-        precharge = _precharge(P_tot_ref_future, SoC_t)
+        deficit_ahead = _deficit_ahead(P_tot_ref_future)
 
         if P_tot_ref_t > 0:                         # --- DEFICIT (decharge) ---
+            # LEVIER RESERVE : deficit prevu -> bande elargie (b -> b_res) donc FC
+            # engagee plus tot et batterie preservee. GARDE H2 : on ne rationne la
+            # batterie via la FC que si le reservoir a de la marge (sinon sous
+            # panne ELY on affamerait la FC). Sinon RB1(a,b) nominal.
+            reserve_on = (reserve and deficit_ahead and E_h2_t >= h2g * E_h2_init)
+            b_eff = b_res if reserve_on else b
             if SoC_t <= a:
                 frac = 0.0
-            elif SoC_t >= b:
+            elif SoC_t >= b_eff:
                 frac = 1.0
             else:
-                frac = (SoC_t - a) / (b - a)
+                frac = (SoC_t - a) / (b_eff - a)
             P_dc_bat_t = P_tot_ref_t * frac
             P_dc_fc_t  = P_tot_ref_t - P_dc_bat_t
             P_dc_ely_t = 0.0
         else:                                        # --- SURPLUS (charge) ---
-            # AUGMENTATION PREVISION : si pre-charge, on COUPE l'ELY (tout le
-            # surplus reste dans la batterie), sinon comportement RB1(a,b) nominal.
-            if precharge:
+            # LEVIER PRE-CHARGE : deficit prevu (et marge SoC) -> on COUPE l'ELY,
+            # tout le surplus reste en batterie. Sinon RB1(a,b) nominal.
+            if precharge and deficit_ahead and SoC_t < SOC_TARGET:
                 frac = 1.0
             elif SoC_t <= b:
                 frac = 1.0

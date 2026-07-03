@@ -77,4 +77,7 @@ reference RB1(0.20,0.60) : score=1.669  LPSP_nom=1.053
 
 === MEILLEUR (feasible, score min) ===
   SoC_low=0.400  SoC_high=0.750  |  score=1.481%  LPSP_nom=0.743%
+
+SCORES : 2.569 / 1.187 / 1.424 / 0.743 (PEMFC / PEMFC50 / PEMWE / PEMWE50)
+
   gain score vs RB1(0.20,0.60) : -0.188 pts (-11.3%)

@@ -26,9 +26,14 @@ import rb1_pred_common as rp
 
 # ======================= CONFIGURATION =======================
 RB1_OPT   = (0.40, 0.75)          # seuils optimises (sweep_rb1.py, plateau 1.481%)
+B_RESERVE = 0.95                   # seuil haut en mode reserve (smoke : optimum)
+H2_GATE   = 0.7                    # reserve active seulement si reservoir H2 > 70% (garde anti-famine ELY)
+H_PRE     = 18                     # horizon de prevision [h] (== RB2(Pred))
 N_DRAWS   = 200
 SEED      = 0
-VARIANTS  = ["nu", "omni", "hyst"]
+# Leviers previsionnels compares (le levier RESERVE cote decharge est la nouveaute
+# orthogonale ; la PRE-CHARGE cote charge est le port RB2, ~inefficace sur RB1) :
+VARIANTS  = ["nu", "reserve_omni", "reserve_hyst", "both_hyst"]
 OUT_TXT   = "run_rb1_pred.txt"
 N_WORKERS = rc.N_WORKERS
 # =============================================================
@@ -36,12 +41,18 @@ N_WORKERS = rc.N_WORKERS
 
 def make_variant(name):
     a, b = RB1_OPT
-    if name == "nu":
+    kw = dict(b_reserve=B_RESERVE, h_pre=H_PRE, h2_gate=H2_GATE)
+    if name == "nu":              # test nul : RB1-opt nu
         return rp.make_rb1_pred(a, b, enable=False)
-    if name == "omni":
-        return rp.make_rb1_pred(a, b, enable=True, noise=False, hyst=False)
-    if name == "hyst":
-        return rp.make_rb1_pred(a, b, enable=True, noise=True, hyst=True)
+    if name == "reserve_omni":    # reserve seule, prevision PARFAITE (borne sup)
+        return rp.make_rb1_pred(a, b, reserve=True, precharge=False,
+                                noise=False, hyst=False, **kw)
+    if name == "reserve_hyst":    # reserve seule, prevision BRUITEE + hysteresis (deployable)
+        return rp.make_rb1_pred(a, b, reserve=True, precharge=False,
+                                noise=True, hyst=True, **kw)
+    if name == "both_hyst":       # reserve + pre-charge, bruitee + hysteresis
+        return rp.make_rb1_pred(a, b, reserve=True, precharge=True,
+                                noise=True, hyst=True, **kw)
     raise ValueError(name)
 
 
@@ -107,14 +118,14 @@ def main():
         for v in VARIANTS:
             row += "%-10.3f" % vals[v]
             score[v].append(vals[v])
-        g_omni = vals["nu"] - vals["omni"]
-        g_hyst = vals["nu"] - vals["hyst"]
+        g_omni = vals["nu"] - vals["reserve_omni"]
+        g_hyst = vals["nu"] - vals["reserve_hyst"]
         recup = (100.0 * g_hyst / g_omni) if abs(g_omni) > 1e-6 else float("nan")
         row += "  %+8.3f  %+8.3f  %5.0f%%" % (g_omni, g_hyst, recup)
         lines.append(row)
     # Moyenne 4 scenarios (== score de l'etape 1) ------------------------------
     m = {v: float(np.mean(score[v])) for v in VARIANTS}
-    g_omni = m["nu"] - m["omni"]; g_hyst = m["nu"] - m["hyst"]
+    g_omni = m["nu"] - m["reserve_omni"]; g_hyst = m["nu"] - m["reserve_hyst"]
     recup = (100.0 * g_hyst / g_omni) if abs(g_omni) > 1e-6 else float("nan")
     lines.append("  " + "-" * 76)
     lines.append("  %-11s  " % "MOYENNE" + "".join("%-10.3f" % m[v] for v in VARIANTS)

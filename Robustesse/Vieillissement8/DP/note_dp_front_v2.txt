@@ -64,9 +64,49 @@ Redige  : 2026-07-04.
      3.0    v1         0.2967   11.731    194.7     12.315
      3.0    v2         0.2658   11.195    174.3     11.718   (-4.8 %)
    NB : a 6 ans la derive FC n'a pas encore son plein effet (vie FC ~2.3 ans,
-   pentes estimees a partir de l'an 1) ; le gain attendu a 25 ans est plus
-   grand (les ~10 kEUR de "FC high" v1 s'accumulent surtout apres l'an 5).
+   pentes estimees a partir de l'an 1) ; le gain a 25 ans est bien plus grand
+   (les ~10 kEUR de "FC high" v1 s'accumulent surtout apres l'an 5).
    Surcout calcul v2 : ~+33 % en local (rollout + rederivation V journaliere).
+
+   25 ANS 51x51 (local, grille full n_fc=10/n_ely=50 -- la vraie) :
+     eps    variante      LPSP%    deg_kE   EENS_kWh   UNIF@3_kE   rebuilds
+     0.15   v2            2.2046   45.177   6027.1     63.258      31
+     3.0    v2            0.3143   47.765    859.1     50.343      31
+     3.0    v1 local      0.3059   55.676    836.4     58.185      38   <- A/B propre
+     3.0    v1 meso       0.3057   57.836    835.7     60.343       -   <- publie cluster
+   => A/B A DONNEES IDENTIQUES (v1 local vs v2 local, meme boucle, meme grille) :
+      a LPSP quasi egal (0.306 -> 0.314 %), la degradation passe de 55.68 ->
+      47.77 kEUR, soit -7.9 kEUR (-14 %) ; unifie 58.19 -> 50.34 kEUR.
+      v2 fait AUSSI 31 rebuilds vs 38 pour v1 : la FC durant plus longtemps,
+      elle declenche moins de reconstructions.
+   NB donnees : le DP RE-OPTIMISE contre les LUT de rendement, il est donc plus
+   sensible que RB2 a leur reconstruction (RB2 socle local 58.85 = ref 58.84 a
+   0.01 kEUR pres, mais le DP v1 local 55.68 vs meso 57.84 differe de ~2 kEUR).
+   => les chiffres ABSOLUS locaux sont indicatifs (+-2 kEUR) ; c'est le run
+      CLUSTER (LUT reelles) qui fixe le front definitif. En revanche le GAIN
+      relatif v1->v2 (-7.9 kEUR) et le MECANISME (FC-high, ci-dessous) sont
+      robustes a la reconstruction.
+
+   DECOMPOSITION (confirme le mecanisme, get_cost_* sur les trajectoires 25 ans):
+     poste FC            v1 meso eps=3    v2 local eps=3
+     FC "high power"       10.039 kEUR      0.374 kEUR    <- -9.7 kEUR (la cause)
+     remplacements FC      10               1             <- FC dure toute sa vie
+     heures > 80% Pmax     1829             706
+     ELY irreversible       1.998 kEUR      1.402 kEUR    <- -0.6 kEUR (genou 30%)
+   La batterie (~39 kEUR) et l'ELY start-stop bougent peu : le gain v2 vient
+   quasi ENTIEREMENT de la FC qui n'est plus garee au-dessus de son seuil de
+   haute puissance vieilli.
+
+   DOMINATION RETABLIE (donnees locales, fideles : RB2 socle local 58.85 vs
+   reference 58.84 ; RB2(SoH_all) local 52.92 vs reference 52.87 -> ecart
+   < 0.1 kEUR, la comparaison est valide) :
+     strategie            LPSP%   deg_kE
+     RB2(SoH_all)         3.09    52.92
+     RB2(SoH_all+Pred)    2.94    53.10   (reference these)
+     PD v2 eps=3          0.31    47.77   <- DOMINE (deg ET LPSP plus bas)
+     PD v2 eps=0.15       2.20    45.18   <- DOMINE (deg ET LPSP plus bas)
+   Le front PD v2 repasse donc SOUS les meilleures regles de la these : il
+   redevient une borne superieure credible de l'optimum global.
 
 5. RELANCE MESOCENTRE
 --------------------------------------------------------------------------------

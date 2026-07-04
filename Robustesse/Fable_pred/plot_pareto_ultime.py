@@ -99,8 +99,42 @@ def draw_isocost(axis, C_levels, xlim, ylim, label_y=None, inset=False):
                           path_effects=LABEL_STROKE)
 
 
+# --- Overlay OPTIONNEL du front de Pareto PD (reference optimale globale) ---
+# Usage : python plot_pareto_ultime.py --dp [chemin/dp_pareto_25y_51x51_v2.npz]
+# Sans argument apres --dp, cherche le npz v2 puis legacy dans
+# ../Vieillissement8/DP/{results_meso,results}. Ne change RIEN par defaut.
+DP_FRONT = None
+if "--dp" in sys.argv:
+    k = sys.argv.index("--dp")
+    if k + 1 < len(sys.argv) and not sys.argv[k + 1].startswith("-"):
+        _dp_path = sys.argv[k + 1]
+    else:
+        _dp_path = None
+        _dp_dir = os.path.abspath(os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "Vieillissement8", "DP"))
+        for _name in ("dp_pareto_25y_51x51_v2.npz", "dp_pareto_25y_51x51.npz"):
+            for _sub in ("results_meso", "results"):
+                _p = os.path.join(_dp_dir, _sub, _name)
+                if _dp_path is None and os.path.exists(_p):
+                    _dp_path = _p
+    if _dp_path and os.path.exists(_dp_path):
+        _d = np.load(_dp_path)
+        _nd = _d['nondominated'].astype(bool) if 'nondominated' in _d.files \
+            else np.ones(len(_d['eps']), dtype=bool)
+        _o = np.argsort(_d['lpsp'][_nd])
+        DP_FRONT = (_d['lpsp'][_nd][_o], _d['deg_keur'][_nd][_o])
+        print("front PD overlay :", _dp_path)
+    else:
+        print("front PD introuvable -> overlay ignore")
+
+DP_COLOR = '#c2185b'
+
+
 def build_figure(iso_cost):
     fig, ax = plt.subplots(figsize=(8, 6))
+    if DP_FRONT is not None:
+        ax.plot(DP_FRONT[0], DP_FRONT[1], '-', color=DP_COLOR, lw=1.6, zorder=3)
+        ax.scatter(DP_FRONT[0], DP_FRONT[1], color=DP_COLOR, s=18, zorder=3)
     for i, label in enumerate(labels):
         ax.scatter(points[i, 0], points[i, 1], color=color_of(label), s=60, alpha=0.9)
     for i, label in enumerate(labels):
@@ -119,6 +153,9 @@ def build_figure(iso_cost):
     zoom_labels = ['75-25', '100-0', 'RB2', 'RB2(SoH_H2)', 'RB2(Pred)',
                    'RB2(SoH_all)', 'RB2(SoH_all+Pred)', 'RB1']
     axins = ax.inset_axes([0.45, 0.10, 0.52, 0.46])
+    if DP_FRONT is not None:
+        axins.plot(DP_FRONT[0], DP_FRONT[1], '-', color=DP_COLOR, lw=1.6, zorder=3)
+        axins.scatter(DP_FRONT[0], DP_FRONT[1], color=DP_COLOR, s=16, zorder=3)
     for i, label in enumerate(labels):
         if label in zoom_labels:
             axins.scatter(points[i, 0], points[i, 1], color=color_of(label), s=70, alpha=0.9)

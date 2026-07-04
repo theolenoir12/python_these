@@ -92,12 +92,18 @@ def net_reference_window(start, n=N_YEAR):
 # Grille de controle P_dc_h2  (>0 FC ; <0 ELY)
 #   contrainte FC  : P_dc_fc / eta  <= P_fc_max   -> u <= P_fc_max*eta
 #   contrainte ELY : |P_dc_ely|*eta <= P_ely_max  -> |u| <= P_ely_max/eta
+#   extra_u : niveaux additionnels (memes conventions, W cote DC). Utilise par
+#   dp_aging pour inserer des niveaux "ride" juste SOUS les seuils de
+#   degradation projetes (0.8*Pmax_fc vieilli, genou 30% ELY vieilli) : la
+#   grille reguliere ne tombe jamais pile sous un seuil qui derive.
 # ---------------------------------------------------------------------------
-def control_grid(n_fc=10, n_ely=50, p_fc_max=P_FC_MAX, p_ely_max=P_ELY_MAX):
+def control_grid(n_fc=10, n_ely=50, p_fc_max=P_FC_MAX, p_ely_max=P_ELY_MAX,
+                 extra_u=()):
     u_fc  = np.linspace(0.0, p_fc_max * ETA, n_fc + 1)[1:]
     u_ely = -np.linspace(0.0, p_ely_max / ETA, n_ely + 1)[1:]
-    u = np.concatenate(([0.0], u_fc, u_ely))
-    return np.sort(u)
+    u = np.concatenate(([0.0], u_fc, u_ely, np.asarray(extra_u, dtype=float)))
+    u = u[(u <= p_fc_max * ETA + 1e-9) & (u >= -p_ely_max / ETA - 1e-9)]
+    return np.unique(u)
 
 
 # ---------------------------------------------------------------------------
@@ -108,12 +114,26 @@ def control_grid(n_fc=10, n_ely=50, p_fc_max=P_FC_MAX, p_ely_max=P_ELY_MAX):
 #   - cost_fc[u, prev] : cout financier FC du pas (EUR), prev = etat on precedent
 #   - cost_ely[u, prev]: cout financier ELY du pas (EUR)  (V_irr+idle+startstop)
 # ---------------------------------------------------------------------------
-def precompute_controls(u, p_fc_max=P_FC_MAX, p_ely_max=P_ELY_MAX):
+def precompute_controls(u, p_fc_max=P_FC_MAX, p_ely_max=P_ELY_MAX,
+                        thr_fc_max=None, thr_ely_max=None):
     """Pre-calculs dependant du controle u, au niveau de vieillissement donne par
     (p_fc_max, p_ely_max).  Par defaut = etat neuf (BoL).  L'effet du
     vieillissement transite UNIQUEMENT par les puissances max (les LUT de
     rendement et les seuils de degradation sont en fractions de Pmax) ; le reste
-    (V_rev ELY, shift FC, et le cout EXACT) est recalcule en forward."""
+    (V_rev ELY, shift FC, et le cout EXACT) est recalcule en forward.
+
+    thr_fc_max / thr_ely_max : Pmax utilises UNIQUEMENT pour placer les SEUILS
+    de degradation (P_high/P_low FC ; rampe F30-F60, idle et start ELY).
+    Motivation : entre deux rebuilds annuels, Pmax derive (FC ~-4%/an) -> un
+    niveau plan "pile a 0.8*Pmax_rebuild" (gratuit au backward) passe AU-DESSUS
+    du seuil reel des les premieres semaines et paie FC_ALPHA_HIGH en silence
+    (~10 kEUR/25 ans constates sur le run meso eps=3). En passant ici le Pmax
+    PROJETE en fin d'annee, le backward price ces heures de facon conservative.
+    Defaut None = Pmax courant (comportement historique inchange)."""
+    if thr_fc_max is None:
+        thr_fc_max = p_fc_max
+    if thr_ely_max is None:
+        thr_ely_max = p_ely_max
     P_dc_fc  = np.maximum(u, 0.0)
     P_dc_ely = np.minimum(u, 0.0)
 
@@ -126,8 +146,8 @@ def precompute_controls(u, p_fc_max=P_FC_MAX, p_ely_max=P_ELY_MAX):
 
     # ----- FC : puissances et seuils -----
     P_fc = P_dc_fc / ETA                       # cote stack
-    P_high = FC_FHIGH * p_fc_max
-    P_low  = FC_FLOW  * p_fc_max
+    P_high = FC_FHIGH * thr_fc_max
+    P_low  = FC_FLOW  * thr_fc_max
     cur_fc_on = P_fc >= 1.0
     # cout en "% tension" -> EUR : /((1-SoH_EoL)*100) * FC['cost']
     deg_fc_pct_base = (P_fc > P_high) * FC_ALPHA_HIGH * TS_H \
@@ -141,13 +161,13 @@ def precompute_controls(u, p_fc_max=P_FC_MAX, p_ely_max=P_ELY_MAX):
 
     # ----- ELY : V_irr (irreversible) + idle + start-stop -----
     P_ely = np.abs(P_dc_ely * ETA)
-    f = np.where(p_ely_max > 0, P_ely / p_ely_max, 0.0)
+    f = np.where(thr_ely_max > 0, P_ely / thr_ely_max, 0.0)
     # a(f) [uV/h] : 0 sous F30, rampe lineaire F30->F60, sature a a2
     a = np.where(f <= ELY_F30, 0.0,
          np.where(f <= ELY_F60, ELY_REC['a2'] * (f - ELY_F30) / (ELY_F60 - ELY_F30),
                   ELY_REC['a2']))
-    th_idle  = 0.01   * p_ely_max
-    th_start = 0.0005 * p_ely_max
+    th_idle  = 0.01   * thr_ely_max
+    th_start = 0.0005 * thr_ely_max
     cur_ely_on = P_ely >= th_start
     deg_irr_pct  = a * TS_H * UV_TO_PCT
     deg_idle_pct = ((P_ely > 0) & (P_ely <= th_idle)) * ELY_REC['idle'] * TS_H * UV_TO_PCT
@@ -213,7 +233,11 @@ def soc_step_and_lpsp(soc, u, P_tot_ref, cap_wh=CAP_WH):
 #   retourne V0 (Ns,Nh,2,2) et, si store, la politique (T, Ns,Nh,2,2) int8
 # ---------------------------------------------------------------------------
 def backward(soc_grid, h2_grid, u, pre, P_ref, VT, store_policy=False,
-             cap_wh=CAP_WH, soh_bat=1.0):
+             cap_wh=CAP_WH, soh_bat=1.0, ckpt_every=None, ckpt_out=None):
+    """ckpt_every/ckpt_out : si fournis, ckpt_out (dict) recoit une COPIE de V
+    aux pas t multiples de ckpt_every (+ le terminal T=len(P_ref)). Sert au
+    rollout de dp_aging (recalcul des tranches V d'une journee a la volee,
+    sans stocker les 8760 tranches)."""
     Ns, Nh, Nu = len(soc_grid), len(h2_grid), len(u)
     P_h2, cur_fc, cur_ely, cost_fc, cost_ely = pre
     INF = 1e18
@@ -231,6 +255,8 @@ def backward(soc_grid, h2_grid, u, pre, P_ref, VT, store_policy=False,
 
     V = VT
     policy = np.empty((len(P_ref), Ns, Nh, 2, 2), dtype=np.int8) if store_policy else None
+    if ckpt_every and ckpt_out is not None:
+        ckpt_out[len(P_ref)] = VT.copy()
 
     for t in range(len(P_ref) - 1, -1, -1):
         Ptot = P_ref[t]
@@ -268,23 +294,32 @@ def backward(soc_grid, h2_grid, u, pre, P_ref, VT, store_policy=False,
                 if store_policy:
                     policy[t, :, :, fc_on, ely_on] = cand.argmin(axis=2).astype(np.int8)
         V = Vnew
+        if ckpt_every and ckpt_out is not None and t % ckpt_every == 0:
+            ckpt_out[t] = V.copy()
     return V, policy
 
 
 def solve_cyclic(soc_grid, h2_grid, u, pre, P_ref, n_iter=3, verbose=True,
-                 cap_wh=CAP_WH, soh_bat=1.0):
+                 cap_wh=CAP_WH, soh_bat=1.0, ckpt_every=None):
+    """Retourne (V0, policy) ; si ckpt_every est fourni, retourne
+    (V0, policy, ckpt) avec ckpt = {t: V_t} captures a la DERNIERE iteration."""
     Ns, Nh = len(soc_grid), len(h2_grid)
     VT = np.zeros((Ns, Nh, 2, 2))
+    ckpt = {} if ckpt_every else None
     for it in range(n_iter):
         store = (it == n_iter - 1)
         t0 = time.time()
         V0, policy = backward(soc_grid, h2_grid, u, pre, P_ref, VT, store_policy=store,
-                              cap_wh=cap_wh, soh_bat=soh_bat)
+                              cap_wh=cap_wh, soh_bat=soh_bat,
+                              ckpt_every=(ckpt_every if store else None),
+                              ckpt_out=(ckpt if store else None))
         delta = np.max(np.abs(V0 - VT))
         if verbose:
             print(f"  [iter {it+1}/{n_iter}] max|V0-VT| = {delta:10.4f} EUR   "
                   f"({time.time()-t0:5.1f}s)")
         VT = V0
+    if ckpt_every:
+        return V0, policy, ckpt
     return V0, policy
 
 

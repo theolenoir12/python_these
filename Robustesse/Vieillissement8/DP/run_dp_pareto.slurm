@@ -25,10 +25,10 @@
 #SBATCH --job-name=dp_pareto
 #SBATCH --output=%x.%J.out        ## %x=nom du job, %J=id du job
 #SBATCH --error=%x.%J.out
-#SBATCH --time=08:00:00           ## walltime (run ~3 h, marge large)
+#SBATCH --time=12:00:00           ## walltime (run v1 ~7 h ; v2 +~20% rollout)
 #SBATCH --partition=smp           ## noeuds 32 coeurs / 96 Go
-#SBATCH --cpus-per-task=16        ## 16 workers paralleles (1 eps / coeur)
-#SBATCH --mem=32G                 ## ~15 process * arrays 25 ans << 96 Go
+#SBATCH --cpus-per-task=19        ## 19 workers paralleles (1 eps / coeur, 19 eps en v2)
+#SBATCH --mem=48G                 ## ~19 process * (arrays 25 ans + ckpt V ~30 Mo)
 # #SBATCH --mail-user=ton.adresse@exemple.fr
 # #SBATCH --mail-type=END,FAIL
 

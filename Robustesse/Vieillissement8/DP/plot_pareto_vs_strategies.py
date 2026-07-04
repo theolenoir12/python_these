@@ -84,18 +84,24 @@ def color_of(label):
 def find_npz():
     if len(sys.argv) > 1:
         return sys.argv[1]
-    for sub in ("results_meso", "results"):
-        p = os.path.join(_THIS, sub, "dp_pareto_25y_51x51.npz")
-        if os.path.exists(p):
-            return p
-    sys.exit("dp_pareto_25y_51x51.npz introuvable (results_meso/ ou results/).")
+    # priorite au front V2 (projection vieillissement + rollout), sinon legacy
+    for name in ("dp_pareto_25y_51x51_v2.npz", "dp_pareto_25y_51x51.npz"):
+        for sub in ("results_meso", "results"):
+            p = os.path.join(_THIS, sub, name)
+            if os.path.exists(p):
+                return p
+    sys.exit("dp_pareto_25y_51x51[_v2].npz introuvable (results_meso/ ou results/).")
 
 
 def main():
-    d = np.load(find_npz())
+    src = find_npz()
+    print("front PD :", src)
+    d = np.load(src)
     eps, lpsp, deg = d['eps'], d['lpsp'], d['deg_keur']
+    nd = d['nondominated'].astype(bool) if 'nondominated' in d.files \
+        else np.ones(len(eps), dtype=bool)
     order = np.argsort(eps)
-    eps, lpsp, deg = eps[order], lpsp[order], deg[order]
+    eps, lpsp, deg, nd = eps[order], lpsp[order], deg[order], nd[order]
 
     fig, ax = plt.subplots(figsize=(8, 6))
 
@@ -116,8 +122,14 @@ def main():
                     weight='bold', path_effects=LABEL_STROKE)
 
     # --- FRONT DE PARETO PD (sobre : ligne + petits points, pas d'etoile) -----
-    ax.plot(lpsp, deg, '-', color=DP_COLOR, lw=1.6, zorder=5)
-    ax.scatter(lpsp, deg, color=DP_COLOR, s=22, zorder=6)
+    # la ligne ne relie que les points NON-DOMINES ; les points domines (des
+    # politiques PD valides mais hors front) restent en marqueurs creux.
+    o = np.argsort(lpsp[nd])
+    ax.plot(lpsp[nd][o], deg[nd][o], '-', color=DP_COLOR, lw=1.6, zorder=5)
+    ax.scatter(lpsp[nd], deg[nd], color=DP_COLOR, s=22, zorder=6)
+    if (~nd).any():
+        ax.scatter(lpsp[~nd], deg[~nd], facecolors='none', edgecolors=DP_COLOR,
+                   s=22, lw=0.9, zorder=6)
 
 
     # --- encart : zoom du cluster bas-gauche, dans le coin BAS-DROITE (vide,    -
@@ -131,10 +143,11 @@ def main():
         dx, dy, ha, va = zoom_offsets[label]
         axins.text(x + dx, y + dy, label, fontsize=11, color=color_of(label),
                    weight='bold', path_effects=LABEL_STROKE, ha=ha, va=va, zorder=8)
-    axins.plot(lpsp, deg, '-', color=DP_COLOR, lw=1.6, zorder=5)
-    axins.scatter(lpsp, deg, color=DP_COLOR, s=20, zorder=6)
-    for e, off in ((0.2, (6, -10)), (0.5, (6, 5))):
-        k = int(np.argmin(np.abs(eps - e)))
+    axins.plot(lpsp[nd][o], deg[nd][o], '-', color=DP_COLOR, lw=1.6, zorder=5)
+    axins.scatter(lpsp[nd], deg[nd], color=DP_COLOR, s=20, zorder=6)
+    if (~nd).any():
+        axins.scatter(lpsp[~nd], deg[~nd], facecolors='none', edgecolors=DP_COLOR,
+                      s=20, lw=0.9, zorder=6)
 
     axins.set_xlim(-0.1, 4.5)
     axins.set_ylim(48, 84)

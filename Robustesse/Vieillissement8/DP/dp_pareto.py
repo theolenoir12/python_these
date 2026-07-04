@@ -26,6 +26,16 @@ NB cap. mesocentre : chaque resolution PD est MONO-THREAD (cf run corrige :
 user~=real). On lance donc tous les epsilon EN PARALLELE, 1 par coeur
 (OMP_NUM_THREADS=1 force dans le .slurm pour ne pas sur-souscrire).
 
+V2 (defaut, DP_PARETO_V2=0 pour revenir au v1) : la PD sequentielle utilise
+la projection du vieillissement (seuils de degradation prices au Pmax projete
+fin d'annee) et le rollout exact (choix du controle par minimisation du cout
+exact du pas au vieillissement courant + V(t+1) interpole). Motivation : au
+run v1 (job 210452), la derive intra-annuelle du seuil 0.8*P_fc_max coutait
+~10 kEUR de degradation FC "high" non pricee (57 000 h, 10 remplacements FC
+sur 25 ans a eps=3) + ~2 kEUR d'irreversible ELY au-dessus du genou 30% --
+c'est exactement ce qui permettait a RB2(SoH_all)/RB2(SoH_all+Pred) de passer
+sous le front. Sorties v2 taggees *_v2 (les resultats v1 ne sont pas ecrases).
+
 RAPPEL THESE : le VoLL=3 reste la valeur de REFERENCE (colonne UNIF@VoLL3 du
 tableau, comparable au run principal). epsilon est ICI un parametre de
 sensibilite explicite (la frontiere de Pareto demandee), pas un changement du
@@ -60,12 +70,22 @@ from get_optimal_action_RB import get_optimal_action_RB
 
 # ---------------------------------------------------------------------------
 # Grille de epsilon (= VOLL de resolution, EUR/kWh). Dense au coude (bas), 3 inclus.
+# Le run 210452 (v1) montrait un TROU realise entre eps=0.1 (LPSP 5.6%) et
+# eps=0.2 (LPSP 1.8%) -- precisement la zone ou RB2(SoH_all) et RB2(SoH_all+Pred)
+# passaient sous la corde du front. On densifie donc [0.1, 0.35].
 # ---------------------------------------------------------------------------
-EPSILONS_FULL  = [0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0, 1.5, 2.0,
-                  3.0, 4.0, 6.0, 10.0, 20.0, 50.0]
+EPSILONS_FULL  = [0.05, 0.1, 0.12, 0.15, 0.2, 0.25, 0.3, 0.35, 0.5, 0.75,
+                  1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 10.0, 20.0, 50.0]
 EPSILONS_SMOKE = [0.2, 3.0, 30.0]
 
 VOLL_REF = 3.0   # VoLL de reference these (pour la colonne UNIF@VoLL3 comparable)
+
+# --- Variante v2 : projection du vieillissement + rollout exact (dp_aging) ---
+# Corrige la derive intra-annuelle des seuils de degradation (P_high FC, genou
+# 30% ELY, capacite batterie) qui coutait ~10 kEUR de "FC high" silencieux au
+# run v1 eps=3 (cf. decomposition get_cost_fc sur dp_aging_25y_51x51.npz).
+# DP_PARETO_V2=0 pour retrouver exactement le comportement v1 (A/B).
+DP_V2 = os.environ.get('DP_PARETO_V2', '1') != '0'
 
 
 # ---------------------------------------------------------------------------
@@ -95,7 +115,8 @@ def run_one(args):
     eps, Ns, Nh, n_fc, n_ely, n_years = args
     t0 = time.time()
     dpc.VOLL = float(eps)              # <-- poids fiabilite DANS la resolution PD
-    pol = DPPolicy(Ns, Nh, n_fc, n_ely, recompute='yearly', verbose=False)
+    pol = DPPolicy(Ns, Nh, n_fc, n_ely, recompute='yearly', verbose=False,
+                   aging_proj=DP_V2, rollout=DP_V2)
     if n_years and n_years != 25:
         data = init_and_run_loop(pol, n_years=n_years)   # smoke (Common modifie)
     else:
@@ -138,11 +159,12 @@ def main():
     print(f" grille {Ns}x{Nh}  n_fc={n_fc} n_ely={n_ely}  | {len(EPS)} epsilon | "
           f"{n_workers} workers paralleles")
     print(f" epsilon (EUR/kWh) = {EPS}")
+    print(f" variante : {'V2 (projection vieillissement + rollout)' if DP_V2 else 'V1 (legacy)'}")
     print("=" * 70, flush=True)
 
     out_dir = os.path.join(_THIS, "results")
     os.makedirs(out_dir, exist_ok=True)
-    tag = f"{n_years}y_{Ns}x{Nh}"
+    tag = f"{n_years}y_{Ns}x{Nh}" + ("_v2" if DP_V2 else "")
 
     # --- RB2 : point de reference unique (independant de epsilon) -------------
     t0 = time.time()
@@ -180,6 +202,7 @@ def main():
         unif3_keur=col('unif3'), soh_bat=col('soh_bat'), soh_fc=col('soh_fc'),
         soh_ely=col('soh_ely'), repl_bat=col('repl_bat'), repl_fc=col('repl_fc'),
         repl_ely=col('repl_ely'),
+        nondominated=_nondominated_mask(col('eens_kwh'), col('deg')),
         RB2_lpsp=rb_lpsp, RB2_deg_keur=rb_deg, RB2_eens_kwh=rb_eens,
         RB2_unif3_keur=rb_unif3, demand_kwh=rb_demand)
 
@@ -198,20 +221,38 @@ def main():
     print(f"\n Resultats -> {out_dir}/dp_pareto_{tag}.txt (+ .npz, + _traj.npz)", flush=True)
 
 
+def _nondominated_mask(eens, deg):
+    """Masque des points NON-DOMINES dans le plan (EENS, deg) (minimiser les 2).
+    Les points domines restent des politiques PD valides mais ne font pas
+    partie du front (on les trace en creux / on ne relie que les non-domines)."""
+    eens = np.asarray(eens); deg = np.asarray(deg)
+    n = len(eens)
+    mask = np.ones(n, dtype=bool)
+    for i in range(n):
+        dom = (eens <= eens[i]) & (deg <= deg[i]) \
+            & ((eens < eens[i]) | (deg < deg[i]))
+        if dom.any():
+            mask[i] = False
+    return mask
+
+
 def _write_partial(out_dir, tag, results, rb):
     """Ecrit le tableau lisible (re-ecrit a chaque point fini -> resultats partiels surs)."""
     rb_lpsp, rb_deg, rb_eens, rb_unif3 = rb
     rs = sorted(results, key=lambda d: d['eps'])
+    nd = _nondominated_mask([r['eens_kwh'] for r in rs], [r['deg'] for r in rs])
     L = ["=" * 78,
-         f" FRONTIERE DE PARETO  degradation <-> EENS   (25 ans, PD sequentielle)",
+         f" FRONTIERE DE PARETO  degradation <-> EENS   (25 ans, PD sequentielle"
+         f"{', V2 proj+rollout' if DP_V2 else ''})",
          f" epsilon = poids fiabilite (VoLL) DANS la resolution PD [EUR/kWh]",
+         f" '*' = point DOMINE (exclu du front non-domine)",
          "=" * 78,
          f" {'eps':>6} {'LPSP%':>8} {'deg_kE':>8} {'EENS_kWh':>10} {'UNIF@3_kE':>10}"
          f" {'SoHbat':>7} {'SoHfc':>6} {'SoHely':>6} {'rebuild':>8}"]
-    for r in rs:
+    for r, ok in zip(rs, nd):
         L.append(f" {r['eps']:6.3g} {r['lpsp']:8.4f} {r['deg']:8.3f} {r['eens_kwh']:10.1f}"
                  f" {r['unif3']:10.3f} {r['soh_bat']:7.3f} {r['soh_fc']:6.3f}"
-                 f" {r['soh_ely']:6.3f} {r['n_rebuild']:8d}")
+                 f" {r['soh_ely']:6.3f} {r['n_rebuild']:8d}" + ("" if ok else "  *"))
     L += ["-" * 78,
           f" {'RB2':>6} {rb_lpsp:8.4f} {rb_deg:8.3f} {rb_eens:10.1f} {rb_unif3:10.3f}"
           f"   (reference, hors PD)",

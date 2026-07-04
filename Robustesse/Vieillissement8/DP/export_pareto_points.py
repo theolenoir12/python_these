@@ -29,11 +29,13 @@ _THIS = os.path.dirname(os.path.abspath(__file__))
 def find_npz():
     if len(sys.argv) > 1:
         return sys.argv[1]
-    for sub in ("results_meso2/results", "results_meso", "results"):
-        p = os.path.join(_THIS, *sub.split("/"), "dp_pareto_25y_51x51.npz")
-        if os.path.exists(p):
-            return p
-    sys.exit("dp_pareto_25y_51x51.npz introuvable.")
+    # priorite au front V2 (projection vieillissement + rollout), sinon legacy
+    for name in ("dp_pareto_25y_51x51_v2.npz", "dp_pareto_25y_51x51.npz"):
+        for sub in ("results_meso2/results", "results_meso", "results"):
+            p = os.path.join(_THIS, *sub.split("/"), name)
+            if os.path.exists(p):
+                return p
+    sys.exit("dp_pareto_25y_51x51[_v2].npz introuvable.")
 
 
 def dominance(lpsp, deg):

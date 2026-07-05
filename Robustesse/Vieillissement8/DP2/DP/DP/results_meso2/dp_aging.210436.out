@@ -1,4 +1,0 @@
-Job 210436  noeud=node4-26  script=dp_aging.py full
-cpus-per-task=4  debut=Sun Jun 28 02:31:44 CEST 2026
-numpy 1.21.5 scipy 1.9.1
-slurmstepd: error: *** JOB 210436 ON node4-26 CANCELLED AT 2026-06-28T02:32:05 ***

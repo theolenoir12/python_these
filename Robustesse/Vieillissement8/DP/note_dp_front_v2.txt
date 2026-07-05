@@ -110,12 +110,49 @@ Redige  : 2026-07-04.
 
 5. RELANCE MESOCENTRE
 --------------------------------------------------------------------------------
-   sbatch run_dp_pareto.slurm     (19 eps, cpus-per-task=19, walltime 12 h)
+   sbatch run_dp_pareto.slurm     (19 eps, cpus-per-task=19, walltime 14 h)
    puis  python plot_pareto_vs_strategies.py            (prend *_v2 en priorite)
-   et    python ../..//Fable_pred/plot_pareto_ultime.py --dp   (overlay du front
+   et    python ../../Fable_pred/plot_pareto_ultime.py --dp   (overlay du front
          sur la figure des strategies ultimes -- optionnel, defaut inchange)
-   Attendu : le front v2 descend de ~3-6 kEUR dans la zone deg-dominante et
-   redomine RB2(SoH_all)/RB2(SoH_all+Pred) ; le trou LPSP 1.8-5.6 % se comble
-   (eps 0.12-0.3) ou, s'il persiste (non-convexite), il est trace honnetement
-   (points non relies).
+
+6. RESULTAT MESOCENTRE (job 213210, 19 eps, DP_PARETO_V2=1, 51x51, 5 h 10 wall)
+--------------------------------------------------------------------------------
+   Front v2 complet (LUT reelles cluster). Le v2 cluster CONFIRME le local :
+   eps=3 donne 47.768 kEUR (local 47.765) -> reconstruction LUT fidele.
+
+   Front v2 (extraits ; deg strictement croissante, front propre, seul eps=50
+   domine, marque '*') :
+     eps    LPSP%   deg_kE   EENS_kWh  UNIF@3_kE
+     0.12   3.272   44.600    8944.8    71.434
+     0.15   2.226   45.168    6085.2    63.424
+     0.2    1.606   45.541    4389.4    58.709
+     0.3    1.194   45.876    3263.6    55.667
+     0.5    0.717   46.382    1961.3    52.266
+     1.0    0.470   46.825    1286.1    50.683
+     3.0    0.320   47.768     874.2    50.390   (v1 etait 57.836 -> -10.07 kEUR)
+
+   GAIN v1 -> v2 (meme eps, front cluster) : -9.1 a -10.3 kEUR de degradation
+   sur tout le front, a LPSP quasi egal.
+
+   DOMINATION DE TOUTES LES STRATEGIES DE LA THESE (base Fable, meme metrique
+   get_cost_total ; marge = deg strategie - deg front AU MEME LPSP) :
+     strategie            LPSP%   deg_kE   marge front   domine ?
+     RB2 socle            2.592   58.85     +13.9 kEUR    OUI
+     RB2(Pred)            2.531   58.96     +14.0 kEUR    OUI
+     RB2(SoH_H2)          2.909   54.91     +10.1 kEUR    OUI
+     RB2(SoH_all)         3.105   52.87      +8.2 kEUR    OUI
+     RB2(SoH_all+Pred)    2.942   53.10      +8.3 kEUR    OUI   <- l'"ultime"
+   => le front PD v2 domine TOUTES les regles, y compris la meilleure de la
+      these (RB2(SoH_all+Pred)), de +8.3 kEUR de degradation a LPSP egal.
+      Il redevient une borne superieure credible de l'optimum global : plus
+      aucune strategie ne passe dessous. Probleme resolu.
+
+   Figures regenerees :
+     DP/figures_pareto_meso/pareto_strategies_vs_DP.{pdf,png}   (front + base)
+     Fable_pred/pareto_ems_ultime{,_isocost}.{pdf,png}         (--dp : overlay
+       du front sous RB2(SoH_all)/RB2(SoH_all+Pred), encart descendu a 42 kEUR)
+
+   Controle de robustesse : le job 213192 (soumis par erreur sur l'ancien code)
+   a reproduit le front v1 BIT A BIT (15/15 points = job 210452) -> chaine
+   deterministe, citable.
 ================================================================================

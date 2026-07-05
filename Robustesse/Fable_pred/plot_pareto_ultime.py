@@ -175,15 +175,18 @@ def build_figure(iso_cost):
             axins.text(points[i, 0] + dx, points[i, 1] + dy, label, fontsize=11,
                        color=color_of(label), weight='bold', path_effects=LABEL_STROKE,
                        horizontalalignment=ha, verticalalignment=va)
+    # avec l'overlay du front PD, on descend la borne basse de l'encart pour que
+    # le front (deg ~45-48 kEUR) soit visible SOUS les strategies (domination).
+    ins_ylo = 42 if DP_FRONT is not None else 47
     axins.set_xlim(1.0, 4.5)
-    axins.set_ylim(47, 84)
+    axins.set_ylim(ins_ylo, 84)
     axins.grid(True, linestyle='--', alpha=0.5)
     axins.tick_params(labelsize=10)
 
     if iso_cost:
         main_xlim, main_ylim = ax.get_xlim(), ax.get_ylim()
         draw_isocost(ax, list(range(70, 141, 10)), main_xlim, main_ylim, label_y=13)
-        draw_isocost(axins, [70, 75, 80, 85, 90, 95, 100], (1.0, 4.5), (47, 84))
+        draw_isocost(axins, [70, 75, 80, 85, 90, 95, 100], (1.0, 4.5), (ins_ylo, 84))
 
     ax.indicate_inset_zoom(axins, edgecolor='gray', alpha=0.6)
     ax.set_xlabel("LPSP [%]", fontsize=18)

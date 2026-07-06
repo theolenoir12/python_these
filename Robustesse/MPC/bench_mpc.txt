@@ -1,0 +1,5 @@
+# bench_mpc (bench_mpc) : 25 ans ; VoLL=3.0 ; N=100 graines ; CRN ; base=MPC (H=24)
+label ; N ; LPSP(%) ; sLPSP ; deg(kEUR) ; sdeg ; total(kEUR) ; stotal ; dtotal_vs_base(kEUR) ; ELY_starts
+MPC (H=24) ; 100 ; 1.2798 ; 0.0159 ; 68.301 ; 0.065 ; 78.797 ; 0.160 ; +0.000 ; 12616
+MPC (H=24, gel 12h) ; 100 ; 4.5218 ; 0.0582 ; 67.286 ; 0.069 ; 104.371 ; 0.476 ; +25.574 ; 11635
+MPC (H=48) ; 100 ; 1.2182 ; 0.0148 ; 69.346 ; 0.063 ; 79.337 ; 0.147 ; +0.540 ; 13814

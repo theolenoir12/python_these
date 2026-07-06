@@ -58,13 +58,13 @@ POINTS = {
     "50-50": (8.0744, 109.0235),
     "75-25": (3.8032, 59.6765),
     "100-0": (2.4851, 66.4122),
-    "RB2":   (2.4540, 65.4218),   # socle cost-min
+    "RB2":   (2.5921, 58.8431),   # socle cost-min (setpoints actuels : main RB2/)
     "RB1":   (1.2597, 80.1562),
     "SoC1":  (1.3389, 140.6745),
     "SoC06": (29.4642, 109.2535),
     "Ideal": (0.0, 0.0),
     # levier état de santé (UNIQUE : setpoints H2 x SoH, noté simplement "SoH")
-    "RB2(SoH)":      (2.5475, 59.3644),
+    "RB2(SoH)":      (2.9091, 54.9057),   # setpoints actuels : main RB2(SoH)/
     # intégration prévision
     "RB2(Pred)":     (2.3642, 65.0248),   # pré-charge +-1sigma (moyenne MC hyst)
     "RB2(RUL)":      (2.5763, 59.9217),   # augmentation par pronostic RUL

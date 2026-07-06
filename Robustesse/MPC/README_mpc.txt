@@ -63,6 +63,9 @@ pas a l'information.
   chaque appel, k=0 exact. Calibration : l'erreur AGREGEE sur 18 h retrouve
   le backtest de RB2(Pred) : sigma=39.38 kWh, biais=-2.32 kWh (memes
   constantes de design que Fable_pred). MPC_NOISE_ENABLE=False = omniscient.
+  --> Discussion de fond (omniscience, echelle d'information, limite du bruit
+      a lever de facon unifiee avec RB2(Pred), role des ancrages RB2) :
+      voir METHODO_mpc.txt.
 
 5. LIMITES ASSUMEES DU MODELE INTERNE (payees dans les metriques reelles)
 -------------------------------------------------------------------------

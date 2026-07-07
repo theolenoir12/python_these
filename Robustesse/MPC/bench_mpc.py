@@ -56,8 +56,10 @@ BENCH_STRATS = [
     ("RB2(SoH_all) (test nul)", ULT, {"ENABLE": False, "NOISE_ENABLE": False,
                                       "_lol:SOC_MAX_AGED_GAIN": G_WIN}),
     ("RB2(SoH_all+Pred)",       ULT, {"_lol:SOC_MAX_AGED_GAIN": G_WIN}),
+    # MPC (H=24) : defaut = sw x3 (robustification plan C retenue, cf
+    # ANALYSE_robust). Le variant "gel 12h" a ete refute (catastrophique a
+    # 25 ans) et retire. "MPC nu" (sw=1) reste accessible via --sweep robust.
     ("MPC (H=24)",              MPC, {}),
-    ("MPC (H=24, gel 12h)",     MPC, {"MPC_ELY_MIN_DWELL": 12}),
     ("MPC (H=48)",              MPC, {"MPC_H": 48}),
 ]
 OMNI_STRATS = [
@@ -75,8 +77,8 @@ SWEEP_VH2    = [0.5, 1.0, 1.5, 2.0]          # MPC_V_H2 [EUR/kWh]
 # residence haut-SoC (hold). Chaque point est un test nul en cascade depuis le
 # MPC nu. La reference omni (plancher) est ajoutee en tete du sweep.
 SWEEP_ROBUST = [   # (label, overrides sur MPC H=24)
-    ("MPC nu (ref)",        {}),
-    ("sw x3",               {"MPC_SW_SCALE": 3.0}),
+    ("MPC nu (ref)",        {"MPC_SW_SCALE": 1.0}),   # sw=1 explicite (defaut = 3)
+    ("sw x3 (defaut)",      {"MPC_SW_SCALE": 3.0}),
     ("sw x10",              {"MPC_SW_SCALE": 10.0}),
     ("sw x30",              {"MPC_SW_SCALE": 30.0}),
     ("hold 0.3",            {"MPC_BAT_HOLD_EUR": 0.3}),

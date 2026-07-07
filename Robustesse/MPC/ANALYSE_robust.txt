@@ -1,0 +1,84 @@
+================================================================================
+MPC(LP) -- LECTURE DU PLAN C (robustification au bruit ; job 213317)
+Robustesse/MPC/ ; redige le 2026-07-07.
+Depouillement : sweep_mpc_robust.txt. A lire apres ANALYSE_mpc2.txt.
+================================================================================
+
+
+1. OBJET
+--------------------------------------------------------------------------------
+ANALYSE_mpc2 avait etabli que, sous prevision bruitee, TOUT l'ecart du MPC aux
+regles (~20 kEUR) vient de la SENSIBILITE A LA PREVISION : le bruit fait
+chatterer l'ELY (8493 demarrages en omniscient -> 13814 en bruite) et pousse
+vers le haut de la bande de SoC. Plan C = tenter de ramener la degradation
+bruitee (~68 kEUR) vers son plancher omniscient (54.6) par deux leviers de
+cout, SANS changer l'information :
+  - MPC_SW_SCALE : durcit le cout de commutation |Delta P| (penalise le
+    changement du setpoint EXECUTE) -> doit baisser le battement ELY ;
+  - MPC_BAT_HOLD_EUR : cout convexe de residence haut-SoC -> confine le cyclage
+    dans la zone la moins chere.
+
+
+2. RESULTATS (25 ans, VoLL=3, N=32, CRN ; base = plancher omniscient)
+--------------------------------------------------------------------------------
+  config              LPSP %   deg kE   total kE   ELY starts   dtotal vs nu
+  MPC omni (plancher)  0.63     54.60     59.79       8402        (plancher)
+  MPC nu (sw=1)        1.28     68.28     78.76      12603         0
+  sw x3   (DEFAUT)     1.41     66.29    *77.84*     11613       -0.92   <= gain
+  sw x10               1.84     66.19     81.29      10587       +2.53
+  sw x30               4.74     69.33    108.18      17139      +29.42
+  hold 0.3             1.52     68.90     81.36      13961       +2.60
+  hold 1.0             1.58     70.61     83.56      15152       +4.81
+  sw x10 + hold 0.3    1.96     66.94     83.00      11486       +4.25
+  sw x10 + hold 1.0    2.17     68.84     86.67      13674       +7.91
+
+
+3. LECTURE
+--------------------------------------------------------------------------------
+(A) sw x3 EST LE SEUL GAGNANT : -0.92 kEUR vs MPC nu (-1.2 %). Il baisse a la
+    fois la degradation (68.3 -> 66.3) et les demarrages ELY (12603 -> 11613),
+    au prix d'un LPSP a peine plus haut (1.28 -> 1.41 %). Le MPC passe ainsi
+    DEVANT RB2(SoH_all) (78.34) et se rapproche a 0.6 kEUR de l'ultime RB
+    (77.23). Le VoLL de croisement descend de 3.35 a ~3.15 EUR/kWh.
+    -> RETENU COMME DEFAUT (MPC_SW_SCALE = 3.0).
+
+(B) hold est CONTRE-PRODUCTIF (la tension anticipee se confirme) : detourner le
+    surplus du haut-SoC vers l'ELY AUGMENTE les demarrages (jusqu'a 15152) et la
+    degradation. Ecarte, comme le gel 12h de ANALYSE_mpc2.
+
+(C) Trop de sw est PATHOLOGIQUE : sw x10 sur-contraint l'ELY (LPSP monte ->
+    total pire malgre moins de demarrages) ; sw x30 degenere (starts 17139,
+    LPSP 4.74 %). L'optimum est un durcissement DOUX (x3), pas agressif.
+
+(D) RESULTAT STRUCTUREL (le plus important) : sw x3 ne recupere que ~0.9 des
+    ~19 kEUR d'ecart au plancher omniscient. La FRAGILITE A LA PREVISION est
+    donc QUASI IRREDUCTIBLE par le cost-shaping du LP. On ne "tune" pas la
+    sortie de la sensibilite a l'incertitude : il faudrait un MPC
+    ROBUSTE/STOCHASTIQUE (optimiser sur un ensemble de scenarios de bruit, ou
+    une contrainte de type CVaR) ou une MEILLEURE prevision. Ce constat ferme
+    proprement la question "peut-on faire battre les regles au MPC a VoLL=3 par
+    reglage ?" -> non par ce levier ; oui via l'information (omni) ou via un
+    VoLL > ~3.15.
+
+
+4. CONSEQUENCES SUR LA CONFIG CANONIQUE
+--------------------------------------------------------------------------------
+  - MPC_SW_SCALE defaut : 1.0 -> 3.0 (le "MPC (H=24)" de reference vaut
+    desormais 77.84 kEUR, pas 78.80). Le LP nu (sw=1) reste accessible par
+    override / via --sweep robust ("MPC nu").
+  - Retrait du variant "gel 12h" du bench nominal (refute a 25 ans).
+  - hold (MPC_BAT_HOLD_EUR) conserve dans le code (defaut OFF) a titre de levier
+    documente et refute ; utile pour la reproductibilite de ce sweep.
+
+
+5. PERSPECTIVES (inchangees / precisees)
+--------------------------------------------------------------------------------
+  - MPC robuste/stochastique : c'est LA piste pour attaquer les ~18 kEUR
+    residuels de fragilite (multi-scenarios de bruit sur l'horizon, ou
+    contrainte de risque). Seul chemin credible pour faire basculer le MPC a
+    VoLL=3.
+  - MILP on/off exact (min-up/min-down) pour l'ELY : traite le battement a la
+    racine, la ou le cout |Delta P| (sw) sature. A comparer a sw x3.
+  - Cote information : le plafond omni (58.7-59.8) montre que l'essentiel du gain
+    dort dans la QUALITE de prevision, pas dans le solveur.
+================================================================================

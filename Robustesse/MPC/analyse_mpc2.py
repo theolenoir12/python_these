@@ -93,6 +93,21 @@ def main():
               f"{g:.1f} kEUR (bruite {bench['MPC (H=48)']['total']:.1f} "
               f"vs omni {bench['MPC omni (H=48)']['total']:.1f}) ===")
 
+    # --- Overlay du gagnant du plan C (sweep robust : sw x3) ------------------
+    win_key = None
+    rob_path = os.path.join(HERE, "sweep_mpc_robust.txt")
+    if os.path.exists(rob_path):
+        rob = parse_bench(rob_path)
+        cand = [v for k, v in rob.items() if k.startswith("sw x3")]
+        if cand:
+            win_key = "MPC sw x3 (plan C)"
+            bench[win_key] = cand[0]
+            for rb in ("RB2(SoH_all+Pred)",):
+                if rb in bench:
+                    V = crossover(bench, win_key, rb)
+                    print(f"\n=== Plan C : {win_key} total@3 = {cand[0]['total']:.2f} "
+                          f"kEUR ; croise {rb} a VoLL = {V:.2f} EUR/kWh ===")
+
     # ------------------------------------------------------------------ figure
     plt.rcParams.update({"font.family": "serif", "mathtext.fontset": "cm",
         "axes.labelsize": 15, "legend.fontsize": 9.5, "xtick.labelsize": 12,
@@ -108,6 +123,8 @@ def main():
         "MPC (H=24)": ("tab:red", "s"), "MPC (H=48)": ("tab:orange", "s"),
         "MPC (H=24, gel 12h)": ("0.6", "x"),
         "MPC omni (H=24)": ("tab:purple", "D"), "MPC omni (H=48)": ("magenta", "D")}
+    if win_key:
+        groups[win_key] = ("crimson", "*")
     if dp is not None:
         ax1.plot(dp[:, 0], dp[:, 1], "-", color="0.4", lw=1.6, zorder=1,
                  label="Front DP (borne offline)")
@@ -126,6 +143,8 @@ def main():
     lines = {"RB2 socle": ("tab:blue", "-"), "RB2(SoH_all) (test nul)": ("tab:cyan", "-"),
              "RB2(SoH_all+Pred)": ("tab:green", "-"), "MPC (H=24)": ("tab:red", "-"),
              "MPC (H=48)": ("tab:orange", "--"), "MPC omni (H=48)": ("magenta", ":")}
+    if win_key:
+        lines[win_key] = ("crimson", "-.")
     for lab, (c, ls) in lines.items():
         if lab not in bench:
             continue

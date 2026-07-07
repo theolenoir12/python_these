@@ -69,7 +69,11 @@ MPC_V_H2         = 1.00    # credit H2 en fin d'horizon (< VoLL*eta_chaine=1.35 
 # --- Surrogats de degradation (echelles, 1.0 = calibration modele reel) ----
 MPC_ELY_WEAR_SCALE = 1.0   # pente charniere ELY > genou 30 %
 MPC_FC_WEAR_SCALE  = 1.0   # pente charniere FC > 80 %
-MPC_SW_SCALE       = 1.0   # couts de commutation |Delta P| (FC et ELY)
+MPC_SW_SCALE       = 3.0   # couts de commutation |Delta P| (FC et ELY).
+                           # 3.0 = robustification au bruit RETENUE (plan C,
+                           # cf ANALYSE_robust : -0.9 kEUR et -1000 demarrages
+                           # ELY vs LP nu ; 1.0 = LP "nu" non robustifie ;
+                           # >10 = sur-contraint, LPSP explose -- cf sweep).
 MPC_C_BAT_SCALE    = 1.0   # cout throughput batterie
 
 # --- Robustification au bruit de prevision (plan C ; DEFAUTS = OFF) ----------

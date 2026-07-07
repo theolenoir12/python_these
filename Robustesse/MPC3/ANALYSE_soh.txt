@@ -1,0 +1,138 @@
+================================================================================
+MPC(LP) -- ECHELLE D'INFORMATION + LEVIER SoH ACTIF (MPC(SoH+Pred))
+Robustesse/MPC/ ; redige le 2026-07-07. A lire apres ANALYSE_robust.txt.
+Objet : construire la comparaison MPC(sans pred) / MPC(Pred) / MPC(SoH+Pred) et
+documenter le levier "penalite d'usure sante-aware" ajoute au LP.
+================================================================================
+
+
+0. NOMENCLATURE (points nommes par l'information UTILISEE)
+--------------------------------------------------------------------------------
+  MPC(sans pred)  : LP sans look-ahead (futur supppose = pas courant, persistance).
+                    Plancher d'information de l'echelle : optimisation, mais AUCUNE
+                    prevision de profil. Flag MPC_FORECAST_MODE="persist".
+  MPC(Pred)       : prevision backtest bruitee (comportement historique du MPC).
+                    = le point reel (LPSP 1.41 %, deg 66.29 kEUR, total 77.84).
+  MPC(SoH+Pred)   : MPC(Pred) + penalite d'usure modulee par l'etat de sante
+                    (levier ci-dessous). betas > 0.
+  (MPC omni)      : plafond informationnel (prevision parfaite sur H), inchange.
+
+Choix METHODO (decide avec l'auteur, 2026-07-07) : baseline PRAGMATIQUE. On garde
+le point (1.41,66.29) comme MPC(Pred) : il ne fait que respecter la physique du
+plant (Pmax vieillis, plafond SoC impose par get_lol) -- ce n'est pas un CHOIX de
+controle sante-aware, c'est la realite observee. MPC(SoH+Pred) ajoute un choix de
+controle EXPLICITE par-dessus.
+
+
+1. CE QUE LE MPC(Pred) FAIT DEJA AVEC LE SoH (constat prealable)
+--------------------------------------------------------------------------------
+Le MPC(Pred) est deja IMPLICITEMENT sante-aware, par la physique :
+  - SoH_bat -> plafond de SoC vieillissant (soc_max_t), comme RB2 ;
+  - Pmax vieillis (P_fc_max_t, P_ely_max_t) -> capacites, position des GENOUS
+    (e30, f80) ET dENOMINATEURS des penalites d'usure (c[iZE] ~ 1/P_ely_max_t).
+    => la penalite d'usure PAR WATT monte deja automatiquement quand le composant
+    vieillit. Le MPC capte donc deja l'"effet de regime" que RB2 approxime par sa
+    modulation SoH^gamma des setpoints.
+Le taux d'usure REEL ELY/FC (cost_fcn_total2) ne depend PAS du SoH courant (cout =
+deg%/(1-SoH_EoL)*cost, taux a2,b2,s,alpha_high... constants). Il n'y a donc AUCUNE
+erreur de cout par pas a corriger : le surrogat au taux fige est deja juste.
+
+Consequence : un levier SoH sur le MPC n'est pas une correction de cout, mais une
+PROTECTION HEURISTIQUE (comme RB2), a evaluer empiriquement.
+
+
+2. LE LEVIER : PENALITE D'USURE SANTE-AWARE h^(-beta)
+--------------------------------------------------------------------------------
+Marge de sante normalisee   h = (SoH - SoH_EoL) / (1 - SoH_EoL) in [0,1]
+  (h=1 neuf ; h->0 fin de vie ; SoH_EoL = 0.9 pour FC et ELY, donc h couvre TOUT
+   [0,1] sur la vie d'une unite -> levier actif EN CONTINU, pas seulement a l'EoL).
+Toutes les penalites d'usure du composant sont multipliees par h^(-beta) :
+  ELY : c[iZE] (sur-genou) ET c[iDE] (demarrage/commutation)  x  h_ely^(-beta_ely)
+  FC  : c[iZF] (haute-P)   ET c[iDF] (transitoire/on-off)     x  h_fc^(-beta_fc)
+beta = 0 -> facteur 1.0 -> LP STRICTEMENT identique (non-regression MPC(Pred)).
+
+POINT DE DESIGN CRUCIAL (verifie par micro-test) : il FAUT scaler le cout de
+COMMUTATION c[iDE], pas seulement le sur-genou c[iZE]. Le sur-genou n'a quasi
+aucun levier decisionnel (le LP l'evite deja par ecretage PV quasi gratuit) ; le
+moteur reel de sur-degradation de l'ELY est le CYCLAGE (start-stop, cf
+ANALYSE_mpc2). Proteger un composant use = surtout freiner son cyclage.
+
+Validation (micro-test _solve_lp, decision marginale de demarrage) :
+  SoH_ely=1.00 (h=1.0)  : e0 identique quel que soit beta (facteur 1).
+  SoH_ely=0.91 (h=0.1)  : beta=1 (x10) -> l'ELY use RENONCE a demarrer (e0 6.1->0
+                          kW) pour un surplus marginal ; beta=0.5 (x3.16) demarre
+                          encore. Monotone, borne (HFLOOR=0.05).
+
+
+3. PARAMETRES (MPC(LP)/get_optimal_action_RB.py)
+--------------------------------------------------------------------------------
+  MPC_SOH_WEAR_BETA_ELY  (defaut 0.0)  exposant sante ELY
+  MPC_SOH_WEAR_BETA_FC   (defaut 0.0)  exposant sante FC
+  MPC_SOH_WEAR_HFLOOR    (defaut 0.05) plancher de h (borne le poids a l'EoL)
+  MPC_FORECAST_MODE      ("pred"|"persist")  "persist" = MPC(sans pred)
+
+
+4. COMMENT PRODUIRE LES CHIFFRES (25 ans, mesocentre)
+--------------------------------------------------------------------------------
+  Sweep du levier (choisir beta) :
+      sbatch run_meso_mpc.slurm 32 25 --sweep soh
+      -> sweep_mpc_soh.txt : MPC(Pred) [b=0] + beta_ely 0.25/0.5/1/2 (+ combos FC),
+         ancre sur RB2(SoH_all+Pred). dtotal montre l'apport SoH.
+  Bench complet de l'echelle (une fois beta retenu, a reporter dans BENCH_STRATS) :
+      sbatch run_meso_mpc.slurm 100 25 --omni
+      -> bench_mpc.txt : RB2 x3 + MPC(sans pred)/MPC(Pred)/MPC(SoH+Pred)/H48 (+omni).
+  Figure : python plot_pareto_mpc.py  (nuage LPSP vs deg, memes conventions).
+
+  NB smoke local : python bench_mpc.py --quick  (1 an) NE MONTRE PAS l'effet SoH
+  (sur 1 an SoH~1, h~1) ; il valide seulement la non-regression + le mode persist.
+
+
+5. ATTENTE HONNETE (cf ANALYSE_robust)
+--------------------------------------------------------------------------------
+Le cost-shaping du LP ne recupere que ~0.9 des ~18 kEUR de fragilite a la
+prevision (quasi irreductible sans MPC robuste/stochastique). Le levier SoH est
+un cost-shaping supplementaire : il donne un POINT METHODOLOGIQUE propre
+(attribution sur l'echelle d'information) et PEUT grignoter les ~0.6 kEUR qui
+separent MPC(Pred) de RB2(SoH+Pred), mais il ne bridge probablement pas a lui seul
+tout l'ecart au front des regles a VoLL=3. Le chemin pour BATTRE RB2 reste le MPC
+robuste (multi-scenarios de bruit / CVaR) -- implemente ci-dessous.
+
+
+6. MPC ROBUSTE / STOCHASTIQUE (piste pour battre RB2, montee en parallele)
+--------------------------------------------------------------------------------
+Principe (2-stage) : a chaque pas, au lieu d'optimiser sur UNE prevision bruitee,
+on tire S = MPC_ROBUST_NSCEN (defaut 10) realisations independantes du bruit de
+prevision et on optimise un SEUL LP couplant les S scenarios, avec 1re action
+COMMUNE (non-anticipativite : f[0], e[0] identiques sur tous les scenarios -- on
+decide avant de savoir quelle realisation surviendra ; recours libre sur k>=1).
+
+Objectif reglable par un CURSEUR de risque lambda (MPC_ROBUST_LAMBDA) :
+    (1-lambda) * moyenne_s(J_s)  +  lambda * CVaR_alpha(J_s)
+  lambda = 0 -> MPC stochastique en ESPERANCE.
+  lambda = 1 -> CVaR pur (alpha = MPC_ROBUST_ALPHA, defaut 0.2) : minimise le cout
+                moyen des 20 % PIRES scenarios -> privilegie la FIABILITE, l'atout
+                naturel du MPC (LPSP deja 2x plus bas). Hypothese : c'est le regime
+                qui abaisse le plus le VoLL de croisement avec les regles.
+CVaR par la representation LP de Rockafellar-Uryasev (var eta + S vars u_s ;
+J_s - eta - u_s <= 0). LP block-diagonal sparse (scipy.sparse) : S copies du LP
+mono-scenario + 2(S-1) egalites de non-anticipativite + machinerie CVaR.
+
+Implementation : MEME module (MPC(LP)/get_optimal_action_RB.py). Le montage LP a
+ete refactore en _build_lp (reutilise tel quel par scenario) ; _solve_lp
+mono-scenario reste STRICTEMENT identique (non-regression verifiee). Le levier SoH
+COMPOSE avec le robuste (memes couts c_s sante-aware par scenario).
+
+Params : MPC_ROBUST_ENABLE (defaut False -> chemin mono-scenario inchange),
+MPC_ROBUST_NSCEN=10, MPC_ROBUST_LAMBDA, MPC_ROBUST_ALPHA.
+
+Validation (micro-tests) : (i) le solveur robuste tourne, non-anticipatif ;
+(ii) reagit au curseur -- lambda croissant pre-arme la FC au pas courant (hedge de
+fiabilite) ; (iii) integration bout-en-bout (get_lol) : actions equilibrees, 0
+echec LP. Effet quantitatif = a mesurer sur 25 ans.
+
+Produire les chiffres :
+      sbatch run_meso_mpc.slurm 32 25 --sweep stoch
+      -> sweep_mpc_stoch.txt : MPC(Pred) det + robuste lambda 0/0.25/0.5/0.75/1,
+         ancre RB2(SoH+Pred). ATTENTION : LP ~S x plus gros -> job plus long
+         (prevoir le walltime ; baisser S ou N pour un premier tour).
+================================================================================

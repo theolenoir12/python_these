@@ -24,6 +24,8 @@ USAGE
     python bench_mpc.py 32 25 --sweep h      # horizon MPC 6/12/24/36/48
     python bench_mpc.py 32 25 --sweep pareto # front MPC : VoLL interne 0.5..30
     python bench_mpc.py 32 25 --sweep vh2    # valeur terminale H2
+    python bench_mpc.py 32 25 --sweep soh    # levier SoH actif : beta_ely/beta_fc
+    python bench_mpc.py 32 25 --sweep stoch  # MPC robuste : curseur risque lambda
     sbatch run_meso_mpc.slurm 100 25 --omni
 
 Sorties (dans MPC/) : bench_mpc*.txt + *_cloud.csv (memes formats que
@@ -56,10 +58,15 @@ BENCH_STRATS = [
     ("RB2(SoH_all) (test nul)", ULT, {"ENABLE": False, "NOISE_ENABLE": False,
                                       "_lol:SOC_MAX_AGED_GAIN": G_WIN}),
     ("RB2(SoH_all+Pred)",       ULT, {"_lol:SOC_MAX_AGED_GAIN": G_WIN}),
-    # MPC (H=24) : defaut = sw x3 (robustification plan C retenue, cf
-    # ANALYSE_robust). Le variant "gel 12h" a ete refute (catastrophique a
-    # 25 ans) et retire. "MPC nu" (sw=1) reste accessible via --sweep robust.
-    ("MPC (H=24)",              MPC, {}),
+    # --- Echelle d'information du MPC (H=24, sw x3 defaut) --------------------
+    # MPC(sans pred) : LP sans look-ahead (persistance) = plancher d'information.
+    # MPC(Pred)      : prevision backtest bruitee (ex "MPC (H=24)", (1.41,66.29)).
+    # MPC(SoH+Pred)  : + penalite d'usure sante-aware (beta_ely provisoire ;
+    #                  valeur RETENUE a fixer depuis --sweep soh).
+    # H=48 conserve comme variante d'horizon (hors echelle d'information).
+    ("MPC(sans pred)",          MPC, {"MPC_FORECAST_MODE": "persist"}),
+    ("MPC(Pred)",               MPC, {}),
+    ("MPC(SoH+Pred)",           MPC, {"MPC_SOH_WEAR_BETA_ELY": 1.0}),
     ("MPC (H=48)",              MPC, {"MPC_H": 48}),
 ]
 OMNI_STRATS = [
@@ -70,6 +77,35 @@ OMNI_STRATS = [
 SWEEP_H      = [6, 12, 24, 36, 48]
 SWEEP_PARETO = [0.5, 1.0, 3.0, 10.0, 30.0]   # MPC_VOLL interne (eval reste VoLL=3)
 SWEEP_VH2    = [0.5, 1.0, 1.5, 2.0]          # MPC_V_H2 [EUR/kWh]
+
+# --- Balayage du levier SoH (MPC(SoH+Pred)) : durcissement d'usure h^(-beta) --
+# Base = MPC(Pred) (beta=0) -> dtotal montre l'apport du SoH actif. L'ELY est le
+# moteur de sur-degradation (cyclage), d'ou le balayage prioritaire de beta_ely.
+SWEEP_SOH = [   # (label, overrides sur MPC(Pred))
+    ("MPC(Pred) [b=0]",         {}),
+    ("MPC(SoH+Pred) bE0.25",    {"MPC_SOH_WEAR_BETA_ELY": 0.25}),
+    ("MPC(SoH+Pred) bE0.5",     {"MPC_SOH_WEAR_BETA_ELY": 0.5}),
+    ("MPC(SoH+Pred) bE1",       {"MPC_SOH_WEAR_BETA_ELY": 1.0}),
+    ("MPC(SoH+Pred) bE2",       {"MPC_SOH_WEAR_BETA_ELY": 2.0}),
+    ("MPC(SoH+Pred) bE1bF1",    {"MPC_SOH_WEAR_BETA_ELY": 1.0,
+                                  "MPC_SOH_WEAR_BETA_FC": 1.0}),
+    ("MPC(SoH+Pred) bE2bF2",    {"MPC_SOH_WEAR_BETA_ELY": 2.0,
+                                  "MPC_SOH_WEAR_BETA_FC": 2.0}),
+]
+
+# --- MPC robuste / stochastique (S scenarios de bruit) : curseur de risque -----
+# Base = MPC(Pred) deterministe (lambda n/a). lambda : 0 = esperance, 1 = CVaR pur
+# (privilegie la fiabilite = queue des pires scenarios). C'est LA piste censee
+# attaquer les ~18 kEUR de fragilite prevision (cf ANALYSE_robust) et faire passer
+# le MPC devant RB2 a VoLL=3. NSCEN=10 (defaut du module).
+SWEEP_STOCH = [   # (label, overrides sur MPC(Pred))
+    ("MPC(Pred) [det]",     {}),
+    ("MPC robuste lam0",    {"MPC_ROBUST_ENABLE": True, "MPC_ROBUST_LAMBDA": 0.0}),
+    ("MPC robuste lam0.25", {"MPC_ROBUST_ENABLE": True, "MPC_ROBUST_LAMBDA": 0.25}),
+    ("MPC robuste lam0.5",  {"MPC_ROBUST_ENABLE": True, "MPC_ROBUST_LAMBDA": 0.5}),
+    ("MPC robuste lam0.75", {"MPC_ROBUST_ENABLE": True, "MPC_ROBUST_LAMBDA": 0.75}),
+    ("MPC robuste lam1",    {"MPC_ROBUST_ENABLE": True, "MPC_ROBUST_LAMBDA": 1.0}),
+]
 
 # --- Plan C : robustification au bruit (sur MPC H=24 bruite) -----------------
 # Cible : ramener la degradation bruitee (~68 kEUR) vers le plancher omniscient
@@ -282,6 +318,20 @@ def main(argv):
         for v in SWEEP_VH2:
             strats.append((f"MPC vH2={v:.2f}", MPC, {"MPC_V_H2": v}))
         run_all(strats, n_seeds, ny, "sweep_mpc_vh2")
+    elif sweep == "soh":
+        # Levier SoH actif (MPC(SoH+Pred)) : base = MPC(Pred) beta=0.
+        # + ancrage RB2 ultime pour situer le point de croisement.
+        strats = [("RB2(SoH_all+Pred)", ULT, {"_lol:SOC_MAX_AGED_GAIN": G_WIN})]
+        for lab, ov in SWEEP_SOH:
+            strats.append((lab, MPC, ov))
+        run_all(strats, n_seeds, ny, "sweep_mpc_soh")
+    elif sweep == "stoch":
+        # MPC robuste : curseur de risque lambda (esperance -> CVaR), S=10.
+        # Ancre RB2 ultime pour situer le croisement.
+        strats = [("RB2(SoH_all+Pred)", ULT, {"_lol:SOC_MAX_AGED_GAIN": G_WIN})]
+        for lab, ov in SWEEP_STOCH:
+            strats.append((lab, MPC, ov))
+        run_all(strats, n_seeds, ny, "sweep_mpc_stoch")
     elif sweep == "robust":
         # Plan C : robustification (sw + hold) sur MPC H=24 bruite, + plancher
         # omniscient en reference. Base = MPC nu -> dtotal montre le GAIN.

@@ -69,6 +69,37 @@ MPC_V_H2         = 1.00    # credit H2 en fin d'horizon (< VoLL*eta_chaine=1.35 
 # --- Surrogats de degradation (echelles, 1.0 = calibration modele reel) ----
 MPC_ELY_WEAR_SCALE = 1.0   # pente charniere ELY > genou 30 %
 MPC_FC_WEAR_SCALE  = 1.0   # pente charniere FC > 80 %
+
+# --- Sante-aware : durcissement des penalites d'usure quand le composant vieillit
+# (levier MPC(SoH+Pred)). Miroir de la modulation SoH^gamma des setpoints RB2,
+# mais transpose en espace de PENALITE : on ne baisse pas un setpoint, on rend
+# l'usure d'un composant use PLUS CHERE dans l'objectif du LP -> l'optimiseur le
+# menage de lui-meme. Marge de sante normalisee h = (SoH - SoH_EoL)/(1 - SoH_EoL)
+# dans [0,1] (h=1 neuf ; h->0 fin de vie) ; le poids d'usure est multiplie par
+# h^(-beta). beta = 0 -> h^0 = 1 -> LP STRICTEMENT identique (non-regression des
+# chiffres MPC(Pred)). NB : SoH_EoL = 0.9 (FC/ELY), donc h couvre tout [0,1] sur
+# la vie d'une unite -> levier actif en continu, pas seulement pres de l'EoL.
+MPC_SOH_WEAR_BETA_FC  = 0.0
+MPC_SOH_WEAR_BETA_ELY = 0.0
+MPC_SOH_WEAR_HFLOOR   = 0.05   # plancher de h (borne le poids d'usure a l'EoL)
+
+# --- Information previsionnelle : "pred" (defaut) ou "persist" -----------------
+# "persist" -> MPC(sans prevision) : la strategie suppose le futur EGAL au pas
+# courant (persistance) ; le LP optimise SANS look-ahead. C'est le PLANCHER
+# d'information de l'echelle (optimisation, mais aucune prevision de profil).
+# "pred" -> fenetre backtest bruitee (= MPC(Pred), comportement historique).
+MPC_FORECAST_MODE = "pred"
+
+# --- MPC ROBUSTE / STOCHASTIQUE (DEFAUT OFF) ---------------------------------
+# Attaque les ~18 kEUR de fragilite a la prevision qu'aucun cost-shaping ne
+# recupere (cf ANALYSE_robust) : au lieu d'optimiser sur UNE prevision bruitee,
+# optimise sur un ENSEMBLE de S scenarios de bruit avec 1re action commune
+# (non-anticipative). Objectif reglable esperance <-> CVaR par MPC_ROBUST_LAMBDA.
+# ENABLE=False -> chemin mono-scenario INCHANGE (non-regression MPC(Pred)).
+MPC_ROBUST_ENABLE = False
+MPC_ROBUST_NSCEN  = 10      # nombre de scenarios de bruit S
+MPC_ROBUST_LAMBDA = 0.0     # curseur risque : 0 = esperance ; 1 = CVaR pur
+MPC_ROBUST_ALPHA  = 0.2     # niveau de queue CVaR (20 % des pires scenarios)
 MPC_SW_SCALE       = 3.0   # couts de commutation |Delta P| (FC et ELY).
                            # 3.0 = robustification au bruit RETENUE (plan C,
                            # cf ANALYSE_robust : -0.9 kEUR et -1000 demarrages
@@ -180,6 +211,15 @@ def _check_no_arbitrage():
 _check_no_arbitrage()
 
 
+def _health_margin(soh, soh_eol):
+    """Marge de sante normalisee h in [HFLOOR, 1] : 1 neuf, ->0 fin de vie.
+    Bornee au plancher pour eviter l'explosion du poids d'usure a l'EoL."""
+    if soh_eol >= 1.0:
+        return 1.0
+    h = (soh - soh_eol) / (1.0 - soh_eol)
+    return min(1.0, max(MPC_SOH_WEAR_HFLOOR, h))
+
+
 _sig_cache = {}
 
 def _noise_sigma_w():
@@ -218,13 +258,29 @@ def _forecast(window):
 #     df = |Delta f|               de = |Delta e|
 #  Layout : x = [f | e | bd | bc | s | c | zf | ze | df | de], blocs de H.
 # ==========================================================================
-def _solve_lp(p, SoC_t, E_h2_t, E_h2_init, SoH_bat_t, P_fc_max_t, P_ely_max_t,
-              soc_max_t):
+def _build_lp(p, SoC_t, E_h2_t, E_h2_init, SoH_bat_t, P_fc_max_t, P_ely_max_t,
+              soc_max_t, SoH_fc_t=1.0, SoH_ely_t=1.0, use_hold=None):
+    """Monte les matrices LP d'UN scenario (sans resoudre). Retourne
+    (c, A_ub, b_ub, A_eq, b_eq, bounds, nv, iF0, iE0). Extrait de _solve_lp pour
+    etre reutilise tel quel par le solveur robuste (block-diagonal multi-scenario)
+    -> le LP mono-scenario reste STRICTEMENT identique (non-regression)."""
     H = len(p)
+    # Facteur d'usure sante-aware (MPC(SoH+Pred)) : h^(-beta), h = marge de sante.
+    # beta = 0 (defaut) -> facteur 1.0 -> LP inchange (non-regression MPC(Pred)).
+    # IMPORTANT : ce facteur multiplie TOUS les canaux d'usure du composant, y
+    # compris le cout de COMMUTATION/demarrage (c[iDE], c[iDF]) -- canal DOMINANT
+    # de la sur-degradation de l'ELY (cyclage, cf ANALYSE_mpc2). Le limiter au
+    # seul cout sur-genou (c[iZE]) serait sans effet : le LP evite deja le
+    # sur-genou par ecretage PV quasi gratuit. Proteger un composant use = surtout
+    # freiner son cyclage.
+    fc_soh  = _health_margin(SoH_fc_t,  FC['SoH_EoL'])  ** (-MPC_SOH_WEAR_BETA_FC)
+    ely_soh = _health_margin(SoH_ely_t, ELY['SoH_EoL']) ** (-MPC_SOH_WEAR_BETA_ELY)
     # Bloc optionnel de residence haut-SoC (plan C) : ajoute H variables hs
     # SEULEMENT si le levier est actif -> LP byte-identique quand MPC_BAT_HOLD_EUR
-    # = 0 (garantit la non-regression des chiffres MPC2).
-    use_hold = MPC_BAT_HOLD_EUR > 0.0
+    # = 0 (garantit la non-regression des chiffres MPC2). use_hold force-able
+    # (le solveur robuste passe use_hold=False pour un layout homogene).
+    if use_hold is None:
+        use_hold = MPC_BAT_HOLD_EUR > 0.0
     nv = (11 if use_hold else 10) * H
     iF, iE, iBD, iBC, iS, iC, iZF, iZE, iDF, iDE = (np.arange(H) + i * H
                                                     for i in range(10))
@@ -245,10 +301,10 @@ def _solve_lp(p, SoC_t, E_h2_t, E_h2_init, SoH_bat_t, P_fc_max_t, P_ely_max_t,
     c[iS]  = MPC_VOLL / 1000.0 * _TS_H
     c[iF] += MPC_V_H2 / 1000.0 * g_f * _TS_H         # H2 consomme = credit perdu
     c[iE] -= MPC_V_H2 / 1000.0 * g_e * _TS_H         # H2 produit  = credit gagne
-    c[iZF] = MPC_FC_WEAR_SCALE * _FC_HIGH_EUR_H * _TS_H / ((1 - FC_FHIGH) * _ETA * P_fc_max_t)
-    c[iZE] = MPC_ELY_WEAR_SCALE * _ELY_RATE_EUR_H * _TS_H / ((ELY_F60 - ELY_F30) * P_ely_max_t / _ETA)
-    c[iDF] = MPC_SW_SCALE * (_FC_SHIFT_EUR / (FC_FHIGH - 0.01) + _FC_ONOFF_EUR) / (_ETA * P_fc_max_t)
-    c[iDE] = MPC_SW_SCALE * _ELY_START_EUR / (P_ely_max_t / _ETA)
+    c[iZF] = fc_soh  * MPC_FC_WEAR_SCALE  * _FC_HIGH_EUR_H  * _TS_H / ((1 - FC_FHIGH) * _ETA * P_fc_max_t)
+    c[iZE] = ely_soh * MPC_ELY_WEAR_SCALE * _ELY_RATE_EUR_H * _TS_H / ((ELY_F60 - ELY_F30) * P_ely_max_t / _ETA)
+    c[iDF] = fc_soh  * MPC_SW_SCALE * (_FC_SHIFT_EUR / (FC_FHIGH - 0.01) + _FC_ONOFF_EUR) / (_ETA * P_fc_max_t)
+    c[iDE] = ely_soh * MPC_SW_SCALE * _ELY_START_EUR / (P_ely_max_t / _ETA)
     if use_hold:
         c[iHS] = MPC_BAT_HOLD_EUR * _TS_H            # EUR / (SoC au-dessus genou) / h
 
@@ -326,11 +382,106 @@ def _solve_lp(p, SoC_t, E_h2_t, E_h2_init, SoH_bat_t, P_fc_max_t, P_ely_max_t,
         bounds[iF[k]] = (0.0, fcap)
         bounds[iE[k]] = (0.0, ecap)
 
+    return c, A_ub, b_ub, A_eq, b_eq, bounds, nv, int(iF[0]), int(iE[0])
+
+
+def _solve_lp(p, SoC_t, E_h2_t, E_h2_init, SoH_bat_t, P_fc_max_t, P_ely_max_t,
+              soc_max_t, SoH_fc_t=1.0, SoH_ely_t=1.0):
+    """LP mono-scenario (MPC deterministe). Retourne (f0, e0) ou None."""
+    c, A_ub, b_ub, A_eq, b_eq, bounds, nv, iF0, iE0 = _build_lp(
+        p, SoC_t, E_h2_t, E_h2_init, SoH_bat_t, P_fc_max_t, P_ely_max_t,
+        soc_max_t, SoH_fc_t, SoH_ely_t)
     res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq,
                   bounds=bounds, method='highs')
     if not res.success:
         return None
-    return float(res.x[iF[0]]), float(res.x[iE[0]])
+    return float(res.x[iF0]), float(res.x[iE0])
+
+
+def _solve_robust_lp(scenarios, SoC_t, E_h2_t, E_h2_init, SoH_bat_t,
+                     P_fc_max_t, P_ely_max_t, soc_max_t, SoH_fc_t=1.0,
+                     SoH_ely_t=1.0):
+    """MPC ROBUSTE / STOCHASTIQUE (2-stage, S scenarios de bruit).
+
+    - Premiere action (f[0], e[0]) COMMUNE a tous les scenarios (non-anticipative :
+      on decide AVANT de savoir quelle realisation du bruit se produira).
+    - Recours libre par scenario sur k>=1 (chaque scenario a sa trajectoire).
+    - Objectif = mesure de risque des couts par scenario J_s, reglable par un
+      CURSEUR lambda (MPC_ROBUST_LAMBDA) entre esperance et CVaR :
+          (1-lambda) * moyenne_s(J_s)  +  lambda * CVaR_alpha(J_s)
+      lambda = 0 -> MPC stochastique en esperance ; lambda = 1 -> CVaR pur
+      (privilegie la fiabilite = queue des mauvais scenarios). CVaR par la
+      representation LP de Rockafellar-Uryasev :
+          CVaR_alpha = min_eta  eta + 1/(alpha S) sum_s max(0, J_s - eta).
+
+    LP block-diagonal (sparse) : S copies du LP mono-scenario + 2(S-1) egalites de
+    non-anticipativite + (si CVaR) 1 var eta + S vars u_s. Retourne (f0, e0)."""
+    from scipy.sparse import block_diag, hstack, vstack, csr_matrix
+    S = len(scenarios)
+    blocks = [_build_lp(ps, SoC_t, E_h2_t, E_h2_init, SoH_bat_t, P_fc_max_t,
+                        P_ely_max_t, soc_max_t, SoH_fc_t, SoH_ely_t,
+                        use_hold=False) for ps in scenarios]
+    nv  = blocks[0][6]
+    iF0 = blocks[0][7]
+    iE0 = blocks[0][8]
+    lam   = MPC_ROBUST_LAMBDA
+    alpha = MPC_ROBUST_ALPHA
+    use_cvar = lam > 0.0
+    ncv = (1 + S) if use_cvar else 0          # eta + u_s
+    N   = S * nv + ncv
+
+    # --- Objectif ------------------------------------------------------------
+    cobj = np.zeros(N)
+    for s in range(S):
+        cobj[s * nv:(s + 1) * nv] = (1.0 - lam) / S * blocks[s][0]   # esperance
+    if use_cvar:
+        i_eta = S * nv
+        i_u0  = S * nv + 1
+        cobj[i_eta] = lam
+        cobj[i_u0:i_u0 + S] = lam / (alpha * S)
+
+    # --- Contraintes block-diagonal (equilibre + SoC/H2/charnieres/|Delta|) ---
+    A_eq = block_diag([b[3] for b in blocks], format='csr')
+    A_ub = block_diag([b[1] for b in blocks], format='csr')
+    b_eq = np.concatenate([b[4] for b in blocks])
+    b_ub = np.concatenate([b[2] for b in blocks])
+    if ncv:                                    # colonnes des vars CVaR (zeros)
+        A_eq = hstack([A_eq, csr_matrix((A_eq.shape[0], ncv))], format='csr')
+        A_ub = hstack([A_ub, csr_matrix((A_ub.shape[0], ncv))], format='csr')
+
+    # --- Non-anticipativite : f[0]_s = f[0]_0, e[0]_s = e[0]_0 (s>=1) ---------
+    na = np.zeros((2 * (S - 1), N))
+    for s in range(1, S):
+        na[2 * (s - 1),     s * nv + iF0] = 1.0
+        na[2 * (s - 1),         0 + iF0]  = -1.0
+        na[2 * (s - 1) + 1, s * nv + iE0] = 1.0
+        na[2 * (s - 1) + 1,     0 + iE0]  = -1.0
+    A_eq = vstack([A_eq, csr_matrix(na)], format='csr')
+    b_eq = np.concatenate([b_eq, np.zeros(2 * (S - 1))])
+
+    # --- CVaR : J_s - eta - u_s <= 0  (J_s = c_s . x_s) -----------------------
+    if use_cvar:
+        cv = np.zeros((S, N))
+        for s in range(S):
+            cv[s, s * nv:(s + 1) * nv] = blocks[s][0]
+            cv[s, i_eta]     = -1.0
+            cv[s, i_u0 + s]  = -1.0
+        A_ub = vstack([A_ub, csr_matrix(cv)], format='csr')
+        b_ub = np.concatenate([b_ub, np.zeros(S)])
+
+    # --- Bornes --------------------------------------------------------------
+    bounds = []
+    for b in blocks:
+        bounds.extend(b[5])
+    if use_cvar:
+        bounds.append((None, None))            # eta libre
+        bounds.extend([(0.0, None)] * S)       # u_s >= 0
+
+    res = linprog(cobj, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq,
+                  bounds=bounds, method='highs')
+    if not res.success:
+        return None
+    return float(res.x[iF0]), float(res.x[iE0])
 
 
 def _fallback_rb2(SoC_t, P_tot_ref_t, E_h2_t, E_h2_init):
@@ -359,12 +510,33 @@ def get_optimal_action_RB(SoC_t,P_tot_ref_t,defaillances,lol_tab,alpha_fc_t,alph
 
     # --- Prevision + LP -------------------------------------------------------
     f0 = e0 = None
-    if P_tot_ref_future is not None and len(P_tot_ref_future) >= 2:
-        H = min(MPC_H, len(P_tot_ref_future))
-        p = _forecast(P_tot_ref_future[:H])
-        p[0] = P_tot_ref_t                       # pas courant connu exactement
+    if MPC_FORECAST_MODE == "persist":
+        # MPC(sans prevision) : futur suppose EGAL au pas courant (persistance).
+        H = MPC_H
+        p = np.full(H, float(P_tot_ref_t))
         sol = _solve_lp(p, SoC_t, E_h2_t, E_h2_init, SoH_bat_t,
-                        P_fc_max_t, P_ely_max_t, soc_max_t)
+                        P_fc_max_t, P_ely_max_t, soc_max_t, SoH_fc_t, SoH_ely_t)
+        if sol is not None:
+            f0, e0 = sol
+    elif P_tot_ref_future is not None and len(P_tot_ref_future) >= 2:
+        H = min(MPC_H, len(P_tot_ref_future))
+        window = P_tot_ref_future[:H]
+        if MPC_ROBUST_ENABLE and MPC_ROBUST_NSCEN > 1:
+            # MPC robuste : S realisations independantes du bruit de prevision,
+            # 1re action commune (non-anticipative). Le pas courant reste exact.
+            scenarios = []
+            for _ in range(MPC_ROBUST_NSCEN):
+                ps = _forecast(window)
+                ps[0] = P_tot_ref_t
+                scenarios.append(ps)
+            sol = _solve_robust_lp(scenarios, SoC_t, E_h2_t, E_h2_init, SoH_bat_t,
+                                   P_fc_max_t, P_ely_max_t, soc_max_t,
+                                   SoH_fc_t, SoH_ely_t)
+        else:
+            p = _forecast(window)
+            p[0] = P_tot_ref_t                   # pas courant connu exactement
+            sol = _solve_lp(p, SoC_t, E_h2_t, E_h2_init, SoH_bat_t,
+                            P_fc_max_t, P_ely_max_t, soc_max_t, SoH_fc_t, SoH_ely_t)
         if sol is not None:
             f0, e0 = sol
     if f0 is None:

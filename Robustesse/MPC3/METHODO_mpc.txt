@@ -1,0 +1,234 @@
+================================================================================
+MPC(LP) -- NOTE DE METHODOLOGIE
+Robustesse/MPC/ ; redige le 2026-07-06 (a la suite du run mesocentre 213274).
+Complement discursif de README_mpc.txt (qui, lui, decrit la FORMULATION du LP).
+Cette note repond a trois questions de fond : (1) le MPC est-il omniscient sur
+son horizon ? (2) qu'est-ce que le modele de bruit fait exactement, et quelle
+est sa limite ? (3) que sont les "ancrages RB2" et quel est leur role ?
+================================================================================
+
+
+0. POSITIONNEMENT
+--------------------------------------------------------------------------------
+Le MPC(LP) ajoute au comparatif de la these une famille de commande
+fondamentalement differente des regles (RB1, RB2 et derivees SoH/Pred) : a
+chaque pas horaire, un programme LINEAIRE optimise la trajectoire des flux
+(P_fc, P_ely, P_bat, delestage) sur les MPC_H prochaines heures a partir d'une
+PREVISION du profil net, applique la PREMIERE action, puis recommence (horizon
+glissant). Il se situe, en termes d'information disponible, ENTRE :
+   - les regles (en ligne, information locale + eventuellement une fenetre de
+     prevision),
+   - la programmation dynamique (DP, offline, omnisciente sur 25 ans = borne
+     d'optimalite).
+L'interet n'est pas seulement "qui gagne" mais de SEPARER les effets grace a
+une echelle d'information controlee (section 1).
+
+
+1. L'ECHELLE D'OMNISCIENCE (le squelette methodologique)
+--------------------------------------------------------------------------------
+On compare, TOUTES CHOSES EGALES PAR AILLEURS (meme profil, meme physique,
+meme comptage du LPSP/lol, meme metrique unifiee VoLL=3), une echelle
+d'information croissante :
+
+  Niveau                Information sur le futur          Role
+  --------------------  -------------------------------   ------------------------
+  DP                    omnisciente sur 25 ans            optimum global OFFLINE
+                                                          (borne basse ~50.3 kEUR)
+  MPC "omni"            futur EXACT sur H=24/48 h         plafond du MPC : apport
+   (--omni)                                               de l'optimisation a
+                                                          horizon fini, prevision
+                                                          parfaite
+  MPC bruite            prevision qualite backtest + MC   ce qu'on deploierait
+   (defaut)                                               REELLEMENT
+  RB2(...+Pred)         MEME prevision bruitee            regles AVEC prevision
+  RB2 / RB1             aucune prevision                  regles reactives
+
+Cette echelle isole TROIS effets que la these veut distinguer :
+  (a) optimisation vs regles ........... MPC omni  vs  RB
+  (b) valeur de l'horizon .............. DP vs MPC omni ; H=24 vs H=48
+  (c) valeur de la qualite de prevision  MPC omni vs MPC bruite
+C'est, a notre sens, l'apport methodologique central du MPC dans le manuscrit,
+davantage que le classement brut.
+
+
+2. LE MPC EST-IL OMNISCIENT SUR SON HORIZON ? -- NON, PAS PAR DEFAUT
+--------------------------------------------------------------------------------
+Le profil (LOAD['P_ref'], PV['P']) est un profil annuel deterministe tuile 51
+fois : la boucle init_and_run_loop_forecast PEUT donc fournir a la strategie la
+fenetre VRAIE du futur, P_tot_ref_future = profil_net[j:j+48]. Mais la strategie
+ne la consomme PAS telle quelle : elle la passe par _forecast(), qui
+
+   - garde le PAS COURANT k=0 EXACT (on observe les conditions presentes) ;
+   - BRUITE les pas k >= 1 (voir section 3).
+
+Deux modes, controles par le drapeau MPC_NOISE_ENABLE :
+
+   MPC_NOISE_ENABLE = True   (DEFAUT)  -> prevision bruitee + Monte-Carlo.
+        C'est le mode du run 213273/213274 (d'ou les N=100 graines, tirees par
+        set_noise_seed). C'EST l'approche "prevision imparfaite + robustesse"
+        attendue : on part de la prevision, on injecte du bruit calibre, et le
+        Monte-Carlo (CRN) mesure la robustesse de la commande a l'incertitude.
+
+   MPC_NOISE_ENABLE = False  (--omni)  -> futur exact sur H.
+        Ce n'est PAS de la triche tant qu'on l'etiquette pour ce qu'il est : le
+        PLAFOND INFORMATIONNEL du MPC (le meilleur atteignable avec une
+        prevision parfaite a court terme). A tracer comme borne, pas comme
+        resultat deployable. NB : le run 213274 n'a PAS inclus --omni ; a
+        ajouter (les points sont deja prets dans OMNI_STRATS de bench_mpc.py).
+
+En resume : aujourd'hui le MPC est REALISTE et robustifie, pas omniscient ;
+l'omniscience n'existe que comme borne superieure optionnelle.
+
+
+3. LE MODELE DE BRUIT DE PREVISION (calibration + fonctionnement)
+--------------------------------------------------------------------------------
+Calibration -- sur le backtest LSTM de la these (celui de RB2(Pred),
+Robustesse/Predictions) :
+     SIGMA_E_KWH = 39.38 kWh   ecart-type de l'erreur AGREGEE en ENERGIE a 18 h
+     BIAS_E_KWH  = -2.32 kWh   biais AGREGE a 18 h
+     _SIGMA_AGG_H = 18         horizon d'agregation de la calibration [pas = h]
+
+Fonctionnement -- a chaque appel, _forecast() ajoute aux pas k >= 1 un bruit
+PAR PAS suivant un AR(1) de correlation MPC_NOISE_RHO = 0.8 :
+     eps_1 ~ N(0,1) ; eps_k = rho*eps_{k-1} + sqrt(1-rho^2)*z_k   (var unite)
+     p[k] += biais_par_pas + sigma_par_pas * eps_k
+L'ecart-type PAR PAS (sigma_par_pas) est back-calcule pour que la SOMME du
+bruit sur 18 h retrouve exactement SIGMA_E_KWH (variance close-form d'une somme
+AR(1) : Var = sigma^2 * [m + 2*sum_{l=1}^{m-1}(m-l) rho^l], m = 18). La
+prevision fournie au LP a donc, a 18 h d'echeance, la MEME dispersion d'energie
+que le backtest reel de la these. Chaque graine Monte-Carlo tire une
+realisation independante -> l'ensemble teste la robustesse.
+
+Coherence avec le reste de la these : le MPC est ainsi bruite a la MEME qualite
+de prevision que RB2(Pred). L'ecart mesure MPC vs RB2(...+Pred) est donc
+imputable a la DECISION (optimisation vs regle), pas a l'information.
+
+
+4. LIMITE ASSUMEE DU MODELE DE BRUIT (a lever plus tard, de facon UNIFIEE)
+--------------------------------------------------------------------------------
+DECISION (2026-07-06) : on CONSERVE le modele de bruit actuel pour l'instant.
+La limite ci-dessous est documentee et sera peut-etre corrigee ulterieurement,
+mais alors de maniere UNIFIEE entre le MPC et RB2(Pred), pour ne pas creer
+d'asymetrie de traitement entre les deux familles.
+
+Limite -- le bruit est RE-TIRE A NEUF a chaque pas de decision. L'erreur de
+prevision d'une decision a la suivante est donc INDEPENDANTE. Dans la realite,
+elle est CORRELEE dans le temps : si a l'heure j on surestime la charge nette
+de l'heure j+5, a l'heure j+1 on la surestimera probablement encore (c'est la
+MEME heure absolue, vue une echeance plus tot). Le modele actuel "lisse" cette
+persistance trop vite -> il est legerement OPTIMISTE sur la robustesse.
+
+  - La version fidele serait un CHAMP DE BRUIT FIGE : tirer une erreur pour
+    chaque HEURE ABSOLUE du futur une fois pour toutes, et la devoiler a mesure
+    que l'echeance se rapproche (l'erreur d'une heure donnee decroit quand on
+    s'en approche). Plus juste, mais plus lourd.
+  - Point important de COHERENCE : le re-tirage par pas est EXACTEMENT la
+    simplification que fait deja RB2(Pred) (qui n'exploite qu'une probabilite
+    agregee de deficit a chaque pas). Garder le modele actuel maintient donc le
+    MPC et RB2(Pred) sur le MEME plan. Si on passe au champ de bruit fige, il
+    faudra le faire DES DEUX COTES simultanement.
+
+Limite secondaire -- l'ancrage de calibration est a 18 h ; au-dela (pertinent
+surtout pour H=48), le sigma par pas est conserve, donc l'erreur agregee
+continue de croitre sans point de backtest pour la contraindre (extrapolation).
+Si des statistiques d'erreur PAR ECHEANCE sigma(h) sont disponibles, calibrer
+le bruit par pas dessus (au lieu d'un AR(1) unique ancre a 18 h) serait plus
+defendable -- la aussi, a faire de facon unifiee avec RB2(Pred).
+
+
+5. LES "ANCRAGES RB2" : ROLE ET ABSENCE D'INFLUENCE SUR LE MPC
+--------------------------------------------------------------------------------
+Point a lever d'emblee : les strategies rule-based n'ont AUCUNE influence sur
+les decisions ni la physique du MPC. Ce sont les MEMES strategies (RB2 socle,
+RB2(SoH_all), RB2(SoH_all+Pred)) REJOUEES DANS LE MEME JOB, sous les MEMES
+graines (CRN, Common Random Numbers). Leur role est purement EXPERIMENTAL, a
+trois titres :
+
+  (i)  ANCRE DE VALIDATION. RB2 socle doit reproduire sa valeur connue
+       (80.10 kEUR, jobs anterieurs). Si elle sort a 80.10, la chaine de mesure
+       (profil, boucle, metriques) est correcte ; si elle derive, il y a un bug
+       dans le montage. C'est le sens du mot "ancrage" : une valeur de
+       reference connue qui CERTIFIE le banc.
+
+  (ii) REDUCTION DE VARIANCE SUR LES ECARTS. MPC et RB voyant les MEMES tirages
+       aleatoires, la difference appariee "MPC - RB ultime" a une variance bien
+       plus faible que la difference de deux moyennes Monte-Carlo independantes.
+       C'est ce qui rend un ecart de ~1.5 kEUR significatif malgre le bruit.
+
+  (iii) COMPARABILITE STRICTE. Meme profil, memes realisations de bruit, meme
+       code de comptage LPSP/lol, meme metrique unifiee.
+
+STATUT DANS LE RUN 213274 : les ancrages ont ete SAUTES (dossier
+Fable_pred/RB2(SoH_all+Pred)/ non synchronise sur le mesocentre ; la resolution
+robuste de bench_mpc.py les a ignores avec avertissement a t=0 plutot que de
+faire echouer le job). La comparaison MPC vs RB repose donc, pour l'instant,
+sur les chiffres RB STOCKES DANS LE MANUSCRIT -> comparaison NON APPARIEE,
+statistiquement plus faible. Pour retablir les ecarts apparies CRN : resync du
+dossier Fable_pred sur le meso, puis relance.
+
+
+6. METRIQUES (identiques a bench_fable / bench_ultime)
+--------------------------------------------------------------------------------
+  LPSP [%]        energie non servie / energie planifiee (deficit uniquement)
+  deg [kEUR]      cout de degradation sur la trajectoire REELLE, via
+                  Common/cost_fcn_total2 (modeles reels bat + FC + ELY) --
+                  PAS le surrogat lineaire interne du LP, qui ne sert qu'a
+                  DECIDER. L'ecart modele-interne / modele-reel est donc paye
+                  dans cette metrique.
+  EENS [kWh]      energie non servie cumulee
+  total [kEUR]    deg + VoLL * EENS/1000   (indicateur unifie, VoLL=3 fige)
+  ELY_starts      nombre de demarrages ELY (indicateur d'usure par cyclage)
+
+
+7. LECTURE DU RUN 213274 (25 ans, VoLL=3, N=100, CRN ; MPC bruite)
+--------------------------------------------------------------------------------
+  strategie              LPSP %   deg kEUR   total kEUR   (ref : vs ultime RB)
+  DP (borne offline)      ~0.34     ~47.5      ~50.3       --
+  RB2(SoH_all+Pred) ULT    2.94      53.10      77.22       0      (manuscrit)
+  RB2(SoH_all)             3.11      52.87      78.34      +1.11   (manuscrit)
+  MPC (H=24)               1.28      68.30      78.80      +1.58
+  MPC (H=48)               1.22      69.35      79.34      +2.11
+  RB2 socle                2.59      58.84      80.10      +2.88   (manuscrit)
+  MPC (H=24, gel 12h)      4.52      67.29     104.37     +27.1
+
+Interpretation :
+  - Le MPC bat la regle NAIVE (socle) mais PAS les regles reglees. Il achete de
+    la FIABILITE (LPSP ~1.2-1.3 %, moitie des RB) au prix d'une DEGRADATION plus
+    forte (68-69 vs 53-59 kEUR). A VoLL=3, l'energie non servie pese trop peu
+    pour que ce gain de fiabilite renverse le classement.
+  - Moteur de la sur-degradation : le CYCLAGE de l'ELY (~12600-13800 demarrages
+    sur 25 ans). Le surrogat d'usure lineaire est trop mou : sous le genou 30 %
+    Pmax l'usure est "gratuite", l'ELY oscille autour du genou ; le cout de
+    commutation |Delta P| est sous-pondere. La batterie exploite toute la bande
+    de SoC (surrogat = pente moyenne, alors que le vrai modele est ~5x plus cher
+    au-dessus de SoC 0.5).
+  - H=48 n'aide PAS (79.34 > 78.80) : allonger l'horizon fait cycler PLUS.
+  - Le gel 12 h est CATASTROPHIQUE a 25 ans (104 kEUR), a l'inverse du test 1 an
+    synthetique : gel indiscrimine -> grosses pertes de charge. A JETER ; la
+    bonne facon de limiter le battement serait des contraintes min-up/min-down
+    dans un MILP, pas un gel force.
+
+Lecture pour le manuscrit : meme avec la MEME information previsionnelle, un
+MPC-LP ne domine pas les regles SoH-aware, parce que le surrogat lineaire
+APLATIT la connaissance non-lineaire de l'usure que les regles encodent (genou
+0.310, setpoints modules par le SoH, plafond de SoC vieillissant). L'atout du
+MPC est la fiabilite -- que VoLL=3 ne recompense pas assez. COROLLAIRE
+TESTABLE : a VoLL plus eleve, le MPC finit par passer devant (LPSP deux fois
+plus bas). Le VoLL de croisement est un resultat a produire (plan B).
+
+
+8. PLAN B (retenu) ET CE QU'IL SUPPOSE
+--------------------------------------------------------------------------------
+Plan B = front MPC + VoLL de croisement.
+  - Front MPC : balayage du VoLL INTERNE du LP (bench_mpc.py --sweep pareto,
+    MPC_VOLL de 0.5 a 30) -> frontiere atteignable du MPC bruite, a comparer au
+    front DP.
+  - VoLL de croisement : exploiter le LPSP deux fois plus bas du MPC pour
+    trouver le VoLL d'evaluation au-dela duquel le MPC passe devant les regles.
+Pour que B soit methodologiquement carre, y ajouter systematiquement :
+  (i)  la variante --omni de chaque point (le plafond informationnel) ;
+  (ii) la resynchro de Fable_pred pour retablir les ancrages apparies CRN.
+
+Rappel : le modele de bruit reste CELUI D'AUJOURD'HUI (section 4), volontairement,
+pour rester unifie avec RB2(Pred).
+================================================================================

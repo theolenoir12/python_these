@@ -13,8 +13,8 @@ def get_optimal_action_RB(SoC_t,P_tot_ref_t,defaillances,lol_tab,alpha_fc_t,alph
     #   SOC_LOW = 0.40, SOC_HIGH = 0.75   (ancien réglage : 0.20 / 0.60).
     # Les pentes ci-dessous en découlent : 1/(SOC_HIGH-SOC_LOW) en décharge,
     # 1/(1-SOC_HIGH) en charge (avant : 5/2 = 1/(0.6-0.2) = 1/(1-0.6)).
-    SOC_LOW  = 0.40
-    SOC_HIGH = 0.75
+    SOC_LOW  = 0.20
+    SOC_HIGH = 0.35
 
     if SOC_LOW < SoC_t < SOC_HIGH:
         if P_tot_ref_t <= 0:

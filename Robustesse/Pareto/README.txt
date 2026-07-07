@@ -64,9 +64,12 @@ plot_eol_pareto_chap2.py, généralisé.
                                   mc_rul_uncertainty_cloud.csv ABSENTE -> non régén.)
       mc_rul_uncertainty.*       (mc_rul_uncertainty.py)
       pred_uncertainty_zoom.*    (plot_pred_uncertainty.py)
-Version des données retenue : results_meso/ (2026-06-22, la plus récente ; doublons
-plus anciens ignorés : ../Analyse_sensibilite/{results,results_meso_1806,
-results_meso_eol}/).
+Version des données retenue : ../Analyse_sensibilite/results_meso/ (re-run mésocentre
+2026-07-07, N=200, setpoints RB2/RB2(SoH) courants ; RB2=(2.4509,65.415),
+RB2(SoH)=(2.5474,59.359), cohérents avec la réf Pareto ci-dessous). Les dossiers
+dupliqués/obsolètes (results_meso_1806, results_meso_eol, Analyse_sensibilite2) ont
+été supprimés lors de la consolidation ; seuls subsistent results_meso/ (canonique) et
+results/ (sorties de runs locaux).
 
 CHIFFRES : CHAPITRE PREDICTIONS (jeu cohérent avec RUL)
 ------------------------------------------------------

@@ -1,0 +1,326 @@
+From dc7984e111dbc05af6b994f207ac28a0ed9cee39 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 6 Jul 2026 18:18:58 +0000
+Subject: [PATCH] MPC2 : depouillement plan B (VoLL de croisement + figure) +
+ note d'analyse
+
+Ajoute Robustesse/MPC2/ :
+  - analyse_mpc2.py : reconstruit l'EENS de chaque strategie depuis les
+    tableaux de synthese (total = deg + VoLL*EENS/1000, pas besoin des clouds),
+    calcule les VoLL de croisement MPC/regles, et trace la figure 2 panneaux
+    (espace des objectifs + front DP ; cout unifie vs VoLL avec croisement) ;
+  - ANALYSE_mpc2.txt : lecture du plan B (jobs 213286 sweep pareto + 213287
+    omni). Points cles : (1) ancrages RB2 reproduits a l'identique -> chaine
+    certifiee, comparaison desormais appariee ; (2) plafond omni du MPC ~59 kE
+    frole la borne DP -> formulation saine ; (3) tout l'ecart aux regles (~20 kE)
+    est de la SENSIBILITE A LA PREVISION (le bruit fait chatterer l'ELY :
+    8493 -> 13814 demarrages), les regles etant robustes ; (4) VoLL de
+    croisement ~3.35 EUR/kWh -> le MPC devient meilleur des que la fiabilite est
+    un peu plus valorisee ; VoLL=3 pile au point de bascule.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01HR98GRhkz4UPufQqH6ZQdr
+---
+ Robustesse/MPC2/ANALYSE_mpc2.txt | 126 +++++++++++++++++++++++++
+ Robustesse/MPC2/analyse_mpc2.py  | 156 +++++++++++++++++++++++++++++++
+ 2 files changed, 282 insertions(+)
+ create mode 100644 Robustesse/MPC2/ANALYSE_mpc2.txt
+ create mode 100644 Robustesse/MPC2/analyse_mpc2.py
+
+diff --git a/Robustesse/MPC2/ANALYSE_mpc2.txt b/Robustesse/MPC2/ANALYSE_mpc2.txt
+new file mode 100644
+index 0000000..ac16639
+--- /dev/null
++++ b/Robustesse/MPC2/ANALYSE_mpc2.txt
+@@ -0,0 +1,126 @@
++================================================================================
++MPC(LP) -- LECTURE DU PLAN B (jobs mesocentre 213286 + 213287)
++Robustesse/MPC2/ ; redige le 2026-07-06.
++Depouillement : analyse_mpc2.py (reconstruit l'EENS et les VoLL de croisement
++depuis bench_mpc.txt + sweep_mpc_pareto.txt ; figure pareto_mpc2.pdf).
++A lire apres METHODO_mpc.txt.
++================================================================================
++
++
++1. CE QUI A TOURNE
++--------------------------------------------------------------------------------
++  213287  --omni  N=100, 25 ans (6 h 07) : comparatif complet AVEC ancrages RB2
++          (Fable_pred synchronise cette fois) + bornes omniscientes du MPC.
++  213286  --sweep pareto  N=32, 25 ans (1 h 54) : front propre du MPC (balayage
++          du VoLL INTERNE du LP, 0.5 -> 30).
++
++
++2. VALIDATION DE LA CHAINE DE MESURE (ancrages RB2)
++--------------------------------------------------------------------------------
++Les trois ancrages reproduisent EXACTEMENT les chiffres du manuscrit :
++    RB2 socle           80.102 kEUR   (manuscrit 80.102)
++    RB2(SoH_all)        78.336        (78.336)
++    RB2(SoH_all+Pred)   77.228        (77.224)
++=> le montage (profil, boucle forecast, metriques, CRN) est CERTIFIE. La
++comparaison MPC vs RB est desormais APPARIEE (memes graines), donc les ecarts
++sont significatifs.
++
++
++3. LE TABLEAU (25 ans, VoLL=3, N=100, CRN)
++--------------------------------------------------------------------------------
++  strategie            LPSP %   deg kE   EENS kWh   total kE   ELY starts
++  DP (borne offline)    ~0.34    ~47.5     ~430      ~50.3       --
++  MPC omni (H=48)        0.48     54.75     1324      58.72      8493
++  MPC omni (H=24)        0.63     54.60     1730      59.79      8402
++  RB2(SoH_all+Pred)      2.94     53.09     8045      77.23      8994
++  RB2(SoH_all)           3.11     52.87     8489      78.34      9190
++  MPC (H=24)             1.28     68.30     3499      78.80     12616
++  MPC (H=48)             1.22     69.35     3330      79.34     13814
++  RB2 socle              2.59     58.84     7086      80.10      9199
++  MPC (H=24, gel 12h)    4.52     67.29    12362     104.37     11635
++  (EENS reconstruit : total = deg + VoLL*EENS/1000)
++
++
++4. LES DEUX RESULTATS MAJEURS
++--------------------------------------------------------------------------------
++(A) LE PLAFOND DU MPC FROLE LA BORNE DP.
++    MPC omni (H=48) = 58.72 kEUR (LPSP 0.48 %, deg 54.75), a comparer a la DP
++    ~50.3 et a l'ultime RB 77.23. Avec une prevision PARFAITE a 48 h, le MPC
++    capture donc l'essentiel de l'optimum offline : LA FORMULATION LP ET LES
++    SURROGATS SONT SAINS. Ce n'est pas l'optimiseur qui est en cause.
++
++(B) TOUT L'ECART AUX REGLES EST DE LA SENSIBILITE A LA PREVISION.
++    Meme MPC, on passe de omni a bruite (backtest sigma=39.38 kWh) :
++        total   58.72 -> 79.34   (+20.6 kEUR)
++        deg     54.75 -> 69.35   (+14.6)
++        ELY st.  8493 -> 13814   (+5321 demarrages, +63 %)
++    Le bruit de prevision fait CHATTERER l'ELY autour du genou 30 % Pmax : c'est
++    LUI qui gonfle la degradation, pas le LP (qui, informe exactement, ne cycle
++    presque pas). Or les regles sont quasi INSENSIBLES a la prevision
++    (RB2(Pred) n'exploite qu'1 bit : franchir +-1 sigma). D'ou le renversement
++    de lecture : le MPC n'est pas "moins bon", il est FRAGILE a l'erreur de
++    prevision, la ou les regles sont robustes par construction. La valeur de la
++    QUALITE de prevision (effet (c) de l'echelle d'information, cf METHODO) vaut
++    ~20 kEUR pour le MPC, ~0 pour les regles.
++
++
++5. LE VoLL DE CROISEMENT (panneau droit de la figure)
++--------------------------------------------------------------------------------
++Cout unifie total(V) = deg + V*EENS/1000 : chaque strategie est une droite en V.
++Le MPC ayant un LPSP ~2x plus bas (EENS 3499 vs 8045 kWh), sa droite est plus
++PLATE -> elle finit par passer sous celle des regles :
++    MPC (H=24) passe devant RB2 socle .............. VoLL > 2.64 EUR/kWh
++    MPC (H=24) passe devant RB2(SoH_all) ........... VoLL > 3.09
++    MPC (H=24) passe devant RB2(SoH_all+Pred) ...... VoLL > 3.35
++    MPC (H=48) passe devant RB2(SoH_all+Pred) ...... VoLL > 3.45
++Lecture : a VoLL=3 (choix de la these) les regles reglees devancent le MPC de
++peu (77.23 vs 78.80), mais le classement BASCULE juste au-dessus, a ~3.35
++EUR/kWh. Le MPC est la strategie en ligne OPTIMALE EN FIABILITE ; il devient le
++meilleur choix global des que la fiabilite est un peu plus valorisee. Le VoLL=3
++se trouve donc pile au point de bascule -- resultat propre et defendable.
++
++
++6. LE FRONT MPC INTERNE (sweep_mpc_pareto.txt, N=32)
++--------------------------------------------------------------------------------
++Balayage du VoLL INTERNE du LP (le bouton de la strategie, distinct du VoLL
++d'evaluation qui reste 3) :
++    VoLLint   LPSP %   deg kE   total@3 kE
++    0.5        5.25     58.91    101.94
++    1          4.87     59.77     99.69
++    3          1.28     68.28     78.76   <- genou (meilleur cout unifie)
++    10         1.32     70.77     81.56
++    30         1.30     69.90     80.56
++Le genou est a VoLLint=3 : en-dessous le LP delest e trop (LPSP explose, deg
++proche des regles ~59), au-dessus il sur-cycle sans gain de LPSP. Le reglage
++interne 3 est donc coherent avec le VoLL d'evaluation, et bien pose.
++
++
++7. AUTRES ENSEIGNEMENTS
++--------------------------------------------------------------------------------
++  - H=24 > H=48 SOUS BRUIT (78.80 < 79.34) : allonger l'horizon integre plus de
++    bruit -> plus de cyclage. Mais H=48 > H=24 en OMNI (58.72 < 59.79) : avec
++    prevision parfaite, l'horizon long aide. L'horizon optimal DEPEND donc de la
++    qualite de prevision -- joli corollaire de l'effet (b) x (c).
++  - Le gel 12 h reste CATASTROPHIQUE a 25 ans (104 kEUR, EENS 12362 kWh) :
++    definitivement ecarte. Le battement ELY doit se traiter par min-up/min-down
++    (MILP), pas par gel force.
++
++
++8. CONCLUSION POUR LE MANUSCRIT
++--------------------------------------------------------------------------------
++Message de conception : un MPC-LP predictif a un POTENTIEL quasi-optimal
++(plafond omni ~ front DP), mais son avantage n'est REALISE que si la prevision
++est de bonne qualite OU si la fiabilite est fortement valorisee (VoLL > ~3.35).
++A prevision imparfaite (backtest) et VoLL modere (3), les regles SoH-aware --
++qui encodent la connaissance non-lineaire de l'usure de facon robuste a
++l'incertitude -- restent legerement preferables. Les deux familles sont ainsi
++positionnees sans ambiguite, et l'echelle d'information (DP / MPC-omni /
++MPC-bruite / RB) donne au chapitre sa structure.
++
++Piste (si l'on veut faire basculer le MPC a VoLL=3) : viser les ~14 kEUR de
++degradation excedentaire due au bruit (68 vs plancher omni 54.6) en
++robustifiant la commande a l'erreur de prevision -- cout batterie par zone de
++SoC + cout de commutation ELY durci (plan C), ou MPC stochastique/robuste. La
++cible chiffree est desormais explicite : ramener la deg bruitee vers son propre
++plancher omniscient.
++================================================================================
+diff --git a/Robustesse/MPC2/analyse_mpc2.py b/Robustesse/MPC2/analyse_mpc2.py
+new file mode 100644
+index 0000000..410a64d
+--- /dev/null
++++ b/Robustesse/MPC2/analyse_mpc2.py
+@@ -0,0 +1,156 @@
++# -*- coding: utf-8 -*-
++"""
++analyse_mpc2.py -- Depouillement du plan B (jobs mesocentre 213286 + 213287).
++==============================================================================
++Lit MPC2/bench_mpc.txt (comparatif complet N=100 avec ancrages RB2 + points
++omniscients) et MPC2/sweep_mpc_pareto.txt (front MPC, VoLL interne), reconstruit
++l'EENS de chaque strategie (total = deg + VoLL*EENS/1000), calcule les VoLL de
++CROISEMENT MPC/regles, et produit la figure a deux panneaux :
++  - gauche : espace des objectifs (LPSP vs deg) + front DP en fond ;
++  - droite : cout unifie vs VoLL d'evaluation + point de croisement.
++
++Aucune dependance aux *_cloud.csv (non necessaires) : tout est reconstruit des
++tableaux de synthese. Lancement : python analyse_mpc2.py
++Sorties : pareto_mpc2.pdf / .png dans MPC2/.
++"""
++import os
++import numpy as np
++import matplotlib
++matplotlib.use("Agg")
++import matplotlib.pyplot as plt
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++ROOT = os.path.abspath(os.path.join(HERE, ".."))
++VOLL = 3.0     # VoLL d'evaluation de reference (fige, comme tout le comparatif)
++
++# Front DP v2 (borne offline). Adapter le chemin si besoin.
++DP_FRONT = os.path.join(ROOT, "Vieillissement8", "DP", "results_meso",
++                        "dp_pareto_25y_51x51_v2.txt")
++
++
++def parse_bench(path):
++    """{label: dict(N, lpsp, slpsp, deg, sdeg, total, stotal, ely)} depuis un .txt."""
++    rows = {}
++    with open(path) as f:
++        for line in f:
++            if line.startswith("#") or line.startswith("label"):
++                continue
++            p = [x.strip() for x in line.split(";")]
++            if len(p) < 10:
++                continue
++            rows[p[0]] = dict(N=int(p[1]), lpsp=float(p[2]), slpsp=float(p[3]),
++                              deg=float(p[4]), sdeg=float(p[5]), total=float(p[6]),
++                              stotal=float(p[7]), ely=float(p[9]))
++    for r in rows.values():                      # EENS reconstruit [kWh]
++        r["eens"] = (r["total"] - r["deg"]) / VOLL * 1000.0
++    return rows
++
++
++def dp_front(path):
++    pts = []
++    try:
++        with open(path) as f:
++            for line in f:
++                tok = [t for t in line.split() if t != "*"]
++                if len(tok) < 5:
++                    continue
++                try:
++                    v = [float(t) for t in tok[:5]]
++                except ValueError:
++                    continue
++                pts.append((v[1], v[2]))         # LPSP%, deg_kE
++    except OSError:
++        return None
++    a = np.array(pts)
++    return a[np.argsort(a[:, 0])] if len(a) else None
++
++
++def crossover(bench, a, b):
++    """VoLL* ou total_a(V) = total_b(V) ; None si pentes egales."""
++    da, ea = bench[a]["deg"], bench[a]["eens"] / 1000.0
++    db, eb = bench[b]["deg"], bench[b]["eens"] / 1000.0
++    return None if abs(ea - eb) < 1e-9 else (db - da) / (ea - eb)
++
++
++def main():
++    bench = parse_bench(os.path.join(HERE, "bench_mpc.txt"))
++
++    print("=== Reconstruction EENS ===")
++    for lab, r in bench.items():
++        print(f"{lab:<26s} LPSP={r['lpsp']:.2f}%  deg={r['deg']:.2f}  "
++              f"EENS={r['eens']:.0f} kWh  tot@3={r['total']:.2f}  ELY={r['ely']:.0f}")
++
++    print("\n=== VoLL de croisement MPC / regles ===")
++    for mpc in ("MPC (H=24)", "MPC (H=48)"):
++        for rb in ("RB2 socle", "RB2(SoH_all) (test nul)", "RB2(SoH_all+Pred)"):
++            if mpc in bench and rb in bench:
++                V = crossover(bench, mpc, rb)
++                print(f"  {mpc} croise {rb:<26s} a VoLL = {V:.2f} EUR/kWh")
++
++    if "MPC omni (H=48)" in bench:
++        g = bench["MPC (H=48)"]["total"] - bench["MPC omni (H=48)"]["total"]
++        print(f"\n=== Cout de l'imperfection de prevision (H=48) : "
++              f"{g:.1f} kEUR (bruite {bench['MPC (H=48)']['total']:.1f} "
++              f"vs omni {bench['MPC omni (H=48)']['total']:.1f}) ===")
++
++    # ------------------------------------------------------------------ figure
++    plt.rcParams.update({"font.family": "serif", "mathtext.fontset": "cm",
++        "axes.labelsize": 15, "legend.fontsize": 9.5, "xtick.labelsize": 12,
++        "ytick.labelsize": 12, "grid.alpha": 0.6, "grid.linestyle": "--",
++        "grid.linewidth": 0.6})
++    disp = {"RB2(SoH_all) (test nul)": "RB2(SoH_all)"}
++    dp = dp_front(DP_FRONT)
++    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13.5, 5.6))
++
++    groups = {
++        "RB2 socle": ("tab:blue", "o"), "RB2(SoH_all) (test nul)": ("tab:cyan", "o"),
++        "RB2(SoH_all+Pred)": ("tab:green", "o"),
++        "MPC (H=24)": ("tab:red", "s"), "MPC (H=48)": ("tab:orange", "s"),
++        "MPC (H=24, gel 12h)": ("0.6", "x"),
++        "MPC omni (H=24)": ("tab:purple", "D"), "MPC omni (H=48)": ("magenta", "D")}
++    if dp is not None:
++        ax1.plot(dp[:, 0], dp[:, 1], "-", color="0.4", lw=1.6, zorder=1,
++                 label="Front DP (borne offline)")
++    for lab, (c, m) in groups.items():
++        if lab not in bench:
++            continue
++        r = bench[lab]
++        ax1.errorbar(r["lpsp"], r["deg"], xerr=r["slpsp"], yerr=r["sdeg"],
++                     fmt=m, ms=8, color=c, ecolor=c, capsize=3, zorder=3,
++                     label=disp.get(lab, lab))
++    ax1.set_xlabel("LPSP [%]"); ax1.set_ylabel(u"Coût de dégradation [k€]")
++    ax1.set_title("Espace des objectifs (25 ans, VoLL=3)", fontsize=13)
++    ax1.grid(True); ax1.legend(loc="upper right")
++
++    Vg = np.linspace(0, 8, 200)
++    lines = {"RB2 socle": ("tab:blue", "-"), "RB2(SoH_all) (test nul)": ("tab:cyan", "-"),
++             "RB2(SoH_all+Pred)": ("tab:green", "-"), "MPC (H=24)": ("tab:red", "-"),
++             "MPC (H=48)": ("tab:orange", "--"), "MPC omni (H=48)": ("magenta", ":")}
++    for lab, (c, ls) in lines.items():
++        if lab not in bench:
++            continue
++        r = bench[lab]
++        ax2.plot(Vg, r["deg"] + Vg * r["eens"] / 1000.0, ls, color=c, lw=1.9,
++                 label=disp.get(lab, lab))
++    if "MPC (H=24)" in bench and "RB2(SoH_all+Pred)" in bench:
++        Vx = crossover(bench, "MPC (H=24)", "RB2(SoH_all+Pred)")
++        Tx = bench["MPC (H=24)"]["deg"] + Vx * bench["MPC (H=24)"]["eens"] / 1000.0
++        ax2.plot(Vx, Tx, "k*", ms=15, zorder=5)
++        ax2.annotate(f"croisement\nMPC / RB ultime\nVoLL={Vx:.2f}", (Vx, Tx),
++                     xytext=(Vx + 0.7, Tx + 10), fontsize=9,
++                     arrowprops=dict(arrowstyle="->", color="k", lw=1))
++    ax2.axvline(VOLL, color="0.7", lw=1, ls=":")
++    ax2.set_xlabel(u"VoLL d'évaluation [€/kWh]")
++    ax2.set_ylabel(u"Coût unifié total [k€]")
++    ax2.set_title(u"Sensibilité au VoLL et point de croisement", fontsize=13)
++    ax2.grid(True); ax2.legend(loc="upper left"); ax2.set_xlim(0, 8)
++
++    plt.tight_layout()
++    for ext in ("pdf", "png"):
++        plt.savefig(os.path.join(HERE, f"pareto_mpc2.{ext}"),
++                    dpi=160, bbox_inches="tight")
++    print("\n-> pareto_mpc2.pdf / .png")
++
++
++if __name__ == "__main__":
++    main()
+-- 
+2.43.0
+

@@ -66,9 +66,9 @@ POINTS = {
     # levier état de santé (UNIQUE : setpoints H2 x SoH, noté simplement "SoH")
     "RB2(SoH)":      (2.9091, 54.9057),   # setpoints actuels : main RB2(SoH)/
     # intégration prévision
-    "RB2(Pred)":     (2.3642, 65.0248),   # pré-charge +-1sigma (moyenne MC hyst)
-    "RB2(RUL)":      (2.5763, 59.9217),   # augmentation par pronostic RUL
-    "RB2(SoH+Pred)": (2.4796, 59.3898),   # prévision appliquée à RB2(SoH), MC hyst
+    "RB2(Pred)":     (2.5171, 58.9745),   # pré-charge +-1sigma (moyenne MC hyst)
+    "RB2(RUL)":      (2.8024, 57.7452),   # augmentation par pronostic RUL
+    "RB2(SoH+Pred)": (2.6283, 55.3644),   # prévision appliquée à RB2(SoH), MC hyst
 }
 
 BASE = ["0-100", "25-75", "50-50", "75-25", "100-0", "RB2",
@@ -108,10 +108,10 @@ FAMILIES = {
         offsets={
             "RB1":           (0.08,  0.0, "left",   "center"),
             "100-0":         (0.06,  1.1, "left",   "bottom"),
-            "RB2":           (0.13,  0.1, "left",   "center"),
+            "RB2":           (0.05,  1.1, "left",   "center"),
             "RB2(Pred)":     (-0.12, 0.0, "right",  "center"),
             "RB2(SoH)":      (0.0,  -1.1, "center", "top"),
-            "RB2(RUL)":      (0.0,   1.0, "center", "bottom"),
+            "RB2(RUL)":      (0.62,   -2.0, "center", "bottom"),
             "RB2(SoH+Pred)": (-0.12, 0.0, "right",  "center"),
             "75-25":         (0.0,   1.1, "center", "bottom"),
         },

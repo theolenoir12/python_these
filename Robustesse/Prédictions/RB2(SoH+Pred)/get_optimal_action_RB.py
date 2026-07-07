@@ -42,8 +42,8 @@ def get_optimal_action_RB(SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t,
                           P_tot_ref_future=None):
     ######################### RULES ##########################
     # Base RB2(SoH) : modulation du setpoint ELY par le SoH (FC non modulee)
-    P_fc_set  = 0.440 * FC['P_fc_max'] * SoH_fc_t ** 0
-    P_ely_set = 0.320 * ELY['P_ely_max'] * SoH_ely_t ** 0.5
+    P_fc_set  = 0.440 * FC['P_fc_max'] * SoH_fc_t ** 1
+    P_ely_set = 0.310 * ELY['P_ely_max'] * SoH_ely_t ** 2
 
     # Levier PREVISION : pre-charge batterie -> couper l'ELY
     if _precharge(P_tot_ref_future, SoC_t):

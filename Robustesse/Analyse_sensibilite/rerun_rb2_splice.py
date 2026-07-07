@@ -1,27 +1,27 @@
 # -*- coding: utf-8 -*-
 """rerun_rb2_splice.py -- re-run CIBLE de RB2 / RB2(SoH) + SPLICE dans results_meso/.
 =================================================================================
-CONTEXTE. Les setpoints des strategies RB2 et RB2(SoH) ont ete re-deplaces
-(cf. get_optimal_action_RB.py). SEULES ces deux strategies ont change : les 8
-autres (0-100..SoC06, RB1) sont deterministes et inchangees. Comme les analyses
+CONTEXTE. Les setpoints des strategies RB1, RB2 et RB2(SoH) ont ete re-deplaces
+(cf. get_optimal_action_RB.py). SEULES ces trois strategies ont change : les 7
+autres (0-100..SoC06) sont deterministes et inchangees. Comme les analyses
 de sensibilite tirent les MEMES echantillons Monte-Carlo pour toutes les
 strategies (common random numbers, seed fixe genere AVANT la boucle strategie),
-on peut ne re-simuler que RB2 et RB2(SoH) et REMPLACER leurs lignes dans les
+on peut ne re-simuler que RB1/RB2/RB2(SoH) et REMPLACER leurs lignes dans les
 fichiers results_meso/sens_<axe>.txt deja produits, sans retoucher les autres.
 
 CE QUE FAIT CE SCRIPT (sans MODIFIER les sens_*.py d'origine)
 ------------------------------------------------------------
 Pour chaque axe demande :
   1. importe le module sens_<axe> ;
-  2. monkeypatch sa liste de scenarios -> [RB2, RB2(SoH)] UNIQUEMENT ;
+  2. monkeypatch sa liste de scenarios -> [RB1, RB2, RB2(SoH)] UNIQUEMENT ;
   3. redirige ses sorties (OUT_TXT + figures) vers un dossier TEMP -> les
      resultats d'origine dans results/ ne sont PAS ecrases ;
   4. appelle son main() : calcul IDENTIQUE a l'original (memes tirages MC, memes
-     colonnes) mais seulement pour RB2 / RB2(SoH) (+ OAT, qui porte deja sur la
+     colonnes) mais seulement pour RB1/RB2/RB2(SoH) (+ OAT, qui porte deja sur la
      reference RB2(SoH)) ;
-  5. SPLICE : dans results_meso/sens_<axe>.txt, remplace les lignes "RB2;..." et
-     "RB2(SoH);..." du front + le bloc "## OAT ..." par ceux fraichement calcules.
-     Une sauvegarde .bak.<horodatage> est ecrite avant toute modification.
+  5. SPLICE : dans results_meso/sens_<axe>.txt, remplace les lignes de front
+     "RB1;...", "RB2;..." et "RB2(SoH);..." + le bloc "## OAT ..." par ceux
+     fraichement calcules. Une sauvegarde .bak.<horodatage> avant modification.
 
 Les 8 autres strategies, l'entete et la structure du fichier sont conserves.
 
@@ -74,8 +74,8 @@ RESULTS_MESO = os.path.join(HERE, "results_meso")
 TMP_DIR = os.path.join(HERE, "_tmp_rb2_splice")
 
 # strategie(s) re-simulee(s) : (dossier Vieillissement8, label)
-ONLY = [("RB2", "RB2"), ("RB2(SoH)", "RB2(SoH)")]
-RB2_KEYS = ("RB2", "RB2(SoH)")
+ONLY = [("RB1", "RB1"), ("RB2", "RB2"), ("RB2(SoH)", "RB2(SoH)")]
+RB_KEYS = ("RB1", "RB2", "RB2(SoH)")
 
 # axe -> (module, fichier canonique dans results_meso, a-t-il un bloc ## OAT ?)
 AXES = {
@@ -121,16 +121,16 @@ def _oat_index(lines):
     return None
 
 
-def splice(canonical_text, new_rb2, new_rb2soh, new_oat_block, has_oat):
+def splice(canonical_text, new_lines, new_oat_block, has_oat):
     """Remplace, dans le texte canonique :
-      - la ligne de front 'RB2;...'      par new_rb2
-      - la ligne de front 'RB2(SoH);...' par new_rb2soh
+      - la ligne de front '<key>;...' de chaque strategie de RB_KEYS par new_lines[key]
       - (si has_oat) tout depuis '## OAT' jusqu'a la fin par new_oat_block
-    Conserve entete, 8 autres strategies, ordre et structure. Renvoie le texte."""
+    Conserve entete, autres strategies, ordre et structure. Renvoie le texte.
+    new_lines = {key: ligne_de_remplacement} pour chaque strategie re-simulee."""
     lines = canonical_text.splitlines(keepends=True)
 
     # 'head' = tout ce qui precede le bloc OAT (front + entete). Le remplacement
-    # des lignes RB2/RB2(SoH) se fait UNIQUEMENT dans le front, jamais dans l'OAT.
+    # des lignes RB se fait UNIQUEMENT dans le front, jamais dans l'OAT.
     if has_oat:
         oat = _oat_index(lines)
         if oat is None:
@@ -139,10 +139,10 @@ def splice(canonical_text, new_rb2, new_rb2soh, new_oat_block, has_oat):
     else:
         head = list(lines)
 
-    for key, repl in (("RB2", new_rb2), ("RB2(SoH)", new_rb2soh)):
+    for key in RB_KEYS:
         idx, old = _front_line(head, key)
         eol = old[len(old.rstrip("\r\n")):]     # preserve \n / \r\n d'origine
-        head[idx] = repl.rstrip("\r\n") + eol
+        head[idx] = new_lines[key].rstrip("\r\n") + eol
 
     if has_oat:
         block = new_oat_block if new_oat_block.endswith("\n") else new_oat_block + "\n"
@@ -151,18 +151,20 @@ def splice(canonical_text, new_rb2, new_rb2soh, new_oat_block, has_oat):
 
 
 def extract_new(temp_text, has_oat):
-    """Depuis le txt fraichement produit (2 strategies), extrait :
-      (ligne_front_RB2, ligne_front_RB2(SoH), bloc_OAT_ou_"")."""
+    """Depuis le txt fraichement produit (strategies de RB_KEYS), extrait :
+      ({key: ligne_front}, bloc_OAT_ou_"")."""
     lines = temp_text.splitlines(keepends=True)
-    _, rb2 = _front_line(lines, "RB2")
-    _, rb2soh = _front_line(lines, "RB2(SoH)")
+    new_lines = {}
+    for key in RB_KEYS:
+        _, ln = _front_line(lines, key)
+        new_lines[key] = ln.rstrip("\r\n")
     oat_block = ""
     if has_oat:
         oat = _oat_index(lines)
         if oat is None:
             raise ValueError("bloc '## OAT' absent du txt temporaire")
         oat_block = "".join(lines[oat:])
-    return rb2.rstrip("\r\n"), rb2soh.rstrip("\r\n"), oat_block
+    return new_lines, oat_block
 
 
 # --------------------------------------------------------------------------- #
@@ -176,8 +178,8 @@ def selftest():
             print("  [%-11s] ABSENT -> %s" % (axis, path)); ok = False; continue
         with open(path, encoding="utf-8") as f:
             text = f.read()
-        rb2, rb2soh, oat = extract_new(text, has_oat)
-        out = splice(text, rb2, rb2soh, oat, has_oat)
+        new_lines, oat = extract_new(text, has_oat)
+        out = splice(text, new_lines, oat, has_oat)
         same = (out == text)
         print("  [%-11s] splice identite : %s" % (axis, "OK" if same else "DIFFERENT !"))
         if not same:
@@ -198,7 +200,7 @@ def run_axis(axis, nmc=None, dry=False):
 
     mod = importlib.import_module(mod_name)
 
-    # 1) restreindre a RB2 / RB2(SoH) : sens_calendar utilise EMS_LIST, les autres SCENARIOS
+    # 1) restreindre a RB1 / RB2 / RB2(SoH) : sens_calendar utilise EMS_LIST, les autres SCENARIOS
     if hasattr(mod, "SCENARIOS"):
         mod.SCENARIOS = list(ONLY)
     if hasattr(mod, "EMS_LIST"):
@@ -212,7 +214,7 @@ def run_axis(axis, nmc=None, dry=False):
         mod.N_MC = int(nmc)
 
     print("\n" + "=" * 78)
-    print("[%s] re-run RB2 / RB2(SoH)  (N_MC=%s)  -> %s"
+    print("[%s] re-run RB1 / RB2 / RB2(SoH)  (N_MC=%s)  -> %s"
           % (axis, getattr(mod, "N_MC", "n/a"), tmp_txt))
     print("=" * 78, flush=True)
     t0 = time.time()
@@ -222,19 +224,18 @@ def run_axis(axis, nmc=None, dry=False):
     # 4) splice
     with open(tmp_txt, encoding="utf-8") as f:
         new_text = f.read()
-    rb2, rb2soh, oat = extract_new(new_text, has_oat)
+    new_lines, oat = extract_new(new_text, has_oat)
     with open(canonical, encoding="utf-8") as f:
         can_text = f.read()
 
     # apercu avant/apres
-    old_rb2 = _front_line(can_text.splitlines(keepends=True), "RB2")[1].rstrip("\r\n")
-    old_soh = _front_line(can_text.splitlines(keepends=True), "RB2(SoH)")[1].rstrip("\r\n")
-    print("  RB2      : %s" % old_rb2)
-    print("        -> : %s" % rb2)
-    print("  RB2(SoH) : %s" % old_soh)
-    print("        -> : %s" % rb2soh)
+    can_lines = can_text.splitlines(keepends=True)
+    for key in RB_KEYS:
+        old = _front_line(can_lines, key)[1].rstrip("\r\n")
+        print("  %-9s : %s" % (key, old))
+        print("        -> : %s" % new_lines[key])
 
-    spliced = splice(can_text, rb2, rb2soh, oat, has_oat)
+    spliced = splice(can_text, new_lines, oat, has_oat)
     if dry:
         print("  [DRY] results_meso/%s NON modifie." % fname); return
     bak = canonical + ".bak." + time.strftime("%Y%m%d_%H%M%S")

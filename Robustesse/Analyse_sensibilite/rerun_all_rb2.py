@@ -11,7 +11,7 @@ rerun_rb2_splice.py s'utilise en ligne de commande (arguments 'run ...' /
   - dans Spyder (F5): possible mais LONG (~5-6 h/7 coeurs) et le multiprocessing
                       Windows+Spyder est capricieux -> a EVITER, prefere le mesocentre.
 
-Seules RB2 et RB2(SoH) sont re-simulees (setpoints actuels) ; les 8 autres
+Seules RB1, RB2 et RB2(SoH) sont re-simulees (setpoints actuels) ; les 7 autres
 strategies sont deterministes et inchangees -> conservees telles quelles.
 Sauvegardes results_meso/sens_<axe>.txt.bak.<horodatage> avant chaque ecriture.
 
@@ -59,7 +59,7 @@ def main():
         run_full(name)
     print("\n" + "#" * 78)
     print("# TERMINE en %.0f min." % ((time.time() - t0) / 60))
-    print("# Verifie dans results_meso/ que RB2 ~ 2.59 et RB2(SoH) ~ 2.91.")
+    print("# Verifie dans results_meso/ que RB1 ~ 1.73, RB2 ~ 2.59 et RB2(SoH) ~ 2.91.")
     print("# Etape suivante (Spyder, leger) :")
     print("#   ../Pareto/generate_ellipses.py   puis   ../Pareto/generate_pareto.py")
     print("#" * 78, flush=True)

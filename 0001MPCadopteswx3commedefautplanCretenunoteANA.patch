@@ -1,0 +1,210 @@
+From f900f92f78ce82213ae0a0785f03c99f598bff70 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 7 Jul 2026 06:49:00 +0000
+Subject: [PATCH] MPC : adopte sw x3 comme defaut (plan C retenu) + note
+ ANALYSE_robust + figure
+
+Suite du sweep robust (job 213317) :
+  - sw x3 est le seul reglage gagnant (-0.9 kEUR vs LP nu, -1000 demarrages
+    ELY) -> adopte comme DEFAUT (MPC_SW_SCALE 1.0 -> 3.0). Le MPC (H=24) de
+    reference vaut desormais 77.84 kEUR ; croisement avec l'ultime RB a
+    VoLL ~3.15 (au lieu de 3.35). sw=1 ('nu') reste accessible.
+  - hold et gel 12h refutes (contre-productifs) : gel retire du bench nominal,
+    hold garde OFF dans le code (levier documente).
+  - Constat structurel : la fragilite a la prevision est quasi irreductible par
+    cost-shaping (sw x3 ne recupere que ~0.9 des ~19 kEUR d'ecart au plancher
+    omni) -> piste = MPC robuste/stochastique. Consigne dans ANALYSE_robust.txt.
+  - analyse_mpc2.py superpose desormais le point sw x3 (lecture sweep_robust) et
+    recalcule son VoLL de croisement.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01HR98GRhkz4UPufQqH6ZQdr
+---
+ Robustesse/MPC/ANALYSE_robust.txt             | 84 +++++++++++++++++++
+ .../MPC/MPC(LP)/get_optimal_action_RB.py      |  6 +-
+ Robustesse/MPC/analyse_mpc2.py                | 19 +++++
+ Robustesse/MPC/bench_mpc.py                   |  8 +-
+ 4 files changed, 113 insertions(+), 4 deletions(-)
+ create mode 100644 Robustesse/MPC/ANALYSE_robust.txt
+
+diff --git a/Robustesse/MPC/ANALYSE_robust.txt b/Robustesse/MPC/ANALYSE_robust.txt
+new file mode 100644
+index 0000000..9d319e9
+--- /dev/null
++++ b/Robustesse/MPC/ANALYSE_robust.txt
+@@ -0,0 +1,84 @@
++================================================================================
++MPC(LP) -- LECTURE DU PLAN C (robustification au bruit ; job 213317)
++Robustesse/MPC/ ; redige le 2026-07-07.
++Depouillement : sweep_mpc_robust.txt. A lire apres ANALYSE_mpc2.txt.
++================================================================================
++
++
++1. OBJET
++--------------------------------------------------------------------------------
++ANALYSE_mpc2 avait etabli que, sous prevision bruitee, TOUT l'ecart du MPC aux
++regles (~20 kEUR) vient de la SENSIBILITE A LA PREVISION : le bruit fait
++chatterer l'ELY (8493 demarrages en omniscient -> 13814 en bruite) et pousse
++vers le haut de la bande de SoC. Plan C = tenter de ramener la degradation
++bruitee (~68 kEUR) vers son plancher omniscient (54.6) par deux leviers de
++cout, SANS changer l'information :
++  - MPC_SW_SCALE : durcit le cout de commutation |Delta P| (penalise le
++    changement du setpoint EXECUTE) -> doit baisser le battement ELY ;
++  - MPC_BAT_HOLD_EUR : cout convexe de residence haut-SoC -> confine le cyclage
++    dans la zone la moins chere.
++
++
++2. RESULTATS (25 ans, VoLL=3, N=32, CRN ; base = plancher omniscient)
++--------------------------------------------------------------------------------
++  config              LPSP %   deg kE   total kE   ELY starts   dtotal vs nu
++  MPC omni (plancher)  0.63     54.60     59.79       8402        (plancher)
++  MPC nu (sw=1)        1.28     68.28     78.76      12603         0
++  sw x3   (DEFAUT)     1.41     66.29    *77.84*     11613       -0.92   <= gain
++  sw x10               1.84     66.19     81.29      10587       +2.53
++  sw x30               4.74     69.33    108.18      17139      +29.42
++  hold 0.3             1.52     68.90     81.36      13961       +2.60
++  hold 1.0             1.58     70.61     83.56      15152       +4.81
++  sw x10 + hold 0.3    1.96     66.94     83.00      11486       +4.25
++  sw x10 + hold 1.0    2.17     68.84     86.67      13674       +7.91
++
++
++3. LECTURE
++--------------------------------------------------------------------------------
++(A) sw x3 EST LE SEUL GAGNANT : -0.92 kEUR vs MPC nu (-1.2 %). Il baisse a la
++    fois la degradation (68.3 -> 66.3) et les demarrages ELY (12603 -> 11613),
++    au prix d'un LPSP a peine plus haut (1.28 -> 1.41 %). Le MPC passe ainsi
++    DEVANT RB2(SoH_all) (78.34) et se rapproche a 0.6 kEUR de l'ultime RB
++    (77.23). Le VoLL de croisement descend de 3.35 a ~3.15 EUR/kWh.
++    -> RETENU COMME DEFAUT (MPC_SW_SCALE = 3.0).
++
++(B) hold est CONTRE-PRODUCTIF (la tension anticipee se confirme) : detourner le
++    surplus du haut-SoC vers l'ELY AUGMENTE les demarrages (jusqu'a 15152) et la
++    degradation. Ecarte, comme le gel 12h de ANALYSE_mpc2.
++
++(C) Trop de sw est PATHOLOGIQUE : sw x10 sur-contraint l'ELY (LPSP monte ->
++    total pire malgre moins de demarrages) ; sw x30 degenere (starts 17139,
++    LPSP 4.74 %). L'optimum est un durcissement DOUX (x3), pas agressif.
++
++(D) RESULTAT STRUCTUREL (le plus important) : sw x3 ne recupere que ~0.9 des
++    ~19 kEUR d'ecart au plancher omniscient. La FRAGILITE A LA PREVISION est
++    donc QUASI IRREDUCTIBLE par le cost-shaping du LP. On ne "tune" pas la
++    sortie de la sensibilite a l'incertitude : il faudrait un MPC
++    ROBUSTE/STOCHASTIQUE (optimiser sur un ensemble de scenarios de bruit, ou
++    une contrainte de type CVaR) ou une MEILLEURE prevision. Ce constat ferme
++    proprement la question "peut-on faire battre les regles au MPC a VoLL=3 par
++    reglage ?" -> non par ce levier ; oui via l'information (omni) ou via un
++    VoLL > ~3.15.
++
++
++4. CONSEQUENCES SUR LA CONFIG CANONIQUE
++--------------------------------------------------------------------------------
++  - MPC_SW_SCALE defaut : 1.0 -> 3.0 (le "MPC (H=24)" de reference vaut
++    desormais 77.84 kEUR, pas 78.80). Le LP nu (sw=1) reste accessible par
++    override / via --sweep robust ("MPC nu").
++  - Retrait du variant "gel 12h" du bench nominal (refute a 25 ans).
++  - hold (MPC_BAT_HOLD_EUR) conserve dans le code (defaut OFF) a titre de levier
++    documente et refute ; utile pour la reproductibilite de ce sweep.
++
++
++5. PERSPECTIVES (inchangees / precisees)
++--------------------------------------------------------------------------------
++  - MPC robuste/stochastique : c'est LA piste pour attaquer les ~18 kEUR
++    residuels de fragilite (multi-scenarios de bruit sur l'horizon, ou
++    contrainte de risque). Seul chemin credible pour faire basculer le MPC a
++    VoLL=3.
++  - MILP on/off exact (min-up/min-down) pour l'ELY : traite le battement a la
++    racine, la ou le cout |Delta P| (sw) sature. A comparer a sw x3.
++  - Cote information : le plafond omni (58.7-59.8) montre que l'essentiel du gain
++    dort dans la QUALITE de prevision, pas dans le solveur.
++================================================================================
+diff --git a/Robustesse/MPC/MPC(LP)/get_optimal_action_RB.py b/Robustesse/MPC/MPC(LP)/get_optimal_action_RB.py
+index 25e9df5..a25ff88 100644
+--- a/Robustesse/MPC/MPC(LP)/get_optimal_action_RB.py
++++ b/Robustesse/MPC/MPC(LP)/get_optimal_action_RB.py
+@@ -69,7 +69,11 @@ MPC_V_H2         = 1.00    # credit H2 en fin d'horizon (< VoLL*eta_chaine=1.35
+ # --- Surrogats de degradation (echelles, 1.0 = calibration modele reel) ----
+ MPC_ELY_WEAR_SCALE = 1.0   # pente charniere ELY > genou 30 %
+ MPC_FC_WEAR_SCALE  = 1.0   # pente charniere FC > 80 %
+-MPC_SW_SCALE       = 1.0   # couts de commutation |Delta P| (FC et ELY)
++MPC_SW_SCALE       = 3.0   # couts de commutation |Delta P| (FC et ELY).
++                           # 3.0 = robustification au bruit RETENUE (plan C,
++                           # cf ANALYSE_robust : -0.9 kEUR et -1000 demarrages
++                           # ELY vs LP nu ; 1.0 = LP "nu" non robustifie ;
++                           # >10 = sur-contraint, LPSP explose -- cf sweep).
+ MPC_C_BAT_SCALE    = 1.0   # cout throughput batterie
+ 
+ # --- Robustification au bruit de prevision (plan C ; DEFAUTS = OFF) ----------
+diff --git a/Robustesse/MPC/analyse_mpc2.py b/Robustesse/MPC/analyse_mpc2.py
+index 410a64d..2792d9e 100644
+--- a/Robustesse/MPC/analyse_mpc2.py
++++ b/Robustesse/MPC/analyse_mpc2.py
+@@ -93,6 +93,21 @@ def main():
+               f"{g:.1f} kEUR (bruite {bench['MPC (H=48)']['total']:.1f} "
+               f"vs omni {bench['MPC omni (H=48)']['total']:.1f}) ===")
+ 
++    # --- Overlay du gagnant du plan C (sweep robust : sw x3) ------------------
++    win_key = None
++    rob_path = os.path.join(HERE, "sweep_mpc_robust.txt")
++    if os.path.exists(rob_path):
++        rob = parse_bench(rob_path)
++        cand = [v for k, v in rob.items() if k.startswith("sw x3")]
++        if cand:
++            win_key = "MPC sw x3 (plan C)"
++            bench[win_key] = cand[0]
++            for rb in ("RB2(SoH_all+Pred)",):
++                if rb in bench:
++                    V = crossover(bench, win_key, rb)
++                    print(f"\n=== Plan C : {win_key} total@3 = {cand[0]['total']:.2f} "
++                          f"kEUR ; croise {rb} a VoLL = {V:.2f} EUR/kWh ===")
++
+     # ------------------------------------------------------------------ figure
+     plt.rcParams.update({"font.family": "serif", "mathtext.fontset": "cm",
+         "axes.labelsize": 15, "legend.fontsize": 9.5, "xtick.labelsize": 12,
+@@ -108,6 +123,8 @@ def main():
+         "MPC (H=24)": ("tab:red", "s"), "MPC (H=48)": ("tab:orange", "s"),
+         "MPC (H=24, gel 12h)": ("0.6", "x"),
+         "MPC omni (H=24)": ("tab:purple", "D"), "MPC omni (H=48)": ("magenta", "D")}
++    if win_key:
++        groups[win_key] = ("crimson", "*")
+     if dp is not None:
+         ax1.plot(dp[:, 0], dp[:, 1], "-", color="0.4", lw=1.6, zorder=1,
+                  label="Front DP (borne offline)")
+@@ -126,6 +143,8 @@ def main():
+     lines = {"RB2 socle": ("tab:blue", "-"), "RB2(SoH_all) (test nul)": ("tab:cyan", "-"),
+              "RB2(SoH_all+Pred)": ("tab:green", "-"), "MPC (H=24)": ("tab:red", "-"),
+              "MPC (H=48)": ("tab:orange", "--"), "MPC omni (H=48)": ("magenta", ":")}
++    if win_key:
++        lines[win_key] = ("crimson", "-.")
+     for lab, (c, ls) in lines.items():
+         if lab not in bench:
+             continue
+diff --git a/Robustesse/MPC/bench_mpc.py b/Robustesse/MPC/bench_mpc.py
+index 7129a65..68206fa 100644
+--- a/Robustesse/MPC/bench_mpc.py
++++ b/Robustesse/MPC/bench_mpc.py
+@@ -56,8 +56,10 @@ BENCH_STRATS = [
+     ("RB2(SoH_all) (test nul)", ULT, {"ENABLE": False, "NOISE_ENABLE": False,
+                                       "_lol:SOC_MAX_AGED_GAIN": G_WIN}),
+     ("RB2(SoH_all+Pred)",       ULT, {"_lol:SOC_MAX_AGED_GAIN": G_WIN}),
++    # MPC (H=24) : defaut = sw x3 (robustification plan C retenue, cf
++    # ANALYSE_robust). Le variant "gel 12h" a ete refute (catastrophique a
++    # 25 ans) et retire. "MPC nu" (sw=1) reste accessible via --sweep robust.
+     ("MPC (H=24)",              MPC, {}),
+-    ("MPC (H=24, gel 12h)",     MPC, {"MPC_ELY_MIN_DWELL": 12}),
+     ("MPC (H=48)",              MPC, {"MPC_H": 48}),
+ ]
+ OMNI_STRATS = [
+@@ -75,8 +77,8 @@ SWEEP_VH2    = [0.5, 1.0, 1.5, 2.0]          # MPC_V_H2 [EUR/kWh]
+ # residence haut-SoC (hold). Chaque point est un test nul en cascade depuis le
+ # MPC nu. La reference omni (plancher) est ajoutee en tete du sweep.
+ SWEEP_ROBUST = [   # (label, overrides sur MPC H=24)
+-    ("MPC nu (ref)",        {}),
+-    ("sw x3",               {"MPC_SW_SCALE": 3.0}),
++    ("MPC nu (ref)",        {"MPC_SW_SCALE": 1.0}),   # sw=1 explicite (defaut = 3)
++    ("sw x3 (defaut)",      {"MPC_SW_SCALE": 3.0}),
+     ("sw x10",              {"MPC_SW_SCALE": 10.0}),
+     ("sw x30",              {"MPC_SW_SCALE": 30.0}),
+     ("hold 0.3",            {"MPC_BAT_HOLD_EUR": 0.3}),
+-- 
+2.43.0
+

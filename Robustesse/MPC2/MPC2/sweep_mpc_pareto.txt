@@ -1,7 +1,0 @@
-# bench_mpc (sweep_mpc_pareto) : 25 ans ; VoLL=3.0 ; N=32 graines ; CRN ; base=MPC VoLLint=0.5
-label ; N ; LPSP(%) ; sLPSP ; deg(kEUR) ; sdeg ; total(kEUR) ; stotal ; dtotal_vs_base(kEUR) ; ELY_starts
-MPC VoLLint=0.5 ; 32 ; 5.2463 ; 0.0156 ; 58.912 ; 0.043 ; 101.939 ; 0.121 ; +0.000 ; 9844
-MPC VoLLint=1 ; 32 ; 4.8672 ; 0.0106 ; 59.767 ; 0.038 ; 99.685 ; 0.087 ; -2.254 ; 9697
-MPC VoLLint=3 ; 32 ; 1.2769 ; 0.0146 ; 68.284 ; 0.065 ; 78.757 ; 0.142 ; -23.183 ; 12603
-MPC VoLLint=10 ; 32 ; 1.3158 ; 0.0129 ; 70.769 ; 0.065 ; 81.560 ; 0.124 ; -20.380 ; 13174
-MPC VoLLint=30 ; 32 ; 1.2989 ; 0.0100 ; 69.903 ; 0.063 ; 80.556 ; 0.089 ; -21.384 ; 13095

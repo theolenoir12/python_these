@@ -72,6 +72,25 @@ MPC_FC_WEAR_SCALE  = 1.0   # pente charniere FC > 80 %
 MPC_SW_SCALE       = 1.0   # couts de commutation |Delta P| (FC et ELY)
 MPC_C_BAT_SCALE    = 1.0   # cout throughput batterie
 
+# --- Robustification au bruit de prevision (plan C ; DEFAUTS = OFF) ----------
+# Diagnostic (ANALYSE_mpc2) : sous bruit, le MPC (a) fait CHATTERER l'ELY autour
+# du genou 30 % (8493 -> 13814 demarrages) et (b) exploite le haut de la bande
+# de SoC, ~5x plus couteux que le bas (densite de dommage de la table
+# cumulative). Deux leviers pour ramener la degradation bruitee (68 kEUR) vers
+# son plancher omniscient (54.6). Tous deux NEUTRES a leur valeur par defaut
+# (le LP est alors STRICTEMENT identique -> chiffres MPC2 inchanges) :
+#   1. durcir MPC_SW_SCALE (ci-dessus) -> penalise le changement du setpoint
+#      EXECUTE (|Delta| a k=0), donc le battement induit par le re-tirage du
+#      bruit a chaque pas.
+#   2. cout de RESIDENCE haut-SoC (ci-dessous) : penalite convexe, LP-propre,
+#      lambda * max(0, SoC_k - genou) par pas ; pousse l'operation vers le bas
+#      de la bande (zone la moins chere). ATTENTION : pousse le surplus vers
+#      l'ELY (moins de stockage batterie haut) -> a doser (sweep robust) pour
+#      ne pas RAJOUTER du cyclage ELY.
+MPC_BAT_HOLD_EUR  = 0.0    # cout [EUR] par (fraction de SoC au-dessus du genou)
+                           # et par heure. 0.0 = LEVIER OFF (bloc LP non ajoute).
+MPC_BAT_HOLD_KNEE = 0.60   # genou de SoC au-dela duquel le dommage s'accelere
+
 # --- Marges de securite (evitent l'ecretage systematique par get_lol) ------
 MPC_SOC_MARGIN   = 0.005   # marge sur [SOC_MIN, soc_max_vieilli]
 MPC_H2_MARGIN    = 0.5     # [kWh] marge sur [0, E_h2_init]
@@ -198,9 +217,14 @@ def _forecast(window):
 def _solve_lp(p, SoC_t, E_h2_t, E_h2_init, SoH_bat_t, P_fc_max_t, P_ely_max_t,
               soc_max_t):
     H = len(p)
-    nv = 10 * H
+    # Bloc optionnel de residence haut-SoC (plan C) : ajoute H variables hs
+    # SEULEMENT si le levier est actif -> LP byte-identique quand MPC_BAT_HOLD_EUR
+    # = 0 (garantit la non-regression des chiffres MPC2).
+    use_hold = MPC_BAT_HOLD_EUR > 0.0
+    nv = (11 if use_hold else 10) * H
     iF, iE, iBD, iBC, iS, iC, iZF, iZE, iDF, iDE = (np.arange(H) + i * H
                                                     for i in range(10))
+    iHS = np.arange(H) + 10 * H if use_hold else None
     E_soh = _E_NOM * SoH_bat_t                       # [Wh]
     fcap  = 0.999 * _ETA * P_fc_max_t                # f : cote DC
     ecap  = 0.999 * P_ely_max_t / _ETA
@@ -221,6 +245,8 @@ def _solve_lp(p, SoC_t, E_h2_t, E_h2_init, SoH_bat_t, P_fc_max_t, P_ely_max_t,
     c[iZE] = MPC_ELY_WEAR_SCALE * _ELY_RATE_EUR_H * _TS_H / ((ELY_F60 - ELY_F30) * P_ely_max_t / _ETA)
     c[iDF] = MPC_SW_SCALE * (_FC_SHIFT_EUR / (FC_FHIGH - 0.01) + _FC_ONOFF_EUR) / (_ETA * P_fc_max_t)
     c[iDE] = MPC_SW_SCALE * _ELY_START_EUR / (P_ely_max_t / _ETA)
+    if use_hold:
+        c[iHS] = MPC_BAT_HOLD_EUR * _TS_H            # EUR / (SoC au-dessus genou) / h
 
     # --- Egalites : equilibre de puissance ------------------------------------
     A_eq = np.zeros((H, nv))
@@ -278,6 +304,18 @@ def _solve_lp(p, SoC_t, E_h2_t, E_h2_init, SoH_bat_t, P_fc_max_t, P_ely_max_t,
     b_dn[H] = -_e_prev
     A_ub = np.vstack([A_ub, A_dn])
     b_ub = np.concatenate([b_ub, b_dn])
+
+    # Residence haut-SoC (plan C, optionnel) : hs_k >= SoC_{k+1} - genou, hs>=0.
+    # SoC_{k+1} = SoC_t + cumsum(bc*KC - bd*KD)*Ts/E_soh (meme convention que le
+    # bloc SoC). Reecrit : cumsum(bc*KC - bd*KD)*Ts/E_soh - hs_k <= genou - SoC_t.
+    if use_hold:
+        A_hs = np.zeros((H, nv))
+        A_hs[:, iBC[0]:iBC[0]+H] = tril * (_KC * _TS_H / E_soh)
+        A_hs[:, iBD[0]:iBD[0]+H] = -tril * (_KD * _TS_H / E_soh)
+        A_hs[np.arange(H), iHS] = -1.0
+        b_hs = np.full(H, MPC_BAT_HOLD_KNEE - SoC_t)
+        A_ub = np.vstack([A_ub, A_hs])
+        b_ub = np.concatenate([b_ub, b_hs])
 
     bounds = [(0.0, None)] * nv
     for k in range(H):

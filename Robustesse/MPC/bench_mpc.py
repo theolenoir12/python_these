@@ -69,6 +69,22 @@ SWEEP_H      = [6, 12, 24, 36, 48]
 SWEEP_PARETO = [0.5, 1.0, 3.0, 10.0, 30.0]   # MPC_VOLL interne (eval reste VoLL=3)
 SWEEP_VH2    = [0.5, 1.0, 1.5, 2.0]          # MPC_V_H2 [EUR/kWh]
 
+# --- Plan C : robustification au bruit (sur MPC H=24 bruite) -----------------
+# Cible : ramener la degradation bruitee (~68 kEUR) vers le plancher omniscient
+# (54.6). Leviers : durcissement du cout de commutation (sw) et cout de
+# residence haut-SoC (hold). Chaque point est un test nul en cascade depuis le
+# MPC nu. La reference omni (plancher) est ajoutee en tete du sweep.
+SWEEP_ROBUST = [   # (label, overrides sur MPC H=24)
+    ("MPC nu (ref)",        {}),
+    ("sw x3",               {"MPC_SW_SCALE": 3.0}),
+    ("sw x10",              {"MPC_SW_SCALE": 10.0}),
+    ("sw x30",              {"MPC_SW_SCALE": 30.0}),
+    ("hold 0.3",            {"MPC_BAT_HOLD_EUR": 0.3}),
+    ("hold 1.0",            {"MPC_BAT_HOLD_EUR": 1.0}),
+    ("sw x10 + hold 0.3",   {"MPC_SW_SCALE": 10.0, "MPC_BAT_HOLD_EUR": 0.3}),
+    ("sw x10 + hold 1.0",   {"MPC_SW_SCALE": 10.0, "MPC_BAT_HOLD_EUR": 1.0}),
+]
+
 LOL_DEFAULTS = {"SOC_MAX_AGED_GAIN": 0.0, "LOL_COMBINED": False}
 
 
@@ -264,6 +280,13 @@ def main(argv):
         for v in SWEEP_VH2:
             strats.append((f"MPC vH2={v:.2f}", MPC, {"MPC_V_H2": v}))
         run_all(strats, n_seeds, ny, "sweep_mpc_vh2")
+    elif sweep == "robust":
+        # Plan C : robustification (sw + hold) sur MPC H=24 bruite, + plancher
+        # omniscient en reference. Base = MPC nu -> dtotal montre le GAIN.
+        strats = [("MPC omni (plancher)", MPC, {"MPC_NOISE_ENABLE": False})]
+        for lab, ov in SWEEP_ROBUST:
+            strats.append((lab, MPC, ov))
+        run_all(strats, n_seeds, ny, "sweep_mpc_robust")
     else:
         strats = list(BENCH_STRATS) + (list(OMNI_STRATS) if omni else [])
         run_all(strats, n_seeds, ny, "bench_mpc" + ("_quick" if quick else ""))

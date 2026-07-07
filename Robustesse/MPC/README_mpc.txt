@@ -86,10 +86,34 @@ pas a l'information.
   bench_mpc.py                       banc CRN (formats bench_ultime) :
                                      RB2 socle, RB2(SoH_all), RB2(SoH_all+Pred),
                                      MPC H=24, H=24+gel12h, H=48 (+ --omni)
-                                     sweeps : h / pareto (VoLL interne) / vh2
+                                     sweeps : h / pareto (VoLL interne) / vh2 /
+                                     robust (plan C : sw + hold)
   run_meso_mpc.slurm                 job Helios (smp, 32 coeurs, 24 h)
   plot_pareto_mpc.py                 figure LPSP vs deg (+ front DP v2 en fond)
   README_mpc.txt                     cette note
+
+6bis. ROBUSTIFICATION AU BRUIT (PLAN C ; leviers OFF par defaut)
+---------------------------------------------------------------
+  Diagnostic (ANALYSE_mpc2) : sous bruit, tout l'ecart aux regles (~20 kEUR)
+  vient de la SENSIBILITE A LA PREVISION -- le bruit fait chatterer l'ELY
+  (8493 -> 13814 demarrages) et pousse vers le haut de la bande de SoC. Deux
+  leviers pour ramener la degradation bruitee vers son plancher omniscient
+  (54.6 kEUR), tous deux NEUTRES a leur valeur par defaut (LP strictement
+  identique -> chiffres MPC2 non regresses) :
+    MPC_SW_SCALE (deja present)   durcit le cout de commutation |Delta P| ->
+                                  penalise le changement du setpoint EXECUTE,
+                                  donc le battement induit par le re-tirage du
+                                  bruit. Baisse les demarrages ELY.
+    MPC_BAT_HOLD_EUR (nouveau)    cout convexe de residence haut-SoC :
+                                  lambda*max(0, SoC-genou) par pas (genou
+                                  MPC_BAT_HOLD_KNEE=0.60). Confine le cyclage
+                                  dans la zone la moins chere. ATTENTION :
+                                  detourne le surplus vers l'ELY -> TENSION avec
+                                  le levier sw (peut RAJOUTER des demarrages).
+  Le --sweep robust mesure les deux axes + combos, base = MPC nu, plancher omni
+  en tete. Test local synthetique : leviers OK dans le bon sens (sw baisse les
+  demarrages, hold baisse la residence haut-SoC), 0 echec LP ; effet NET sur la
+  deg data-dependant -> a trancher sur donnees reelles (mesocentre).
 
 7. LANCEMENT
 ------------
@@ -97,8 +121,10 @@ pas a l'information.
   Meso (nominal)         : sbatch run_meso_mpc.slurm            # N=100, 25 ans
   Meso (+ omni)          : sbatch run_meso_mpc.slurm 100 25 --omni
   Meso (front MPC)       : sbatch run_meso_mpc.slurm 32 25 --sweep pareto
+  Meso (robuste, plan C) : sbatch run_meso_mpc.slurm 32 25 --sweep robust
   Couts indicatifs : run 25 ans H=24 ~ 35-45 min (LP ~5.7 ms/pas),
-  H=48 ~ 80-95 min ; bench nominal N=100 ~ 12-16 h sur 32 coeurs.
+  H=48 ~ 80-95 min ; bench nominal N=100 ~ 12-16 h sur 32 coeurs ;
+  --sweep robust (9 configs x 32 graines, H=24) ~ 3 h.
   Prerequis meso inchanges : GENIAL_DATA_DIR=$WORK/genial_data + dos2unix.
 
 8. VALIDATION LOCALE (donnees SYNTHETIQUES -- chiffres NON representatifs)

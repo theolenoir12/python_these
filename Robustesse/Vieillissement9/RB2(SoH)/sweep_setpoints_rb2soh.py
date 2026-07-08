@@ -61,10 +61,10 @@ import voll_common as V                                       # cout unifie (VoL
 N_YEARS   = 25
 # Grille des 4 parametres (elargir/raffiner selon le besoin). gamma=0 => constant
 # (reference d'attribution) ; inclure 0 dans chaque liste gamma pour l'obtenir.
-FC_FRACS   = [0.440]                 # c_fc  : base FC (fraction de Pmax nominal)
-GAMMA_FC   = [0.0, 1.0, 2.0]         # exposant sur SoH_fc
-ELY_FRACS  = [0.300, 0.310, 0.320, 0.335]   # c_ely : base ELY
-GAMMA_ELY  = [0.0, 1.0, 2.0, 3.0]    # exposant sur SoH_ely
+FC_FRACS   = [0.400]                 # c_fc  : base FC (fraction de Pmax nominal)
+GAMMA_FC   = [0.0, 0.5, 1.0, 1.5, 2.0]         # exposant sur SoH_fc
+ELY_FRACS  = [0.260]   # c_ely : base ELY
+GAMMA_ELY  = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]    # exposant sur SoH_ely
 _N_AVAIL   = max(1, int(os.environ.get("SLURM_CPUS_PER_TASK", (os.cpu_count() or 2) - 1)))
 OUT_TXT    = os.path.join(HERE, "sweep_setpoints_rb2soh.txt")
 OUT_PDF    = os.path.join(HERE, "sweep_setpoints_rb2soh.pdf")

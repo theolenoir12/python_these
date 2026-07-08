@@ -1,0 +1,14 @@
+# Sweep setpoints RB2 (fixes, sans SoH) vs RB2(SoH) reelle - 25 ans
+# P_fc_max=1753.06 W  P_ely_max=18430.24 W
+kind;fc_frac;ely_frac;LPSP(%);Cost(kEUR)
+RB2_sweep;0.440;0.290;2.9547;57.1259
+RB2_sweep;0.440;0.310;2.5920;58.8499
+RB2_base_of_SoH;0.440;0.320;2.5208;60.5896
+RB2_sweep;0.440;0.330;2.5259;65.3765
+RB2_sweep;0.440;0.350;2.4818;71.3676
+RB2_sweep;0.450;0.290;3.0408;56.9175
+RB2_sweep;0.450;0.310;2.6947;58.6706
+RB2_sweep;0.450;0.320;2.5246;60.3484
+RB2_nominal;0.450;0.330;2.4540;65.4218
+RB2_sweep;0.450;0.350;2.3883;71.5360
+RB2(SoH);0.440;0.320;2.5475;59.3644

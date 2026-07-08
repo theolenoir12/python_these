@@ -1,0 +1,36 @@
+Job 213210  noeud=node4-12  script=dp_pareto.py full  DP_PARETO_V2=1
+cpus-per-task=19 (= workers paralleles)  debut=sam. juil.  4 21:03:55 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+======================================================================
+ FRONTIERE DE PARETO  deg <-> EENS   (FULL 25 ans)
+ grille 51x51  n_fc=10 n_ely=50  | 19 epsilon | 19 workers paralleles
+ epsilon (EUR/kWh) = [0.05, 0.1, 0.12, 0.15, 0.2, 0.25, 0.3, 0.35, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 10.0, 20.0, 50.0]
+ variante : V2 (projection vieillissement + rollout)
+======================================================================
+[RB2] LPSP 2.4509%  deg 65.415 kE  EENS 6700.2 kWh  UNIF@3 85.516 kE   (57s)
+[eps=1     ] LPSP 0.4704%  deg 46.825 kE  EENS   1286.1 kWh  UNIF@3 50.683 kE  (rebuild 31, 8926s)
+[eps=0.35  ] LPSP 1.0135%  deg 46.057 kE  EENS   2770.8 kWh  UNIF@3 54.369 kE  (rebuild 31, 9532s)
+[eps=2     ] LPSP 0.3440%  deg 47.453 kE  EENS    940.4 kWh  UNIF@3 50.274 kE  (rebuild 31, 10498s)
+[eps=50    ] LPSP 0.2827%  deg 48.511 kE  EENS    772.8 kWh  UNIF@3 50.829 kE  (rebuild 32, 12115s)
+[eps=0.5   ] LPSP 0.7174%  deg 46.382 kE  EENS   1961.3 kWh  UNIF@3 52.266 kE  (rebuild 31, 14534s)
+[eps=0.75  ] LPSP 0.5285%  deg 46.675 kE  EENS   1444.8 kWh  UNIF@3 51.009 kE  (rebuild 31, 15078s)
+[eps=10    ] LPSP 0.2922%  deg 48.246 kE  EENS    798.8 kWh  UNIF@3 50.643 kE  (rebuild 32, 16216s)
+[eps=0.1   ] LPSP 5.1182%  deg 43.849 kE  EENS  13992.2 kWh  UNIF@3 85.826 kE  (rebuild 31, 16673s)
+[eps=0.15  ] LPSP 2.2259%  deg 45.168 kE  EENS   6085.2 kWh  UNIF@3 63.424 kE  (rebuild 31, 17337s)
+[eps=20    ] LPSP 0.2813%  deg 48.426 kE  EENS    768.9 kWh  UNIF@3 50.733 kE  (rebuild 32, 17416s)
+[eps=1.5   ] LPSP 0.3730%  deg 47.252 kE  EENS   1019.7 kWh  UNIF@3 50.311 kE  (rebuild 31, 17879s)
+[eps=0.05  ] LPSP 16.7436%  deg 40.286 kE  EENS  45773.9 kWh  UNIF@3 177.608 kE  (rebuild 30, 18104s)
+[eps=3     ] LPSP 0.3198%  deg 47.768 kE  EENS    874.2 kWh  UNIF@3 50.390 kE  (rebuild 31, 18142s)
+[eps=4     ] LPSP 0.3051%  deg 47.966 kE  EENS    834.0 kWh  UNIF@3 50.468 kE  (rebuild 31, 18203s)
+[eps=0.3   ] LPSP 1.1938%  deg 45.876 kE  EENS   3263.6 kWh  UNIF@3 55.667 kE  (rebuild 31, 18270s)
+[eps=0.2   ] LPSP 1.6056%  deg 45.541 kE  EENS   4389.4 kWh  UNIF@3 58.709 kE  (rebuild 31, 18292s)
+[eps=0.25  ] LPSP 1.3879%  deg 45.707 kE  EENS   3794.1 kWh  UNIF@3 57.089 kE  (rebuild 31, 18296s)
+[eps=0.12  ] LPSP 3.2719%  deg 44.600 kE  EENS   8944.8 kWh  UNIF@3 71.434 kE  (rebuild 31, 18350s)
+[eps=6     ] LPSP 0.2985%  deg 48.166 kE  EENS    816.0 kWh  UNIF@3 50.614 kE  (rebuild 32, 18550s)
+
+ Resultats -> /Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP/results/dp_pareto_25y_51x51_v2.txt (+ .npz, + _traj.npz)
+
+real	310m10,600s
+user	4986m7,947s
+sys	2m2,286s
+fin=dim. juil.  5 02:14:06 CEST 2026

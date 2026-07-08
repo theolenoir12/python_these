@@ -1,106 +1,85 @@
 """
 sweep_setpoints_rb2.py
 ======================
-Test de pertinence de l'information SoH dans RB2(SoH).
+Ré-optimisation des setpoints FIXES de RB2 (fractions de Pmax, SANS SoH) par
+minimisation du COUT UNIFIE :
 
-Question : RB2(SoH) est-elle meilleure que RB2 *parce qu'elle exploite le SoH*,
-ou seulement *parce qu'elle part de meilleurs setpoints de base* (0.440/0.320 vs
-0.450/0.330 pour RB2 nu) ? Pour trancher, on balaie une grille de setpoints FIXES
-de RB2 (fractions de Pmax, SANS aucune modulation SoH) autour des valeurs
-specifiees, et on regarde si le point RB2(SoH) DOMINE ce nuage (=> le SoH apporte
-qqch) ou s'il se pose simplement DESSUS (=> gain du seul choix de setpoints).
+    cout_unifie [kEUR] = degradation [kEUR] + cout_LPSP [kEUR]
+    cout_LPSP  = VoLL * energie_non_fournie   (voll_common.py, VoLL=3 par defaut)
 
-La grille inclut deux points cles :
-  - (0.450, 0.330) = RB2 nominal
-  - (0.440, 0.320) = base de RB2(SoH) MAIS figee, sans le facteur SoH_ely^0.5
-    -> c'est LE comparateur du "test-nul" : meme offset de base que RB2(SoH),
-       il ne reste que l'effet de la modulation dynamique par le SoH.
+On balaie une grille (fc_frac, ely_frac), on simule chaque couple sur N_YEARS,
+on calcule (LPSP %, deg k€) puis le cout unifie, et on classe. Le meilleur couple
+est celui a reporter dans RB2/get_optimal_action_RB.py (lignes P_fc_set/P_ely_set)
+avant de retracer le front de Pareto complet.
 
-Chaque couple (fc_frac, ely_frac) -> 1 simulation 25 ans -> 1 point (LPSP %, cout k€).
-On ajoute le point de la vraie strategie RB2(SoH) (importee de son dossier).
+Sorties (dans RB2/) :
+  - sweep_setpoints_rb2.txt : tous les couples, TRIES par cout unifie croissant
+  - sweep_setpoints_rb2.pdf/.png : nuage (LPSP, deg), couleur = cout unifie,
+    etoile = optimum, pointilles = iso-cout unifie.
 
-Sorties (dans le dossier RB2/) :
-  - sweep_setpoints_rb2.txt : tous les points
-  - sweep_setpoints_rb2.pdf/.png : Pareto style Pareto_2d_25y
-
-Lancement (depuis Vieillissement8/RB2/) :
+Lancement (depuis Vieillissement9/RB2/) :
     python sweep_setpoints_rb2.py            # sweep complet + figure
-    python sweep_setpoints_rb2.py --smoke    # smoke-test (2 sims, horizon court)
+    python sweep_setpoints_rb2.py --smoke    # 4 sims, horizon court (2 ans)
     python sweep_setpoints_rb2.py --replot    # refait la figure depuis le .txt
-Regler N_WORKERS selon la RAM dispo (defaut = coeurs-1, plafonne conseille a 2-3).
+Regler N_WORKERS via SLURM_CPUS_PER_TASK sur le mesocentre.
 """
 import sys, os, time, argparse
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-import matplotlib.patheffects as pe
-import colorsys
 from concurrent.futures import ProcessPoolExecutor
 
-HERE   = os.path.dirname(os.path.abspath(__file__))          # .../Vieillissement8/RB2
-PARENT = os.path.dirname(HERE)                               # .../Vieillissement8
-sys.path.insert(0, PARENT)                                   # pour importer Common
+HERE   = os.path.dirname(os.path.abspath(__file__))          # .../Vieillissement9/RB2
+PARENT = os.path.dirname(HERE)                               # .../Vieillissement9
+sys.path.insert(0, PARENT)
 from Common import Init_EMR_MG_v16_python as I
 from Common.main_init_and_loop import init_and_run_loop
 from Common.cost_fcn_total2 import get_cost_total
 from Common.get_lol import get_lol
+sys.path.insert(0, os.path.abspath(os.path.join(PARENT, "..", "Analyse_sensibilite")))
+import voll_common as V                                       # cout unifie (VoLL)
 
 # ======================= CONFIGURATION =======================
-N_YEARS   = 25                       # horizon (defaut du coeur)
-# Fractions de Pmax a balayer. FC non module par le SoH dans RB2(SoH) (gamma_FC=0)
-# -> 2 valeurs suffisent ; ELY module (gamma_ELY=0.5) -> on encadre 0.30-0.33.
-FC_FRACS  = [0.440, 0.450]
-ELY_FRACS = [0.290, 0.310, 0.320, 0.330, 0.350]
-# Nb de coeurs dispo : honore SLURM_CPUS_PER_TASK sur le mesocentre, sinon coeurs-1.
-_N_AVAIL  = int(os.environ.get("SLURM_CPUS_PER_TASK", (os.cpu_count() or 2) - 1))
-_N_AVAIL  = max(1, _N_AVAIL)
+N_YEARS   = 25
+# Grille de fractions de Pmax a balayer (elargir/raffiner selon le besoin).
+FC_FRACS  = np.round(np.arange(0.36, 0.52 + 1e-9, 0.02), 3)   # setpoint FC
+ELY_FRACS = np.round(np.arange(0.26, 0.38 + 1e-9, 0.02), 3)   # setpoint ELY
+_N_AVAIL  = max(1, int(os.environ.get("SLURM_CPUS_PER_TASK", (os.cpu_count() or 2) - 1)))
 OUT_TXT   = os.path.join(HERE, "sweep_setpoints_rb2.txt")
 OUT_PDF   = os.path.join(HERE, "sweep_setpoints_rb2.pdf")
 OUT_PNG   = os.path.join(HERE, "sweep_setpoints_rb2.png")
-# Points de contexte (autres EMS statiques, valeurs 25 ans figees, cf
-# batch_results_summary_25y.txt) affiches en gris clair pour situer le nuage.
-CONTEXT = {
-    "75-25": (3.8032, 59.6765),
-    "100-0": (2.4851, 66.4122),
-    "RB1":   (1.2597, 80.1562),
-}
 # =============================================================
 
 
 def make_rb2_frac(fc_frac, ely_frac):
-    """Fabrique une action RB2 IDENTIQUE a l'originale (plafonds H2 inclus), mais
-    avec les deux setpoints donnes en FRACTION de Pmax (fixes, sans SoH)."""
+    """Action RB2 identique a l'originale (plafonds H2 inclus), setpoints FIXES
+    donnes en fraction de Pmax (sans modulation SoH)."""
     def get_optimal_action_RB(SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t,
                               alpha_ely_t, SoH_bat_t, E_h2_t, E_h2_init, P_fc_max_t,
                               P_ely_max_t, RUL_fc_t, RUL_ely_t, SoH_fc_t, SoH_ely_t):
         P_fc_set  = fc_frac  * I.FC['P_fc_max']
         P_ely_set = ely_frac * I.ELY['P_ely_max']
-
         dt_h         = I.LOAD['Ts'] / 3600.0
         P_fc_h2_max  = max(E_h2_t, 0.0)             / dt_h * I.FC['eff']  * I.CONV['eta'] * 1000
         P_ely_h2_max = max(E_h2_init - E_h2_t, 0.0) / dt_h / (I.ELY['eff'] * I.CONV['eta']) * 1000
-
+        P_dc_fc_t = P_dc_ely_t = 0
         if P_tot_ref_t > 0:
             P_fc_avail = min(P_fc_set, P_fc_h2_max)
             if P_tot_ref_t > P_fc_avail:
                 P_dc_fc_t  = P_fc_avail
                 P_dc_bat_t = P_tot_ref_t - P_fc_avail
             else:
-                P_dc_fc_t  = 0
                 P_dc_bat_t = P_tot_ref_t
-            P_dc_ely_t = 0
-        if P_tot_ref_t < 0:
+        elif P_tot_ref_t < 0:
             P_ely_avail = min(P_ely_set, P_ely_h2_max)
             if P_tot_ref_t < -P_ely_avail:
                 P_dc_ely_t = -P_ely_avail
                 P_dc_bat_t = P_tot_ref_t + P_ely_avail
             else:
-                P_dc_ely_t = 0
                 P_dc_bat_t = P_tot_ref_t
-            P_dc_fc_t = 0
-
+        else:
+            P_dc_bat_t = P_tot_ref_t
         if 'FC' in defaillances and P_tot_ref_t > 0:
             P_dc_bat_t = P_tot_ref_t
         if 'ELY' in defaillances and P_tot_ref_t < 0:
@@ -112,170 +91,103 @@ def make_rb2_frac(fc_frac, ely_frac):
     return get_optimal_action_RB
 
 
-def _compute_metrics(data):
-    """(LPSP %, cout k€) EXACTEMENT comme batch_pareto._compute_metrics
-    (avec interpolation NaN de SoH_bat avant remplacement)."""
+def _metrics(data):
+    """(LPSP %, deg k€) comme batch_pareto (interpolation NaN de SoH_bat)."""
     P_bat = data["P_bat"]; P_fc = data["P_fc"]; P_ely = data["P_ely"]
     P_dc_load = data["P_dc_load"]; P_dc_pv = data["P_dc_pv"]; lol_tab = data["lol_tab"]
-    SoC = data["SoC"]
-    alpha_fc  = data["alpha_fc"][:-1]
-    alpha_ely = data["alpha_ely"][:-1]
-    SoH_bat   = data["SoH_bat"][:-1].copy()
+    SoC = data["SoC"]; af = data["alpha_fc"][:-1]; ae = data["alpha_ely"][:-1]
+    SoH_bat = data["SoH_bat"][:-1].copy()
     for k in range(1, len(SoH_bat)):
-        if SoH_bat[k] == 1:
-            SoH_bat[k - 1] = np.nan
+        if SoH_bat[k] == 1: SoH_bat[k-1] = np.nan
     if np.isnan(SoH_bat).any():
-        SoH_bat[np.isnan(SoH_bat)] = np.interp(
-            np.flatnonzero(np.isnan(SoH_bat)),
-            np.flatnonzero(~np.isnan(SoH_bat)),
-            SoH_bat[~np.isnan(SoH_bat)])
-    P_planned = np.array([(a - b) / 1000 for a, b in zip(P_dc_load, P_dc_pv)])
-    P_real    = np.array([(a - b) * (1 - c) / 1000 for a, b, c in zip(P_dc_load, P_dc_pv, lol_tab)])
-    p, r = np.clip(P_planned, 0, None), np.clip(P_real, 0, None)
-    lpsp = (np.clip(p - r, 0, None).sum() / p.sum() * 100) if p.sum() > 0 else 0.0
-    cost_keur = get_cost_total(alpha_fc, P_fc, alpha_ely, P_ely, P_bat, SoC,
-                               I.LOAD, I.BAT, I.FC, I.ELY, SoH_bat) / 1000
-    return float(lpsp), float(cost_keur)
+        SoH_bat[np.isnan(SoH_bat)] = np.interp(np.flatnonzero(np.isnan(SoH_bat)),
+            np.flatnonzero(~np.isnan(SoH_bat)), SoH_bat[~np.isnan(SoH_bat)])
+    Pp = np.array([(a-b)/1000 for a, b in zip(P_dc_load, P_dc_pv)])
+    Pr = np.array([(a-b)*(1-c)/1000 for a, b, c in zip(P_dc_load, P_dc_pv, lol_tab)])
+    p, r = np.clip(Pp, 0, None), np.clip(Pr, 0, None)
+    lpsp = (np.clip(p-r, 0, None).sum()/p.sum()*100) if p.sum() > 0 else 0.0
+    deg = get_cost_total(af, P_fc, ae, P_ely, P_bat, SoC,
+                         I.LOAD, I.BAT, I.FC, I.ELY, SoH_bat) / 1000
+    return float(lpsp), float(deg)
 
 
-def _eval_frac(args):
-    fc_frac, ely_frac, n_years = args
-    data = init_and_run_loop(make_rb2_frac(fc_frac, ely_frac), n_years=n_years)
-    lpsp, cost = _compute_metrics(data)
-    return (fc_frac, ely_frac, lpsp, cost)
+def _eval(args):
+    fc, ely, n_years = args
+    data = init_and_run_loop(make_rb2_frac(fc, ely), n_years=n_years)
+    lpsp, deg = _metrics(data)
+    return (fc, ely, lpsp, deg, V.total_cost_keur(lpsp, deg))   # dernier = cout unifie
 
 
-def _eval_rb2soh(n_years):
-    soh_dir = os.path.join(PARENT, "RB2(SoH)")
-    sys.path.insert(0, soh_dir)
-    sys.modules.pop("get_optimal_action_RB", None)
-    import importlib
-    mod = importlib.import_module("get_optimal_action_RB")
-    data = init_and_run_loop(mod.get_optimal_action_RB, n_years=n_years)
-    return _compute_metrics(data)
-
-
-# ----------------------------- run -----------------------------
 def run_sweep(smoke=False):
-    n_years = 2 if smoke else N_YEARS
+    ny = 2 if smoke else N_YEARS
     if smoke:
-        combos = [(0.450, 0.330, n_years), (0.440, 0.320, n_years)]
+        combos = [(0.44, 0.30, ny), (0.44, 0.34, ny), (0.48, 0.30, ny), (0.40, 0.32, ny)]
     else:
-        combos = [(fc, el, n_years) for fc in FC_FRACS for el in ELY_FRACS]
-    n_workers = max(1, min(_N_AVAIL, len(combos)))
-    print(f"--- Sweep RB2 : {len(combos)} sims sur {n_years} ans ({n_workers} workers) ---",
-          flush=True)
-    t0 = time.time()
-    results = []
-    with ProcessPoolExecutor(max_workers=n_workers) as ex:
-        for i, res in enumerate(ex.map(_eval_frac, combos), 1):
-            results.append(res)
-            print(f"  [{i:2d}/{len(combos)}] fc={res[0]:.3f} ely={res[1]:.3f} "
-                  f"-> LPSP={res[2]:6.3f}%  cout={res[3]:8.3f} k€", flush=True)
-    print("  ... RB2(SoH) (strategie reelle)", flush=True)
-    soh_lpsp, soh_cost = _eval_rb2soh(n_years)
-    print(f"  [SoH] RB2(SoH) -> LPSP={soh_lpsp:6.3f}%  cout={soh_cost:8.3f} k€", flush=True)
+        combos = [(fc, el, ny) for fc in FC_FRACS for el in ELY_FRACS]
+    nw = max(1, min(_N_AVAIL, len(combos)))
+    print(f"--- Sweep RB2 : {len(combos)} sims / {ny} ans ({nw} workers) ; VoLL={V.VOLL_TIERS} ---", flush=True)
+    t0 = time.time(); res = []
+    with ProcessPoolExecutor(max_workers=nw) as ex:
+        for i, r in enumerate(ex.map(_eval, combos), 1):
+            res.append(r)
+            print(f"  [{i:2d}/{len(combos)}] fc={r[0]:.3f} ely={r[1]:.3f}"
+                  f" -> LPSP={r[2]:6.3f}%  deg={r[3]:7.3f}  UNIF={r[4]:8.3f} k€", flush=True)
+    res.sort(key=lambda r: r[4])                                # tri par cout unifie
+    best = res[0]
     print(f"--- termine en {time.time()-t0:.0f}s ---", flush=True)
-
+    print(f">>> OPTIMUM : fc_frac={best[0]:.3f}  ely_frac={best[1]:.3f}"
+          f"  (LPSP={best[2]:.3f}%  deg={best[3]:.3f} k€  UNIF={best[4]:.3f} k€)", flush=True)
+    print(f"    -> dans RB2/get_optimal_action_RB.py :  P_fc_set={best[0]:.3f}*P_fc_max ;"
+          f"  P_ely_set={best[1]:.3f}*P_ely_max", flush=True)
     with open(OUT_TXT, "w", encoding="utf-8") as f:
-        f.write(f"# Sweep setpoints RB2 (fixes, sans SoH) vs RB2(SoH) reelle - {n_years} ans\n")
+        f.write(f"# Sweep setpoints RB2 (fixes) - {ny} ans ; VoLL={V.VOLL_TIERS}\n")
         f.write(f"# P_fc_max={I.FC['P_fc_max']:.2f} W  P_ely_max={I.ELY['P_ely_max']:.2f} W\n")
-        f.write("kind;fc_frac;ely_frac;LPSP(%);Cost(kEUR)\n")
-        for fc, el, lpsp, cost in results:
-            tag = "RB2_sweep"
-            if abs(fc-0.450) < 1e-9 and abs(el-0.330) < 1e-9:
-                tag = "RB2_nominal"
-            elif abs(fc-0.440) < 1e-9 and abs(el-0.320) < 1e-9:
-                tag = "RB2_base_of_SoH"   # meme base que RB2(SoH), SANS modulation
-            f.write(f"{tag};{fc:.3f};{el:.3f};{lpsp:.4f};{cost:.4f}\n")
-        f.write(f"RB2(SoH);0.440;0.320;{soh_lpsp:.4f};{soh_cost:.4f}\n")
+        f.write(f"# OPTIMUM : fc_frac={best[0]:.3f} ely_frac={best[1]:.3f} -> unifie={best[4]:.4f} kEUR\n")
+        f.write("rang;fc_frac;ely_frac;LPSP(%);deg(kEUR);unifie(kEUR)\n")
+        for i, r in enumerate(res, 1):
+            f.write(f"{i};{r[0]:.3f};{r[1]:.3f};{r[2]:.4f};{r[3]:.4f};{r[4]:.4f}\n")
     print(f"Ecrit : {OUT_TXT}", flush=True)
-    return OUT_TXT
-
-
-# ----------------------------- plot -----------------------------
-def _darken(color, factor=0.7):
-    r, g, b = mcolors.to_rgb(color)
-    h, l, s = colorsys.rgb_to_hls(r, g, b)
-    return colorsys.hls_to_rgb(h, max(0.0, l * factor), s)
+    return res
 
 
 def _read_txt():
-    sweep, nominal, base, soh = [], None, None, None
+    rows = []
     with open(OUT_TXT, encoding="utf-8") as f:
         for line in f:
-            if line.startswith("#") or line.startswith("kind"):
+            if line.startswith("#") or line.startswith("rang"):
                 continue
-            parts = line.strip().split(";")
-            if len(parts) != 5:
-                continue
-            kind, fc, el, lpsp, cost = parts
-            fc, el, lpsp, cost = float(fc), float(el), float(lpsp), float(cost)
-            if kind == "RB2(SoH)":
-                soh = (fc, el, lpsp, cost)
-            elif kind == "RB2_nominal":
-                nominal = (fc, el, lpsp, cost); sweep.append((fc, el, lpsp, cost))
-            elif kind == "RB2_base_of_SoH":
-                base = (fc, el, lpsp, cost); sweep.append((fc, el, lpsp, cost))
-            else:
-                sweep.append((fc, el, lpsp, cost))
-    return sweep, nominal, base, soh
+            p = line.strip().split(";")
+            if len(p) == 6:
+                rows.append((float(p[1]), float(p[2]), float(p[3]), float(p[4]), float(p[5])))
+    return rows
 
 
 def plot():
-    sweep, nominal, base, soh = _read_txt()
-    LABEL_STROKE = [pe.withStroke(linewidth=2.0, foreground='white')]
-    plt.rcParams.update({
-        "text.usetex": False, "mathtext.fontset": "cm", "font.family": "serif",
-        "axes.labelsize": 18, "axes.titlesize": 16, "legend.fontsize": 12,
-        "xtick.labelsize": 14, "ytick.labelsize": 14, "lines.linewidth": 1.8,
-        "lines.markersize": 5, "grid.alpha": 0.7, "grid.linestyle": "--",
-        "grid.linewidth": 0.6, "pdf.fonttype": 42,
-    })
+    rows = _read_txt()
+    if not rows:
+        print("Rien a tracer (txt vide).", flush=True); return
+    lpsp = np.array([r[2] for r in rows]); deg = np.array([r[3] for r in rows])
+    unif = np.array([r[4] for r in rows])
+    best = min(rows, key=lambda r: r[4])
+    plt.rcParams.update({"text.usetex": False, "mathtext.fontset": "cm",
+                         "font.family": "serif", "pdf.fonttype": 42})
     fig, ax = plt.subplots(figsize=(8, 6))
-
-    # Contexte : autres EMS statiques (gris clair)
-    for lab, (x, y) in CONTEXT.items():
-        ax.scatter(x, y, color='0.7', s=45, alpha=0.8, zorder=1)
-        ax.text(x + 0.03, y + 0.4, lab, fontsize=11, color='0.5',
-                path_effects=LABEL_STROKE, zorder=1)
-
-    # Nuage RB2 (setpoints fixes), relie par ligne d'iso-fc_frac pour lire la tendance
-    sw = np.array([[s[2], s[3]] for s in sweep])
-    fcs = sorted(set(s[0] for s in sweep))
-    cmap = {fc: c for fc, c in zip(fcs, plt.cm.viridis(np.linspace(0.15, 0.75, len(fcs))))}
-    for fc in fcs:
-        pts = sorted([s for s in sweep if s[0] == fc], key=lambda s: s[1])
-        xs = [p[2] for p in pts]; ys = [p[3] for p in pts]
-        ax.plot(xs, ys, '-', color=cmap[fc], alpha=0.55, lw=1.4, zorder=2)
-        ax.scatter(xs, ys, color=cmap[fc], s=42, zorder=3,
-                   label=f"RB2 fixe, $f_{{FC}}$={fc:.3f}")
-        for p in pts:
-            ax.annotate(f"{p[1]:.3f}", (p[2], p[3]), fontsize=7, color=_darken(cmap[fc]),
-                        xytext=(3, 3), textcoords="offset points", zorder=3)
-
-    # Point "base de RB2(SoH) sans SoH" mis en evidence (comparateur test-nul)
-    if base is not None:
-        ax.scatter(base[2], base[3], facecolors='none', edgecolors='darkorange',
-                   s=170, linewidths=2.2, zorder=4,
-                   label="RB2 fixe base SoH (0.440/0.320, sans SoH)")
-    # RB2 nominal
-    if nominal is not None:
-        ax.scatter(nominal[2], nominal[3], marker='s', color='black', s=55, zorder=5,
-                   label="RB2 nominal (0.450/0.330)")
-
-    # RB2(SoH) : la vraie strategie
-    if soh is not None:
-        ax.scatter(soh[2], soh[3], marker='*', color='crimson', s=300, zorder=6,
-                   edgecolors='white', linewidths=0.8, label="RB2(SoH)")
-        ax.text(soh[2] + 0.02, soh[3] - 0.5, "RB2(SoH)", fontsize=14, color='crimson',
-                weight='bold', path_effects=LABEL_STROKE, ha='left', va='top', zorder=6)
-
-    ax.set_xlabel("LPSP [%]")
-    ax.set_ylabel("Coût de dégradation [k€]")
-    ax.grid(True, linestyle='--', alpha=0.5)
-    ax.legend(loc='upper right', framealpha=0.92)
-    ax.set_title("Balayage des setpoints fixes de RB2 vs RB2(SoH) (25 ans)")
+    # iso-cout unifie : deg = C - slope*LPSP  (slope = cout d'1 point de LPSP)
+    slope = V.cost_lpsp_keur(1.0)
+    xs = np.linspace(lpsp.min(), lpsp.max() + 1e-6, 50)
+    for C in np.linspace(unif.min(), unif.max(), 7):
+        ax.plot(xs, C - slope * xs, ls=':', color='0.7', lw=0.8, zorder=0)
+    sc = ax.scatter(lpsp, deg, c=unif, cmap='viridis_r', s=55, zorder=3)
+    for fc, el, lp, dg, un in rows:
+        ax.annotate(f"{fc:.2f}/{el:.2f}", (lp, dg), fontsize=6, color='0.3',
+                    xytext=(3, 3), textcoords="offset points", zorder=3)
+    ax.scatter(best[2], best[3], marker='*', s=340, color='crimson',
+               edgecolors='white', linewidths=0.8, zorder=5,
+               label=f"optimum {best[0]:.3f}/{best[1]:.3f} ({best[4]:.2f} k€)")
+    fig.colorbar(sc, ax=ax, label="coût unifié [k€]")
+    ax.set_xlabel("LPSP [%]"); ax.set_ylabel("Coût de dégradation [k€]")
+    ax.grid(True, linestyle='--', alpha=0.5); ax.legend(loc='upper right')
+    ax.set_title(f"Setpoints RB2 : minimisation du coût unifié ({N_YEARS} ans)")
     plt.tight_layout()
     plt.savefig(OUT_PDF, format='pdf', bbox_inches='tight')
     plt.savefig(OUT_PNG, format='png', dpi=150, bbox_inches='tight')
@@ -285,7 +197,7 @@ def plot():
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--smoke", action="store_true", help="2 sims, horizon court")
+    ap.add_argument("--smoke", action="store_true", help="4 sims, horizon court")
     ap.add_argument("--replot", action="store_true", help="refait la figure depuis le .txt")
     args = ap.parse_args()
     if args.replot:

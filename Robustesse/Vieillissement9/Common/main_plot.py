@@ -194,6 +194,34 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
     plot_degradation_pie_charts(deg_fc, deg_ely, savedir)
             
     def plot_scientific_summary(temps, soh_d, deg_d, sdir):
+        
+        def get_first_life_stats(power, soh):
+        
+            # Premier indice où le composant existe réellement
+            valid = np.where(~np.isnan(soh))[0]
+            if len(valid) == 0:
+                return 0.0, 0.0
+        
+            start = valid[0]
+        
+            # Recherche d'un remplacement uniquement après cette date
+            repl = np.where(
+                (soh[start+1:] == 1) &
+                (soh[start:-1] < 0.999)
+            )[0]
+        
+            if len(repl):
+                end = start + repl[0] + 1
+            else:
+                end = len(power)
+        
+            p = np.asarray(power[start:end])
+        
+            hours = np.count_nonzero(p) * LOAD['Ts'] / 3600
+            energy = np.sum(np.abs(p)) * LOAD['Ts'] / 3600 / 1000
+        
+            return hours, energy
+        
         # --- Configuration Ultra-Lisible ---
         plt.rcParams.update({
             "font.family":"serif", "font.size":28, "axes.titlesize":36, 
@@ -254,6 +282,10 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
         ]
         
         colors_p = ['#ff9999','#66b3ff','#99ff99','#ffcc99']
+        
+        fc_hours, fc_energy = get_first_life_stats(P_fc, SoH_fc)
+        ely_hours, ely_energy = get_first_life_stats(P_ely, SoH_ely)
+        
         for d, k, l, t, pos in cf_pie:
             ax = f.add_subplot(pos)
             v = np.array([d[key][np.argmax(d['total'])-1] for key in k])
@@ -266,6 +298,33 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
                 plt.setp(autotexts, fontsize=26, weight="bold")
                 ax.legend(wedges, np.array(l)[m], loc='center left',
                           bbox_to_anchor=(0.95, 0.5), prop={'size': 26}, frameon=False)
+                if "PEMFC" in t:
+                    txt = (
+                        rf"$\bf{{Operating\ time}}$: {fc_hours:.0f} h"
+                        "\n"
+                        rf"$\bf{{Energy}}$: {fc_energy:.0f} kWh"
+                    )
+                else:
+                    txt = (
+                        rf"$\bf{{Operating\ time}}$: {ely_hours:.0f} h"
+                        "\n"
+                        rf"$\bf{{Energy}}$: {ely_energy:.0f} kWh"
+                    )
+                
+                ax.text(
+                    -5.5, +4.18,
+                    txt,
+                    transform=ax.transAxes,
+                    ha='left',
+                    va='top',
+                    fontsize=26,
+                    bbox=dict(
+                        boxstyle="round",
+                        facecolor="white",
+                        edgecolor="black",
+                        alpha=0.95
+                    )
+                )
             ax.set_title(rf'${t}$', pad=10)
     
         plt.savefig(os.path.join(sdir, 'all_aging_2.pdf'), format='pdf', bbox_inches='tight')

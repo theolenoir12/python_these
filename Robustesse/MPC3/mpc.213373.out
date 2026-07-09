@@ -1,0 +1,134 @@
+Job 213373  noeud=node4-10  N=32  n_years=25  extra=--sweep stoch
+cpus-per-task=32  debut=Tue Jul  7 17:31:31 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+linprog HiGHS OK
+[bench_mpc] 224 runs (25 ans), 32 workers ...
+  [  1/224] RB2(SoH_all+Pred)        seed=2026   LPSP=2.9725%  deg=53.078  total=77.456  ELYstarts=9016  (72s)
+  [  2/224] RB2(SoH_all+Pred)        seed=2027   LPSP=2.9281%  deg=53.095  total=77.109  ELYstarts=8992  (72s)
+  [  3/224] RB2(SoH_all+Pred)        seed=2028   LPSP=2.9319%  deg=53.083  total=77.129  ELYstarts=8978  (71s)
+  [  4/224] RB2(SoH_all+Pred)        seed=2029   LPSP=2.9358%  deg=53.134  total=77.212  ELYstarts=8999  (71s)
+  [  5/224] RB2(SoH_all+Pred)        seed=2030   LPSP=2.9435%  deg=53.085  total=77.226  ELYstarts=9017  (72s)
+  [  6/224] RB2(SoH_all+Pred)        seed=2031   LPSP=2.9255%  deg=53.095  total=77.088  ELYstarts=8985  (72s)
+  [  7/224] RB2(SoH_all+Pred)        seed=2032   LPSP=2.9356%  deg=53.084  total=77.160  ELYstarts=8967  (72s)
+  [  8/224] RB2(SoH_all+Pred)        seed=2033   LPSP=2.9439%  deg=53.099  total=77.243  ELYstarts=8992  (72s)
+  [  9/224] RB2(SoH_all+Pred)        seed=2034   LPSP=2.9344%  deg=53.105  total=77.171  ELYstarts=9010  (72s)
+  [ 10/224] RB2(SoH_all+Pred)        seed=2035   LPSP=2.9439%  deg=53.077  total=77.221  ELYstarts=8984  (71s)
+  [ 11/224] RB2(SoH_all+Pred)        seed=2036   LPSP=2.9445%  deg=53.107  total=77.257  ELYstarts=8993  (72s)
+  [ 12/224] RB2(SoH_all+Pred)        seed=2037   LPSP=2.9581%  deg=53.093  total=77.354  ELYstarts=9006  (72s)
+  [ 13/224] RB2(SoH_all+Pred)        seed=2038   LPSP=2.9318%  deg=53.076  total=77.121  ELYstarts=8988  (79s)
+  [ 14/224] RB2(SoH_all+Pred)        seed=2039   LPSP=2.9620%  deg=53.089  total=77.382  ELYstarts=9011  (72s)
+  [ 15/224] RB2(SoH_all+Pred)        seed=2040   LPSP=2.9629%  deg=53.088  total=77.388  ELYstarts=9019  (72s)
+  [ 16/224] RB2(SoH_all+Pred)        seed=2041   LPSP=2.9471%  deg=53.101  total=77.271  ELYstarts=8993  (72s)
+  [ 17/224] RB2(SoH_all+Pred)        seed=2042   LPSP=2.9596%  deg=53.077  total=77.350  ELYstarts=9023  (73s)
+  [ 18/224] RB2(SoH_all+Pred)        seed=2043   LPSP=2.9258%  deg=53.090  total=77.086  ELYstarts=8977  (73s)
+  [ 19/224] RB2(SoH_all+Pred)        seed=2044   LPSP=2.9678%  deg=53.089  total=77.429  ELYstarts=9016  (72s)
+  [ 20/224] RB2(SoH_all+Pred)        seed=2045   LPSP=2.9391%  deg=53.077  total=77.182  ELYstarts=8979  (73s)
+  [ 21/224] RB2(SoH_all+Pred)        seed=2046   LPSP=2.9365%  deg=53.084  total=77.168  ELYstarts=8973  (73s)
+  [ 22/224] RB2(SoH_all+Pred)        seed=2047   LPSP=2.9509%  deg=53.088  total=77.290  ELYstarts=8996  (73s)
+  [ 23/224] RB2(SoH_all+Pred)        seed=2048   LPSP=2.9436%  deg=53.111  total=77.252  ELYstarts=9012  (72s)
+  [ 24/224] RB2(SoH_all+Pred)        seed=2049   LPSP=2.9376%  deg=53.085  total=77.177  ELYstarts=8979  (73s)
+  [ 25/224] RB2(SoH_all+Pred)        seed=2050   LPSP=2.9239%  deg=53.120  total=77.101  ELYstarts=8992  (73s)
+  [ 26/224] RB2(SoH_all+Pred)        seed=2051   LPSP=2.9532%  deg=53.112  total=77.333  ELYstarts=8992  (73s)
+  [ 27/224] RB2(SoH_all+Pred)        seed=2052   LPSP=2.9354%  deg=53.072  total=77.146  ELYstarts=8971  (73s)
+  [ 28/224] RB2(SoH_all+Pred)        seed=2053   LPSP=2.9466%  deg=53.068  total=77.235  ELYstarts=8981  (73s)
+  [ 29/224] RB2(SoH_all+Pred)        seed=2054   LPSP=2.9502%  deg=53.097  total=77.293  ELYstarts=9010  (73s)
+  [ 30/224] RB2(SoH_all+Pred)        seed=2055   LPSP=2.9440%  deg=53.055  total=77.200  ELYstarts=8969  (73s)
+  [ 31/224] RB2(SoH_all+Pred)        seed=2056   LPSP=2.9395%  deg=53.105  total=77.213  ELYstarts=9005  (73s)
+  [ 32/224] RB2(SoH_all+Pred)        seed=2057   LPSP=2.9447%  deg=53.109  total=77.260  ELYstarts=8990  (73s)
+  [ 33/224] MPC(Pred) [det]          seed=2026   LPSP=1.4481%  deg=66.300  total=78.176  ELYstarts=11680  (1364s)
+  [ 34/224] MPC(Pred) [det]          seed=2027   LPSP=1.4047%  deg=66.255  total=77.775  ELYstarts=11593  (1364s)
+  [ 35/224] MPC(Pred) [det]          seed=2028   LPSP=1.3997%  deg=66.256  total=77.735  ELYstarts=11641  (1374s)
+  [ 36/224] MPC(Pred) [det]          seed=2029   LPSP=1.3749%  deg=66.261  total=77.537  ELYstarts=11531  (1371s)
+  [ 37/224] MPC(Pred) [det]          seed=2030   LPSP=1.3959%  deg=66.293  total=77.741  ELYstarts=11659  (1367s)
+  [ 38/224] MPC(Pred) [det]          seed=2031   LPSP=1.4450%  deg=66.245  total=78.096  ELYstarts=11607  (1392s)
+  [ 39/224] MPC(Pred) [det]          seed=2032   LPSP=1.3875%  deg=66.304  total=77.684  ELYstarts=11618  (1371s)
+  [ 40/224] MPC(Pred) [det]          seed=2033   LPSP=1.4484%  deg=66.252  total=78.131  ELYstarts=11627  (1373s)
+  [ 41/224] MPC(Pred) [det]          seed=2034   LPSP=1.3980%  deg=66.254  total=77.720  ELYstarts=11616  (1363s)
+  [ 42/224] MPC(Pred) [det]          seed=2035   LPSP=1.4134%  deg=66.209  total=77.800  ELYstarts=11605  (1364s)
+  [ 43/224] MPC(Pred) [det]          seed=2036   LPSP=1.4132%  deg=66.247  total=77.837  ELYstarts=11596  (1374s)
+  [ 44/224] MPC(Pred) [det]          seed=2037   LPSP=1.4240%  deg=66.350  total=78.029  ELYstarts=11691  (1373s)
+  [ 45/224] MPC(Pred) [det]          seed=2038   LPSP=1.4029%  deg=66.216  total=77.721  ELYstarts=11508  (1373s)
+  [ 46/224] MPC(Pred) [det]          seed=2039   LPSP=1.3840%  deg=66.346  total=77.697  ELYstarts=11617  (1372s)
+  [ 47/224] MPC(Pred) [det]          seed=2040   LPSP=1.4000%  deg=66.316  total=77.798  ELYstarts=11659  (1375s)
+  [ 48/224] MPC(Pred) [det]          seed=2041   LPSP=1.3994%  deg=66.295  total=77.772  ELYstarts=11573  (1370s)
+  [ 49/224] MPC(Pred) [det]          seed=2042   LPSP=1.4024%  deg=66.209  total=77.711  ELYstarts=11505  (1362s)
+  [ 50/224] MPC(Pred) [det]          seed=2043   LPSP=1.3892%  deg=66.398  total=77.791  ELYstarts=11644  (1369s)
+  [ 51/224] MPC(Pred) [det]          seed=2044   LPSP=1.4164%  deg=66.265  total=77.882  ELYstarts=11573  (1371s)
+  [ 52/224] MPC(Pred) [det]          seed=2045   LPSP=1.4033%  deg=66.258  total=77.768  ELYstarts=11578  (1376s)
+  [ 53/224] MPC(Pred) [det]          seed=2046   LPSP=1.4187%  deg=66.302  total=77.938  ELYstarts=11640  (1370s)
+  [ 54/224] MPC(Pred) [det]          seed=2047   LPSP=1.4297%  deg=66.313  total=78.039  ELYstarts=11678  (1364s)
+  [ 55/224] MPC(Pred) [det]          seed=2048   LPSP=1.3768%  deg=66.283  total=77.575  ELYstarts=11585  (1367s)
+  [ 56/224] MPC(Pred) [det]          seed=2049   LPSP=1.4313%  deg=66.272  total=78.011  ELYstarts=11596  (1378s)
+  [ 57/224] MPC(Pred) [det]          seed=2050   LPSP=1.4302%  deg=66.260  total=77.989  ELYstarts=11603  (1365s)
+  [ 58/224] MPC(Pred) [det]          seed=2051   LPSP=1.3918%  deg=66.377  total=77.792  ELYstarts=11645  (1365s)
+  [ 59/224] MPC(Pred) [det]          seed=2052   LPSP=1.3995%  deg=66.391  total=77.869  ELYstarts=11658  (1372s)
+  [ 60/224] MPC(Pred) [det]          seed=2053   LPSP=1.4207%  deg=66.227  total=77.879  ELYstarts=11582  (1367s)
+  [ 61/224] MPC(Pred) [det]          seed=2054   LPSP=1.4079%  deg=66.358  total=77.904  ELYstarts=11698  (1374s)
+  [ 62/224] MPC(Pred) [det]          seed=2055   LPSP=1.4082%  deg=66.210  total=77.760  ELYstarts=11533  (1372s)
+  [ 63/224] MPC(Pred) [det]          seed=2056   LPSP=1.4333%  deg=66.348  total=78.104  ELYstarts=11654  (1370s)
+  [ 64/224] MPC(Pred) [det]          seed=2057   LPSP=1.3816%  deg=66.301  total=77.633  ELYstarts=11616  (1368s)
+  [ 65/224] MPC robuste lam0         seed=2026   LPSP=1.1279%  deg=60.364  total=69.614  ELYstarts=8890  (26565s)
+  [ 66/224] MPC robuste lam0         seed=2027   LPSP=1.1315%  deg=60.420  total=69.700  ELYstarts=8879  (27266s)
+  [ 67/224] MPC robuste lam0         seed=2028   LPSP=1.1135%  deg=60.522  total=69.654  ELYstarts=8886  (26653s)
+  [ 68/224] MPC robuste lam0         seed=2029   LPSP=1.1352%  deg=60.460  total=69.770  ELYstarts=8903  (26689s)
+  [ 69/224] MPC robuste lam0         seed=2030   LPSP=1.1335%  deg=60.387  total=69.683  ELYstarts=8840  (26739s)
+  [ 70/224] MPC robuste lam0         seed=2031   LPSP=1.1205%  deg=60.387  total=69.576  ELYstarts=8866  (26650s)
+  [ 71/224] MPC robuste lam0         seed=2032   LPSP=1.1604%  deg=60.357  total=69.874  ELYstarts=8840  (26665s)
+  [ 72/224] MPC robuste lam0         seed=2033   LPSP=1.1327%  deg=60.394  total=69.684  ELYstarts=8841  (26684s)
+  [ 73/224] MPC robuste lam0         seed=2034   LPSP=1.1387%  deg=60.386  total=69.725  ELYstarts=8858  (26711s)
+  [ 74/224] MPC robuste lam0         seed=2035   LPSP=1.1408%  deg=60.414  total=69.770  ELYstarts=8856  (27414s)
+  [ 75/224] MPC robuste lam0         seed=2036   LPSP=1.1421%  deg=60.417  total=69.784  ELYstarts=8859  (26955s)
+  [ 76/224] MPC robuste lam0         seed=2037   LPSP=1.1528%  deg=60.353  total=69.807  ELYstarts=8884  (26700s)
+  [ 77/224] MPC robuste lam0         seed=2038   LPSP=1.1451%  deg=60.354  total=69.745  ELYstarts=8835  (26580s)
+  [ 78/224] MPC robuste lam0         seed=2039   LPSP=1.1277%  deg=60.364  total=69.612  ELYstarts=8851  (27032s)
+  [ 79/224] MPC robuste lam0         seed=2040   LPSP=1.1403%  deg=60.357  total=69.709  ELYstarts=8842  (27862s)
+  [ 80/224] MPC robuste lam0         seed=2041   LPSP=1.1442%  deg=60.432  total=69.815  ELYstarts=8872  (26640s)
+  [ 81/224] MPC robuste lam0         seed=2042   LPSP=1.1416%  deg=60.427  total=69.790  ELYstarts=8856  (26736s)
+  [ 82/224] MPC robuste lam0         seed=2043   LPSP=1.1297%  deg=60.444  total=69.709  ELYstarts=8861  (26507s)
+  [ 83/224] MPC robuste lam0         seed=2044   LPSP=1.1274%  deg=60.503  total=69.750  ELYstarts=8874  (27046s)
+  [ 84/224] MPC robuste lam0         seed=2045   LPSP=1.1256%  deg=60.458  total=69.690  ELYstarts=8888  (26735s)
+  [ 85/224] MPC robuste lam0         seed=2046   LPSP=1.1273%  deg=60.474  total=69.719  ELYstarts=8876  (26754s)
+  [ 86/224] MPC robuste lam0         seed=2047   LPSP=1.1496%  deg=60.377  total=69.805  ELYstarts=8867  (26795s)
+  [ 87/224] MPC robuste lam0         seed=2048   LPSP=1.1385%  deg=60.382  total=69.719  ELYstarts=8863  (26782s)
+  [ 88/224] MPC robuste lam0         seed=2049   LPSP=1.1624%  deg=60.347  total=69.881  ELYstarts=8854  (27363s)
+  [ 89/224] MPC robuste lam0         seed=2050   LPSP=1.1450%  deg=60.410  total=69.801  ELYstarts=8867  (26776s)
+  [ 90/224] MPC robuste lam0         seed=2051   LPSP=1.1096%  deg=60.386  total=69.486  ELYstarts=8857  (26962s)
+  [ 91/224] MPC robuste lam0         seed=2052   LPSP=1.1423%  deg=60.405  total=69.774  ELYstarts=8881  (27448s)
+  [ 92/224] MPC robuste lam0         seed=2053   LPSP=1.1451%  deg=60.389  total=69.781  ELYstarts=8878  (26784s)
+  [ 93/224] MPC robuste lam0         seed=2054   LPSP=1.1310%  deg=60.414  total=69.690  ELYstarts=8881  (26654s)
+  [ 94/224] MPC robuste lam0         seed=2055   LPSP=1.1391%  deg=60.379  total=69.721  ELYstarts=8874  (26891s)
+  [ 95/224] MPC robuste lam0         seed=2056   LPSP=1.1634%  deg=60.397  total=69.939  ELYstarts=8880  (27804s)
+  [ 96/224] MPC robuste lam0         seed=2057   LPSP=1.1450%  deg=60.384  total=69.775  ELYstarts=8870  (26600s)
+  [ 97/224] MPC robuste lam0.25      seed=2026   LPSP=0.8484%  deg=63.501  total=70.459  ELYstarts=9594  (31432s)  LPfail=3
+  [ 98/224] MPC robuste lam0.25      seed=2027   LPSP=0.8585%  deg=63.528  total=70.569  ELYstarts=9648  (31453s)  LPfail=3
+  [ 99/224] MPC robuste lam0.25      seed=2028   LPSP=0.8545%  deg=63.507  total=70.515  ELYstarts=9621  (31448s)  LPfail=5
+  [100/224] MPC robuste lam0.25      seed=2029   LPSP=0.8547%  deg=63.489  total=70.499  ELYstarts=9654  (31525s)  LPfail=5
+  [101/224] MPC robuste lam0.25      seed=2030   LPSP=0.8715%  deg=63.540  total=70.688  ELYstarts=9664  (31601s)  LPfail=5
+  [102/224] MPC robuste lam0.25      seed=2031   LPSP=0.8479%  deg=63.478  total=70.431  ELYstarts=9625  (31370s)  LPfail=3
+  [103/224] MPC robuste lam0.25      seed=2032   LPSP=0.8576%  deg=63.467  total=70.501  ELYstarts=9630  (31880s)  LPfail=7
+  [104/224] MPC robuste lam0.25      seed=2033   LPSP=0.8430%  deg=63.422  total=70.336  ELYstarts=9640  (31428s)  LPfail=5
+  [105/224] MPC robuste lam0.25      seed=2034   LPSP=0.8638%  deg=63.475  total=70.560  ELYstarts=9602  (31543s)  LPfail=5
+  [106/224] MPC robuste lam0.25      seed=2035   LPSP=0.8603%  deg=63.472  total=70.527  ELYstarts=9643  (31551s)  LPfail=2
+  [107/224] MPC robuste lam0.25      seed=2036   LPSP=0.8470%  deg=63.541  total=70.487  ELYstarts=9635  (31637s)  LPfail=7
+  [108/224] MPC robuste lam0.25      seed=2037   LPSP=0.8619%  deg=63.421  total=70.490  ELYstarts=9617  (31494s)  LPfail=2
+  [109/224] MPC robuste lam0.25      seed=2038   LPSP=0.8597%  deg=63.530  total=70.581  ELYstarts=9662  (31619s)  LPfail=14
+  [110/224] MPC robuste lam0.25      seed=2039   LPSP=0.8549%  deg=63.436  total=70.447  ELYstarts=9566  (31872s)  LPfail=6
+  [111/224] MPC robuste lam0.25      seed=2040   LPSP=0.8534%  deg=63.450  total=70.449  ELYstarts=9621  (31549s)  LPfail=5
+  [112/224] MPC robuste lam0.25      seed=2041   LPSP=0.8685%  deg=63.498  total=70.621  ELYstarts=9641  (31551s)  LPfail=6
+  [113/224] MPC robuste lam0.25      seed=2042   LPSP=0.8430%  deg=63.476  total=70.390  ELYstarts=9648  (31461s)  LPfail=3
+  [114/224] MPC robuste lam0.25      seed=2043   LPSP=0.8564%  deg=63.525  total=70.548  ELYstarts=9642  (31562s)  LPfail=5
+  [115/224] MPC robuste lam0.25      seed=2044   LPSP=0.8471%  deg=63.488  total=70.436  ELYstarts=9605  (31526s)  LPfail=3
+  [116/224] MPC robuste lam0.25      seed=2045   LPSP=0.8595%  deg=63.522  total=70.571  ELYstarts=9683  (31569s)  LPfail=5
+  [117/224] MPC robuste lam0.25      seed=2046   LPSP=0.8539%  deg=63.501  total=70.504  ELYstarts=9664  (31512s)
+  [118/224] MPC robuste lam0.25      seed=2047   LPSP=0.8576%  deg=63.489  total=70.523  ELYstarts=9610  (31621s)  LPfail=1
+  [119/224] MPC robuste lam0.25      seed=2048   LPSP=0.8582%  deg=63.504  total=70.542  ELYstarts=9646  (31588s)  LPfail=7
+  [120/224] MPC robuste lam0.25      seed=2049   LPSP=0.8666%  deg=63.494  total=70.602  ELYstarts=9632  (31553s)  LPfail=3
+  [121/224] MPC robuste lam0.25      seed=2050   LPSP=0.8570%  deg=63.509  total=70.538  ELYstarts=9644  (31658s)  LPfail=4
+  [122/224] MPC robuste lam0.25      seed=2051   LPSP=0.8163%  deg=63.408  total=70.103  ELYstarts=9664  (31564s)  LPfail=1
+  [123/224] MPC robuste lam0.25      seed=2052   LPSP=0.8510%  deg=63.455  total=70.435  ELYstarts=9583  (32116s)  LPfail=10
+  [124/224] MPC robuste lam0.25      seed=2053   LPSP=0.8679%  deg=63.501  total=70.618  ELYstarts=9640  (32324s)  LPfail=1
+  [125/224] MPC robuste lam0.25      seed=2054   LPSP=0.8548%  deg=63.479  total=70.490  ELYstarts=9658  (32254s)  LPfail=5
+  [126/224] MPC robuste lam0.25      seed=2055   LPSP=0.8514%  deg=63.514  total=70.496  ELYstarts=9655  (32298s)  LPfail=7
+  [127/224] MPC robuste lam0.25      seed=2056   LPSP=0.8649%  deg=63.513  total=70.606  ELYstarts=9656  (32889s)  LPfail=6
+  [128/224] MPC robuste lam0.25      seed=2057   LPSP=0.8566%  deg=63.473  total=70.499  ELYstarts=9615  (31667s)  LPfail=3
+slurmstepd: error: *** JOB 213373 ON node4-10 CANCELLED AT 2026-07-08T17:31:53 DUE TO TIME LIMIT ***

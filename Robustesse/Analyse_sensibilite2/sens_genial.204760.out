@@ -1,0 +1,447 @@
+Job 204760  noeud=node4-9  script=sens_soh_estimation.py
+cpus-per-task=32  debut=Fri Jun 19 19:52:08 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+=== ETAPE 1 -- Sensibilite a l'erreur d'estimation du SoH (RB2(SoH), 25 ans) ===
+    refresh=168 pas (~7 j) | clip=(0.2, 1.1) | composants=('fc', 'ely')
+
+BASELINE (SoH exact) : LPSP 2.6493%  deg 58.53 kEUR  | vie B/F/E = 3.921917808219178/12.574771689497716/19.118607305936074
+
+--- REGIME 1 -- biais systematique : 9 runs (32 workers) ---
+  [  1/9] bias=-0.100 sigma=0.000 -> LPSP  3.0209%  deg   55.33 kEUR
+  [  2/9] bias=-0.075 sigma=0.000 -> LPSP  2.8726%  deg   55.90 kEUR
+  [  3/9] bias=-0.050 sigma=0.000 -> LPSP  2.7804%  deg   57.05 kEUR
+  [  4/9] bias=-0.025 sigma=0.000 -> LPSP  2.7194%  deg   57.82 kEUR
+  [  5/9] bias=+0.000 sigma=0.000 -> LPSP  2.6493%  deg   58.53 kEUR
+  [  6/9] bias=+0.025 sigma=0.000 -> LPSP  2.5764%  deg   59.77 kEUR
+  [  7/9] bias=+0.050 sigma=0.000 -> LPSP  2.5464%  deg   63.11 kEUR
+  [  8/9] bias=+0.075 sigma=0.000 -> LPSP  2.6102%  deg   66.46 kEUR
+  [  9/9] bias=+0.100 sigma=0.000 -> LPSP  2.5855%  deg   68.72 kEUR
+  (63s)
+
+--- REGIME 2 -- bruit gaussien (Monte Carlo) : 400 runs (32 workers) ---
+  [  1/400] bias=+0.000 sigma=0.020 -> LPSP  2.6558%  deg   58.62 kEUR
+  [  2/400] bias=+0.000 sigma=0.020 -> LPSP  2.6637%  deg   58.70 kEUR
+  [  3/400] bias=+0.000 sigma=0.020 -> LPSP  2.6624%  deg   58.69 kEUR
+  [  4/400] bias=+0.000 sigma=0.020 -> LPSP  2.6633%  deg   58.67 kEUR
+  [  5/400] bias=+0.000 sigma=0.020 -> LPSP  2.6518%  deg   58.65 kEUR
+  [  6/400] bias=+0.000 sigma=0.020 -> LPSP  2.6694%  deg   58.74 kEUR
+  [  7/400] bias=+0.000 sigma=0.020 -> LPSP  2.6574%  deg   58.63 kEUR
+  [  8/400] bias=+0.000 sigma=0.020 -> LPSP  2.6546%  deg   58.68 kEUR
+  [  9/400] bias=+0.000 sigma=0.020 -> LPSP  2.6735%  deg   58.60 kEUR
+  [ 10/400] bias=+0.000 sigma=0.020 -> LPSP  2.6491%  deg   58.72 kEUR
+  [ 11/400] bias=+0.000 sigma=0.020 -> LPSP  2.6486%  deg   58.66 kEUR
+  [ 12/400] bias=+0.000 sigma=0.020 -> LPSP  2.6619%  deg   58.70 kEUR
+  [ 13/400] bias=+0.000 sigma=0.020 -> LPSP  2.6580%  deg   58.63 kEUR
+  [ 14/400] bias=+0.000 sigma=0.020 -> LPSP  2.6551%  deg   58.73 kEUR
+  [ 15/400] bias=+0.000 sigma=0.020 -> LPSP  2.6400%  deg   58.72 kEUR
+  [ 16/400] bias=+0.000 sigma=0.020 -> LPSP  2.6479%  deg   58.64 kEUR
+  [ 17/400] bias=+0.000 sigma=0.020 -> LPSP  2.6568%  deg   58.64 kEUR
+  [ 18/400] bias=+0.000 sigma=0.020 -> LPSP  2.6583%  deg   58.66 kEUR
+  [ 19/400] bias=+0.000 sigma=0.020 -> LPSP  2.6460%  deg   58.64 kEUR
+  [ 20/400] bias=+0.000 sigma=0.020 -> LPSP  2.6546%  deg   58.69 kEUR
+  [ 21/400] bias=+0.000 sigma=0.020 -> LPSP  2.6491%  deg   58.66 kEUR
+  [ 22/400] bias=+0.000 sigma=0.020 -> LPSP  2.6636%  deg   58.64 kEUR
+  [ 23/400] bias=+0.000 sigma=0.020 -> LPSP  2.6552%  deg   58.65 kEUR
+  [ 24/400] bias=+0.000 sigma=0.020 -> LPSP  2.6617%  deg   58.72 kEUR
+  [ 25/400] bias=+0.000 sigma=0.020 -> LPSP  2.6578%  deg   58.58 kEUR
+  [ 26/400] bias=+0.000 sigma=0.020 -> LPSP  2.6500%  deg   58.68 kEUR
+  [ 27/400] bias=+0.000 sigma=0.020 -> LPSP  2.6548%  deg   58.68 kEUR
+  [ 28/400] bias=+0.000 sigma=0.020 -> LPSP  2.6473%  deg   58.72 kEUR
+  [ 29/400] bias=+0.000 sigma=0.020 -> LPSP  2.6663%  deg   58.68 kEUR
+  [ 30/400] bias=+0.000 sigma=0.020 -> LPSP  2.6680%  deg   58.67 kEUR
+  [ 31/400] bias=+0.000 sigma=0.020 -> LPSP  2.6461%  deg   58.65 kEUR
+  [ 32/400] bias=+0.000 sigma=0.020 -> LPSP  2.6589%  deg   58.69 kEUR
+  [ 33/400] bias=+0.000 sigma=0.020 -> LPSP  2.6576%  deg   58.72 kEUR
+  [ 34/400] bias=+0.000 sigma=0.020 -> LPSP  2.6684%  deg   58.68 kEUR
+  [ 35/400] bias=+0.000 sigma=0.020 -> LPSP  2.6764%  deg   58.71 kEUR
+  [ 36/400] bias=+0.000 sigma=0.020 -> LPSP  2.6609%  deg   58.65 kEUR
+  [ 37/400] bias=+0.000 sigma=0.020 -> LPSP  2.6404%  deg   58.64 kEUR
+  [ 38/400] bias=+0.000 sigma=0.020 -> LPSP  2.6667%  deg   58.65 kEUR
+  [ 39/400] bias=+0.000 sigma=0.020 -> LPSP  2.6544%  deg   58.67 kEUR
+  [ 40/400] bias=+0.000 sigma=0.020 -> LPSP  2.6673%  deg   58.67 kEUR
+  [ 41/400] bias=+0.000 sigma=0.020 -> LPSP  2.6531%  deg   58.55 kEUR
+  [ 42/400] bias=+0.000 sigma=0.020 -> LPSP  2.6518%  deg   58.64 kEUR
+  [ 43/400] bias=+0.000 sigma=0.020 -> LPSP  2.6631%  deg   58.68 kEUR
+  [ 44/400] bias=+0.000 sigma=0.020 -> LPSP  2.6488%  deg   58.66 kEUR
+  [ 45/400] bias=+0.000 sigma=0.020 -> LPSP  2.6571%  deg   58.64 kEUR
+  [ 46/400] bias=+0.000 sigma=0.020 -> LPSP  2.6571%  deg   58.69 kEUR
+  [ 47/400] bias=+0.000 sigma=0.020 -> LPSP  2.6428%  deg   58.63 kEUR
+  [ 48/400] bias=+0.000 sigma=0.020 -> LPSP  2.6556%  deg   58.67 kEUR
+  [ 49/400] bias=+0.000 sigma=0.020 -> LPSP  2.6434%  deg   58.67 kEUR
+  [ 50/400] bias=+0.000 sigma=0.020 -> LPSP  2.6673%  deg   58.63 kEUR
+  [ 51/400] bias=+0.000 sigma=0.020 -> LPSP  2.6473%  deg   58.66 kEUR
+  [ 52/400] bias=+0.000 sigma=0.020 -> LPSP  2.6483%  deg   58.70 kEUR
+  [ 53/400] bias=+0.000 sigma=0.020 -> LPSP  2.6699%  deg   58.69 kEUR
+  [ 54/400] bias=+0.000 sigma=0.020 -> LPSP  2.6727%  deg   58.68 kEUR
+  [ 55/400] bias=+0.000 sigma=0.020 -> LPSP  2.6523%  deg   58.64 kEUR
+  [ 56/400] bias=+0.000 sigma=0.020 -> LPSP  2.6497%  deg   58.73 kEUR
+  [ 57/400] bias=+0.000 sigma=0.020 -> LPSP  2.6622%  deg   58.65 kEUR
+  [ 58/400] bias=+0.000 sigma=0.020 -> LPSP  2.6740%  deg   58.63 kEUR
+  [ 59/400] bias=+0.000 sigma=0.020 -> LPSP  2.6687%  deg   58.64 kEUR
+  [ 60/400] bias=+0.000 sigma=0.020 -> LPSP  2.6590%  deg   58.68 kEUR
+  [ 61/400] bias=+0.000 sigma=0.020 -> LPSP  2.6677%  deg   58.69 kEUR
+  [ 62/400] bias=+0.000 sigma=0.020 -> LPSP  2.6630%  deg   58.68 kEUR
+  [ 63/400] bias=+0.000 sigma=0.020 -> LPSP  2.6582%  deg   58.67 kEUR
+  [ 64/400] bias=+0.000 sigma=0.020 -> LPSP  2.6592%  deg   58.65 kEUR
+  [ 65/400] bias=+0.000 sigma=0.020 -> LPSP  2.6428%  deg   58.65 kEUR
+  [ 66/400] bias=+0.000 sigma=0.020 -> LPSP  2.6652%  deg   58.72 kEUR
+  [ 67/400] bias=+0.000 sigma=0.020 -> LPSP  2.6560%  deg   58.62 kEUR
+  [ 68/400] bias=+0.000 sigma=0.020 -> LPSP  2.6532%  deg   58.63 kEUR
+  [ 69/400] bias=+0.000 sigma=0.020 -> LPSP  2.6427%  deg   58.70 kEUR
+  [ 70/400] bias=+0.000 sigma=0.020 -> LPSP  2.6435%  deg   58.69 kEUR
+  [ 71/400] bias=+0.000 sigma=0.020 -> LPSP  2.6600%  deg   58.68 kEUR
+  [ 72/400] bias=+0.000 sigma=0.020 -> LPSP  2.6579%  deg   58.70 kEUR
+  [ 73/400] bias=+0.000 sigma=0.020 -> LPSP  2.6452%  deg   58.70 kEUR
+  [ 74/400] bias=+0.000 sigma=0.020 -> LPSP  2.6517%  deg   58.64 kEUR
+  [ 75/400] bias=+0.000 sigma=0.020 -> LPSP  2.6522%  deg   58.65 kEUR
+  [ 76/400] bias=+0.000 sigma=0.020 -> LPSP  2.6590%  deg   58.63 kEUR
+  [ 77/400] bias=+0.000 sigma=0.020 -> LPSP  2.6546%  deg   58.76 kEUR
+  [ 78/400] bias=+0.000 sigma=0.020 -> LPSP  2.6527%  deg   58.72 kEUR
+  [ 79/400] bias=+0.000 sigma=0.020 -> LPSP  2.6417%  deg   58.67 kEUR
+  [ 80/400] bias=+0.000 sigma=0.020 -> LPSP  2.6525%  deg   58.71 kEUR
+  [ 81/400] bias=+0.000 sigma=0.020 -> LPSP  2.6495%  deg   58.69 kEUR
+  [ 82/400] bias=+0.000 sigma=0.020 -> LPSP  2.6627%  deg   58.62 kEUR
+  [ 83/400] bias=+0.000 sigma=0.020 -> LPSP  2.6638%  deg   58.67 kEUR
+  [ 84/400] bias=+0.000 sigma=0.020 -> LPSP  2.6714%  deg   58.71 kEUR
+  [ 85/400] bias=+0.000 sigma=0.020 -> LPSP  2.6561%  deg   58.67 kEUR
+  [ 86/400] bias=+0.000 sigma=0.020 -> LPSP  2.6599%  deg   58.67 kEUR
+  [ 87/400] bias=+0.000 sigma=0.020 -> LPSP  2.6677%  deg   58.68 kEUR
+  [ 88/400] bias=+0.000 sigma=0.020 -> LPSP  2.6450%  deg   58.66 kEUR
+  [ 89/400] bias=+0.000 sigma=0.020 -> LPSP  2.6678%  deg   58.65 kEUR
+  [ 90/400] bias=+0.000 sigma=0.020 -> LPSP  2.6600%  deg   58.73 kEUR
+  [ 91/400] bias=+0.000 sigma=0.020 -> LPSP  2.6574%  deg   58.67 kEUR
+  [ 92/400] bias=+0.000 sigma=0.020 -> LPSP  2.6591%  deg   58.69 kEUR
+  [ 93/400] bias=+0.000 sigma=0.020 -> LPSP  2.6490%  deg   58.67 kEUR
+  [ 94/400] bias=+0.000 sigma=0.020 -> LPSP  2.6515%  deg   58.65 kEUR
+  [ 95/400] bias=+0.000 sigma=0.020 -> LPSP  2.6362%  deg   58.59 kEUR
+  [ 96/400] bias=+0.000 sigma=0.020 -> LPSP  2.6524%  deg   58.65 kEUR
+  [ 97/400] bias=+0.000 sigma=0.020 -> LPSP  2.6605%  deg   58.69 kEUR
+  [ 98/400] bias=+0.000 sigma=0.020 -> LPSP  2.6611%  deg   58.70 kEUR
+  [ 99/400] bias=+0.000 sigma=0.020 -> LPSP  2.6652%  deg   58.62 kEUR
+  [100/400] bias=+0.000 sigma=0.020 -> LPSP  2.6503%  deg   58.73 kEUR
+  [101/400] bias=+0.000 sigma=0.020 -> LPSP  2.6539%  deg   58.66 kEUR
+  [102/400] bias=+0.000 sigma=0.020 -> LPSP  2.6708%  deg   58.58 kEUR
+  [103/400] bias=+0.000 sigma=0.020 -> LPSP  2.6539%  deg   58.63 kEUR
+  [104/400] bias=+0.000 sigma=0.020 -> LPSP  2.6610%  deg   58.65 kEUR
+  [105/400] bias=+0.000 sigma=0.020 -> LPSP  2.6577%  deg   58.70 kEUR
+  [106/400] bias=+0.000 sigma=0.020 -> LPSP  2.6639%  deg   58.66 kEUR
+  [107/400] bias=+0.000 sigma=0.020 -> LPSP  2.6635%  deg   58.69 kEUR
+  [108/400] bias=+0.000 sigma=0.020 -> LPSP  2.6565%  deg   58.67 kEUR
+  [109/400] bias=+0.000 sigma=0.020 -> LPSP  2.6586%  deg   58.67 kEUR
+  [110/400] bias=+0.000 sigma=0.020 -> LPSP  2.6552%  deg   58.70 kEUR
+  [111/400] bias=+0.000 sigma=0.020 -> LPSP  2.6564%  deg   58.71 kEUR
+  [112/400] bias=+0.000 sigma=0.020 -> LPSP  2.6655%  deg   58.68 kEUR
+  [113/400] bias=+0.000 sigma=0.020 -> LPSP  2.6568%  deg   58.67 kEUR
+  [114/400] bias=+0.000 sigma=0.020 -> LPSP  2.6618%  deg   58.65 kEUR
+  [115/400] bias=+0.000 sigma=0.020 -> LPSP  2.6574%  deg   58.65 kEUR
+  [116/400] bias=+0.000 sigma=0.020 -> LPSP  2.6649%  deg   58.64 kEUR
+  [117/400] bias=+0.000 sigma=0.020 -> LPSP  2.6615%  deg   58.66 kEUR
+  [118/400] bias=+0.000 sigma=0.020 -> LPSP  2.6563%  deg   58.66 kEUR
+  [119/400] bias=+0.000 sigma=0.020 -> LPSP  2.6584%  deg   58.66 kEUR
+  [120/400] bias=+0.000 sigma=0.020 -> LPSP  2.6553%  deg   58.66 kEUR
+  [121/400] bias=+0.000 sigma=0.020 -> LPSP  2.6465%  deg   58.68 kEUR
+  [122/400] bias=+0.000 sigma=0.020 -> LPSP  2.6691%  deg   58.70 kEUR
+  [123/400] bias=+0.000 sigma=0.020 -> LPSP  2.6466%  deg   58.64 kEUR
+  [124/400] bias=+0.000 sigma=0.020 -> LPSP  2.6565%  deg   58.70 kEUR
+  [125/400] bias=+0.000 sigma=0.020 -> LPSP  2.6424%  deg   58.62 kEUR
+  [126/400] bias=+0.000 sigma=0.020 -> LPSP  2.6571%  deg   58.67 kEUR
+  [127/400] bias=+0.000 sigma=0.020 -> LPSP  2.6463%  deg   58.73 kEUR
+  [128/400] bias=+0.000 sigma=0.020 -> LPSP  2.6574%  deg   58.69 kEUR
+  [129/400] bias=+0.000 sigma=0.020 -> LPSP  2.6502%  deg   58.71 kEUR
+  [130/400] bias=+0.000 sigma=0.020 -> LPSP  2.6610%  deg   58.63 kEUR
+  [131/400] bias=+0.000 sigma=0.020 -> LPSP  2.6546%  deg   58.65 kEUR
+  [132/400] bias=+0.000 sigma=0.020 -> LPSP  2.6740%  deg   58.69 kEUR
+  [133/400] bias=+0.000 sigma=0.020 -> LPSP  2.6612%  deg   58.71 kEUR
+  [134/400] bias=+0.000 sigma=0.020 -> LPSP  2.6659%  deg   58.69 kEUR
+  [135/400] bias=+0.000 sigma=0.020 -> LPSP  2.6680%  deg   58.67 kEUR
+  [136/400] bias=+0.000 sigma=0.020 -> LPSP  2.6583%  deg   58.70 kEUR
+  [137/400] bias=+0.000 sigma=0.020 -> LPSP  2.6624%  deg   58.73 kEUR
+  [138/400] bias=+0.000 sigma=0.020 -> LPSP  2.6474%  deg   58.65 kEUR
+  [139/400] bias=+0.000 sigma=0.020 -> LPSP  2.6488%  deg   58.75 kEUR
+  [140/400] bias=+0.000 sigma=0.020 -> LPSP  2.6517%  deg   58.64 kEUR
+  [141/400] bias=+0.000 sigma=0.020 -> LPSP  2.6610%  deg   58.65 kEUR
+  [142/400] bias=+0.000 sigma=0.020 -> LPSP  2.6607%  deg   58.71 kEUR
+  [143/400] bias=+0.000 sigma=0.020 -> LPSP  2.6502%  deg   58.67 kEUR
+  [144/400] bias=+0.000 sigma=0.020 -> LPSP  2.6747%  deg   58.69 kEUR
+  [145/400] bias=+0.000 sigma=0.020 -> LPSP  2.6535%  deg   58.64 kEUR
+  [146/400] bias=+0.000 sigma=0.020 -> LPSP  2.6542%  deg   58.73 kEUR
+  [147/400] bias=+0.000 sigma=0.020 -> LPSP  2.6570%  deg   58.68 kEUR
+  [148/400] bias=+0.000 sigma=0.020 -> LPSP  2.6578%  deg   58.68 kEUR
+  [149/400] bias=+0.000 sigma=0.020 -> LPSP  2.6579%  deg   58.63 kEUR
+  [150/400] bias=+0.000 sigma=0.020 -> LPSP  2.6608%  deg   58.70 kEUR
+  [151/400] bias=+0.000 sigma=0.020 -> LPSP  2.6498%  deg   58.62 kEUR
+  [152/400] bias=+0.000 sigma=0.020 -> LPSP  2.6551%  deg   58.68 kEUR
+  [153/400] bias=+0.000 sigma=0.020 -> LPSP  2.6667%  deg   58.62 kEUR
+  [154/400] bias=+0.000 sigma=0.020 -> LPSP  2.6709%  deg   58.65 kEUR
+  [155/400] bias=+0.000 sigma=0.020 -> LPSP  2.6648%  deg   58.66 kEUR
+  [156/400] bias=+0.000 sigma=0.020 -> LPSP  2.6478%  deg   58.76 kEUR
+  [157/400] bias=+0.000 sigma=0.020 -> LPSP  2.6548%  deg   58.63 kEUR
+  [158/400] bias=+0.000 sigma=0.020 -> LPSP  2.6459%  deg   58.70 kEUR
+  [159/400] bias=+0.000 sigma=0.020 -> LPSP  2.6558%  deg   58.65 kEUR
+  [160/400] bias=+0.000 sigma=0.020 -> LPSP  2.6550%  deg   58.69 kEUR
+  [161/400] bias=+0.000 sigma=0.020 -> LPSP  2.6615%  deg   58.70 kEUR
+  [162/400] bias=+0.000 sigma=0.020 -> LPSP  2.6640%  deg   58.70 kEUR
+  [163/400] bias=+0.000 sigma=0.020 -> LPSP  2.6510%  deg   58.65 kEUR
+  [164/400] bias=+0.000 sigma=0.020 -> LPSP  2.6537%  deg   58.63 kEUR
+  [165/400] bias=+0.000 sigma=0.020 -> LPSP  2.6587%  deg   58.69 kEUR
+  [166/400] bias=+0.000 sigma=0.020 -> LPSP  2.6578%  deg   58.70 kEUR
+  [167/400] bias=+0.000 sigma=0.020 -> LPSP  2.6575%  deg   58.64 kEUR
+  [168/400] bias=+0.000 sigma=0.020 -> LPSP  2.6505%  deg   58.64 kEUR
+  [169/400] bias=+0.000 sigma=0.020 -> LPSP  2.6593%  deg   58.74 kEUR
+  [170/400] bias=+0.000 sigma=0.020 -> LPSP  2.6485%  deg   58.68 kEUR
+  [171/400] bias=+0.000 sigma=0.020 -> LPSP  2.6720%  deg   58.68 kEUR
+  [172/400] bias=+0.000 sigma=0.020 -> LPSP  2.6543%  deg   58.70 kEUR
+  [173/400] bias=+0.000 sigma=0.020 -> LPSP  2.6504%  deg   58.71 kEUR
+  [174/400] bias=+0.000 sigma=0.020 -> LPSP  2.6577%  deg   58.65 kEUR
+  [175/400] bias=+0.000 sigma=0.020 -> LPSP  2.6690%  deg   58.67 kEUR
+  [176/400] bias=+0.000 sigma=0.020 -> LPSP  2.6434%  deg   58.63 kEUR
+  [177/400] bias=+0.000 sigma=0.020 -> LPSP  2.6541%  deg   58.70 kEUR
+  [178/400] bias=+0.000 sigma=0.020 -> LPSP  2.6646%  deg   58.66 kEUR
+  [179/400] bias=+0.000 sigma=0.020 -> LPSP  2.6604%  deg   58.57 kEUR
+  [180/400] bias=+0.000 sigma=0.020 -> LPSP  2.6614%  deg   58.73 kEUR
+  [181/400] bias=+0.000 sigma=0.020 -> LPSP  2.6596%  deg   58.68 kEUR
+  [182/400] bias=+0.000 sigma=0.020 -> LPSP  2.6615%  deg   58.68 kEUR
+  [183/400] bias=+0.000 sigma=0.020 -> LPSP  2.6600%  deg   58.63 kEUR
+  [184/400] bias=+0.000 sigma=0.020 -> LPSP  2.6659%  deg   58.67 kEUR
+  [185/400] bias=+0.000 sigma=0.020 -> LPSP  2.6539%  deg   58.65 kEUR
+  [186/400] bias=+0.000 sigma=0.020 -> LPSP  2.6582%  deg   58.62 kEUR
+  [187/400] bias=+0.000 sigma=0.020 -> LPSP  2.6675%  deg   58.63 kEUR
+  [188/400] bias=+0.000 sigma=0.020 -> LPSP  2.6597%  deg   58.61 kEUR
+  [189/400] bias=+0.000 sigma=0.020 -> LPSP  2.6533%  deg   58.67 kEUR
+  [190/400] bias=+0.000 sigma=0.020 -> LPSP  2.6564%  deg   58.66 kEUR
+  [191/400] bias=+0.000 sigma=0.020 -> LPSP  2.6466%  deg   58.65 kEUR
+  [192/400] bias=+0.000 sigma=0.020 -> LPSP  2.6584%  deg   58.69 kEUR
+  [193/400] bias=+0.000 sigma=0.020 -> LPSP  2.6591%  deg   58.68 kEUR
+  [194/400] bias=+0.000 sigma=0.020 -> LPSP  2.6713%  deg   58.66 kEUR
+  [195/400] bias=+0.000 sigma=0.020 -> LPSP  2.6598%  deg   58.59 kEUR
+  [196/400] bias=+0.000 sigma=0.020 -> LPSP  2.6663%  deg   58.68 kEUR
+  [197/400] bias=+0.000 sigma=0.020 -> LPSP  2.6586%  deg   58.65 kEUR
+  [198/400] bias=+0.000 sigma=0.020 -> LPSP  2.6606%  deg   58.65 kEUR
+  [199/400] bias=+0.000 sigma=0.020 -> LPSP  2.6427%  deg   58.69 kEUR
+  [200/400] bias=+0.000 sigma=0.020 -> LPSP  2.6477%  deg   58.72 kEUR
+  [201/400] bias=+0.000 sigma=0.100 -> LPSP  2.7147%  deg   60.17 kEUR
+  [202/400] bias=+0.000 sigma=0.100 -> LPSP  2.7535%  deg   60.43 kEUR
+  [203/400] bias=+0.000 sigma=0.100 -> LPSP  2.7770%  deg   60.39 kEUR
+  [204/400] bias=+0.000 sigma=0.100 -> LPSP  2.7944%  deg   60.54 kEUR
+  [205/400] bias=+0.000 sigma=0.100 -> LPSP  2.7787%  deg   60.33 kEUR
+  [206/400] bias=+0.000 sigma=0.100 -> LPSP  2.8257%  deg   60.75 kEUR
+  [207/400] bias=+0.000 sigma=0.100 -> LPSP  2.7003%  deg   60.17 kEUR
+  [208/400] bias=+0.000 sigma=0.100 -> LPSP  2.6879%  deg   60.51 kEUR
+  [209/400] bias=+0.000 sigma=0.100 -> LPSP  2.8031%  deg   60.12 kEUR
+  [210/400] bias=+0.000 sigma=0.100 -> LPSP  2.7629%  deg   60.71 kEUR
+  [211/400] bias=+0.000 sigma=0.100 -> LPSP  2.7218%  deg   60.43 kEUR
+  [212/400] bias=+0.000 sigma=0.100 -> LPSP  2.7679%  deg   60.44 kEUR
+  [213/400] bias=+0.000 sigma=0.100 -> LPSP  2.7529%  deg   60.35 kEUR
+  [214/400] bias=+0.000 sigma=0.100 -> LPSP  2.7289%  deg   60.68 kEUR
+  [215/400] bias=+0.000 sigma=0.100 -> LPSP  2.6772%  deg   60.66 kEUR
+  [216/400] bias=+0.000 sigma=0.100 -> LPSP  2.7701%  deg   60.31 kEUR
+  [217/400] bias=+0.000 sigma=0.100 -> LPSP  2.7030%  deg   60.27 kEUR
+  [218/400] bias=+0.000 sigma=0.100 -> LPSP  2.7535%  deg   60.24 kEUR
+  [219/400] bias=+0.000 sigma=0.100 -> LPSP  2.7420%  deg   60.30 kEUR
+  [220/400] bias=+0.000 sigma=0.100 -> LPSP  2.7211%  deg   60.48 kEUR
+  [221/400] bias=+0.000 sigma=0.100 -> LPSP  2.6947%  deg   60.55 kEUR
+  [222/400] bias=+0.000 sigma=0.100 -> LPSP  2.7666%  deg   60.45 kEUR
+  [223/400] bias=+0.000 sigma=0.100 -> LPSP  2.7580%  deg   60.44 kEUR
+  [224/400] bias=+0.000 sigma=0.100 -> LPSP  2.7988%  deg   60.86 kEUR
+  [225/400] bias=+0.000 sigma=0.100 -> LPSP  2.7789%  deg   59.91 kEUR
+  [226/400] bias=+0.000 sigma=0.100 -> LPSP  2.7337%  deg   60.43 kEUR
+  [227/400] bias=+0.000 sigma=0.100 -> LPSP  2.6993%  deg   60.63 kEUR
+  [228/400] bias=+0.000 sigma=0.100 -> LPSP  2.7412%  deg   60.45 kEUR
+  [229/400] bias=+0.000 sigma=0.100 -> LPSP  2.7708%  deg   60.38 kEUR
+  [230/400] bias=+0.000 sigma=0.100 -> LPSP  2.7486%  deg   60.36 kEUR
+  [231/400] bias=+0.000 sigma=0.100 -> LPSP  2.7312%  deg   60.41 kEUR
+  [232/400] bias=+0.000 sigma=0.100 -> LPSP  2.7574%  deg   60.54 kEUR
+  [233/400] bias=+0.000 sigma=0.100 -> LPSP  2.7573%  deg   60.66 kEUR
+  [234/400] bias=+0.000 sigma=0.100 -> LPSP  2.7778%  deg   60.42 kEUR
+  [235/400] bias=+0.000 sigma=0.100 -> LPSP  2.7835%  deg   60.63 kEUR
+  [236/400] bias=+0.000 sigma=0.100 -> LPSP  2.7234%  deg   60.36 kEUR
+  [237/400] bias=+0.000 sigma=0.100 -> LPSP  2.7116%  deg   60.49 kEUR
+  [238/400] bias=+0.000 sigma=0.100 -> LPSP  2.8024%  deg   60.28 kEUR
+  [239/400] bias=+0.000 sigma=0.100 -> LPSP  2.7627%  deg   60.31 kEUR
+  [240/400] bias=+0.000 sigma=0.100 -> LPSP  2.8081%  deg   60.42 kEUR
+  [241/400] bias=+0.000 sigma=0.100 -> LPSP  2.7902%  deg   59.72 kEUR
+  [242/400] bias=+0.000 sigma=0.100 -> LPSP  2.7716%  deg   60.28 kEUR
+  [243/400] bias=+0.000 sigma=0.100 -> LPSP  2.8193%  deg   60.26 kEUR
+  [244/400] bias=+0.000 sigma=0.100 -> LPSP  2.7020%  deg   60.43 kEUR
+  [245/400] bias=+0.000 sigma=0.100 -> LPSP  2.8462%  deg   60.23 kEUR
+  [246/400] bias=+0.000 sigma=0.100 -> LPSP  2.7246%  deg   60.50 kEUR
+  [247/400] bias=+0.000 sigma=0.100 -> LPSP  2.7029%  deg   60.20 kEUR
+  [248/400] bias=+0.000 sigma=0.100 -> LPSP  2.7689%  deg   60.45 kEUR
+  [249/400] bias=+0.000 sigma=0.100 -> LPSP  2.7079%  deg   60.61 kEUR
+  [250/400] bias=+0.000 sigma=0.100 -> LPSP  2.7525%  deg   60.18 kEUR
+  [251/400] bias=+0.000 sigma=0.100 -> LPSP  2.7519%  deg   60.34 kEUR
+  [252/400] bias=+0.000 sigma=0.100 -> LPSP  2.7497%  deg   60.62 kEUR
+  [253/400] bias=+0.000 sigma=0.100 -> LPSP  2.7656%  deg   60.49 kEUR
+  [254/400] bias=+0.000 sigma=0.100 -> LPSP  2.7665%  deg   60.54 kEUR
+  [255/400] bias=+0.000 sigma=0.100 -> LPSP  2.7334%  deg   60.31 kEUR
+  [256/400] bias=+0.000 sigma=0.100 -> LPSP  2.7357%  deg   60.73 kEUR
+  [257/400] bias=+0.000 sigma=0.100 -> LPSP  2.7773%  deg   60.34 kEUR
+  [258/400] bias=+0.000 sigma=0.100 -> LPSP  2.8005%  deg   60.25 kEUR
+  [259/400] bias=+0.000 sigma=0.100 -> LPSP  2.8356%  deg   60.25 kEUR
+  [260/400] bias=+0.000 sigma=0.100 -> LPSP  2.7227%  deg   60.54 kEUR
+  [261/400] bias=+0.000 sigma=0.100 -> LPSP  2.7510%  deg   60.36 kEUR
+  [262/400] bias=+0.000 sigma=0.100 -> LPSP  2.8077%  deg   60.60 kEUR
+  [263/400] bias=+0.000 sigma=0.100 -> LPSP  2.7696%  deg   60.35 kEUR
+  [264/400] bias=+0.000 sigma=0.100 -> LPSP  2.7668%  deg   60.16 kEUR
+  [265/400] bias=+0.000 sigma=0.100 -> LPSP  2.7259%  deg   60.39 kEUR
+  [266/400] bias=+0.000 sigma=0.100 -> LPSP  2.7768%  deg   60.50 kEUR
+  [267/400] bias=+0.000 sigma=0.100 -> LPSP  2.7835%  deg   60.12 kEUR
+  [268/400] bias=+0.000 sigma=0.100 -> LPSP  2.7855%  deg   60.17 kEUR
+  [269/400] bias=+0.000 sigma=0.100 -> LPSP  2.7412%  deg   60.59 kEUR
+  [270/400] bias=+0.000 sigma=0.100 -> LPSP  2.6811%  deg   60.56 kEUR
+  [271/400] bias=+0.000 sigma=0.100 -> LPSP  2.7554%  deg   60.36 kEUR
+  [272/400] bias=+0.000 sigma=0.100 -> LPSP  2.7335%  deg   60.69 kEUR
+  [273/400] bias=+0.000 sigma=0.100 -> LPSP  2.7619%  deg   60.43 kEUR
+  [274/400] bias=+0.000 sigma=0.100 -> LPSP  2.7864%  deg   60.22 kEUR
+  [275/400] bias=+0.000 sigma=0.100 -> LPSP  2.7479%  deg   60.40 kEUR
+  [276/400] bias=+0.000 sigma=0.100 -> LPSP  2.8185%  deg   60.29 kEUR
+  [277/400] bias=+0.000 sigma=0.100 -> LPSP  2.7457%  deg   60.77 kEUR
+  [278/400] bias=+0.000 sigma=0.100 -> LPSP  2.7101%  deg   60.80 kEUR
+  [279/400] bias=+0.000 sigma=0.100 -> LPSP  2.7521%  deg   60.37 kEUR
+  [280/400] bias=+0.000 sigma=0.100 -> LPSP  2.7403%  deg   60.56 kEUR
+  [281/400] bias=+0.000 sigma=0.100 -> LPSP  2.7234%  deg   60.47 kEUR
+  [282/400] bias=+0.000 sigma=0.100 -> LPSP  2.7640%  deg   60.17 kEUR
+  [283/400] bias=+0.000 sigma=0.100 -> LPSP  2.7559%  deg   60.30 kEUR
+  [284/400] bias=+0.000 sigma=0.100 -> LPSP  2.7759%  deg   60.70 kEUR
+  [285/400] bias=+0.000 sigma=0.100 -> LPSP  2.7877%  deg   60.43 kEUR
+  [286/400] bias=+0.000 sigma=0.100 -> LPSP  2.8077%  deg   60.48 kEUR
+  [287/400] bias=+0.000 sigma=0.100 -> LPSP  2.7444%  deg   60.37 kEUR
+  [288/400] bias=+0.000 sigma=0.100 -> LPSP  2.7087%  deg   60.38 kEUR
+  [289/400] bias=+0.000 sigma=0.100 -> LPSP  2.8026%  deg   60.31 kEUR
+  [290/400] bias=+0.000 sigma=0.100 -> LPSP  2.7341%  deg   60.64 kEUR
+  [291/400] bias=+0.000 sigma=0.100 -> LPSP  2.7591%  deg   60.48 kEUR
+  [292/400] bias=+0.000 sigma=0.100 -> LPSP  2.8214%  deg   60.49 kEUR
+  [293/400] bias=+0.000 sigma=0.100 -> LPSP  2.6863%  deg   60.50 kEUR
+  [294/400] bias=+0.000 sigma=0.100 -> LPSP  2.7472%  deg   60.27 kEUR
+  [295/400] bias=+0.000 sigma=0.100 -> LPSP  2.7505%  deg   60.01 kEUR
+  [296/400] bias=+0.000 sigma=0.100 -> LPSP  2.7577%  deg   60.23 kEUR
+  [297/400] bias=+0.000 sigma=0.100 -> LPSP  2.7975%  deg   60.34 kEUR
+  [298/400] bias=+0.000 sigma=0.100 -> LPSP  2.7241%  deg   60.34 kEUR
+  [299/400] bias=+0.000 sigma=0.100 -> LPSP  2.7720%  deg   60.07 kEUR
+  [300/400] bias=+0.000 sigma=0.100 -> LPSP  2.7234%  deg   60.60 kEUR
+  [301/400] bias=+0.000 sigma=0.100 -> LPSP  2.7425%  deg   60.31 kEUR
+  [302/400] bias=+0.000 sigma=0.100 -> LPSP  2.8295%  deg   60.13 kEUR
+  [303/400] bias=+0.000 sigma=0.100 -> LPSP  2.7625%  deg   60.32 kEUR
+  [304/400] bias=+0.000 sigma=0.100 -> LPSP  2.7453%  deg   60.28 kEUR
+  [305/400] bias=+0.000 sigma=0.100 -> LPSP  2.7468%  deg   60.54 kEUR
+  [306/400] bias=+0.000 sigma=0.100 -> LPSP  2.7627%  deg   60.21 kEUR
+  [307/400] bias=+0.000 sigma=0.100 -> LPSP  2.7469%  deg   60.42 kEUR
+  [308/400] bias=+0.000 sigma=0.100 -> LPSP  2.7306%  deg   60.32 kEUR
+  [309/400] bias=+0.000 sigma=0.100 -> LPSP  2.6979%  deg   60.46 kEUR
+  [310/400] bias=+0.000 sigma=0.100 -> LPSP  2.6986%  deg   60.66 kEUR
+  [311/400] bias=+0.000 sigma=0.100 -> LPSP  2.7139%  deg   60.67 kEUR
+  [312/400] bias=+0.000 sigma=0.100 -> LPSP  2.7470%  deg   60.43 kEUR
+  [313/400] bias=+0.000 sigma=0.100 -> LPSP  2.7141%  deg   60.50 kEUR
+  [314/400] bias=+0.000 sigma=0.100 -> LPSP  2.7317%  deg   60.41 kEUR
+  [315/400] bias=+0.000 sigma=0.100 -> LPSP  2.7532%  deg   60.25 kEUR
+  [316/400] bias=+0.000 sigma=0.100 -> LPSP  2.8332%  deg   60.27 kEUR
+  [317/400] bias=+0.000 sigma=0.100 -> LPSP  2.8122%  deg   60.32 kEUR
+  [318/400] bias=+0.000 sigma=0.100 -> LPSP  2.7322%  deg   60.30 kEUR
+  [319/400] bias=+0.000 sigma=0.100 -> LPSP  2.7829%  deg   60.25 kEUR
+  [320/400] bias=+0.000 sigma=0.100 -> LPSP  2.7470%  deg   60.63 kEUR
+  [321/400] bias=+0.000 sigma=0.100 -> LPSP  2.6858%  deg   60.42 kEUR
+  [322/400] bias=+0.000 sigma=0.100 -> LPSP  2.7753%  deg   60.43 kEUR
+  [323/400] bias=+0.000 sigma=0.100 -> LPSP  2.7410%  deg   60.28 kEUR
+  [324/400] bias=+0.000 sigma=0.100 -> LPSP  2.7395%  deg   60.61 kEUR
+  [325/400] bias=+0.000 sigma=0.100 -> LPSP  2.7427%  deg   60.17 kEUR
+  [326/400] bias=+0.000 sigma=0.100 -> LPSP  2.7024%  deg   60.25 kEUR
+  [327/400] bias=+0.000 sigma=0.100 -> LPSP  2.7075%  deg   60.78 kEUR
+  [328/400] bias=+0.000 sigma=0.100 -> LPSP  2.7366%  deg   60.47 kEUR
+  [329/400] bias=+0.000 sigma=0.100 -> LPSP  2.7384%  deg   60.66 kEUR
+  [330/400] bias=+0.000 sigma=0.100 -> LPSP  2.8084%  deg   60.17 kEUR
+  [331/400] bias=+0.000 sigma=0.100 -> LPSP  2.7499%  deg   60.38 kEUR
+  [332/400] bias=+0.000 sigma=0.100 -> LPSP  2.7614%  deg   60.50 kEUR
+  [333/400] bias=+0.000 sigma=0.100 -> LPSP  2.7493%  deg   60.61 kEUR
+  [334/400] bias=+0.000 sigma=0.100 -> LPSP  2.7825%  deg   60.72 kEUR
+  [335/400] bias=+0.000 sigma=0.100 -> LPSP  2.7733%  deg   60.34 kEUR
+  [336/400] bias=+0.000 sigma=0.100 -> LPSP  2.8094%  deg   60.48 kEUR
+  [337/400] bias=+0.000 sigma=0.100 -> LPSP  2.7476%  deg   60.71 kEUR
+  [338/400] bias=+0.000 sigma=0.100 -> LPSP  2.6848%  deg   60.31 kEUR
+  [339/400] bias=+0.000 sigma=0.100 -> LPSP  2.7671%  deg   60.54 kEUR
+  [340/400] bias=+0.000 sigma=0.100 -> LPSP  2.7714%  deg   60.37 kEUR
+  [341/400] bias=+0.000 sigma=0.100 -> LPSP  2.7461%  deg   60.26 kEUR
+  [342/400] bias=+0.000 sigma=0.100 -> LPSP  2.7862%  deg   60.48 kEUR
+  [343/400] bias=+0.000 sigma=0.100 -> LPSP  2.7510%  deg   60.50 kEUR
+  [344/400] bias=+0.000 sigma=0.100 -> LPSP  2.8336%  deg   60.53 kEUR
+  [345/400] bias=+0.000 sigma=0.100 -> LPSP  2.8325%  deg   60.21 kEUR
+  [346/400] bias=+0.000 sigma=0.100 -> LPSP  2.7540%  deg   60.56 kEUR
+  [347/400] bias=+0.000 sigma=0.100 -> LPSP  2.7026%  deg   60.54 kEUR
+  [348/400] bias=+0.000 sigma=0.100 -> LPSP  2.7238%  deg   60.69 kEUR
+  [349/400] bias=+0.000 sigma=0.100 -> LPSP  2.7837%  deg   60.26 kEUR
+  [350/400] bias=+0.000 sigma=0.100 -> LPSP  2.7133%  deg   60.68 kEUR
+  [351/400] bias=+0.000 sigma=0.100 -> LPSP  2.7118%  deg   60.29 kEUR
+  [352/400] bias=+0.000 sigma=0.100 -> LPSP  2.7515%  deg   60.52 kEUR
+  [353/400] bias=+0.000 sigma=0.100 -> LPSP  2.8379%  deg   60.04 kEUR
+  [354/400] bias=+0.000 sigma=0.100 -> LPSP  2.8108%  deg   60.35 kEUR
+  [355/400] bias=+0.000 sigma=0.100 -> LPSP  2.7695%  deg   60.48 kEUR
+  [356/400] bias=+0.000 sigma=0.100 -> LPSP  2.7190%  deg   60.96 kEUR
+  [357/400] bias=+0.000 sigma=0.100 -> LPSP  2.7198%  deg   60.26 kEUR
+  [358/400] bias=+0.000 sigma=0.100 -> LPSP  2.7156%  deg   60.70 kEUR
+  [359/400] bias=+0.000 sigma=0.100 -> LPSP  2.7653%  deg   60.37 kEUR
+  [360/400] bias=+0.000 sigma=0.100 -> LPSP  2.7333%  deg   60.58 kEUR
+  [361/400] bias=+0.000 sigma=0.100 -> LPSP  2.7192%  deg   60.69 kEUR
+  [362/400] bias=+0.000 sigma=0.100 -> LPSP  2.7114%  deg   60.47 kEUR
+  [363/400] bias=+0.000 sigma=0.100 -> LPSP  2.7732%  deg   60.29 kEUR
+  [364/400] bias=+0.000 sigma=0.100 -> LPSP  2.7513%  deg   60.46 kEUR
+  [365/400] bias=+0.000 sigma=0.100 -> LPSP  2.7375%  deg   60.49 kEUR
+  [366/400] bias=+0.000 sigma=0.100 -> LPSP  2.7094%  deg   60.61 kEUR
+  [367/400] bias=+0.000 sigma=0.100 -> LPSP  2.7056%  deg   60.36 kEUR
+  [368/400] bias=+0.000 sigma=0.100 -> LPSP  2.7338%  deg   60.35 kEUR
+  [369/400] bias=+0.000 sigma=0.100 -> LPSP  2.6949%  deg   60.97 kEUR
+  [370/400] bias=+0.000 sigma=0.100 -> LPSP  2.7328%  deg   60.48 kEUR
+  [371/400] bias=+0.000 sigma=0.100 -> LPSP  2.7686%  deg   60.50 kEUR
+  [372/400] bias=+0.000 sigma=0.100 -> LPSP  2.6535%  deg   60.63 kEUR
+  [373/400] bias=+0.000 sigma=0.100 -> LPSP  2.7357%  deg   60.61 kEUR
+  [374/400] bias=+0.000 sigma=0.100 -> LPSP  2.7481%  deg   60.34 kEUR
+  [375/400] bias=+0.000 sigma=0.100 -> LPSP  2.7373%  deg   60.34 kEUR
+  [376/400] bias=+0.000 sigma=0.100 -> LPSP  2.7274%  deg   60.18 kEUR
+  [377/400] bias=+0.000 sigma=0.100 -> LPSP  2.7484%  deg   60.46 kEUR
+  [378/400] bias=+0.000 sigma=0.100 -> LPSP  2.7912%  deg   60.33 kEUR
+  [379/400] bias=+0.000 sigma=0.100 -> LPSP  2.8078%  deg   59.96 kEUR
+  [380/400] bias=+0.000 sigma=0.100 -> LPSP  2.7300%  deg   60.77 kEUR
+  [381/400] bias=+0.000 sigma=0.100 -> LPSP  2.7762%  deg   60.31 kEUR
+  [382/400] bias=+0.000 sigma=0.100 -> LPSP  2.7393%  deg   60.47 kEUR
+  [383/400] bias=+0.000 sigma=0.100 -> LPSP  2.7470%  deg   60.49 kEUR
+  [384/400] bias=+0.000 sigma=0.100 -> LPSP  2.7829%  deg   60.28 kEUR
+  [385/400] bias=+0.000 sigma=0.100 -> LPSP  2.7841%  deg   60.44 kEUR
+  [386/400] bias=+0.000 sigma=0.100 -> LPSP  2.8003%  deg   60.15 kEUR
+  [387/400] bias=+0.000 sigma=0.100 -> LPSP  2.7823%  deg   60.38 kEUR
+  [388/400] bias=+0.000 sigma=0.100 -> LPSP  2.7119%  deg   60.13 kEUR
+  [389/400] bias=+0.000 sigma=0.100 -> LPSP  2.6951%  deg   60.40 kEUR
+  [390/400] bias=+0.000 sigma=0.100 -> LPSP  2.7741%  deg   60.32 kEUR
+  [391/400] bias=+0.000 sigma=0.100 -> LPSP  2.7858%  deg   60.37 kEUR
+  [392/400] bias=+0.000 sigma=0.100 -> LPSP  2.7899%  deg   60.31 kEUR
+  [393/400] bias=+0.000 sigma=0.100 -> LPSP  2.7403%  deg   60.56 kEUR
+  [394/400] bias=+0.000 sigma=0.100 -> LPSP  2.7634%  deg   60.27 kEUR
+  [395/400] bias=+0.000 sigma=0.100 -> LPSP  2.7532%  deg   60.06 kEUR
+  [396/400] bias=+0.000 sigma=0.100 -> LPSP  2.7996%  deg   60.27 kEUR
+  [397/400] bias=+0.000 sigma=0.100 -> LPSP  2.8327%  deg   60.41 kEUR
+  [398/400] bias=+0.000 sigma=0.100 -> LPSP  2.7651%  deg   60.20 kEUR
+  [399/400] bias=+0.000 sigma=0.100 -> LPSP  2.7346%  deg   60.48 kEUR
+  [400/400] bias=+0.000 sigma=0.100 -> LPSP  2.7024%  deg   60.61 kEUR
+  (925s)
+
+========================================================================
+BASELINE : LPSP 2.6493%  deg 58.53 kEUR
+------------------------------------------------------------------------
+Biais  ->  LPSP        deg
+  -0.100 :   3.0209%     55.33 kEUR  (dLPSP +0.3716 pts, ddeg -5.47%)
+  -0.075 :   2.8726%     55.90 kEUR  (dLPSP +0.2233 pts, ddeg -4.48%)
+  -0.050 :   2.7804%     57.05 kEUR  (dLPSP +0.1310 pts, ddeg -2.53%)
+  -0.025 :   2.7194%     57.82 kEUR  (dLPSP +0.0700 pts, ddeg -1.20%)
+  +0.000 :   2.6493%     58.53 kEUR  (dLPSP +0.0000 pts, ddeg +0.00%)
+  +0.025 :   2.5764%     59.77 kEUR  (dLPSP -0.0729 pts, ddeg +2.13%)
+  +0.050 :   2.5464%     63.11 kEUR  (dLPSP -0.1030 pts, ddeg +7.83%)
+  +0.075 :   2.6102%     66.46 kEUR  (dLPSP -0.0391 pts, ddeg +13.55%)
+  +0.100 :   2.5855%     68.72 kEUR  (dLPSP -0.0639 pts, ddeg +17.40%)
+  MC sigma=0.020 (N=200): LPSP 2.6573+/-0.0078  deg 58.67+/-0.04 kEUR
+  MC sigma=0.100 (N=200): LPSP 2.7535+/-0.0368  deg 60.42+/-0.19 kEUR
+========================================================================
+Resultats : /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_soh.txt
+Figures   : /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_soh_bias.pdf
+            /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_soh_pareto.pdf
+
+real	17m26.117s
+user	476m4.847s
+sys	0m28.946s
+fin=Fri Jun 19 20:09:35 CEST 2026

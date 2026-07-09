@@ -1,0 +1,103 @@
+Job 204160  noeud=node4-26  script=sens_sizing.py
+cpus-per-task=32  debut=Wed Jun 17 16:29:05 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+=== ETAPE 5 -- Robustesse du classement des EMS au dimensionnement (25 ans) ===
+    10 EMS x 7 scenarios = 70 simus | leviers: BAT.series, FC.n_series, ELY.n_series
+    nominal: bat_series=60 fc_nseries=10 ely_nseries=10
+
+--- Dimensionnement -- fronts par scenario : 70 runs (32 workers) ---
+  [  1/70] 0-100     @ nominal      -> LPSP 10.3787%  deg  124.22 kEUR
+  [  2/70] 25-75     @ nominal      -> LPSP 20.2640%  deg  110.78 kEUR
+  [  3/70] 50-50     @ nominal      -> LPSP 8.0738%  deg  109.02 kEUR
+  [  4/70] 75-25     @ nominal      -> LPSP 3.8028%  deg   59.67 kEUR
+  [  5/70] 100-0     @ nominal      -> LPSP 2.4862%  deg   66.42 kEUR
+  [  6/70] RB2       @ nominal      -> LPSP 2.7126%  deg   65.17 kEUR
+  [  7/70] RB2(SoH)  @ nominal      -> LPSP 2.6493%  deg   58.53 kEUR
+  [  8/70] RB1       @ nominal      -> LPSP 1.2596%  deg   80.16 kEUR
+  [  9/70] SoC1      @ nominal      -> LPSP 1.3398%  deg  140.68 kEUR
+  [ 10/70] SoC06     @ nominal      -> LPSP 29.4607%  deg  109.27 kEUR
+  [ 11/70] 0-100     @ FC x2        -> LPSP 4.4504%  deg  134.28 kEUR
+  [ 12/70] 25-75     @ FC x2        -> LPSP 4.7596%  deg  127.77 kEUR
+  [ 13/70] 50-50     @ FC x2        -> LPSP 1.4737%  deg  109.33 kEUR
+  [ 14/70] 75-25     @ FC x2        -> LPSP 3.9883%  deg   62.15 kEUR
+  [ 15/70] 100-0     @ FC x2        -> LPSP 1.0042%  deg   66.26 kEUR
+  [ 16/70] RB2       @ FC x2        -> LPSP 2.9798%  deg   66.86 kEUR
+  [ 17/70] RB2(SoH)  @ FC x2        -> LPSP 3.7918%  deg   59.81 kEUR
+  [ 18/70] RB1       @ FC x2        -> LPSP 0.5419%  deg   82.37 kEUR
+  [ 19/70] SoC1      @ FC x2        -> LPSP 6.1757%  deg  132.56 kEUR
+  [ 20/70] SoC06     @ FC x2        -> LPSP 11.4692%  deg  120.64 kEUR
+  [ 21/70] 0-100     @ FC x3        -> LPSP 9.6514%  deg  132.96 kEUR
+  [ 22/70] 25-75     @ FC x3        -> LPSP 1.7889%  deg  118.11 kEUR
+  [ 23/70] 50-50     @ FC x3        -> LPSP 1.7376%  deg  113.19 kEUR
+  [ 24/70] 75-25     @ FC x3        -> LPSP 7.1629%  deg   64.80 kEUR
+  [ 25/70] 100-0     @ FC x3        -> LPSP 0.6973%  deg   67.43 kEUR
+  [ 26/70] RB2       @ FC x3        -> LPSP 2.7972%  deg   69.65 kEUR
+  [ 27/70] RB2(SoH)  @ FC x3        -> LPSP 3.2540%  deg   62.58 kEUR
+  [ 28/70] RB1       @ FC x3        -> LPSP 0.4343%  deg   88.87 kEUR
+  [ 29/70] SoC1      @ FC x3        -> LPSP 9.8493%  deg  132.82 kEUR
+  [ 30/70] SoC06     @ FC x3        -> LPSP 4.8309%  deg  126.93 kEUR
+  [ 31/70] 0-100     @ ELY x0.5     -> LPSP 12.3381%  deg  117.64 kEUR
+  [ 32/70] 25-75     @ ELY x0.5     -> LPSP 26.0927%  deg   95.58 kEUR
+  [ 33/70] 50-50     @ ELY x0.5     -> LPSP 9.0228%  deg  105.06 kEUR
+  [ 34/70] 75-25     @ ELY x0.5     -> LPSP 3.8028%  deg   80.10 kEUR
+  [ 35/70] 100-0     @ ELY x0.5     -> LPSP 2.4862%  deg   65.19 kEUR
+  [ 36/70] RB2       @ ELY x0.5     -> LPSP 7.8936%  deg   57.13 kEUR
+  [ 37/70] RB2(SoH)  @ ELY x0.5     -> LPSP 7.0060%  deg   53.31 kEUR
+  [ 38/70] RB1       @ ELY x0.5     -> LPSP 1.2596%  deg   77.73 kEUR
+  [ 39/70] SoC1      @ ELY x0.5     -> LPSP 19.1449%  deg  107.19 kEUR
+  [ 40/70] SoC06     @ ELY x0.5     -> LPSP 37.8187%  deg   89.80 kEUR
+  [ 41/70] 0-100     @ BAT x0.5     -> LPSP 14.7300%  deg  121.06 kEUR
+  [ 42/70] 25-75     @ BAT x0.5     -> LPSP 20.9273%  deg  113.04 kEUR
+  [ 43/70] 50-50     @ BAT x0.5     -> LPSP 12.2395%  deg   92.33 kEUR
+  [ 44/70] 75-25     @ BAT x0.5     -> LPSP 27.2896%  deg   39.32 kEUR
+  [ 45/70] 100-0     @ BAT x0.5     -> LPSP 9.7058%  deg  102.76 kEUR
+  [ 46/70] RB2       @ BAT x0.5     -> LPSP 16.2559%  deg   46.18 kEUR
+  [ 47/70] RB2(SoH)  @ BAT x0.5     -> LPSP 18.4603%  deg   39.21 kEUR
+  [ 48/70] RB1       @ BAT x0.5     -> LPSP 7.1918%  deg  106.67 kEUR
+  [ 49/70] SoC1      @ BAT x0.5     -> LPSP 2.4678%  deg  131.29 kEUR
+  [ 50/70] SoC06     @ BAT x0.5     -> LPSP 30.1685%  deg  109.01 kEUR
+  [ 51/70] 0-100     @ BAT x2       -> LPSP 8.1425%  deg  124.43 kEUR
+  [ 52/70] 25-75     @ BAT x2       -> LPSP 20.1920%  deg  108.96 kEUR
+  [ 53/70] 50-50     @ BAT x2       -> LPSP 6.7473%  deg  104.49 kEUR
+  [ 54/70] 75-25     @ BAT x2       -> LPSP 1.1056%  deg   78.73 kEUR
+  [ 55/70] 100-0     @ BAT x2       -> LPSP 0.7435%  deg   85.84 kEUR
+  [ 56/70] RB2       @ BAT x2       -> LPSP 0.5623%  deg   72.86 kEUR
+  [ 57/70] RB2(SoH)  @ BAT x2       -> LPSP 0.5454%  deg   69.04 kEUR
+  [ 58/70] RB1       @ BAT x2       -> LPSP 0.5451%  deg   90.41 kEUR
+  [ 59/70] SoC1      @ BAT x2       -> LPSP 1.1938%  deg  134.21 kEUR
+  [ 60/70] SoC06     @ BAT x2       -> LPSP 29.4982%  deg  108.02 kEUR
+  [ 61/70] 0-100     @ FC x2 / ELY x0.5 -> LPSP 34.1936%  deg   95.06 kEUR
+  [ 62/70] 25-75     @ FC x2 / ELY x0.5 -> LPSP 24.2568%  deg   97.83 kEUR
+  [ 63/70] 50-50     @ FC x2 / ELY x0.5 -> LPSP 4.1874%  deg  102.73 kEUR
+  [ 64/70] 75-25     @ FC x2 / ELY x0.5 -> LPSP 4.1723%  deg   85.74 kEUR
+  [ 65/70] 100-0     @ FC x2 / ELY x0.5 -> LPSP 1.0042%  deg   65.01 kEUR
+  [ 66/70] RB2       @ FC x2 / ELY x0.5 -> LPSP 10.4663%  deg   58.90 kEUR
+  [ 67/70] RB2(SoH)  @ FC x2 / ELY x0.5 -> LPSP 8.8297%  deg   55.21 kEUR
+  [ 68/70] RB1       @ FC x2 / ELY x0.5 -> LPSP 0.5453%  deg   79.90 kEUR
+  [ 69/70] SoC1      @ FC x2 / ELY x0.5 -> LPSP 37.7139%  deg   90.74 kEUR
+  [ 70/70] SoC06     @ FC x2 / ELY x0.5 -> LPSP 34.7264%  deg   87.36 kEUR
+  (211s)
+
+==============================================================================
+CLASSEMENT PAR COUT (1 = moins cher ; * = non-domine 2D)
+EMS          nominal      FC x2      FC x3   ELY x0.5   BAT x0.5     BAT x2 FC x2 / EL
+--------------------------------------------------------------------------------------
+0-100             9         10         10         10          9          9          8 
+25-75             8          8          7          7          8          8          9 
+50-50             6          6          6          8          4*         6         10 
+75-25             2          2          2          5          2          3          5 
+100-0             4*         3*         3*         3*         5*         4          3*
+RB2               3          4          4          2          3*         2          2 
+RB2(SoH)          1*         1*         1*         1*         1*         1*         1*
+RB1               5*         5*         5*         4*         6*         5*         4*
+SoC1             10          9          9          9         10*        10          7 
+SoC06             7          7          8          6          7          7          6 
+==============================================================================
+Resultats : /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_sizing.txt
+Figures   : /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_sizing_fronts.pdf
+            /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_sizing_ranking.pdf
+
+real	3m34.263s
+user	81m3.262s
+sys	0m6.620s
+fin=Wed Jun 17 16:32:40 CEST 2026

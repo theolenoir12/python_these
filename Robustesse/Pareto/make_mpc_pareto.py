@@ -9,7 +9,7 @@ N'ECRASE AUCUNE figure existante : ecrit des fichiers NEUFS dans figures_chap3/ 
                                MPC deployable, MPC omni, front PD)
 
 Reutilise le style et les points RB de make_chap3_pareto (import, sans lancer son
-main). Les points MPC sont LUS des resultats reels de ../MPC/ :
+main). Les points MPC sont LUS des resultats reels de ../MPC3/ (re-import 2026-07-09) :
     MPC (deployable)  = 'sw x3' du sweep_mpc_robust.txt (defaut retenu, plan C)
     MPC omni          = 'MPC omni (H=48)' de bench_mpc.txt (plafond informationnel)
 Coordonnees = (LPSP %, cout de degradation kEUR), meme repere que les RB.
@@ -52,7 +52,7 @@ def _parse_bench(path):
 
 def mpc_points():
     """Points MPC reels lus de ../MPC/ ; fallback sur les valeurs consignees."""
-    mpcdir = os.path.abspath(os.path.join(HERE, "..", "MPC"))
+    mpcdir = os.path.abspath(os.path.join(HERE, "..", "MPC3"))
     pts = {}
     try:
         rob = _parse_bench(os.path.join(mpcdir, "sweep_mpc_robust.txt"))
@@ -67,8 +67,8 @@ def mpc_points():
             pts['MPC omni'] = ben["MPC omni (H=48)"]
     except OSError:
         pass
-    pts.setdefault('MPC',      (1.41, 66.29))   # sw x3   (ANALYSE_robust)
-    pts.setdefault('MPC omni', (0.48, 54.75))   # omni H48 (bench_mpc.txt)
+    pts.setdefault('MPC',      (1.41, 66.29))   # sw x3   (MPC3/sweep_mpc_robust)
+    pts.setdefault('MPC omni', (0.46, 55.65))   # omni H48 (MPC3/bench_mpc.txt)
     return pts
 
 

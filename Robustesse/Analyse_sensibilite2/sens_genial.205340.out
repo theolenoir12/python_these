@@ -1,0 +1,9 @@
+Job 205340  noeud=node4-12  script=sens_timesteps.py
+cpus-per-task=32  debut=Mon Jun 22 11:58:37 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+python: can't open file '/Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/sens_timesteps.py': [Errno 2] No such file or directory
+
+real	0m0.031s
+user	0m0.016s
+sys	0m0.007s
+fin=Mon Jun 22 11:58:38 CEST 2026

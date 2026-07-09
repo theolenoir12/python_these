@@ -1,0 +1,9 @@
+# Sensibilite C-weights -- 10 EMS 25 ans | DELTA={'bat': 0.3, 'fc': 0.3, 'ely': 0.3} | N_MC=200 | CI=95%
+# couts de remplacement nominaux [EUR]: bat=6998 fc=1183 ely=9339
+# LPSP INVARIANT aux poids ; cout lineaire -> bande verticale
+# clps = cout LPS pas-a-pas [kEUR] (invariant aux poids de cout)
+
+strat;LPSP_%;cout_nominal;cost_bat;cost_fc;cost_ely;cout_mean;cout_std;cout_lo95;cout_hi95;clps
+RB1;1.2596;80.161;46.197;4.268;29.696;80.489;9.248;63.434;97.489;10.330
+RB2;2.4509;65.415;44.900;2.359;18.156;65.645;8.286;51.323;79.955;20.101
+RB2(SoH);2.5474;59.359;45.005;2.357;11.997;59.540;8.046;46.478;73.135;20.892

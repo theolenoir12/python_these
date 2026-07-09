@@ -1,0 +1,10 @@
+Job 204059  noeud=node4-26  script=sens_cweigths.py
+cpus-per-task=32  debut=Wed Jun 17 11:54:46 CEST 2026
+Matplotlib created a temporary config/cache directory at /tmp/jobscratch/204059/matplotlib-f54cvzrp because the default path (/Home/Users/tlenoir/.config/matplotlib) is not a writable directory; it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+numpy 1.21.5 scipy 1.9.1
+python: can't open file '/Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/sens_cweigths.py': [Errno 2] No such file or directory
+
+real	0m0.029s
+user	0m0.020s
+sys	0m0.004s
+fin=Wed Jun 17 11:54:55 CEST 2026

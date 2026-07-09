@@ -1,0 +1,320 @@
+Job 204675  noeud=node4-10  script=sens_sizing.py
+cpus-per-task=32  debut=Fri Jun 19 08:35:10 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+=== ETAPE 5 -- Robustesse du classement des EMS au dimensionnement (25 ans) ===
+    10 EMS x 27 scenarios = 270 simus | leviers: BAT.series, FC.n_series, ELY.n_series
+    nominal: bat_series=60 fc_nseries=10 ely_nseries=10
+
+--- Dimensionnement -- fronts par scenario : 270 runs (32 workers) ---
+  [  1/270] 0-100     @ B0.8 F0.8 E0.8 -> LPSP 9.6134%  deg  113.00 kEUR
+  [  2/270] 25-75     @ B0.8 F0.8 E0.8 -> LPSP 26.6520%  deg  106.33 kEUR
+  [  3/270] 50-50     @ B0.8 F0.8 E0.8 -> LPSP 12.5398%  deg   99.89 kEUR
+  [  4/270] 75-25     @ B0.8 F0.8 E0.8 -> LPSP 6.5848%  deg   60.26 kEUR
+  [  5/270] 100-0     @ B0.8 F0.8 E0.8 -> LPSP 7.3773%  deg   73.89 kEUR
+  [  6/270] RB2       @ B0.8 F0.8 E0.8 -> LPSP 5.3484%  deg   54.50 kEUR
+  [  7/270] RB2(SoH)  @ B0.8 F0.8 E0.8 -> LPSP 6.1638%  deg   48.76 kEUR
+  [  8/270] RB1       @ B0.8 F0.8 E0.8 -> LPSP 3.1819%  deg   86.65 kEUR
+  [  9/270] SoC1      @ B0.8 F0.8 E0.8 -> LPSP 1.6668%  deg  122.90 kEUR
+  [ 10/270] SoC06     @ B0.8 F0.8 E0.8 -> LPSP 39.4120%  deg   90.36 kEUR
+  [ 11/270] 0-100     @ B0.8 F0.8 E1.0 -> LPSP 19.8847%  deg  104.97 kEUR
+  [ 12/270] 25-75     @ B0.8 F0.8 E1.0 -> LPSP 26.6520%  deg  108.62 kEUR
+  [ 13/270] 50-50     @ B0.8 F0.8 E1.0 -> LPSP 12.5398%  deg   98.26 kEUR
+  [ 14/270] 75-25     @ B0.8 F0.8 E1.0 -> LPSP 6.5848%  deg   54.43 kEUR
+  [ 15/270] 100-0     @ B0.8 F0.8 E1.0 -> LPSP 7.3773%  deg   75.20 kEUR
+  [ 16/270] RB2       @ B0.8 F0.8 E1.0 -> LPSP 4.9714%  deg   57.35 kEUR
+  [ 17/270] RB2(SoH)  @ B0.8 F0.8 E1.0 -> LPSP 5.7238%  deg   51.71 kEUR
+  [ 18/270] RB1       @ B0.8 F0.8 E1.0 -> LPSP 3.1819%  deg   87.98 kEUR
+  [ 19/270] SoC1      @ B0.8 F0.8 E1.0 -> LPSP 1.3821%  deg  125.85 kEUR
+  [ 20/270] SoC06     @ B0.8 F0.8 E1.0 -> LPSP 39.4112%  deg   93.11 kEUR
+  [ 21/270] 0-100     @ B0.8 F0.8 E1.2 -> LPSP 35.6834%  deg   96.64 kEUR
+  [ 22/270] 25-75     @ B0.8 F0.8 E1.2 -> LPSP 26.6520%  deg  110.01 kEUR
+  [ 23/270] 50-50     @ B0.8 F0.8 E1.2 -> LPSP 12.5398%  deg   90.49 kEUR
+  [ 24/270] 75-25     @ B0.8 F0.8 E1.2 -> LPSP 6.5848%  deg   53.35 kEUR
+  [ 25/270] 100-0     @ B0.8 F0.8 E1.2 -> LPSP 7.3773%  deg   75.70 kEUR
+  [ 26/270] RB2       @ B0.8 F0.8 E1.2 -> LPSP 4.8402%  deg   59.49 kEUR
+  [ 27/270] RB2(SoH)  @ B0.8 F0.8 E1.2 -> LPSP 5.6966%  deg   54.32 kEUR
+  [ 28/270] RB1       @ B0.8 F0.8 E1.2 -> LPSP 3.1819%  deg   89.37 kEUR
+  [ 29/270] SoC1      @ B0.8 F0.8 E1.2 -> LPSP 1.3666%  deg  128.66 kEUR
+  [ 30/270] SoC06     @ B0.8 F0.8 E1.2 -> LPSP 39.4112%  deg   96.00 kEUR
+  [ 31/270] 0-100     @ B0.8 F1.0 E0.8 -> LPSP 5.2385%  deg  129.59 kEUR
+  [ 32/270] 25-75     @ B0.8 F1.0 E0.8 -> LPSP 20.4129%  deg  110.09 kEUR
+  [ 33/270] 50-50     @ B0.8 F1.0 E0.8 -> LPSP 8.6465%  deg  105.56 kEUR
+  [ 34/270] 75-25     @ B0.8 F1.0 E0.8 -> LPSP 6.5192%  deg   57.76 kEUR
+  [ 35/270] 100-0     @ B0.8 F1.0 E0.8 -> LPSP 3.9228%  deg   79.83 kEUR
+  [ 36/270] RB2       @ B0.8 F1.0 E0.8 -> LPSP 6.3290%  deg   54.47 kEUR
+  [ 37/270] RB2(SoH)  @ B0.8 F1.0 E0.8 -> LPSP 6.0746%  deg   48.30 kEUR
+  [ 38/270] RB1       @ B0.8 F1.0 E0.8 -> LPSP 1.6287%  deg   85.40 kEUR
+  [ 39/270] SoC1      @ B0.8 F1.0 E0.8 -> LPSP 3.9345%  deg  132.91 kEUR
+  [ 40/270] SoC06     @ B0.8 F1.0 E0.8 -> LPSP 29.6310%  deg  106.55 kEUR
+  [ 41/270] 0-100     @ B0.8 F1.0 E1.0 -> LPSP 11.6082%  deg  123.95 kEUR
+  [ 42/270] 25-75     @ B0.8 F1.0 E1.0 -> LPSP 20.3996%  deg  112.87 kEUR
+  [ 43/270] 50-50     @ B0.8 F1.0 E1.0 -> LPSP 8.6465%  deg  103.52 kEUR
+  [ 44/270] 75-25     @ B0.8 F1.0 E1.0 -> LPSP 6.5192%  deg   52.17 kEUR
+  [ 45/270] 100-0     @ B0.8 F1.0 E1.0 -> LPSP 3.9228%  deg   80.92 kEUR
+  [ 46/270] RB2       @ B0.8 F1.0 E1.0 -> LPSP 3.7033%  deg   57.88 kEUR
+  [ 47/270] RB2(SoH)  @ B0.8 F1.0 E1.0 -> LPSP 3.9317%  deg   51.06 kEUR
+  [ 48/270] RB1       @ B0.8 F1.0 E1.0 -> LPSP 1.6287%  deg   86.74 kEUR
+  [ 49/270] SoC1      @ B0.8 F1.0 E1.0 -> LPSP 1.5412%  deg  139.45 kEUR
+  [ 50/270] SoC06     @ B0.8 F1.0 E1.0 -> LPSP 29.5420%  deg  109.38 kEUR
+  [ 51/270] 0-100     @ B0.8 F1.0 E1.2 -> LPSP 24.9536%  deg  116.04 kEUR
+  [ 52/270] 25-75     @ B0.8 F1.0 E1.2 -> LPSP 20.4004%  deg  114.86 kEUR
+  [ 53/270] 50-50     @ B0.8 F1.0 E1.2 -> LPSP 8.6465%  deg   95.20 kEUR
+  [ 54/270] 75-25     @ B0.8 F1.0 E1.2 -> LPSP 6.5192%  deg   51.14 kEUR
+  [ 55/270] 100-0     @ B0.8 F1.0 E1.2 -> LPSP 3.9228%  deg   82.26 kEUR
+  [ 56/270] RB2       @ B0.8 F1.0 E1.2 -> LPSP 3.1230%  deg   60.20 kEUR
+  [ 57/270] RB2(SoH)  @ B0.8 F1.0 E1.2 -> LPSP 3.7928%  deg   53.75 kEUR
+  [ 58/270] RB1       @ B0.8 F1.0 E1.2 -> LPSP 1.6287%  deg   88.24 kEUR
+  [ 59/270] SoC1      @ B0.8 F1.0 E1.2 -> LPSP 1.1891%  deg  143.14 kEUR
+  [ 60/270] SoC06     @ B0.8 F1.0 E1.2 -> LPSP 29.5412%  deg  112.46 kEUR
+  [ 61/270] 0-100     @ B0.8 F1.2 E0.8 -> LPSP 4.3956%  deg  135.04 kEUR
+  [ 62/270] 25-75     @ B0.8 F1.2 E0.8 -> LPSP 16.3496%  deg  111.11 kEUR
+  [ 63/270] 50-50     @ B0.8 F1.2 E0.8 -> LPSP 5.3883%  deg  110.15 kEUR
+  [ 64/270] 75-25     @ B0.8 F1.2 E0.8 -> LPSP 6.5192%  deg   57.75 kEUR
+  [ 65/270] 100-0     @ B0.8 F1.2 E0.8 -> LPSP 2.1482%  deg   81.74 kEUR
+  [ 66/270] RB2       @ B0.8 F1.2 E0.8 -> LPSP 8.0534%  deg   54.54 kEUR
+  [ 67/270] RB2(SoH)  @ B0.8 F1.2 E0.8 -> LPSP 7.9043%  deg   48.35 kEUR
+  [ 68/270] RB1       @ B0.8 F1.2 E0.8 -> LPSP 1.2030%  deg   82.81 kEUR
+  [ 69/270] SoC1      @ B0.8 F1.2 E0.8 -> LPSP 6.2785%  deg  134.28 kEUR
+  [ 70/270] SoC06     @ B0.8 F1.2 E0.8 -> LPSP 23.8879%  deg  113.39 kEUR
+  [ 71/270] 0-100     @ B0.8 F1.2 E1.0 -> LPSP 7.0182%  deg  133.75 kEUR
+  [ 72/270] 25-75     @ B0.8 F1.2 E1.0 -> LPSP 16.1834%  deg  114.35 kEUR
+  [ 73/270] 50-50     @ B0.8 F1.2 E1.0 -> LPSP 5.3433%  deg  108.69 kEUR
+  [ 74/270] 75-25     @ B0.8 F1.2 E1.0 -> LPSP 6.5192%  deg   52.16 kEUR
+  [ 75/270] 100-0     @ B0.8 F1.2 E1.0 -> LPSP 2.1482%  deg   83.02 kEUR
+  [ 76/270] RB2       @ B0.8 F1.2 E1.0 -> LPSP 5.4721%  deg   57.25 kEUR
+  [ 77/270] RB2(SoH)  @ B0.8 F1.2 E1.0 -> LPSP 4.7266%  deg   50.53 kEUR
+  [ 78/270] RB1       @ B0.8 F1.2 E1.0 -> LPSP 1.2026%  deg   84.19 kEUR
+  [ 79/270] SoC1      @ B0.8 F1.2 E1.0 -> LPSP 2.5361%  deg  143.14 kEUR
+  [ 80/270] SoC06     @ B0.8 F1.2 E1.0 -> LPSP 23.2082%  deg  117.69 kEUR
+  [ 81/270] 0-100     @ B0.8 F1.2 E1.2 -> LPSP 18.1706%  deg  126.36 kEUR
+  [ 82/270] 25-75     @ B0.8 F1.2 E1.2 -> LPSP 16.1769%  deg  116.52 kEUR
+  [ 83/270] 50-50     @ B0.8 F1.2 E1.2 -> LPSP 5.3108%  deg  100.27 kEUR
+  [ 84/270] 75-25     @ B0.8 F1.2 E1.2 -> LPSP 6.5192%  deg   51.13 kEUR
+  [ 85/270] 100-0     @ B0.8 F1.2 E1.2 -> LPSP 2.1497%  deg   84.29 kEUR
+  [ 86/270] RB2       @ B0.8 F1.2 E1.2 -> LPSP 2.9955%  deg   60.06 kEUR
+  [ 87/270] RB2(SoH)  @ B0.8 F1.2 E1.2 -> LPSP 2.9438%  deg   52.95 kEUR
+  [ 88/270] RB1       @ B0.8 F1.2 E1.2 -> LPSP 1.2021%  deg   85.60 kEUR
+  [ 89/270] SoC1      @ B0.8 F1.2 E1.2 -> LPSP 1.4008%  deg  147.70 kEUR
+  [ 90/270] SoC06     @ B0.8 F1.2 E1.2 -> LPSP 23.1763%  deg  121.12 kEUR
+  [ 91/270] 0-100     @ B1.0 F0.8 E0.8 -> LPSP 7.4795%  deg  116.38 kEUR
+  [ 92/270] 25-75     @ B1.0 F0.8 E0.8 -> LPSP 26.5164%  deg  104.24 kEUR
+  [ 93/270] 50-50     @ B1.0 F0.8 E0.8 -> LPSP 11.9672%  deg  105.39 kEUR
+  [ 94/270] 75-25     @ B1.0 F0.8 E0.8 -> LPSP 3.8684%  deg   67.76 kEUR
+  [ 95/270] 100-0     @ B1.0 F0.8 E0.8 -> LPSP 3.9243%  deg   63.46 kEUR
+  [ 96/270] RB2       @ B1.0 F0.8 E0.8 -> LPSP 3.3746%  deg   62.01 kEUR
+  [ 97/270] RB2(SoH)  @ B1.0 F0.8 E0.8 -> LPSP 3.6874%  deg   56.26 kEUR
+  [ 98/270] RB1       @ B1.0 F0.8 E0.8 -> LPSP 1.9430%  deg   80.03 kEUR
+  [ 99/270] SoC1      @ B1.0 F0.8 E0.8 -> LPSP 1.2255%  deg  128.01 kEUR
+  [100/270] SoC06     @ B1.0 F0.8 E0.8 -> LPSP 39.3183%  deg   90.25 kEUR
+  [101/270] 0-100     @ B1.0 F0.8 E1.0 -> LPSP 18.5798%  deg  105.32 kEUR
+  [102/270] 25-75     @ B1.0 F0.8 E1.0 -> LPSP 26.5164%  deg  106.53 kEUR
+  [103/270] 50-50     @ B1.0 F0.8 E1.0 -> LPSP 11.9672%  deg  103.77 kEUR
+  [104/270] 75-25     @ B1.0 F0.8 E1.0 -> LPSP 3.8684%  deg   61.92 kEUR
+  [105/270] 100-0     @ B1.0 F0.8 E1.0 -> LPSP 3.9243%  deg   63.84 kEUR
+  [106/270] RB2       @ B1.0 F0.8 E1.0 -> LPSP 3.0758%  deg   64.90 kEUR
+  [107/270] RB2(SoH)  @ B1.0 F0.8 E1.0 -> LPSP 3.3490%  deg   59.23 kEUR
+  [108/270] RB1       @ B1.0 F0.8 E1.0 -> LPSP 1.9430%  deg   80.83 kEUR
+  [109/270] SoC1      @ B1.0 F0.8 E1.0 -> LPSP 0.9184%  deg  130.99 kEUR
+  [110/270] SoC06     @ B1.0 F0.8 E1.0 -> LPSP 39.3183%  deg   93.06 kEUR
+  [111/270] 0-100     @ B1.0 F0.8 E1.2 -> LPSP 35.4628%  deg   96.24 kEUR
+  [112/270] 25-75     @ B1.0 F0.8 E1.2 -> LPSP 26.5164%  deg  107.91 kEUR
+  [113/270] 50-50     @ B1.0 F0.8 E1.2 -> LPSP 11.9672%  deg   95.99 kEUR
+  [114/270] 75-25     @ B1.0 F0.8 E1.2 -> LPSP 3.8684%  deg   60.85 kEUR
+  [115/270] 100-0     @ B1.0 F0.8 E1.2 -> LPSP 3.9243%  deg   64.22 kEUR
+  [116/270] RB2       @ B1.0 F0.8 E1.2 -> LPSP 3.0026%  deg   67.07 kEUR
+  [117/270] RB2(SoH)  @ B1.0 F0.8 E1.2 -> LPSP 3.3464%  deg   61.85 kEUR
+  [118/270] RB1       @ B1.0 F0.8 E1.2 -> LPSP 1.9430%  deg   81.34 kEUR
+  [119/270] SoC1      @ B1.0 F0.8 E1.2 -> LPSP 0.8981%  deg  133.77 kEUR
+  [120/270] SoC06     @ B1.0 F0.8 E1.2 -> LPSP 39.3178%  deg   95.94 kEUR
+  [121/270] 0-100     @ B1.0 F1.0 E0.8 -> LPSP 3.8794%  deg  131.65 kEUR
+  [122/270] 25-75     @ B1.0 F1.0 E0.8 -> LPSP 20.2773%  deg  108.00 kEUR
+  [123/270] 50-50     @ B1.0 F1.0 E0.8 -> LPSP 8.0738%  deg  111.06 kEUR
+  [124/270] 75-25     @ B1.0 F1.0 E0.8 -> LPSP 3.8028%  deg   65.26 kEUR
+  [125/270] 100-0     @ B1.0 F1.0 E0.8 -> LPSP 2.4862%  deg   66.03 kEUR
+  [126/270] RB2       @ B1.0 F1.0 E0.8 -> LPSP 4.6328%  deg   61.70 kEUR
+  [127/270] RB2(SoH)  @ B1.0 F1.0 E0.8 -> LPSP 4.2471%  deg   55.72 kEUR
+  [128/270] RB1       @ B1.0 F1.0 E0.8 -> LPSP 1.2596%  deg   79.39 kEUR
+  [129/270] SoC1      @ B1.0 F1.0 E0.8 -> LPSP 3.7591%  deg  134.09 kEUR
+  [130/270] SoC06     @ B1.0 F1.0 E0.8 -> LPSP 29.5618%  deg  106.42 kEUR
+  [131/270] 0-100     @ B1.0 F1.0 E1.0 -> LPSP 10.3787%  deg  124.22 kEUR
+  [132/270] 25-75     @ B1.0 F1.0 E1.0 -> LPSP 20.2640%  deg  110.78 kEUR
+  [133/270] 50-50     @ B1.0 F1.0 E1.0 -> LPSP 8.0738%  deg  109.02 kEUR
+  [134/270] 75-25     @ B1.0 F1.0 E1.0 -> LPSP 3.8028%  deg   59.67 kEUR
+  [135/270] 100-0     @ B1.0 F1.0 E1.0 -> LPSP 2.4862%  deg   66.42 kEUR
+  [136/270] RB2       @ B1.0 F1.0 E1.0 -> LPSP 2.7126%  deg   65.17 kEUR
+  [137/270] RB2(SoH)  @ B1.0 F1.0 E1.0 -> LPSP 2.6493%  deg   58.53 kEUR
+  [138/270] RB1       @ B1.0 F1.0 E1.0 -> LPSP 1.2596%  deg   80.16 kEUR
+  [139/270] SoC1      @ B1.0 F1.0 E1.0 -> LPSP 1.3398%  deg  140.68 kEUR
+  [140/270] SoC06     @ B1.0 F1.0 E1.0 -> LPSP 29.4607%  deg  109.27 kEUR
+  [141/270] 0-100     @ B1.0 F1.0 E1.2 -> LPSP 24.6128%  deg  115.77 kEUR
+  [142/270] 25-75     @ B1.0 F1.0 E1.2 -> LPSP 20.2648%  deg  112.76 kEUR
+  [143/270] 50-50     @ B1.0 F1.0 E1.2 -> LPSP 8.0738%  deg  100.70 kEUR
+  [144/270] 75-25     @ B1.0 F1.0 E1.2 -> LPSP 3.8028%  deg   58.64 kEUR
+  [145/270] 100-0     @ B1.0 F1.0 E1.2 -> LPSP 2.4862%  deg   66.78 kEUR
+  [146/270] RB2       @ B1.0 F1.0 E1.2 -> LPSP 2.1867%  deg   67.51 kEUR
+  [147/270] RB2(SoH)  @ B1.0 F1.0 E1.2 -> LPSP 2.5403%  deg   61.25 kEUR
+  [148/270] RB1       @ B1.0 F1.0 E1.2 -> LPSP 1.2596%  deg   80.66 kEUR
+  [149/270] SoC1      @ B1.0 F1.0 E1.2 -> LPSP 0.9808%  deg  144.35 kEUR
+  [150/270] SoC06     @ B1.0 F1.0 E1.2 -> LPSP 29.4591%  deg  112.35 kEUR
+  [151/270] 0-100     @ B1.0 F1.2 E0.8 -> LPSP 3.6840%  deg  135.53 kEUR
+  [152/270] 25-75     @ B1.0 F1.2 E0.8 -> LPSP 16.2140%  deg  109.01 kEUR
+  [153/270] 50-50     @ B1.0 F1.2 E0.8 -> LPSP 4.8156%  deg  115.65 kEUR
+  [154/270] 75-25     @ B1.0 F1.2 E0.8 -> LPSP 3.8028%  deg   65.25 kEUR
+  [155/270] 100-0     @ B1.0 F1.2 E0.8 -> LPSP 1.7055%  deg   67.20 kEUR
+  [156/270] RB2       @ B1.0 F1.2 E0.8 -> LPSP 6.2899%  deg   61.38 kEUR
+  [157/270] RB2(SoH)  @ B1.0 F1.2 E0.8 -> LPSP 6.0538%  deg   55.42 kEUR
+  [158/270] RB1       @ B1.0 F1.2 E0.8 -> LPSP 0.9917%  deg   79.10 kEUR
+  [159/270] SoC1      @ B1.0 F1.2 E0.8 -> LPSP 6.2404%  deg  132.70 kEUR
+  [160/270] SoC06     @ B1.0 F1.2 E0.8 -> LPSP 23.8147%  deg  113.25 kEUR
+  [161/270] 0-100     @ B1.0 F1.2 E1.0 -> LPSP 6.1114%  deg  133.90 kEUR
+  [162/270] 25-75     @ B1.0 F1.2 E1.0 -> LPSP 16.0478%  deg  112.26 kEUR
+  [163/270] 50-50     @ B1.0 F1.2 E1.0 -> LPSP 4.7707%  deg  114.19 kEUR
+  [164/270] 75-25     @ B1.0 F1.2 E1.0 -> LPSP 3.8028%  deg   59.66 kEUR
+  [165/270] 100-0     @ B1.0 F1.2 E1.0 -> LPSP 1.7055%  deg   67.55 kEUR
+  [166/270] RB2       @ B1.0 F1.2 E1.0 -> LPSP 4.3735%  deg   63.92 kEUR
+  [167/270] RB2(SoH)  @ B1.0 F1.2 E1.0 -> LPSP 3.5715%  deg   57.40 kEUR
+  [168/270] RB1       @ B1.0 F1.2 E1.0 -> LPSP 0.9922%  deg   79.87 kEUR
+  [169/270] SoC1      @ B1.0 F1.2 E1.0 -> LPSP 2.4975%  deg  141.57 kEUR
+  [170/270] SoC06     @ B1.0 F1.2 E1.0 -> LPSP 23.1401%  deg  117.52 kEUR
+  [171/270] 0-100     @ B1.0 F1.2 E1.2 -> LPSP 17.8106%  deg  126.17 kEUR
+  [172/270] 25-75     @ B1.0 F1.2 E1.2 -> LPSP 16.0413%  deg  114.43 kEUR
+  [173/270] 50-50     @ B1.0 F1.2 E1.2 -> LPSP 4.7381%  deg  105.78 kEUR
+  [174/270] 75-25     @ B1.0 F1.2 E1.2 -> LPSP 3.8028%  deg   58.62 kEUR
+  [175/270] 100-0     @ B1.0 F1.2 E1.2 -> LPSP 1.7055%  deg   67.94 kEUR
+  [176/270] RB2       @ B1.0 F1.2 E1.2 -> LPSP 2.3452%  deg   66.60 kEUR
+  [177/270] RB2(SoH)  @ B1.0 F1.2 E1.2 -> LPSP 2.2015%  deg   59.81 kEUR
+  [178/270] RB1       @ B1.0 F1.2 E1.2 -> LPSP 0.9922%  deg   80.35 kEUR
+  [179/270] SoC1      @ B1.0 F1.2 E1.2 -> LPSP 1.3588%  deg  146.15 kEUR
+  [180/270] SoC06     @ B1.0 F1.2 E1.2 -> LPSP 23.1030%  deg  120.94 kEUR
+  [181/270] 0-100     @ B1.2 F0.8 E0.8 -> LPSP 5.8579%  deg  118.40 kEUR
+  [182/270] 25-75     @ B1.2 F0.8 E0.8 -> LPSP 26.4611%  deg  103.49 kEUR
+  [183/270] 50-50     @ B1.2 F0.8 E0.8 -> LPSP 11.4781%  deg  107.69 kEUR
+  [184/270] 75-25     @ B1.2 F0.8 E0.8 -> LPSP 3.1305%  deg   75.16 kEUR
+  [185/270] 100-0     @ B1.2 F0.8 E0.8 -> LPSP 2.4219%  deg   62.94 kEUR
+  [186/270] RB2       @ B1.2 F0.8 E0.8 -> LPSP 2.6207%  deg   68.95 kEUR
+  [187/270] RB2(SoH)  @ B1.2 F0.8 E0.8 -> LPSP 2.8371%  deg   63.40 kEUR
+  [188/270] RB1       @ B1.2 F0.8 E0.8 -> LPSP 1.5742%  deg   78.42 kEUR
+  [189/270] SoC1      @ B1.2 F0.8 E0.8 -> LPSP 0.9403%  deg  130.15 kEUR
+  [190/270] SoC06     @ B1.2 F0.8 E0.8 -> LPSP 39.1452%  deg   90.05 kEUR
+  [191/270] 0-100     @ B1.2 F0.8 E1.0 -> LPSP 17.6852%  deg  105.10 kEUR
+  [192/270] 25-75     @ B1.2 F0.8 E1.0 -> LPSP 26.4611%  deg  105.78 kEUR
+  [193/270] 50-50     @ B1.2 F0.8 E1.0 -> LPSP 11.4781%  deg  106.07 kEUR
+  [194/270] 75-25     @ B1.2 F0.8 E1.0 -> LPSP 3.1305%  deg   69.32 kEUR
+  [195/270] 100-0     @ B1.2 F0.8 E1.0 -> LPSP 2.4219%  deg   63.06 kEUR
+  [196/270] RB2       @ B1.2 F0.8 E1.0 -> LPSP 2.4092%  deg   71.77 kEUR
+  [197/270] RB2(SoH)  @ B1.2 F0.8 E1.0 -> LPSP 2.6182%  deg   66.27 kEUR
+  [198/270] RB1       @ B1.2 F0.8 E1.0 -> LPSP 1.5742%  deg   78.87 kEUR
+  [199/270] SoC1      @ B1.2 F0.8 E1.0 -> LPSP 0.6246%  deg  133.21 kEUR
+  [200/270] SoC06     @ B1.2 F0.8 E1.0 -> LPSP 39.1452%  deg   92.84 kEUR
+  [201/270] 0-100     @ B1.2 F0.8 E1.2 -> LPSP 35.3526%  deg   95.96 kEUR
+  [202/270] 25-75     @ B1.2 F0.8 E1.2 -> LPSP 26.4611%  deg  107.16 kEUR
+  [203/270] 50-50     @ B1.2 F0.8 E1.2 -> LPSP 11.4781%  deg   98.29 kEUR
+  [204/270] 75-25     @ B1.2 F0.8 E1.2 -> LPSP 3.1305%  deg   68.25 kEUR
+  [205/270] 100-0     @ B1.2 F0.8 E1.2 -> LPSP 2.4219%  deg   63.12 kEUR
+  [206/270] RB2       @ B1.2 F0.8 E1.2 -> LPSP 2.3699%  deg   73.89 kEUR
+  [207/270] RB2(SoH)  @ B1.2 F0.8 E1.2 -> LPSP 2.6285%  deg   68.88 kEUR
+  [208/270] RB1       @ B1.2 F0.8 E1.2 -> LPSP 1.5742%  deg   79.30 kEUR
+  [209/270] SoC1      @ B1.2 F0.8 E1.2 -> LPSP 0.6014%  deg  136.02 kEUR
+  [210/270] SoC06     @ B1.2 F0.8 E1.2 -> LPSP 39.1452%  deg   95.80 kEUR
+  [211/270] 0-100     @ B1.2 F1.0 E0.8 -> LPSP 3.0897%  deg  132.32 kEUR
+  [212/270] 25-75     @ B1.2 F1.0 E0.8 -> LPSP 20.2220%  deg  107.24 kEUR
+  [213/270] 50-50     @ B1.2 F1.0 E0.8 -> LPSP 7.5847%  deg  113.36 kEUR
+  [214/270] 75-25     @ B1.2 F1.0 E0.8 -> LPSP 3.0649%  deg   72.66 kEUR
+  [215/270] 100-0     @ B1.2 F1.0 E0.8 -> LPSP 1.6809%  deg   64.29 kEUR
+  [216/270] RB2       @ B1.2 F1.0 E0.8 -> LPSP 3.7766%  deg   67.70 kEUR
+  [217/270] RB2(SoH)  @ B1.2 F1.0 E0.8 -> LPSP 3.4144%  deg   62.10 kEUR
+  [218/270] RB1       @ B1.2 F1.0 E0.8 -> LPSP 1.0715%  deg   79.12 kEUR
+  [219/270] SoC1      @ B1.2 F1.0 E0.8 -> LPSP 3.6786%  deg  133.00 kEUR
+  [220/270] SoC06     @ B1.2 F1.0 E0.8 -> LPSP 29.4083%  deg  106.20 kEUR
+  [221/270] 0-100     @ B1.2 F1.0 E1.0 -> LPSP 9.6389%  deg  124.18 kEUR
+  [222/270] 25-75     @ B1.2 F1.0 E1.0 -> LPSP 20.2087%  deg  110.02 kEUR
+  [223/270] 50-50     @ B1.2 F1.0 E1.0 -> LPSP 7.5847%  deg  111.32 kEUR
+  [224/270] 75-25     @ B1.2 F1.0 E1.0 -> LPSP 3.0649%  deg   67.07 kEUR
+  [225/270] 100-0     @ B1.2 F1.0 E1.0 -> LPSP 1.6809%  deg   64.42 kEUR
+  [226/270] RB2       @ B1.2 F1.0 E1.0 -> LPSP 2.1434%  deg   70.87 kEUR
+  [227/270] RB2(SoH)  @ B1.2 F1.0 E1.0 -> LPSP 2.0461%  deg   64.80 kEUR
+  [228/270] RB1       @ B1.2 F1.0 E1.0 -> LPSP 1.0715%  deg   79.48 kEUR
+  [229/270] SoC1      @ B1.2 F1.0 E1.0 -> LPSP 1.2501%  deg  139.59 kEUR
+  [230/270] SoC06     @ B1.2 F1.0 E1.0 -> LPSP 29.3125%  deg  109.02 kEUR
+  [231/270] 0-100     @ B1.2 F1.0 E1.2 -> LPSP 24.4342%  deg  115.60 kEUR
+  [232/270] 25-75     @ B1.2 F1.0 E1.2 -> LPSP 20.2095%  deg  112.01 kEUR
+  [233/270] 50-50     @ B1.2 F1.0 E1.2 -> LPSP 7.5847%  deg  103.00 kEUR
+  [234/270] 75-25     @ B1.2 F1.0 E1.2 -> LPSP 3.0649%  deg   66.04 kEUR
+  [235/270] 100-0     @ B1.2 F1.0 E1.2 -> LPSP 1.6809%  deg   64.51 kEUR
+  [236/270] RB2       @ B1.2 F1.0 E1.2 -> LPSP 1.6463%  deg   73.16 kEUR
+  [237/270] RB2(SoH)  @ B1.2 F1.0 E1.2 -> LPSP 1.9356%  deg   67.50 kEUR
+  [238/270] RB1       @ B1.2 F1.0 E1.2 -> LPSP 1.0715%  deg   79.96 kEUR
+  [239/270] SoC1      @ B1.2 F1.0 E1.2 -> LPSP 0.8953%  deg  143.23 kEUR
+  [240/270] SoC06     @ B1.2 F1.0 E1.2 -> LPSP 29.3125%  deg  112.13 kEUR
+  [241/270] 0-100     @ B1.2 F1.2 E0.8 -> LPSP 3.2587%  deg  135.37 kEUR
+  [242/270] 25-75     @ B1.2 F1.2 E0.8 -> LPSP 16.1588%  deg  108.26 kEUR
+  [243/270] 50-50     @ B1.2 F1.2 E0.8 -> LPSP 4.3265%  deg  117.95 kEUR
+  [244/270] 75-25     @ B1.2 F1.2 E0.8 -> LPSP 3.0649%  deg   72.65 kEUR
+  [245/270] 100-0     @ B1.2 F1.2 E0.8 -> LPSP 1.2520%  deg   64.83 kEUR
+  [246/270] RB2       @ B1.2 F1.2 E0.8 -> LPSP 5.3863%  deg   66.93 kEUR
+  [247/270] RB2(SoH)  @ B1.2 F1.2 E0.8 -> LPSP 5.1229%  deg   61.22 kEUR
+  [248/270] RB1       @ B1.2 F1.2 E0.8 -> LPSP 0.8167%  deg   79.70 kEUR
+  [249/270] SoC1      @ B1.2 F1.2 E0.8 -> LPSP 6.2386%  deg  130.72 kEUR
+  [250/270] SoC06     @ B1.2 F1.2 E0.8 -> LPSP 23.6682%  deg  113.02 kEUR
+  [251/270] 0-100     @ B1.2 F1.2 E1.0 -> LPSP 5.5276%  deg  133.98 kEUR
+  [252/270] 25-75     @ B1.2 F1.2 E1.0 -> LPSP 15.9926%  deg  111.50 kEUR
+  [253/270] 50-50     @ B1.2 F1.2 E1.0 -> LPSP 4.2816%  deg  116.49 kEUR
+  [254/270] 75-25     @ B1.2 F1.2 E1.0 -> LPSP 3.0649%  deg   67.06 kEUR
+  [255/270] 100-0     @ B1.2 F1.2 E1.0 -> LPSP 1.2520%  deg   64.93 kEUR
+  [256/270] RB2       @ B1.2 F1.2 E1.0 -> LPSP 3.6237%  deg   68.58 kEUR
+  [257/270] RB2(SoH)  @ B1.2 F1.2 E1.0 -> LPSP 2.8122%  deg   62.73 kEUR
+  [258/270] RB1       @ B1.2 F1.2 E1.0 -> LPSP 0.8167%  deg   79.96 kEUR
+  [259/270] SoC1      @ B1.2 F1.2 E1.0 -> LPSP 2.4907%  deg  139.58 kEUR
+  [260/270] SoC06     @ B1.2 F1.2 E1.0 -> LPSP 23.0008%  deg  117.30 kEUR
+  [261/270] 0-100     @ B1.2 F1.2 E1.2 -> LPSP 17.6039%  deg  126.11 kEUR
+  [262/270] 25-75     @ B1.2 F1.2 E1.2 -> LPSP 15.9860%  deg  113.68 kEUR
+  [263/270] 50-50     @ B1.2 F1.2 E1.2 -> LPSP 4.2490%  deg  108.08 kEUR
+  [264/270] 75-25     @ B1.2 F1.2 E1.2 -> LPSP 3.0649%  deg   66.02 kEUR
+  [265/270] 100-0     @ B1.2 F1.2 E1.2 -> LPSP 1.2520%  deg   65.05 kEUR
+  [266/270] RB2       @ B1.2 F1.2 E1.2 -> LPSP 1.8059%  deg   70.72 kEUR
+  [267/270] RB2(SoH)  @ B1.2 F1.2 E1.2 -> LPSP 1.6478%  deg   64.82 kEUR
+  [268/270] RB1       @ B1.2 F1.2 E1.2 -> LPSP 0.8167%  deg   80.44 kEUR
+  [269/270] SoC1      @ B1.2 F1.2 E1.2 -> LPSP 1.3508%  deg  144.17 kEUR
+  [270/270] SoC06     @ B1.2 F1.2 E1.2 -> LPSP 22.9662%  deg  120.69 kEUR
+  (617s)
+
+==============================================================================
+CLASSEMENT PAR COUT (1 = moins cher ; * = non-domine 2D) -- scenario x EMS
+scenario         0-100    25-75    50-50    75-25    100-0      RB2 RB2(SoH)      RB1     SoC1    SoC06
+-------------------------------------------------------------------------------------------------------
+B0.8 F0.8 E0.       9        8        7        3        4        2*       1*       5*      10*       6 
+B0.8 F0.8 E1.       8        9        7        2        4        3*       1*       5*      10*       6 
+B0.8 F0.8 E1.       8        9        6        1*       4        3*       2*       5*      10*       7 
+B0.8 F1.0 E0.       9        8        6        3        4*       2        1*       5*      10        7 
+B0.8 F1.0 E1.       9        8        6        2        4        3*       1*       5*      10*       7 
+B0.8 F1.0 E1.       9        8        6        1*       4        3*       2*       5*      10*       7 
+B0.8 F1.2 E0.      10        7        6        3*       4*       2        1*       5*       9        8 
+B0.8 F1.2 E1.       9        7        6        2        4*       3        1*       5*      10        8 
+B0.8 F1.2 E1.       9        7        6        1*       4*       3        2*       5*      10        8 
+B1.0 F0.8 E0.       9        7        8        4        3        2*       1*       5*      10*       6 
+B1.0 F0.8 E1.       8        9        7        2        3        4*       1*       5*      10*       6 
+B1.0 F0.8 E1.       8        9        7        1*       3        4*       2*       5*      10*       6 
+B1.0 F1.0 E0.       9        7        8        3*       4*       2        1*       5*      10        6 
+B1.0 F1.0 E1.       9        8        6        2        4*       3        1*       5*      10        7 
+B1.0 F1.0 E1.       9        8        6        1*       3*       4*       2*       5*      10*       7 
+B1.0 F1.2 E0.      10        6        8        3*       4*       2        1*       5*       9        7 
+B1.0 F1.2 E1.       9        6        7        2        4*       3        1*       5*      10        8 
+B1.0 F1.2 E1.       9        7        6        1*       4*       3        2*       5*      10        8 
+B1.2 F0.8 E0.       9        7        8        4        1*       3        2        5*      10*       6 
+B1.2 F0.8 E1.       7        8        9        3        1*       4*       2        5*      10*       6 
+B1.2 F0.8 E1.       7        9        8        2        1*       4*       3        5*      10*       6 
+B1.2 F1.0 E0.       9        7        8        4        2*       3        1*       5*      10        6 
+B1.2 F1.0 E1.       9        7        8        3        1*       4        2        5*      10        6 
+B1.2 F1.0 E1.       9        7        6        2        1*       4*       3        5*      10*       8 
+B1.2 F1.2 E0.      10        6        8        4        2*       3        1*       5*       9        7 
+B1.2 F1.2 E1.       9        6        7        3        2*       4        1*       5*      10        8 
+B1.2 F1.2 E1.       9        7        6        3        2*       4        1*       5*      10        8 
+==============================================================================
+Resultats : /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_sizing.txt
+Figures   : /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_sizing_fronts.pdf
+            /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_sizing_ranking.pdf
+
+real	10m22.907s
+user	307m33.594s
+sys	0m14.683s
+fin=Fri Jun 19 08:45:34 CEST 2026

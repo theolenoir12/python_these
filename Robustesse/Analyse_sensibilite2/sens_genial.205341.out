@@ -1,0 +1,41 @@
+Job 205341  noeud=node4-12  script=sens_timestep.py
+cpus-per-task=32  debut=Mon Jun 22 11:58:51 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+=== ETAPE 7 -- Pas de temps & bruit intra-horaire (RB2, RB2(SoH), 25 ans) ===
+    Ref 1h + 10min sigma in [0.0, 0.05, 0.1, 0.15] (PV+charge, moyenne horaire preservee)
+
+--- Pas de temps -- 1h ref + 10min x sigma : 10 runs (32 workers) ---
+  [  1/10] RB2       ts=3600s sig=0.00 -> LPSP 2.4509%  deg   65.42 kEUR  ss_FC  95.8%  ss_ELY  36.9%  vie_bat 3.9
+  [  2/10] RB2(SoH)  ts=3600s sig=0.00 -> LPSP 2.5474%  deg   59.36 kEUR  ss_FC  95.9%  ss_ELY  55.7%  vie_bat 3.9
+  [  3/10] RB2       ts= 600s sig=0.00 -> LPSP 2.4542%  deg   65.87 kEUR  ss_FC  95.8%  ss_ELY  36.0%  vie_bat 3.9
+  [  4/10] RB2(SoH)  ts= 600s sig=0.00 -> LPSP 2.5501%  deg   59.46 kEUR  ss_FC  95.9%  ss_ELY  55.3%  vie_bat 3.9
+  [  5/10] RB2       ts= 600s sig=0.05 -> LPSP 2.4091%  deg   67.87 kEUR  ss_FC  95.9%  ss_ELY  43.9%  vie_bat 3.9
+  [  6/10] RB2(SoH)  ts= 600s sig=0.05 -> LPSP 2.5220%  deg   62.90 kEUR  ss_FC  96.0%  ss_ELY  58.5%  vie_bat 3.9
+  [  7/10] RB2       ts= 600s sig=0.10 -> LPSP 2.3976%  deg   70.71 kEUR  ss_FC  95.8%  ss_ELY  49.1%  vie_bat 3.9
+  [  8/10] RB2(SoH)  ts= 600s sig=0.10 -> LPSP 2.5510%  deg   67.51 kEUR  ss_FC  95.9%  ss_ELY  57.9%  vie_bat 3.9
+  [  9/10] RB2       ts= 600s sig=0.15 -> LPSP 2.4155%  deg   75.20 kEUR  ss_FC  95.8%  ss_ELY  51.9%  vie_bat 3.9
+  [ 10/10] RB2(SoH)  ts= 600s sig=0.15 -> LPSP 2.5836%  deg   70.13 kEUR  ss_FC  95.9%  ss_ELY  64.6%  vie_bat 3.9
+  (428s)
+
+========================================================================================
+PART START-STOP & INDICATEURS : 1h ref -> 10min (sigma croissant)
+----------------------------------------------------------------------------------------
+EMS       | Ts   | sigma | LPSP%   | deg kEUR | ss_FC% | ss_ELY%
+RB2       | 3600s | 0.00  | 2.4509 |    65.42 |   95.8 |   36.9
+RB2(SoH)  | 3600s | 0.00  | 2.5474 |    59.36 |   95.9 |   55.7
+RB2       |  600s | 0.00  | 2.4542 |    65.87 |   95.8 |   36.0
+RB2(SoH)  |  600s | 0.00  | 2.5501 |    59.46 |   95.9 |   55.3
+RB2       |  600s | 0.05  | 2.4091 |    67.87 |   95.9 |   43.9
+RB2(SoH)  |  600s | 0.05  | 2.5220 |    62.90 |   96.0 |   58.5
+RB2       |  600s | 0.10  | 2.3976 |    70.71 |   95.8 |   49.1
+RB2(SoH)  |  600s | 0.10  | 2.5510 |    67.51 |   95.9 |   57.9
+RB2       |  600s | 0.15  | 2.4155 |    75.20 |   95.8 |   51.9
+RB2(SoH)  |  600s | 0.15  | 2.5836 |    70.13 |   95.9 |   64.6
+========================================================================================
+Resultats : /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_timestep.txt
+Figure    : /Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/results/sens_timestep.pdf
+
+real	7m9.902s
+user	54m38.074s
+sys	0m2.328s
+fin=Mon Jun 22 12:06:02 CEST 2026

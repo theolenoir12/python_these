@@ -1,0 +1,9 @@
+Job 205310  noeud=node4-26  script=sens_cweigths.py
+cpus-per-task=32  debut=Mon Jun 22 09:44:47 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+python: can't open file '/Work/Users/tlenoir/genial/Robustesse/Analyse_sensibilite/sens_cweigths.py': [Errno 2] No such file or directory
+
+real	0m0.029s
+user	0m0.017s
+sys	0m0.007s
+fin=Mon Jun 22 09:44:48 CEST 2026

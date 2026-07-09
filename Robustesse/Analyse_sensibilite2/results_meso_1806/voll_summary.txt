@@ -1,0 +1,29 @@
+# Unified summary -- total_cost = degradation cost + unserved-energy cost
+# VOLL [EUR/kWh]: <5% -> 2 ; <10% -> 5 ; <999% -> 10
+# E_ref = 273.381 MWh (net planned energy, 25 yr) ; unserved_energy = LPSP%/100 * E_ref
+
+## Global ranking (mean rank over 5 sensitivity columns)
+mean_rank;ems;total_cost_median_kEUR;min;max
+1.00;RB2(SoH);75.30;73.01;76.02
+2.40;RB2;80.96;80.00;81.95
+3.00;100-0;80.22;80.00;84.23
+3.60;75-25;81.13;80.46;83.55
+5.00;RB1;87.38;87.05;92.80
+6.00;SoC1;148.01;147.46;160.61
+7.00;50-50;219.95;219.38;228.21
+8.00;0-100;408.73;406.24;494.83
+9.00;25-75;666.38;664.75;680.66
+10.00;SoC06;915.36;914.17;941.11
+
+## Total cost per case and strategy [kEUR]
+ems;Nominal;EoL thresholds;H2 degradation thresholds;Replacement-cost weights;Component sizing
+0-100;407.96;436.05;406.24;408.73;494.83
+25-75;664.75;675.95;666.38;665.44;680.66
+50-50;219.38;228.21;219.82;219.95;221.46
+75-25;80.46;83.55;81.13;80.64;83.14
+100-0;80.01;83.87;80.00;80.22;84.23
+RB2;80.00;80.96;80.98;80.23;81.95
+RB2(SoH);73.01;75.30;75.61;73.19;76.02
+RB1;87.05;92.80;87.22;87.38;89.08
+SoC1;148.01;160.61;147.83;148.81;147.46
+SoC06;914.66;926.16;914.17;915.36;941.11

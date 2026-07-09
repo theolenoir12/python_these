@@ -1,0 +1,35 @@
+# Sensibilite dimensionnement -- front de Pareto + bandes
+# leviers: BAT['series_num'], FC['n_series'], ELY['n_series'] (PV non touche)
+# MC: N=200/strat, +/-20% uniforme/composant, seed=2024 (memes triplets pour toutes)
+
+## Front de Pareto : point nominal + dispersion MC par strategie
+strat;LPSP_nom;deg_nom;LPSP_mean;LPSP_std;deg_mean;deg_std;deg_min;deg_max;N_ok;clps_nom;clps_mean;clps_std
+RB1;1.2596;80.161;1.4037;0.3697;81.410;2.339;78.683;87.875;200;10.330;11.512;3.032
+RB2;2.4509;65.415;3.0642;0.7903;64.617;4.189;56.138;73.403;200;20.101;25.131;6.481
+RB2(SoH);2.5474;59.359;3.1945;0.8221;58.998;4.299;50.235;68.312;200;20.892;26.200;6.742
+
+## OAT (strategie RB2(SoH)) : un composant varie, les deux autres au nominal
+# BAT
+facteur_taille;LPSP_%;deg_kEUR;vie_composant_ans
+0.800;3.7804;51.890;3.7
+0.900;2.9631;55.662;3.8
+1.000;2.5474;59.359;3.9
+1.100;2.2600;62.608;4.0
+1.200;1.9520;65.618;4.1
+
+# FC
+facteur_taille;LPSP_%;deg_kEUR;vie_composant_ans
+0.800;3.3228;60.142;12.6
+0.900;2.9045;59.865;12.6
+1.000;2.5474;59.359;12.6
+1.100;2.8994;58.714;12.7
+1.200;3.4561;58.071;12.9
+
+# ELY
+facteur_taille;LPSP_%;deg_kEUR;vie_composant_ans
+0.800;4.0761;56.324;17.1
+0.900;3.1308;57.812;17.1
+1.000;2.5474;59.359;16.8
+1.100;2.4890;60.949;16.7
+1.200;2.5320;62.216;16.8
+

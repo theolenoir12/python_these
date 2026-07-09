@@ -1,0 +1,8 @@
+Job 205347  noeud=node4-9  script=sens_common.py
+cpus-per-task=32  debut=Mon Jun 22 15:27:49 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+
+real	0m1.392s
+user	0m1.011s
+sys	0m0.129s
+fin=Mon Jun 22 15:27:51 CEST 2026

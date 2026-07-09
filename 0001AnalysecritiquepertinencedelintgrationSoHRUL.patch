@@ -1,0 +1,224 @@
+From c607f58d87eec87cbc03da31624009143692d21d Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 9 Jul 2026 11:09:35 +0000
+Subject: [PATCH 1/2] =?UTF-8?q?Analyse=20critique=20:=20pertinence=20de=20?=
+ =?UTF-8?q?l'int=C3=A9gration=20SoH/RUL/pr=C3=A9vision=20dans=20les=20r?=
+ =?UTF-8?q?=C3=A8gles?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Diagnostic des causes structurelles des petits gains (structure de coût,
+baseline re-optimisée, monde nominal déterministe, présentation en coût
+unifié) et huit propositions priorisées pour les tâches AAPG 3.2/3.4.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_015a63S8UWVq2qswrPvxcime
+---
+ ...SE_CRITIQUE_integration_vieillissement.txt | 194 ++++++++++++++++++
+ 1 file changed, 194 insertions(+)
+ create mode 100644 Robustesse/ANALYSE_CRITIQUE_integration_vieillissement.txt
+
+diff --git a/Robustesse/ANALYSE_CRITIQUE_integration_vieillissement.txt b/Robustesse/ANALYSE_CRITIQUE_integration_vieillissement.txt
+new file mode 100644
+index 0000000..c6ec570
+--- /dev/null
++++ b/Robustesse/ANALYSE_CRITIQUE_integration_vieillissement.txt
+@@ -0,0 +1,194 @@
++================================================================================
++ANALYSE CRITIQUE -- POURQUOI L'INTEGRATION SoH/RUL/PREVISION RAPPORTE PEU,
++                    ET COMMENT LA RENDRE PERTINENTE (tâches AAPG 3.2 / 3.4)
++Dossier : Robustesse/            Rédigé : 2026-07-09 (revue critique externe)
++Données : Pareto/README.txt (Gen B), Vieillissement9/batch_results_summary_25y,
++          optim_rb2soh_gamma_25y.txt, Fable/note_rb2_soh_unifiee.txt,
++          Fable/robustesse_quatre_alternatives.txt, Analyse_sensibilite/,
++          Prédictions/, MPC3/, DEMARCHE_dp_front_v2.txt, AAPG_2022.pdf.
++================================================================================
++
++0. RESUME
++--------------------------------------------------------------------------------
++Les gains mesurés (SoH : -1.3 a -1.8 kEUR de coût unifié soit ~2 % ; Pred :
++-0.4 kEUR ; RUL : ~0 à baseline égale) ne sont PAS un échec de mesure : ils
++sont le produit correct d'un protocole honnête (baselines re-optimisées, CRN,
++tests nuls) appliqué à un problème où, PAR CONSTRUCTION, l'information d'état
++de santé a peu de valeur. Quatre causes structurelles sont identifiées (sect.
++1). La conséquence n'est pas "intégrer mieux les mêmes données dans les mêmes
++règles", mais DEPLACER LA PREUVE DE VALEUR là où l'information de santé a un
++levier causal : (i) incertitude du vieillissement (boucle fermée vs boucle
++ouverte), (ii) décisions discrètes de maintenance (RUL), (iii) exploitation
++de la physique réversible/start-stop du modèle V9, (iv) échelle saisonnière
++pour la prévision. Huit propositions concrètes, priorisées, en sect. 2.
++
++1. DIAGNOSTIC : QUATRE CAUSES STRUCTURELLES DES PETITS GAINS
++--------------------------------------------------------------------------------
++1.a  LA STRUCTURE DE COUT REND LE GISEMENT PETIT.
++     Décomposition RB2 (sens_cweights, 25 ans) : batterie 44.9 kEUR (69 %),
++     ELY 18.2 (28 %), FC 2.4 (3.6 %). Or les leviers SoH retenus agissent sur
++     la chaîne H2 (setpoints), et la batterie -- poste dominant -- est
++     l'ESCLAVE de la règle (elle prend tout le résidu, aucune stratégie ne la
++     commande directement). Le gisement adressable par les setpoints H2 est
++     donc ~6-8 kEUR sur 65 : même une exploitation PARFAITE du SoH plafonne
++     vers -10 %. Aucun levier FC ne paiera jamais (remplacement 1183 EUR).
++     -> Le "résultat décevant" est en grande partie un résultat de
++     DIMENSIONNEMENT/coûts, pas de stratégie.
++
++1.b  LA BASELINE RE-OPTIMISEE A DEJA CAPTURE L'ESSENTIEL.
++     Après re-calage cost-min, l'ELY est garé au genou de zéro-usure (0.310 ~
++     30 % Pmax) : c'est le propre enseignement n°3 de robustesse_quatre_
++     alternatives.txt ("pas de marge d'usure cachée dans un EMS optimisé").
++     La modulation SoH ne peut plus apporter que la CORRECTION DE DERIVE
++     autour de cet optimum. Une grande partie des gains "SoH" publiés dans la
++     littérature vient de baselines mal calées -- le readme RB2(RUL) le
++     démontre d'ailleurs explicitement (le "-5.3 %" était du re-calage de
++     constantes). C'est un résultat de thèse en soi, à assumer.
++
++1.c  EN MONDE NOMINAL DETERMINISTE, BOUCLE FERMEE ~ BOUCLE OUVERTE.
++     Le protocole évalue les stratégies sur UN scénario de vieillissement
++     déterministe et quasi-périodique. Dans ce cadre, la trajectoire SoH(t)
++     est prévisible : une loi PROGRAMMEE dans le temps (t depuis le dernier
++     remplacement) peut mimer SoH^gamma sans capteur. La valeur
++     INFORMATIONNELLE du SoH (ce que le jumeau numérique apporte vraiment)
++     n'est pas identifiable dans ce protocole ; seule la valeur de la
++     NON-STATIONNARITE de la politique l'est. Expérience de contrôle
++     décisive : cloner RB2(SoH) en RB2(Sched) open-loop (même trajectoire de
++     setpoints, indexée sur le temps calendaire nominal) et comparer. Si
++     égalité -> la valeur du SoH doit être démontrée SOUS INCERTITUDE de
++     vieillissement (cf. P1), pas en nominal.
++
++1.d  LA PRESENTATION EN COUT UNIFIE ECRASE LE RESULTAT.
++     En coût unifié : -1.3 a -1.8 kEUR (~2 %). A LPSP CONTRAINT (la bonne
++     lecture Pareto, cf. optim_rb2soh_gamma_25y.txt, table finale) : -6 a
++     -20 % de dégradation au même LPSP. Le front de la FAMILLE RB2(SoH)
++     étend le front de la famille RB2 vers des zones inaccessibles
++     (deg 52-58 kEUR). C'est front-contre-front qu'il faut présenter (en
++     s'assurant que la famille RB2 est optimisée en continu, pas sur grille,
++     pour ne pas gonfler le gain d'un artefact de résolution).
++
++2. PROPOSITIONS (par ordre de rendement attendu pour la thèse)
++--------------------------------------------------------------------------------
++P1. DEPLACER LA PREUVE DE VALEUR VERS L'INCERTITUDE DU VIEILLISSEMENT.  [***]
++    Monte-Carlo sur les PARAMETRES des modèles de dégradation (a_irr, b_rev,
++    s, taux batterie, dispersion inter-unités : tirages +-30-50 %, l'infra
++    sens_* existe déjà) avec trois compétiteurs : RB2 statique calée sur le
++    nominal, RB2(Sched) open-loop (1.c), RB2(SoH) closed-loop. Métriques :
++    espérance + P95/CVaR + regret par tirage (différences appariées CRN).
++    Hypothèse testable : la boucle fermée s'auto-corrige quand le modèle de
++    vieillissement est faux ; la boucle ouverte et la baseline statique se
++    trompent avec lui. C'est EXACTEMENT l'attendu AAPG 3.2 ("dérives de
++    vieillissement observées par le jumeau numérique" -> correction) : la
++    valeur du SoH est une valeur de ROBUSTESSE, pas une valeur nominale.
++
++P2. REMPLACER L'EXPOSANT EMPIRIQUE PAR UNE LOI PHYSIQUE DE SUIVI DE SEUIL. [***]
++    Le mécanisme qui fait gagner RB2(SoH) est identifié depuis le fix DP
++    v1->v2 : les seuils de dégradation sont des FRACTIONS d'un Pmax qui
++    dérive ; un setpoint constant en W finit au-dessus du genou vieilli.
++    Ecrire directement P_ely_set(t) = 0.30 * P_ely_max(t) (suivi du genou),
++    idem borne FC 0.80 * P_fc_max(t) : zéro paramètre à caler, narrative
++    claire ("la valeur du SoH dans une règle = suivre les breakpoints de
++    dégradation qui dérivent avec l'usure"), et un ENONCE GENERAL défendable :
++    le SoH paie ssi (i) la loi de dégradation a des breakpoints en fraction
++    de Pmax et (ii) Pmax dérive vite devant l'horizon. Prédit : valeur forte
++    pour l'ELY, nulle pour la FC (coût négligeable), faible pour la batterie
++    (pas de breakpoint dérivant dans le modèle) -- conforme aux mesures.
++
++P3. REPOSITIONNER LA RUL SUR LES DECISIONS DISCRETES (= tâche 3.4).  [***]
++    Le readme RB2(RUL) conclut déjà que la RUL est dominée par le SoH comme
++    signal de derating continu (sigma_RUL 5-12 % vs SoH quasi-exact). Sa
++    place naturelle : la PLANIFICATION. Introduire dans le modèle ce qui
++    donne mécaniquement de la valeur à la RUL :
++      - fenêtres de maintenance discrètes (site îlien : visites tous les
++        N mois) + COUT FIXE PAR INTERVENTION (déplacement, immobilisation) ;
++      - remplacement seulement en fenêtre -> un composant qui meurt entre
++        deux fenêtres reste HORS SERVICE (LPSP dégradé pendant des semaines).
++    Alors : (i) mode "limp-home" piloté par RUL (derater pour atteindre la
++    prochaine fenêtre), (ii) regroupement de remplacements (avancer un
++    remplacement pour économiser une visite), (iii) alignement EoL/fenêtre.
++    Ce sont des décisions à fort enjeu où le pronostic est irremplaçable --
++    contrairement à la modulation continue où il vaut ~1 %. Cohérent avec la
++    courbe en U de sigma_RUL(horizon) : la RUL est bonne à moyen terme,
++    exactement l'échelle de la planification de maintenance.
++
++P4. EXPLOITER REELLEMENT LA PHYSIQUE V9 (réversible + start-stop).  [**]
++    Si V8 et V9 donnent les mêmes conclusions, c'est que LES STRATEGIES
++    N'EXPLOITENT PAS ce que V9 a changé (récupération, start-stop, genou).
++    Deux leviers concrets :
++      (i)  DEMARRAGES ELY : ~9000-9700 starts sur 25 ans x 11.7 uV =
++           ~105-113 mV/cellule, soit ~70 % d'UNE VIE de stack (seuil 150 mV)
++           partie en start-stop. Règle prévisionnelle : ne démarrer l'ELY que
++           si le surplus prévu dure >= N heures (dwell conditionné par la
++           prévision, pas seulement par l'état). Gain quantifiable, purement
++           attribuable à la prévision (test nul préservé).
++      (ii) REPOS PROGRAMMES pilotés par la part REVERSIBLE estimée : le
++           jumeau numérique (tâche 3.1, EKF) peut séparer V_rev/V_irr ; règle
++           "si V_rev_estimé > seuil ET la prévision montre que la batterie
++           couvre H heures -> imposer une fenêtre OFF". A vérifier d'abord :
++           si les périodes OFF naturelles suffisent déjà à récupérer V_rev
++           (tau ~ 0.5 h), ce levier est petit -> le mesurer, et le dire.
++
++P5. DONNER A LA PREVISION L'ECHELLE OU ELLE A DU LEVIER : LA SAISON.  [**]
++    sigma(18 h) = 39.4 kWh ~ la capacité batterie (38.9 kWh) : à cet horizon
++    il ne reste qu'UN bit exploitable (démonstration faite, quatre
++    alternatives réfutées -- ne pas re-creuser). Mais l'état LENT du système
++    est le stock H2, et les LPSP viennent des déficits multi-jours : la
++    prévision J+3/J+7 (ou une simple climatologie mensuelle) peut piloter une
++    RESERVE H2 DYNAMIQUE : E_h2_min(saison/prévision) sous laquelle l'ELY est
++    prioritaire et la pré-charge batterie interdite. C'est la vision que la
++    DP a et que les règles n'ont pas (cf. perspective "MPC_V_H2 saisonnier",
++    README_mpc sect. 9). L'erreur relative de prévision AGREGEE sur une
++    semaine est bien plus faible qu'à 18 h -> l'information redevient riche.
++
++P6. REFORMULER LES INDICATEURS EN UNITES QUI PORTENT LE MESSAGE.  [**]
++    Les kEUR de dégradation sur 25 ans sont illisibles et dépendants de la
++    fonction de coût. Traduire :
++      - en DUREES DE VIE et DATES/NOMBRE de remplacements par composant
++        (déjà calculés : vie_bat/vie_fc/vie_ely) ;
++      - en EQUIVALENT CAPEX : "RB2(SoH) atteint le même LPSP avec une
++        batterie de X kWh / un ELY de Y kW en moins" (croiser avec
++        sens_sizing : chiffrer la valeur de l'information de santé en marge
++        de dimensionnement économisée). Message projet fort : l'EMS conscient
++        du vieillissement SE SUBSTITUE a du surdimensionnement.
++    Et tracer "valeur du SoH" vs "marge de dimensionnement" : la valeur doit
++    croître quand le système est tendu -> donne la CONDITION D'EMPLOI.
++
++P7. RETOURNER LA DEPENDANCE AUX FONCTIONS DE COUT EN RESULTAT.  [*]
++    Plutôt que subir "les résultats dépendent du modèle de dégradation",
++    caractériser la CLASSE de modèles pour laquelle chaque levier paie :
++    genou/pas de genou, convexité a(f), part réversible, poids start-stop,
++    calendaire on/off. Une table "levier x propriété du modèle -> gain"
++    (V8 vs V9 en sont déjà deux colonnes) transforme la fragilité en
++    théorème empirique, et cadre honnêtement la généralisation (défense).
++
++P8. DISTILLER LA DP EN REGLES (pont vers l'edge, tâche 3.3).  [*]
++    L'écart règles->DP v2 reste 8-14 kEUR. Apprendre des trajectoires DP des
++    règles interprétables à petit état : c_ely(mois, E_h2, SoH_ely),
++    c_fc(mois, SoC) (arbre de régression peu profond ou table). Déployable
++    edge, explicable, et comble une partie de l'écart sans boîte noire.
++
++3. CE QUI EST DEJA SOLIDE (a garder tel quel)
++--------------------------------------------------------------------------------
++  - Protocole d'attribution : baselines re-optimisées, tests nuls, CRN,
++    contrôles de non-régression < 0.01 kEUR. C'est au-dessus des standards
++    de la littérature du domaine ; les "petits gains" sont crédibles.
++  - Borne DP v2 (seuils projetés + rollout) et la leçon méthodologique
++    associée (DEMARCHE_dp_front_v2) : réutilisable en P2.
++  - Les quatre réfutations (A1-A4) et l'enseignement "1 bit exploitable" :
++    résultat négatif de valeur, à publier comme tel.
++  - La hiérarchie honnête RUL < SoH pour le derating temps réel.
++
++4. QUESTIONS OUVERTES (pour orienter la suite)
++--------------------------------------------------------------------------------
++  Q1. Le dimensionnement est-il figé par le projet, ou peut-on présenter la
++      valeur de l'EMS en équivalent CAPEX (P6) ?
++  Q2. Existe-t-il des contraintes de maintenance réalistes documentables
++      (périodicité des visites, coût fixe d'intervention, délais de pièces)
++      pour ancrer P3 ? Même des hypothèses d'ordre de grandeur suffisent.
++  Q3. Le livrable 3.2 attend des "lois de variation des paramètres de
++      réglage" : la forme P_set = c * Pmax_vieilli(t) (P2) est-elle
++      acceptable comme loi canonique, avec gamma comme généralisation ?
++  Q4. Pour P1 : quelles plages d'incertitude sur les taux de dégradation
++      sont défendables expérimentalement (McCay/Colombo/Rakousky donnent
++      déjà des fourchettes ~x2) ?
++================================================================================
+-- 
+2.43.0
+

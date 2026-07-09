@@ -13,7 +13,9 @@
 # A soumettre DEPUIS le dossier Vieillissement9/ (le script y trouve Common/
 # et ecrit valeur_info_25y.{txt,pdf,png} a cote).
 # Fichier transfere depuis Windows : passer  dos2unix  une fois.
-# Cout indicatif : ~600 runs 25 ans, ~6-8 h sur 32 coeurs.
+# Cout indicatif : ~800 runs 25 ans ~8-10 h / 32 coeurs ; avec le txt du run
+# precedent present, seuls les runs manquants sont lances (ex. ajout de
+# RB2(Recale) : ~200 runs, ~2-3 h). --fresh pour tout re-payer.
 # ============================================================================
 
 #SBATCH --job-name=valeur_info

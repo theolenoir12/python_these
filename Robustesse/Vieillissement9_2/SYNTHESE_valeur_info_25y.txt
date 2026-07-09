@@ -1,0 +1,107 @@
+================================================================================
+SYNTHESE -- VALEUR INFORMATIONNELLE DU SoH SOUS INCERTITUDE DE VIEILLISSEMENT
+Dossier : Robustesse/Vieillissement9_2/     Redige : 2026-07-09
+Donnees : valeur_info_25y.txt (job meso 214530 : 25 ans, N_MC=200, seed=2026,
+          multiplicateurs U_log[0.5, 2] sur FC(a_irr,b_rev,s)/ELY(a2,b2,s)/BAT,
+          VoLL=3, CRN). Banc : bench_valeur_info.py (cf. docstring).
+Contexte : proposition P1 de ../ANALYSE_CRITIQUE_integration_vieillissement.txt.
+================================================================================
+
+0. RESUME (l'essentiel pour le manuscrit)
+--------------------------------------------------------------------------------
+Au monde NOMINAL, la valeur du capteur SoH est EXACTEMENT NULLE : une loi
+programmee dans le temps (RB2(Sched), enregistree design-time) rejoue RB2(SoH)
+a l'identique (test nul, ecart 0.0). C'est la confirmation directe du
+diagnostic 1.c : dans le monde de conception, une horloge remplace le jumeau
+numerique.
+
+Sous INCERTITUDE de vieillissement (200 mondes perturbes x[0.5,2]), le capteur
+commence a payer : la boucle fermee bat la boucle ouverte programmee de
+0.71 kEUR en moyenne, sur 99 % des tirages, et sa part dans l'avantage total
+CROIT avec l'ecart du monde au modele (25 % -> 39 % du gain total entre mondes
+doux et severes). C'est la valeur de ROBUSTESSE du jumeau numerique attendue
+par l'AAPG 3.2, mesuree isolement pour la premiere fois dans la these.
+
+1. CHIFFRES (cout unifie = deg + VoLL*EENS, kEUR / 25 ans)
+--------------------------------------------------------------------------------
+                          moyenne    P95      CVaR90   LPSP moy  gagne (CRN)
+    RB2 statique           91.64    124.21    125.61    3.26 %      --
+    RB2(Sched) open-loop   90.04    123.86    124.48    2.94 %   100 % vs RB2
+    RB2(SoH)   closed-loop 89.33    122.38    123.55    2.91 %    99 % vs Sched
+
+  Decomposition de l'avantage total RB2(SoH) - RB2 = -2.31 +/- 0.49 kEUR :
+    open-loop  (Sched - RB2)  : -1.60 kEUR  (69 %)  re-calage + calendrier,
+                                                    SANS capteur ;
+    closed-loop (SoH - Sched) : -0.71 +/- 0.42 kEUR (31 %)  valeur
+                                                    informationnelle propre.
+  Le capteur gagne sur les DEUX axes en moyenne : LPSP 2.915 vs 2.936 % ET
+  degradation 65.43 vs 65.97 kEUR (vs Sched).
+
+  NOMINAL (multiplicateurs = 1) :
+    RB2        LPSP 3.2499 %  deg 57.548  unifie 84.201
+    Sched=SoH  LPSP 2.9099 %  deg 58.024  unifie 81.889   (test nul : identiques)
+  Le gain nominal (-2.31) est porte par l'EENS (-930 kWh x 3 EUR), pas par la
+  degradation (+0.48) : les constantes re-calees (0.42/0.30 vs 0.40/0.26)
+  descendent la LPSP de 3.25 a 2.91 %.
+
+2. VALEUR DU CAPTEUR vs SEVERITE DU MONDE
+--------------------------------------------------------------------------------
+  sev = moyenne geometrique des 7 multiplicateurs (>1 = vieillissement plus
+  rapide que le modele de conception). corr(gain capteur, sev) = 0.23.
+
+    tercile     gain capteur   gain total   part du capteur
+    doux          0.65 kEUR      2.57 kEUR       25 %
+    moyen         0.68           2.32            30 %
+    severe        0.79           2.05            39 %
+
+  Lecture : quand le monde s'ecarte du modele, l'avantage TOTAL retrecit
+  (les setpoints re-cales sont moins bien adaptes) mais la part du CAPTEUR
+  grandit -- la boucle fermee s'auto-corrige la ou la boucle ouverte se trompe
+  avec son modele. Correlation moderee (0.23) : benefice CONSISTANT, un peu
+  plus grand dans les mauvais mondes ; pas une assurance spectaculaire.
+  La queue est amelioree : P95 -1.48, CVaR90 -0.93 vs open-loop.
+
+3. RESERVES (a enoncer dans le manuscrit)
+--------------------------------------------------------------------------------
+  (a) RB2(SoH) voit le SoH VRAI parfaitement -> 0.71 kEUR est une BORNE
+      SUPERIEURE de la valeur du capteur (~0.8 % du cout total). Le bruit
+      d'estimation (sens_soh_estimation.py) ne peut que l'eroder.
+  (b) Le "69 % open-loop" MELANGE deux ingredients : le re-calage des
+      constantes (0.40/0.26 -> 0.42/0.30) et la non-stationnarite du
+      calendrier. Le 4e competiteur RB2(Recale) (v2 du banc : constantes
+      re-calees, gamma=0) separe les deux :
+        re-calage = RB2(Recale) - RB2 ; horloge = RB2(Sched) - RB2(Recale).
+      >>> A COMPLETER apres le re-run meso (le banc reutilise les 603 runs
+      deja payes ; seuls les ~201 runs de RB2(Recale) sont lances). <<<
+  (c) Les multiplicateurs sont tires independamment par composant ; des
+      derives correlees (ex. un lot de cellules uniformement pire) ou des
+      changements de REGIME (rupture de pente, defaut naissant) ne sont pas
+      couverts -- c'est la ou une boucle fermee devrait creuser l'ecart
+      davantage (perspective : scenario "rupture" cible).
+
+4. RECIT MANUSCRIT PROPOSE
+--------------------------------------------------------------------------------
+  "La valeur de l'information d'etat de sante dans une regle de gestion se
+  decompose en trois ingredients : le RE-CALAGE des constantes, la
+  NON-STATIONNARITE de la politique (une horloge suffit), et la RETROACTION
+  du capteur. Au monde nominal, la retroaction vaut exactement zero : tout
+  gain rapporte sans cette decomposition est attribuable aux deux premiers
+  ingredients -- ce que la litterature distingue rarement. Sous incertitude
+  du modele de vieillissement (x[0.5,2] sur les taux), la retroaction
+  apporte un gain modeste mais quasi certain (0.71 kEUR, 99 % des tirages),
+  qui croit avec l'ecart du monde au modele (25 -> 39 % de l'avantage total)
+  et ameliore la queue de distribution (CVaR90 -0.93 kEUR). Le jumeau
+  numerique de la tache 3.1 est donc une ASSURANCE contre l'erreur de modele
+  de vieillissement, plus qu'un optimiseur nominal."
+
+5. FICHIERS / REPRODUCTION
+--------------------------------------------------------------------------------
+  bench_valeur_info.py          banc v2 (4 competiteurs, cascade, severite,
+                                reutilisation des runs payes ; --fresh pour tout
+                                re-payer). Test nul integre.
+  run_meso_valeur_info.slurm    sbatch run_meso_valeur_info.slurm
+  valeur_info_25y.txt           donnees (v1 : 3 strategies ; enrichi en place
+                                par le re-run v2 avec RB2(Recale))
+  valeur_info_25y.pdf/.png      figure (v2 : nuages+ellipses | histogrammes
+                                horloge/capteur | gain capteur vs severite)
+================================================================================

@@ -1,0 +1,60 @@
+Job 210474  tache 2  eps=50  noeud=node4-26
+cpus-per-task=4  debut=Mon Jun 29 13:12:44 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+======================================================================
+ PD detaillee  eps=50  -> /Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP/figures_pareto_meso/eps_50
+======================================================================
+   [DP rebuild #1] an 0  pas 0  SoH_bat=1.000  Pfc=1753W  Pely=18430W  (208s)
+   [DP rebuild #2] an 1  pas 8760  SoH_bat=0.939  Pfc=1520W  Pely=18217W  (207s)
+   [DP rebuild #3] an 1  pas 17184  SoH_bat=0.875  Pfc=1753W  Pely=18022W  (207s)
+   [DP rebuild #4] an 2  pas 17520  SoH_bat=0.873  Pfc=1742W  Pely=18016W  (207s)
+   [DP rebuild #5] an 3  pas 26280  SoH_bat=0.812  Pfc=1531W  Pely=17803W  (207s)
+   [DP rebuild #6] an 4  pas 35040  SoH_bat=0.747  Pfc=1428W  Pely=17646W  (206s)
+   [DP rebuild #7] an 4  pas 38504  SoH_bat=0.723  Pfc=1753W  Pely=17596W  (207s)
+   [DP rebuild #8] an 4  pas 41594  SoH_bat=1.000  Pfc=1714W  Pely=17544W  (209s)
+   [DP rebuild #9] an 5  pas 43800  SoH_bat=0.983  Pfc=1650W  Pely=17493W  (209s)
+   [DP rebuild #10] an 6  pas 52560  SoH_bat=0.919  Pfc=1460W  Pely=17276W  (209s)
+   [DP rebuild #11] an 6  pas 58465  SoH_bat=0.873  Pfc=1753W  Pely=17172W  (209s)
+   [DP rebuild #12] an 7  pas 61320  SoH_bat=0.851  Pfc=1672W  Pely=17105W  (209s)
+   [DP rebuild #13] an 8  pas 70080  SoH_bat=0.787  Pfc=1509W  Pely=16932W  (209s)
+   [DP rebuild #14] an 9  pas 78840  SoH_bat=0.722  Pfc=1417W  Pely=16778W  (210s)
+   [DP rebuild #15] an 9  pas 81394  SoH_bat=0.705  Pfc=1753W  Pely=16741W  (211s)
+   [DP rebuild #16] an 9  pas 82060  SoH_bat=1.000  Pfc=1743W  Pely=16729W  (210s)
+   [DP rebuild #17] an 10  pas 87600  SoH_bat=0.956  Pfc=1598W  Pely=16595W  (209s)
+   [DP rebuild #18] an 11  pas 96360  SoH_bat=0.889  Pfc=1433W  Pely=16405W  (209s)
+   [DP rebuild #19] an 11  pas 99053  SoH_bat=0.870  Pfc=1753W  Pely=16356W  (208s)
+   [DP rebuild #20] an 12  pas 105120  SoH_bat=0.823  Pfc=1616W  Pely=16232W  (208s)
+   [DP rebuild #21] an 13  pas 113880  SoH_bat=0.757  Pfc=1492W  Pely=16085W  (208s)
+   [DP rebuild #22] an 13  pas 121619  SoH_bat=1.000  Pfc=1415W  Pely=15956W  (208s)
+   [DP rebuild #23] an 14  pas 122640  SoH_bat=0.990  Pfc=1406W  Pely=15950W  (208s)
+   [DP rebuild #24] an 14  pas 123540  SoH_bat=0.984  Pfc=1753W  Pely=15936W  (208s)
+   [DP rebuild #25] an 15  pas 131400  SoH_bat=0.924  Pfc=1564W  Pely=15778W  (208s)
+   [DP rebuild #26] an 16  pas 140160  SoH_bat=0.854  Pfc=1439W  Pely=15637W  (223s)
+   [DP rebuild #27] an 16  pas 144397  SoH_bat=0.822  Pfc=1753W  Pely=15577W  (225s)
+   [DP rebuild #28] an 17  pas 148920  SoH_bat=0.786  Pfc=1665W  Pely=15498W  (215s)
+   [DP rebuild #29] an 18  pas 157680  SoH_bat=0.721  Pfc=1617W  Pely=15365W  (207s)
+   [DP rebuild #30] an 18  pas 160901  SoH_bat=1.000  Pfc=1559W  Pely=15314W  (207s)
+   [DP rebuild #31] an 19  pas 166440  SoH_bat=0.951  Pfc=1470W  Pely=15233W  (207s)
+   [DP rebuild #32] an 19  pas 174082  SoH_bat=0.886  Pfc=1753W  Pely=15146W  (207s)
+   [DP rebuild #33] an 20  pas 175200  SoH_bat=0.877  Pfc=1721W  Pely=15121W  (207s)
+   [DP rebuild #34] an 21  pas 183960  SoH_bat=0.811  Pfc=1549W  Pely=14987W  (215s)
+   [DP rebuild #35] an 22  pas 192720  SoH_bat=0.745  Pfc=1449W  Pely=14871W  (229s)
+   [DP rebuild #36] an 22  pas 198665  SoH_bat=1.000  Pfc=1399W  Pely=14804W  (227s)
+   [DP rebuild #37] an 22  pas 199289  SoH_bat=0.994  Pfc=1753W  Pely=14800W  (218s)
+   [DP rebuild #38] an 23  pas 201480  SoH_bat=0.976  Pfc=1696W  Pely=14770W  (208s)
+   [DP rebuild #39] an 24  pas 210240  SoH_bat=0.907  Pfc=1515W  Pely=14654W  (208s)
+
+[reproduction eps=50]  LPSP 0.2943%  deg 57.946 kE  (8282s, 39 rebuilds)
+   stocke (npz)       LPSP 0.2943%  deg 57.946 kE  -> dLPSP +0.0000  ddeg +0.000
+LPSP : 0.2943083945242892 (%)
+Dégradations :  57945.96264751952 (EUR)
+  BoP (installation) : 40714 EUR  |  dégradation actualisée (r=5%, N=25 ans, AF=0.564) : 32668 EUR
+  NPC (coût total de possession) : 73382 EUR  =  73.4 k€
+  Énergie non fournie : 805 kWh  |  coût d'indisponibilité (VOLL=5.0 €/kWh, actualisé) : 2268 EUR
+  COÛT TOTAL (NPC + indisponibilité) : 75649 EUR  =  75.6 k€
+ figures eps=50 -> /Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP/figures_pareto_meso/eps_50\Figures\218999h\
+
+real	138m44.549s
+user	138m14.132s
+sys	0m1.633s
+fin=Mon Jun 29 15:31:30 CEST 2026

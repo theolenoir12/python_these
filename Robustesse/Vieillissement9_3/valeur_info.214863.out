@@ -1,0 +1,238 @@
+Job 214863  noeud=node4-11  args=
+cpus-per-task=32  debut=jeu. juil.  9 21:24:30 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+=== VALEUR DE L'INFORMATION SoH -- boucle fermee vs boucle ouverte ===
+    horizon=25 ans | N_MC=200 | multiplicateurs U_log[0.50, 2.00] | seed=2026 | VoLL=3.0
+
+--- Programme nominal reutilise : /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_2/valeur_info_sched_25y.npz
+  (reuse) 603 resultats repris de /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_2/valeur_info_25y.txt
+
+--- 201 runs a lancer (603 repris, 32 workers) ---
+  [  1/201] RB2(Recale) draw=-1  LPSP  2.6569%  deg   61.472  unifie   83.262 kEUR
+  [  2/201] RB2(Recale) draw=0   LPSP  2.6714%  deg   96.921  unifie  118.830 kEUR
+  [  3/201] RB2(Recale) draw=1   LPSP  2.6842%  deg   80.580  unifie  102.594 kEUR
+  [  4/201] RB2(Recale) draw=2   LPSP  2.6653%  deg   59.797  unifie   81.657 kEUR
+  [  5/201] RB2(Recale) draw=3   LPSP  2.6609%  deg   62.991  unifie   84.814 kEUR
+  [  6/201] RB2(Recale) draw=4   LPSP  2.6587%  deg   53.118  unifie   74.923 kEUR
+  [  7/201] RB2(Recale) draw=5   LPSP  2.6893%  deg   55.914  unifie   77.970 kEUR
+  [  8/201] RB2(Recale) draw=6   LPSP  2.6749%  deg   73.598  unifie   95.536 kEUR
+  [  9/201] RB2(Recale) draw=7   LPSP  2.6621%  deg   73.191  unifie   95.024 kEUR
+  [ 10/201] RB2(Recale) draw=8   LPSP  2.6568%  deg   59.802  unifie   81.592 kEUR
+  [ 11/201] RB2(Recale) draw=9   LPSP  2.6912%  deg   53.794  unifie   75.866 kEUR
+  [ 12/201] RB2(Recale) draw=10  LPSP  2.6810%  deg   47.737  unifie   69.725 kEUR
+  [ 13/201] RB2(Recale) draw=11  LPSP  2.6472%  deg   43.310  unifie   65.021 kEUR
+  [ 14/201] RB2(Recale) draw=12  LPSP  2.6751%  deg  101.234  unifie  123.173 kEUR
+  [ 15/201] RB2(Recale) draw=13  LPSP  2.6650%  deg   97.662  unifie  119.519 kEUR
+  [ 16/201] RB2(Recale) draw=14  LPSP  2.6690%  deg   80.754  unifie  102.643 kEUR
+  [ 17/201] RB2(Recale) draw=15  LPSP  2.6648%  deg   54.393  unifie   76.248 kEUR
+  [ 18/201] RB2(Recale) draw=16  LPSP  2.6436%  deg   47.123  unifie   68.805 kEUR
+  [ 19/201] RB2(Recale) draw=17  LPSP  2.6501%  deg   43.357  unifie   65.091 kEUR
+  [ 20/201] RB2(Recale) draw=18  LPSP  2.6807%  deg   81.942  unifie  103.927 kEUR
+  [ 21/201] RB2(Recale) draw=19  LPSP  2.6924%  deg   76.774  unifie   98.855 kEUR
+  [ 22/201] RB2(Recale) draw=20  LPSP  2.6556%  deg   38.831  unifie   60.610 kEUR
+  [ 23/201] RB2(Recale) draw=21  LPSP  2.6427%  deg   48.064  unifie   69.738 kEUR
+  [ 24/201] RB2(Recale) draw=22  LPSP  2.6787%  deg   69.238  unifie   91.207 kEUR
+  [ 25/201] RB2(Recale) draw=23  LPSP  2.6366%  deg   47.531  unifie   69.155 kEUR
+  [ 26/201] RB2(Recale) draw=24  LPSP  2.6672%  deg  102.884  unifie  124.758 kEUR
+  [ 27/201] RB2(Recale) draw=25  LPSP  2.6718%  deg   77.952  unifie   99.865 kEUR
+  [ 28/201] RB2(Recale) draw=26  LPSP  2.6707%  deg   69.245  unifie   91.149 kEUR
+  [ 29/201] RB2(Recale) draw=27  LPSP  2.6648%  deg   62.141  unifie   83.996 kEUR
+  [ 30/201] RB2(Recale) draw=28  LPSP  2.6514%  deg   48.872  unifie   70.617 kEUR
+  [ 31/201] RB2(Recale) draw=29  LPSP  2.6860%  deg   98.547  unifie  120.576 kEUR
+  [ 32/201] RB2(Recale) draw=30  LPSP  2.6539%  deg   45.795  unifie   67.561 kEUR
+  [ 33/201] RB2(Recale) draw=31  LPSP  2.6645%  deg   65.767  unifie   87.620 kEUR
+  [ 34/201] RB2(Recale) draw=32  LPSP  2.6423%  deg   47.838  unifie   69.509 kEUR
+  [ 35/201] RB2(Recale) draw=33  LPSP  2.6700%  deg   72.068  unifie   93.966 kEUR
+  [ 36/201] RB2(Recale) draw=34  LPSP  2.6619%  deg   45.060  unifie   66.891 kEUR
+  [ 37/201] RB2(Recale) draw=35  LPSP  2.6697%  deg   47.905  unifie   69.800 kEUR
+  [ 38/201] RB2(Recale) draw=36  LPSP  2.7009%  deg  110.899  unifie  133.050 kEUR
+  [ 39/201] RB2(Recale) draw=37  LPSP  2.6637%  deg   47.542  unifie   69.388 kEUR
+  [ 40/201] RB2(Recale) draw=38  LPSP  2.6786%  deg  115.012  unifie  136.980 kEUR
+  [ 41/201] RB2(Recale) draw=39  LPSP  2.6591%  deg   54.903  unifie   76.712 kEUR
+  [ 42/201] RB2(Recale) draw=40  LPSP  2.6799%  deg   85.446  unifie  107.426 kEUR
+  [ 43/201] RB2(Recale) draw=41  LPSP  2.6612%  deg   66.509  unifie   88.335 kEUR
+  [ 44/201] RB2(Recale) draw=42  LPSP  2.6845%  deg   80.401  unifie  102.417 kEUR
+  [ 45/201] RB2(Recale) draw=43  LPSP  2.6568%  deg   54.741  unifie   76.531 kEUR
+  [ 46/201] RB2(Recale) draw=44  LPSP  2.6605%  deg   97.057  unifie  118.877 kEUR
+  [ 47/201] RB2(Recale) draw=45  LPSP  2.6716%  deg   89.114  unifie  111.025 kEUR
+  [ 48/201] RB2(Recale) draw=46  LPSP  2.6735%  deg   93.771  unifie  115.698 kEUR
+  [ 49/201] RB2(Recale) draw=47  LPSP  2.6487%  deg   60.902  unifie   82.625 kEUR
+  [ 50/201] RB2(Recale) draw=48  LPSP  2.6794%  deg   56.428  unifie   78.403 kEUR
+  [ 51/201] RB2(Recale) draw=49  LPSP  2.6686%  deg   80.385  unifie  102.272 kEUR
+  [ 52/201] RB2(Recale) draw=50  LPSP  2.6573%  deg   49.155  unifie   70.949 kEUR
+  [ 53/201] RB2(Recale) draw=51  LPSP  2.6749%  deg   86.314  unifie  108.252 kEUR
+  [ 54/201] RB2(Recale) draw=52  LPSP  2.6508%  deg   54.320  unifie   76.060 kEUR
+  [ 55/201] RB2(Recale) draw=53  LPSP  2.6572%  deg   60.630  unifie   82.423 kEUR
+  [ 56/201] RB2(Recale) draw=54  LPSP  2.6713%  deg   50.104  unifie   72.013 kEUR
+  [ 57/201] RB2(Recale) draw=55  LPSP  2.6556%  deg   58.365  unifie   80.145 kEUR
+  [ 58/201] RB2(Recale) draw=56  LPSP  2.6589%  deg   75.175  unifie   96.981 kEUR
+  [ 59/201] RB2(Recale) draw=57  LPSP  2.6681%  deg   66.942  unifie   88.824 kEUR
+  [ 60/201] RB2(Recale) draw=58  LPSP  2.6624%  deg   99.926  unifie  121.762 kEUR
+  [ 61/201] RB2(Recale) draw=59  LPSP  2.6756%  deg   61.641  unifie   83.585 kEUR
+  [ 62/201] RB2(Recale) draw=60  LPSP  2.6829%  deg   49.838  unifie   71.841 kEUR
+  [ 63/201] RB2(Recale) draw=61  LPSP  2.6715%  deg   94.453  unifie  116.363 kEUR
+  [ 64/201] RB2(Recale) draw=62  LPSP  2.6821%  deg   74.974  unifie   96.971 kEUR
+  [ 65/201] RB2(Recale) draw=63  LPSP  2.6547%  deg   48.910  unifie   70.682 kEUR
+  [ 66/201] RB2(Recale) draw=64  LPSP  2.6825%  deg   55.442  unifie   77.442 kEUR
+  [ 67/201] RB2(Recale) draw=65  LPSP  2.6816%  deg   68.946  unifie   90.939 kEUR
+  [ 68/201] RB2(Recale) draw=66  LPSP  2.6454%  deg   41.473  unifie   63.169 kEUR
+  [ 69/201] RB2(Recale) draw=67  LPSP  2.6723%  deg   85.301  unifie  107.218 kEUR
+  [ 70/201] RB2(Recale) draw=68  LPSP  2.6652%  deg   45.855  unifie   67.713 kEUR
+  [ 71/201] RB2(Recale) draw=69  LPSP  2.6626%  deg   48.354  unifie   70.191 kEUR
+  [ 72/201] RB2(Recale) draw=70  LPSP  2.6668%  deg   72.288  unifie   94.160 kEUR
+  [ 73/201] RB2(Recale) draw=71  LPSP  2.6668%  deg   57.264  unifie   79.135 kEUR
+  [ 74/201] RB2(Recale) draw=72  LPSP  2.6608%  deg   56.951  unifie   78.774 kEUR
+  [ 75/201] RB2(Recale) draw=73  LPSP  2.6633%  deg   66.671  unifie   88.514 kEUR
+  [ 76/201] RB2(Recale) draw=74  LPSP  2.6615%  deg   55.655  unifie   77.483 kEUR
+  [ 77/201] RB2(Recale) draw=75  LPSP  2.6679%  deg   96.750  unifie  118.631 kEUR
+  [ 78/201] RB2(Recale) draw=76  LPSP  2.6781%  deg   72.790  unifie   94.754 kEUR
+  [ 79/201] RB2(Recale) draw=77  LPSP  2.6737%  deg   69.576  unifie   91.504 kEUR
+  [ 80/201] RB2(Recale) draw=78  LPSP  2.6733%  deg   54.218  unifie   76.143 kEUR
+  [ 81/201] RB2(Recale) draw=79  LPSP  2.6607%  deg   66.037  unifie   87.858 kEUR
+  [ 82/201] RB2(Recale) draw=80  LPSP  2.7039%  deg  104.997  unifie  127.173 kEUR
+  [ 83/201] RB2(Recale) draw=81  LPSP  2.6707%  deg   71.740  unifie   93.644 kEUR
+  [ 84/201] RB2(Recale) draw=82  LPSP  2.6721%  deg   74.605  unifie   96.519 kEUR
+  [ 85/201] RB2(Recale) draw=83  LPSP  2.6668%  deg   85.574  unifie  107.445 kEUR
+  [ 86/201] RB2(Recale) draw=84  LPSP  2.6685%  deg   41.451  unifie   63.336 kEUR
+  [ 87/201] RB2(Recale) draw=85  LPSP  2.6696%  deg   80.167  unifie  102.061 kEUR
+  [ 88/201] RB2(Recale) draw=86  LPSP  2.6610%  deg   67.541  unifie   89.364 kEUR
+  [ 89/201] RB2(Recale) draw=87  LPSP  2.6673%  deg   74.852  unifie   96.728 kEUR
+  [ 90/201] RB2(Recale) draw=88  LPSP  2.6745%  deg   88.801  unifie  110.736 kEUR
+  [ 91/201] RB2(Recale) draw=89  LPSP  2.6634%  deg   59.866  unifie   81.710 kEUR
+  [ 92/201] RB2(Recale) draw=90  LPSP  2.6589%  deg   84.788  unifie  106.595 kEUR
+  [ 93/201] RB2(Recale) draw=91  LPSP  2.6335%  deg   40.321  unifie   61.920 kEUR
+  [ 94/201] RB2(Recale) draw=92  LPSP  2.6929%  deg   83.424  unifie  105.510 kEUR
+  [ 95/201] RB2(Recale) draw=93  LPSP  2.6679%  deg  107.396  unifie  129.276 kEUR
+  [ 96/201] RB2(Recale) draw=94  LPSP  2.7121%  deg  106.713  unifie  128.957 kEUR
+  [ 97/201] RB2(Recale) draw=95  LPSP  2.6841%  deg   96.389  unifie  118.402 kEUR
+  [ 98/201] RB2(Recale) draw=96  LPSP  2.6529%  deg   40.431  unifie   62.189 kEUR
+  [ 99/201] RB2(Recale) draw=97  LPSP  2.6605%  deg   83.906  unifie  105.726 kEUR
+  [100/201] RB2(Recale) draw=98  LPSP  2.6618%  deg   86.305  unifie  108.136 kEUR
+  [101/201] RB2(Recale) draw=99  LPSP  2.6574%  deg   80.748  unifie  102.543 kEUR
+  [102/201] RB2(Recale) draw=100 LPSP  2.6537%  deg   55.509  unifie   77.273 kEUR
+  [103/201] RB2(Recale) draw=101 LPSP  2.6676%  deg   90.827  unifie  112.705 kEUR
+  [104/201] RB2(Recale) draw=102 LPSP  2.6792%  deg   86.956  unifie  108.930 kEUR
+  [105/201] RB2(Recale) draw=103 LPSP  2.6690%  deg   89.261  unifie  111.151 kEUR
+  [106/201] RB2(Recale) draw=104 LPSP  2.6771%  deg   38.959  unifie   60.915 kEUR
+  [107/201] RB2(Recale) draw=105 LPSP  2.6539%  deg   61.272  unifie   83.038 kEUR
+  [108/201] RB2(Recale) draw=106 LPSP  2.6663%  deg   60.173  unifie   82.040 kEUR
+  [109/201] RB2(Recale) draw=107 LPSP  2.6484%  deg   39.108  unifie   60.828 kEUR
+  [110/201] RB2(Recale) draw=108 LPSP  2.6691%  deg   75.071  unifie   96.962 kEUR
+  [111/201] RB2(Recale) draw=109 LPSP  2.6659%  deg   61.907  unifie   83.771 kEUR
+  [112/201] RB2(Recale) draw=110 LPSP  2.6721%  deg   82.097  unifie  104.012 kEUR
+  [113/201] RB2(Recale) draw=111 LPSP  2.6750%  deg   72.392  unifie   94.331 kEUR
+  [114/201] RB2(Recale) draw=112 LPSP  2.6320%  deg   42.721  unifie   64.307 kEUR
+  [115/201] RB2(Recale) draw=113 LPSP  2.6695%  deg   83.343  unifie  105.236 kEUR
+  [116/201] RB2(Recale) draw=114 LPSP  2.6760%  deg   45.448  unifie   67.395 kEUR
+  [117/201] RB2(Recale) draw=115 LPSP  2.6653%  deg   89.166  unifie  111.025 kEUR
+  [118/201] RB2(Recale) draw=116 LPSP  2.6487%  deg   52.564  unifie   74.288 kEUR
+  [119/201] RB2(Recale) draw=117 LPSP  2.6670%  deg   65.064  unifie   86.938 kEUR
+  [120/201] RB2(Recale) draw=118 LPSP  2.6553%  deg   56.347  unifie   78.124 kEUR
+  [121/201] RB2(Recale) draw=119 LPSP  2.6656%  deg   68.664  unifie   90.526 kEUR
+  [122/201] RB2(Recale) draw=120 LPSP  2.6914%  deg   63.432  unifie   85.505 kEUR
+  [123/201] RB2(Recale) draw=121 LPSP  2.6607%  deg   48.559  unifie   70.380 kEUR
+  [124/201] RB2(Recale) draw=122 LPSP  2.6609%  deg   71.713  unifie   93.536 kEUR
+  [125/201] RB2(Recale) draw=123 LPSP  2.6771%  deg   48.453  unifie   70.409 kEUR
+  [126/201] RB2(Recale) draw=124 LPSP  2.6750%  deg   62.343  unifie   84.282 kEUR
+  [127/201] RB2(Recale) draw=125 LPSP  2.6770%  deg   74.624  unifie   96.579 kEUR
+  [128/201] RB2(Recale) draw=126 LPSP  2.6706%  deg   76.859  unifie   98.762 kEUR
+  [129/201] RB2(Recale) draw=127 LPSP  2.6664%  deg   86.997  unifie  108.865 kEUR
+  [130/201] RB2(Recale) draw=128 LPSP  2.6576%  deg   67.868  unifie   89.663 kEUR
+  [131/201] RB2(Recale) draw=129 LPSP  2.7104%  deg  104.842  unifie  127.071 kEUR
+  [132/201] RB2(Recale) draw=130 LPSP  2.6815%  deg   41.050  unifie   63.042 kEUR
+  [133/201] RB2(Recale) draw=131 LPSP  2.6717%  deg  103.642  unifie  125.555 kEUR
+  [134/201] RB2(Recale) draw=132 LPSP  2.6726%  deg   49.267  unifie   71.186 kEUR
+  [135/201] RB2(Recale) draw=133 LPSP  2.6757%  deg   80.849  unifie  102.794 kEUR
+  [136/201] RB2(Recale) draw=134 LPSP  2.6347%  deg   35.978  unifie   57.586 kEUR
+  [137/201] RB2(Recale) draw=135 LPSP  2.6678%  deg   42.265  unifie   64.144 kEUR
+  [138/201] RB2(Recale) draw=136 LPSP  2.6382%  deg   52.113  unifie   73.751 kEUR
+  [139/201] RB2(Recale) draw=137 LPSP  2.6699%  deg   82.144  unifie  104.041 kEUR
+  [140/201] RB2(Recale) draw=138 LPSP  2.6851%  deg   90.981  unifie  113.002 kEUR
+  [141/201] RB2(Recale) draw=139 LPSP  2.6801%  deg   69.907  unifie   91.888 kEUR
+  [142/201] RB2(Recale) draw=140 LPSP  2.6631%  deg   48.125  unifie   69.966 kEUR
+  [143/201] RB2(Recale) draw=141 LPSP  2.6733%  deg   84.353  unifie  106.278 kEUR
+  [144/201] RB2(Recale) draw=142 LPSP  2.6752%  deg   84.435  unifie  106.376 kEUR
+  [145/201] RB2(Recale) draw=143 LPSP  2.6784%  deg   51.746  unifie   73.713 kEUR
+  [146/201] RB2(Recale) draw=144 LPSP  2.6550%  deg   61.967  unifie   83.742 kEUR
+  [147/201] RB2(Recale) draw=145 LPSP  2.6725%  deg   87.239  unifie  109.157 kEUR
+  [148/201] RB2(Recale) draw=146 LPSP  2.7123%  deg   97.486  unifie  119.731 kEUR
+  [149/201] RB2(Recale) draw=147 LPSP  2.6733%  deg   89.404  unifie  111.329 kEUR
+  [150/201] RB2(Recale) draw=148 LPSP  2.6839%  deg   65.098  unifie   87.109 kEUR
+  [151/201] RB2(Recale) draw=149 LPSP  2.6802%  deg  101.740  unifie  123.721 kEUR
+  [152/201] RB2(Recale) draw=150 LPSP  2.6680%  deg   72.671  unifie   94.553 kEUR
+  [153/201] RB2(Recale) draw=151 LPSP  2.6757%  deg   88.566  unifie  110.510 kEUR
+  [154/201] RB2(Recale) draw=152 LPSP  2.6484%  deg   39.694  unifie   61.414 kEUR
+  [155/201] RB2(Recale) draw=153 LPSP  2.6507%  deg   41.247  unifie   62.986 kEUR
+  [156/201] RB2(Recale) draw=154 LPSP  2.6300%  deg   37.222  unifie   58.792 kEUR
+  [157/201] RB2(Recale) draw=155 LPSP  2.6544%  deg   58.710  unifie   80.481 kEUR
+  [158/201] RB2(Recale) draw=156 LPSP  2.6918%  deg   79.661  unifie  101.737 kEUR
+  [159/201] RB2(Recale) draw=157 LPSP  2.6693%  deg   73.255  unifie   95.147 kEUR
+  [160/201] RB2(Recale) draw=158 LPSP  2.6661%  deg   64.819  unifie   86.685 kEUR
+  [161/201] RB2(Recale) draw=159 LPSP  2.6933%  deg   74.912  unifie   97.001 kEUR
+  [162/201] RB2(Recale) draw=160 LPSP  2.6646%  deg   58.875  unifie   80.729 kEUR
+  [163/201] RB2(Recale) draw=161 LPSP  2.6635%  deg   87.309  unifie  109.154 kEUR
+  [164/201] RB2(Recale) draw=162 LPSP  2.6512%  deg   51.106  unifie   72.849 kEUR
+  [165/201] RB2(Recale) draw=163 LPSP  2.6596%  deg   56.554  unifie   78.367 kEUR
+  [166/201] RB2(Recale) draw=164 LPSP  2.6886%  deg   82.237  unifie  104.287 kEUR
+  [167/201] RB2(Recale) draw=165 LPSP  2.6646%  deg   41.228  unifie   63.082 kEUR
+  [168/201] RB2(Recale) draw=166 LPSP  2.6400%  deg   48.859  unifie   70.511 kEUR
+  [169/201] RB2(Recale) draw=167 LPSP  2.6454%  deg   49.735  unifie   71.431 kEUR
+  [170/201] RB2(Recale) draw=168 LPSP  2.6522%  deg   57.967  unifie   79.719 kEUR
+  [171/201] RB2(Recale) draw=169 LPSP  2.6781%  deg   45.948  unifie   67.912 kEUR
+  [172/201] RB2(Recale) draw=170 LPSP  2.6545%  deg   57.317  unifie   79.088 kEUR
+  [173/201] RB2(Recale) draw=171 LPSP  2.6709%  deg   77.995  unifie   99.901 kEUR
+  [174/201] RB2(Recale) draw=172 LPSP  2.6699%  deg  100.796  unifie  122.693 kEUR
+  [175/201] RB2(Recale) draw=173 LPSP  2.6631%  deg   46.024  unifie   67.865 kEUR
+  [176/201] RB2(Recale) draw=174 LPSP  2.6575%  deg   62.421  unifie   84.216 kEUR
+  [177/201] RB2(Recale) draw=175 LPSP  2.6861%  deg  100.043  unifie  122.073 kEUR
+  [178/201] RB2(Recale) draw=176 LPSP  2.6817%  deg   52.524  unifie   74.518 kEUR
+  [179/201] RB2(Recale) draw=177 LPSP  2.6765%  deg  104.531  unifie  126.482 kEUR
+  [180/201] RB2(Recale) draw=178 LPSP  2.6626%  deg   88.751  unifie  110.588 kEUR
+  [181/201] RB2(Recale) draw=179 LPSP  2.6781%  deg   66.316  unifie   88.280 kEUR
+  [182/201] RB2(Recale) draw=180 LPSP  2.6743%  deg   85.998  unifie  107.931 kEUR
+  [183/201] RB2(Recale) draw=181 LPSP  2.6617%  deg   51.688  unifie   73.517 kEUR
+  [184/201] RB2(Recale) draw=182 LPSP  2.6710%  deg  102.042  unifie  123.948 kEUR
+  [185/201] RB2(Recale) draw=183 LPSP  2.6523%  deg   51.495  unifie   73.248 kEUR
+  [186/201] RB2(Recale) draw=184 LPSP  2.6502%  deg   65.322  unifie   87.057 kEUR
+  [187/201] RB2(Recale) draw=185 LPSP  2.6787%  deg  107.202  unifie  129.170 kEUR
+  [188/201] RB2(Recale) draw=186 LPSP  2.6606%  deg  101.538  unifie  123.359 kEUR
+  [189/201] RB2(Recale) draw=187 LPSP  2.6703%  deg   92.726  unifie  114.627 kEUR
+  [190/201] RB2(Recale) draw=188 LPSP  2.6787%  deg   53.857  unifie   75.826 kEUR
+  [191/201] RB2(Recale) draw=189 LPSP  2.6536%  deg   50.702  unifie   72.465 kEUR
+  [192/201] RB2(Recale) draw=190 LPSP  2.6623%  deg   67.534  unifie   89.368 kEUR
+  [193/201] RB2(Recale) draw=191 LPSP  2.6836%  deg   56.172  unifie   78.181 kEUR
+  [194/201] RB2(Recale) draw=192 LPSP  2.6768%  deg   42.125  unifie   64.078 kEUR
+  [195/201] RB2(Recale) draw=193 LPSP  2.6551%  deg   51.698  unifie   73.474 kEUR
+  [196/201] RB2(Recale) draw=194 LPSP  2.6595%  deg   77.266  unifie   99.078 kEUR
+  [197/201] RB2(Recale) draw=195 LPSP  2.6648%  deg   90.854  unifie  112.710 kEUR
+  [198/201] RB2(Recale) draw=196 LPSP  2.6633%  deg   51.537  unifie   73.380 kEUR
+  [199/201] RB2(Recale) draw=197 LPSP  2.6742%  deg   92.673  unifie  114.606 kEUR
+  [200/201] RB2(Recale) draw=198 LPSP  2.6437%  deg   42.983  unifie   64.665 kEUR
+  [201/201] RB2(Recale) draw=199 LPSP  2.6804%  deg   85.668  unifie  107.651 kEUR
+  (251s)
+
+TEST NUL (monde nominal) : |unifie RB2(SoH) - RB2(Sched)| = 0.000e+00 kEUR -> OK
+
+==============================================================================
+COUT UNIFIE [kEUR] sous incertitude du vieillissement (N=200)
+strat        |     mean |      P95 |   CVaR90 |   regret
+RB2          |   91.643 |  124.212 |  125.608 |    2.337
+RB2(Recale)  |   90.677 |  123.988 |  125.451 |    1.371
+RB2(Sched)   |   90.043 |  123.859 |  124.482 |    0.737
+RB2(SoH)     |   89.333 |  122.381 |  123.552 |    0.026
+------------------------------------------------------------------------------
+CASCADE (apparie, negatif = gain) :
+  re-calage RB2(Recale) - RB2          : -0.966 +/- 1.282 kEUR ; gagne 82%
+  horloge   RB2(Sched) - RB2(Recale)   : -0.634 +/- 1.047 kEUR ; gagne 71%
+  capteur   RB2(SoH) - RB2(Sched)      : -0.711 +/- 0.423 kEUR ; gagne 99%
+  total     RB2(SoH) - RB2             : -2.311 +/- 0.486 kEUR ; gagne 100%
+------------------------------------------------------------------------------
+CAPTEUR vs SEVERITE : corr=0.234 ; gain moyen par tercile : doux 0.653  moyen 0.684  severe 0.794
+==============================================================================
+Resultats : /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_2/valeur_info_25y.txt
+Figure    : /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_2/valeur_info_25y.pdf
+
+real	4m14,157s
+user	120m53,790s
+sys	0m12,792s
+fin=jeu. juil.  9 21:28:45 CEST 2026

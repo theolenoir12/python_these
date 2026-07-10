@@ -117,7 +117,7 @@ ASSURANCE contre l'erreur de modèle de vieillissement, pas un optimiseur
 nominal".
 
 4. ÉTAPE 3 -- EXPÉRIENCE P3 : "VALEUR DE LA RUL POUR LA MAINTENANCE INSULAIRE"
-   (Vieillissement9_3/bench_maintenance.py -- RUN EN COURS sur le mésocentre)
+   (Vieillissement9_4/bench_maintenance.py -- TERMINÉE, jobs 214867 puis 214887)
 --------------------------------------------------------------------------------
 IDÉE : votre readme RB2(RUL) a montré que la RUL ne vaut rien comme signal de
 derating continu (le SoH la domine). Sa place est la PLANIFICATION. On ajoute
@@ -138,45 +138,63 @@ de conduite FIXE (RB2(SoH)) pour que l'écart soit attribuable à la politique :
     calendar    + préventif à l'ÂGE nominal (préventif SANS pronostic,
                 calé sur le modèle -- le concurrent honnête de la RUL) ;
     rul         + préventif si la RUL ESTIMÉE en ligne (extrapolation
-                linéaire du SoH, batterie incluse) < intervalle x marge.
+                linéaire du SoH) < intervalle x marge.
+
+PÉRIMÈTRE DU PRÉVENTIF (leçon du 1er run, 214867) : la v1 incluait la
+batterie dans le préventif -> le rul perdait +6.9 kEUR (5.8 kEUR de vie
+résiduelle jetée, corr(gaspillage, m_bat)=+0.76) alors qu'il gagnait sur le
+service. La batterie est une panne MOLLE (elle continue à capacité dégradée):
+son préventif n'évite aucun outage. v2 : préventif restreint aux PANNES
+DURES (FC, ELY). Règle générale : le préventif ne paie que si la panne coûte
+plus cher que la vie résiduelle jetée.
 
 Comptabilité : coût total = deg + VoLL x EENS + C_visite x interventions
 (groupées : 2 composants à la même visite = 1 intervention) + gaspillage
 (vie résiduelle jetée au remplacement préventif).
 
 MÊMES 200 mondes CRN que P1 (même graine) : les deux bancs sont croisables
-tirage à tirage. Attente : en nominal calendar ~ rul (vies prévisibles) ;
-sous mondes perturbés, calendar rate des fenêtres (monde plus vieillissant
-que prévu -> outage) ou gaspille (moins vieillissant) ; la RUL doit creuser
-l'écart, d'autant plus que C_visite est élevé et la période longue.
+tirage à tirage.
 
-CONSTAT DE VALIDATION à garder en tête pour lire les résultats : la RUL par
-extrapolation LINÉAIRE est systématiquement OPTIMISTE pour la batterie (~280 j
-estimés pour 182 j réels à 6 mois de la mort) car sa dégradation ACCÉLÈRE en
-fin de vie (C-rate qui monte quand la capacité baisse). Avec marge 1.0 la
-politique rul peut donc rater la dernière fenêtre sûre ; la marge (--margin)
-compense ce biais. Le compromis marge basse (morts) / haute (gaspillage) est
-un RÉSULTAT à tracer, pas un réglage à cacher. Recommandation : après le run
-par défaut, lancer  sbatch run_meso_maintenance.slurm --margin 1.5  puis
---margin 2  (chaque marge a son propre fichier de cache).
+RÉSULTATS (job 214887, C_visite = 1.5 kEUR, détail et autres C_visite dans
+SYNTHESE_maintenance_25y.txt) :
+    politique     moyenne   CVaR90   LPSP     outage
+    instant       106.76    148.79   2.91 %        0 h
+    corrective    105.43    144.88   3.21 %   10 088 h
+    calendar      106.12    146.35   3.15 %    7 220 h
+    rul           104.89    143.78   2.98 %      144 h
+  - le rul ÉCRASE l'indisponibilité (outage /70) pour une prime quasi nulle
+    (0.31 kEUR de vie jetée : il remplace la FC à SoH~0.90) ; meilleure
+    politique en moyenne ET en CVaR90 aux trois C_visite ;
+  - rul - corrective : -0.53 (gagne 57 %) à C_visite=1.5 ; -0.88 (78.5 %) à
+    0.5 ; ~0 (52.5 %) à 3.0 -- la valeur du pronostic croît quand
+    l'intervention est bon marché ;
+  - le calendaire PERD contre le correctif (gagne 7 % des mondes) : il ne
+    peut pas planifier ce que le modèle nominal n'a jamais montré (l'ELY) et
+    anticipe à âge fixe (trop tôt ou trop tard selon le monde). C'est
+    l'avantage structurel du pronostic EN LIGNE sur le préventif calendaire ;
+  - contrairement au capteur P1 (gain croissant avec l'écart au modèle), la
+    valeur du pronostic est du TIMING DISCRET : plus uniforme, plus bruitée
+    (assurance de disponibilité : prime faible, payoff quand la panne tombe
+    mal).
 
-5. OÙ EST QUOI (tout dans Robustesse/, dossier canonique = Vieillissement9_3/)
+5. OÙ EST QUOI (tout dans Robustesse/, dossier canonique = Vieillissement9_4/)
 --------------------------------------------------------------------------------
   ANALYSE_CRITIQUE_integration_vieillissement.txt   diagnostic + propositions
-  Vieillissement9_3/
+  Vieillissement9_4/
     bench_valeur_info.py            banc P1 (4 compétiteurs, cascade, reuse)
-    run_meso_valeur_info.slurm      son lanceur
     valeur_info_25y.txt/.pdf/.png   RÉSULTATS P1 (200 mondes, cascade, sévérité)
     valeur_info_sched_25y.npz       programme SoH nominal (l'"horloge")
     SYNTHESE_valeur_info_25y.txt    synthèse P1 complète (chiffres + récit)
-    Common/main_init_and_loop_maintenance.py   boucle à fenêtres de visite
-    bench_maintenance.py            banc P3 (4 politiques, C_visite, marge)
-    run_meso_maintenance.slurm      son lanceur   <- RUN EN COURS
-    maintenance_25y_T6m.txt/.pdf    (sortiront du run en cours)
-  NB : Vieillissement9/ et 9_2/ contiennent des copies antérieures des bancs ;
-  9_3 fait foi. Les bancs relisent leur txt et ne relancent que les runs
-  manquants (--fresh pour tout repayer ; supprimer le txt si stratégies ou
-  modèles changent).
+    Common/main_init_and_loop_maintenance.py   boucle à fenêtres (v2 prev_scope)
+    bench_maintenance.py            banc P3 v2 (préventif pannes dures)
+    run_meso_maintenance.slurm      son lanceur
+    maintenance_25y_T6m.txt/.pdf    RÉSULTATS P3 (job 214887)
+    SYNTHESE_maintenance_25y.txt    synthèse P3 complète (chiffres + règle)
+    maintenance.214867.out          v1 archivée = contrefactuel batterie
+  NB : Vieillissement9/, 9_2/, 9_3/ = copies antérieures ; 9_4 fait foi.
+  Les bancs relisent leur txt et ne relancent que les runs manquants
+  (--fresh pour tout repayer ; supprimer le txt si stratégies ou modèles
+  changent ; un run 25 ans ~ 40 s sur le méso, un banc complet ~ 20 min).
 
 6. MÉTHODES TRANSVERSES (pourquoi c'est défendable)
 --------------------------------------------------------------------------------
@@ -193,12 +211,14 @@ par défaut, lancer  sbatch run_meso_maintenance.slurm --margin 1.5  puis
 
 7. PROCHAINES ÉTAPES (dans l'ordre suggéré)
 --------------------------------------------------------------------------------
-  1. Lire maintenance_25y_T6m.txt du run en cours : tableau "Coût total à
-     C_visite=1.5", paires rul-calendar / rul-corrective, figure.
-  2. Balayer la marge (--margin 1.5, --margin 2) et éventuellement la période
-     (--tvisit 3, --tvisit 12) : cartographier QUAND le pronostic paie.
-  3. Reporter dans le manuscrit : cascade P1 (section 3 ci-dessus) + carte P3.
-  4. Restent ouvertes parmi les propositions : P4 (exploiter la physique V9 :
+  1. Balayages P3 restants (~20 min chacun) : marge (--margin 1.5, --margin 2
+     -- ATTENTION deux tirets, les jobs 214888/9 ont échoué sur "__margin")
+     et période (--tvisit 3, --tvisit 12) : carte complète "quand le
+     pronostic paie".
+  2. Reporter dans le manuscrit : cascade P1 (section 3) + résultats P3
+     (section 4) + les deux règles générales (le préventif ne paie que pour
+     les pannes dures ; le capteur est le seul ingrédient quasi certain).
+  3. Restent ouvertes parmi les propositions : P4 (exploiter la physique V9 :
      démarrages ELY ~70 % d'une vie de stack, repos programmés), P5 (réserve
      H2 saisonnière pilotée par la prévision J+3/J+7), P6 (indicateurs en
      durées de vie plutôt qu'en kEUR), P7 (table levier x propriété du modèle

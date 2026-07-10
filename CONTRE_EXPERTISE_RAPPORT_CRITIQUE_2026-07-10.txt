@@ -1,0 +1,423 @@
+================================================================================
+CONTRE-EXPERTISE DU RAPPORT CRITIQUE DU CHAPITRE 3
+Date : 2026-07-10
+Objet : RAPPORT_CRITIQUE_CHAPITRE3_2026-07-11.txt (commit e72be0a)
+Methode : relecture critique du rapport, avec verification de chaque
+          affirmation factuelle contre les scripts, les sorties et les notes
+          du depot (references fichier:ligne donnees au fil du texte).
+================================================================================
+
+VERDICT SUR LE RAPPORT
+--------------------------------------------------------------------------------
+
+Trois conclusions d'ensemble :
+
+ (a) La fiabilite factuelle du rapport est excellente. Chaque chiffre et
+     chaque affirmation de code verifiables ont ete recoupes contre le depot :
+     aucune erreur factuelle n'a ete trouvee (audit complet en section 1).
+     C'est rare pour un document de cette densite et cela lui donne du poids.
+
+ (b) Son diagnostic central est correct et correctement priorise : la
+     contradiction RUL est reelle et indecidable en l'etat, le concurrent
+     "horloge" est trop faible, le concurrent "maintenance par SoH" manque,
+     et le manifeste d'experiences est bien la premiere chose a faire.
+
+ (c) Mais c'est une revue STATIQUE, qui decrit des symptomes sans remonter a
+     leur cause racine, qui rate l'instance la plus recente du probleme
+     qu'elle denonce (le fichier RB1 partage, modifie le 7 juillet), qui ne
+     relie pas ses propres sections entre elles (3.2 et 3.3 decrivent en
+     realite la meme experience manquante), et qui s'arrete parfois a
+     mi-chemin de ses propres constats (3.4).
+
+Aucune conclusion du rapport n'est a inverser. Plusieurs sont a DURCIR.
+
+
+1. AUDIT FACTUEL : CE QUI A ETE RECOUPE
+================================================================================
+
+Chaque ligne ci-dessous est une affirmation du rapport, son verdict apres
+verification, et la preuve dans le depot.
+
+  Affirmation (section du rapport)              Verdict     Preuve
+  --------------------------------------------  ----------  -------------------
+  Chiffres centraux 1.1 (80.102, 78.764,        EXACT       Robustesse/INDEX_
+    79.543, 78.336, 79.722, 77.224)                         MANUSCRIT_FABLE.txt
+  RB2(Pred) omniscient ~79.03 (1.1)             EXACT       Fable/README_fable
+                                                            .txt:43 (79.027)
+  Optimum RUL 9000 j / exp 0.20 -> 79.70 (3.2)  EXACT       Predictions/
+                                                            sweep_rul2.txt
+  Attribution limitee a 1000/2000/3000 j (3.2)  EXACT       sweep_rul_
+                                                            attribution.py:36
+  La note post-fix generalise "le RUL ne        EXACT       note_rul_postfix
+    rapporte rien" depuis cette grille (3.2)                .txt sect. 1b et 3
+  Sched indexee sur le temps global, jamais     EXACT       V9_4/bench_valeur_
+    recalee au remplacement (3.3)                           info.py:198-225
+  Capteur -0.71 kEUR, gagne 99 % (1.1)          EXACT       RECAP sect. 3
+  Valeur propre SoH_bat ~ +0.048 kEUR a g=0.2   EXACT       Fable/bench_socwin_
+    (3.4)                                                   fixed.txt:19
+  Calendaire ELY = None -> jamais preventif     EXACT       maintenance_25y_T6m
+    (3.5)                                                   .txt:4
+  Cout de visite = visites AVEC remplacement    EXACT       bench_maintenance
+    seulement (3.6)                                         .py (COMPTABILITE)
+  RUL extrapolee du SoH vrai, sans erreur de    EXACT       bench_maintenance
+    diagnostic (3.6)                                        .py (protocole)
+  rul - correctif : -0.53, std 2.84, 57 % (3.9) EXACT       SYNTHESE_
+                                                            maintenance_25y:41
+  net_pred = net_vrai + N(biais, sigma) (3.7)   EXACT       RB2(Pred)/get_
+                                                            optimal_action_RB
+                                                            .py:138-143
+  Backtest 216 origines, pas de 12 h (3.7)      EXACT       robustesse_bruit_
+                                                            prevision.txt:52 ;
+                                                            pv_profils_backtest
+                                                            _net.py:43
+  Quantiles P5/P95 = -74.7/+51.6 kWh (3.7)      PLAUSIBLE   le script les
+                                                            calcule (pv_profils
+                                                            _backtest_h18.py:
+                                                            94-95) ; valeurs
+                                                            non re-executables
+                                                            statiquement
+  Branchement depuis des snapshots RB2 (3.8)    EXACT       Defaillances/
+                                                            robustesse_common
+                                                            .py:14-30
+  RB1 historique remplace par RB1-opt (3.8)     INCOMPLET   pire que decrit :
+                                                            cf. section 3.1
+  DP V9 encore sur le modele Pei (3.1)          EXACT       V9_4/README_
+                                                            vieillissement9
+                                                            .md:81
+  Notes designant encore 9_2/9_3 (3.1)          EXACT       RECAP sect. 2 (V9_3)
+                                                            vs sect. 5 (9_4)
+  Meme nom, constantes differentes (3.1)        EXACT       V8/RB2 = 0.440/0.310
+                                                            vs V9_4/RB2 =
+                                                            0.400/0.260
+  Metrique V9 : trace complete sans reset       EXACT       cost_fcn_total2.py:
+    (3.10)                                                  300-317 et 344-362 ;
+                                                            boucle : accumulat.
+                                                            remis a 0 (main_
+                                                            init_and_loop.py:
+                                                            108-113)
+  Artefact de recuperation reversible reconnu   EXACT       main_init_and_loop_
+    dans le code (3.10)                                     maintenance.py:55
+  Les +/- sont des ecarts-types, pas des IC     EXACT       bench_valeur_info
+    (3.9)                                                   .py (dif.std())
+  Variance RB1(Pred) sur 30 realisations de     EXACT       mc_rb1_pred_ellipse
+    bruit (3.9)                                             .py:36 (R_REPS=30)
+  RB1(Pred) 1.481 -> 1.455, 55 % du potentiel   EXACT       DEMARCHE_RB1_
+    (1.1)                                                   augmentation.txt:
+                                                            140-141
+
+Bilan : sur ~25 affirmations verifiables, 24 exactes, 1 incomplete (RB1),
+0 fausse. Le rapport peut etre utilise comme base de travail fiable.
+
+
+2. LES POINTS FORTS DU RAPPORT (CONFIRMES, PARFOIS RENFORCES PAR L'AUDIT)
+================================================================================
+
+2.1. La contradiction RUL (3.2) est le meilleur apport du rapport
+--------------------------------------------------------------------------------
+Confirmee ligne a ligne : l'optimum du manuscrit (9000 j, exp 0.20,
+79.70 kEUR) existe dans sweep_rul2.txt, il est au bord de la grille, et le
+balayage "attribution honnete" qui fonde la conclusion inverse ne teste que
+RUL_REFS = [1000, 2000, 3000] (sweep_rul_attribution.py:36). La note
+note_rul_postfix.txt conclut pourtant "le levier RUL ne rapporte rien
+(-0.002 %)" en s'appuyant sur cette grille. Le rapport a raison : les deux
+conclusions coexistent parce qu'elles ne testent pas le meme espace, et la
+question est ouverte. C'est une vraie prise, que personne d'autre n'avait
+consignee.
+
+2.2. L'horloge non recalee (3.3) est confirmee dans le code
+--------------------------------------------------------------------------------
+sched_strategy (bench_valeur_info.py:217-225) lit le programme nominal via un
+compteur de pas GLOBAL (_SCHED["j"]), remis a zero en debut de run seulement.
+Aucun recalage a l'age de l'unite apres un remplacement reel. Le concurrent
+"Sched-age" demande par le rapport est le bon, et il est peu couteux (le
+wrapper existant suffit presque : il faut seulement re-ancrer l'index sur la
+date du dernier remplacement, information disponible sans capteur).
+
+2.3. Le concurrent maintenance-par-SoH (3.5) manque bien
+--------------------------------------------------------------------------------
+POLICIES = ["instant", "corrective", "calendar", "rul"] : aucune politique
+seuil-SoH. Or la politique rul EST deja une fonction du SoH (extrapolation
+lineaire) ; le seuil-SoH en est un cas degenere (meme information, sans
+pente). L'ajout coute une politique de plus dans un banc qui reutilise ses
+runs : c'est le controle au meilleur rapport cout/valeur de tout le rapport.
+
+2.4. La reserve sur la metrique V9 (3.10) est fondee, et peut etre precisee
+--------------------------------------------------------------------------------
+Verification faite : get_cost_fc / get_cost_ely integrent l'etat
+(V_irr, V_rev) DEPUIS ZERO sur la trace de puissance complete des 25 ans
+(cost_fcn_total2.py:300-317, 344-362), sans connaissance des remplacements,
+alors que la boucle remet ses accumulateurs a zero a chaque remplacement
+(main_init_and_loop.py:108-113). Le point precis : la conversion financiere
+est lineaire en deg_pct, donc si les taux d'avancement ne dependaient pas de
+l'etat, le total se telescoperait et l'ecart serait nul. Mais le terme de
+RECUPERATION depend de l'etat V_rev courant : c'est exactement la que la
+contamination inter-unites peut se produire. Le test d'invariance demande par
+le rapport (trace complete vs somme des decoupes aux remplacements) est donc
+le bon test, et on sait deja ou chercher si l'ecart est non nul.
+
+2.5. La hierarchisation (5.1 avant 5.2 avant 5.3) est la bonne
+--------------------------------------------------------------------------------
+En particulier placer le manifeste en premier : la moitie des problemes
+releves (3.1, 3.8) sont des problemes de tracabilite, pas de science.
+
+
+3. CE QUE LE RAPPORT SOUS-ESTIME, RATE OU NE RELIE PAS
+================================================================================
+
+3.1. RB1 : trois variantes, pas deux -- et un commentaire desormais faux
+--------------------------------------------------------------------------------
+Le rapport ecrit (3.8) : "le RB1 historique a ete remplace dans le code
+partage par RB1-opt. Il faut conserver les deux noms." La realite est pire :
+
+  - RB1 historique (chapitre 2)      : SOC_LOW/HIGH = 0.20/0.60
+                                       (reference de sweep_rb1.txt, score
+                                       defaillance 1.669) ;
+  - RB1-opt defaillance (juillet)    : 0.40/0.75 (optimum du sweep robustesse,
+                                       score 1.481 ; base des resultats
+                                       RB1(Pred) cites au rapport 1.1) ;
+  - RB1 ACTUEL du code partage       : 0.20/0.35 depuis le commit "Setpoints
+                                       RB1" (f562d47, 7 juillet), soit
+                                       l'optimum COUT UNIFIE NOMINAL du modele
+                                       V9_4 (sweep_setpoints_rb1_unified.txt,
+                                       rang 1), colle dans le fichier V8
+                                       partage Vieillissement8/RB1/.
+
+Le commentaire du fichier (get_optimal_action_RB.py:11-14) affirme toujours
+"OPTIMISES ... SOC_LOW = 0.40, SOC_HIGH = 0.75" deux lignes au-dessus de
+constantes qui valent 0.20/0.35. Le protocole de defaillance charge ses
+strategies DEPUIS CE DOSSIER (robustesse_common.py:145). Consequences :
+
+  - toute re-execution de Defaillances/ ou du Pareto V8 avec "RB1" produira
+    des chiffres ne correspondant a AUCUN resultat publie (ni ch. 2, ni
+    DEMARCHE_RB1_augmentation) ;
+  - le score defaillance de 0.20/0.35 n'est consigne nulle part : la variante
+    actuellement en place est la seule des trois a n'avoir jamais ete evaluee
+    sur la metrique du dossier qui l'heberge ;
+  - un optimum nominal V9_4 vit dans un arbre V8 : c'est precisement le
+    melange de socles que le rapport denonce en 3.1.
+
+Le rapport a donc identifie la bonne classe de probleme mais rate son
+instance la plus recente et la plus dangereuse -- vraisemblablement parce
+qu'il a lu le commentaire du fichier plutot que ses constantes. Lecon pour
+la these : les commentaires ne sont pas des preuves ; seuls les parametres
+effectivement charges le sont (argument de plus pour le manifeste).
+
+3.2. Les sections 3.2 et 3.3 du rapport decrivent la meme experience manquante
+--------------------------------------------------------------------------------
+Le rapport traite la contradiction RUL (3.2) et l'horloge non recalee (3.3)
+comme deux problemes independants. Ils n'en font qu'un, et le voir change le
+protocole a construire :
+
+  (i)  RUL_ref = 9000 j est de l'ordre de l'horizon complet (25 ans =
+       9125 j). A ce reglage, f_ely = min(RUL/9000, 1)^0.2 est < 1 en
+       PERMANENCE : le "levier RUL" degenere en programme de derating indexe
+       sur l'age de l'unite, en dents de scie, remis a 1 aux remplacements.
+       En monde nominal deterministe (ce que sont sweep_rul2 et
+       sweep_rul_attribution : des runs uniques, pas du Monte-Carlo), c'est
+       EXACTEMENT un RB2(Sched-age) : une boucle ouverte programmee. Le
+       diagnostic 1.c du RECAP s'applique donc mot pour mot : en nominal, la
+       valeur INFORMATIONNELLE du pronostic n'est pas identifiable. Meme si
+       le balayage conjoint confirme -0.40 kEUR a 9000 j, cela demontrera la
+       valeur de la NON-STATIONNARITE, pas celle de la RUL.
+  (ii) Detail aggravant que le rapport n'a pas vu : tant que delta_soh est
+       trop petit pour extrapoler, l'estimateur renvoie RUL_ely = 3000 j PAR
+       DEFAUT (main_init_and_loop.py:197-198). Avec ref = 9000, ce defaut
+       donne f = (3000/9000)^0.2 ~ 0.80 : un derating de ~20 % applique DES
+       LE PREMIER PAS, quand l'estimateur ne sait encore RIEN, puis un saut
+       vers f ~ 0.92 quand l'estimation demarre. L'optimum a 9000 j exploite
+       donc en partie un artefact de la valeur par defaut de l'estimateur.
+  (iii) Consequence sur la grille recommandee : le setpoint effectif au
+       voisinage de (9000 j, 0.20) vaut ~0.31 x 0.80 ~ 0.25. La grille
+       c_ely = 0.28-0.34 proposee par le rapport ne descend pas assez bas
+       pour contenir le concurrent statique equivalent : il faut descendre
+       a ~0.25-0.26.
+
+Protocole unifie propose (remplace 5.1.2 + 5.1.3 du rapport) : un seul banc
+avec RB2(c_ely statique bas), RB2(Sched-age), RB2(RUL a large grille refs),
+RB2(SoH), d'abord en nominal (resout la contradiction), puis sous les 200
+mondes CRN de P1 (tranche la valeur informationnelle). Trois questions du
+rapport fermees par une seule experience, avec la meme infrastructure
+existante de bench_valeur_info.
+
+3.3. Le constat 3.4 (SoH batterie) s'arrete a mi-chemin
+--------------------------------------------------------------------------------
+Le rapport lit correctement bench_socwin_fixed.txt (valeur propre
++0.048 kEUR a g=0.2, au meme LPSP). Mais le meme tableau contient un fait
+plus derangeant qu'il ne mentionne pas : le MEILLEUR plafond FIXE
+(soc_max = 0.895, ligne g=0.100) atteint 78.678 kEUR, soit MIEUX en cout
+unifie que la variante SoH retenue (79.543 a g=0.2), et pratiquement le
+niveau de RB2(SoH_H2) (78.764). Autrement dit : non seulement l'information
+SoH_bat n'a presque pas de valeur propre, mais le point de fonctionnement
+RETENU n'est meme pas l'optimum de sa propre famille statique en cout
+unifie (il a ete choisi a LPSP plus favorable, 2.77 contre 3.17 %). Cela
+affaiblit l'additivite mise en avant dans l'INDEX (SoH_all = SoH_H2 +
+SoH_bat) : l'une des deux briques additionnees est une restriction de
+fenetre sous-optimale, pas un levier informationnel. La decision 5.1.5 du
+rapport ("decider si le levier reste") devrait etre reformulee : soit le
+manuscrit assume un PLAFOND STATIQUE optimise (et le dit), soit il demontre
+la valeur adaptative de SoH_bat sous incertitude batterie (decomposition P1
+dediee), mais l'etat intermediaire actuel n'est pas defendable.
+
+3.4. La cause racine n'est pas nommee : versionnage par copie et edition en place
+--------------------------------------------------------------------------------
+Le rapport demande un manifeste (5.1.1) mais ne dit pas POURQUOI le depot en
+est arrive la. Deux pratiques generent mecaniquement les incoherences
+relevees en 3.1/3.8 :
+
+  - le versionnage par COPIE DE DOSSIERS (Vieillissement9, 9_2, 9_3, 9_4 ;
+    "code stage Herve" et "Herve2" ; archives .7z a la racine) : chaque copie
+    fige des constantes qui divergent ensuite silencieusement, et les notes
+    pointent inevitablement vers des versions perimees (RECAP sect. 2 vs 5) ;
+  - l'EDITION EN PLACE de strategies publiees (commit "Setpoints RB1" du
+    7 juillet : cf. 3.1 ci-dessus) : elle invalide retroactivement des
+    resultats sans laisser de trace dans les fichiers de resultats.
+
+Un manifeste seul ne protege pas contre cela : il sera perime a la premiere
+edition en place. La regle de gouvernance manquante est structurelle : une
+strategie publiee est IMMUABLE ; tout changement = un nouveau dossier (ou un
+parametre de config) + une entree de manifeste. Le depot etant deja sous
+git, la moitie du travail est faite ; il manque la discipline d'usage, pas
+l'outil.
+
+3.5. La culture du test nul est excellente mais reste artisanale
+--------------------------------------------------------------------------------
+Le rapport loue les tests nuls (2.1) sans remarquer leur limite : ils sont
+integres a des bancs qu'il faut penser a relancer. Le bug d'ancrage RUL
+(corrige le 2026-07-01, cf. note_rul_postfix.txt sect. 0) a vecu jusqu'a une
+verification manuelle ; la mutation silencieuse de RB1 (3.1 ci-dessus) ne
+declenche aujourd'hui aucune alarme. Une suite de non-regression legere --
+runs fumee 2 ans a graine figee pour chaque strategie canonique, compares a
+des sorties de reference versionnees, executables en quelques minutes --
+transformerait chaque "preuve de non-regression" ponctuelle (check_rul_fix,
+check_lol_combined) en garde permanente. C'est l'outillage naturel du
+manifeste que le rapport recommande, et il manque a sa liste 5.1.
+
+3.6. Les recommandations statistiques ne sont pas outillees
+--------------------------------------------------------------------------------
+Le rapport demande (3.9) de "distinguer une moyenne favorable d'une
+domination robuste" mais ne nomme aucun outil, alors que le design CRN rend
+les reponses triviales et gratuites (les donnees par tirage sont deja dans
+les .txt versionnes) :
+
+  - differences appariees -> test des signes ou Wilcoxon apparie, et IC
+    bootstrap sur la moyenne de l'ecart : a rapporter pour la cascade P1 et
+    pour rul-correctif ;
+  - P3 est disperse et a queues lourdes (std 2.84 pour une moyenne de
+    -0.53) : rapporter mediane et IQR en plus de la moyenne, sinon le
+    lecteur ne peut pas juger si les 57 % de mondes gagnes portent le
+    resultat ou si ce sont les queues ;
+  - VoLL est balaye nulle part dans P3 alors que EENS et deg sont stockes
+    PAR TIRAGE dans maintenance_25y_*.txt : re-classer les 4 politiques a
+    VoLL = 1/3/10 est un post-traitement a cout nul, et la conclusion "rul
+    meilleure en moyenne ET en CVaR90" en depend directement (elle pese
+    l'outage via VoLL). Le rapport signale la dependance a VoLL pour la
+    "meilleure strategie" du programme Fable (3.9) mais pas pour P3, ou le
+    controle est pourtant gratuit.
+
+3.7. Soin du document lui-meme
+--------------------------------------------------------------------------------
+Pour un rapport dont la recommandation phare est un manifeste exact des
+experiences, quelques negligences internes :
+
+  - les chemins cites ("Predictions/...", "Fable/...", "Vieillissement9_4/
+    ...") sont relatifs a Robustesse/ sans que ce soit dit, et sans accents
+    la ou le depot en a ("Robustesse/Prédictions/") : plusieurs references
+    ne se resolvent pas telles quelles ;
+  - la table 4.5 attribue a la detection de panne un horizon
+    "secondes-semaines" alors que la simulation est au pas horaire
+    (Ts = 3600 s, Init_EMR_MG_v16_python.py:36) : rien en dessous de l'heure
+    n'est demontrable dans ce cadre ;
+  - la cascade P1 est presentee comme canonique sans discuter sa dependance
+    a l'ORDRE de decomposition (recalage puis horloge puis capteur). Les
+    increments d'une cascade ne sont pas independants de l'ordre (pas de
+    propriete de type Shapley). Controle bon marche : la variante
+    RB2 -> Sched(-age) -> SoH doit donner un increment capteur similaire ;
+    sinon, rapporter les deux ordres.
+
+
+4. POINTS DU RAPPORT A NUANCER
+================================================================================
+
+4.1. Sur 3.6 (le modele de maintenance "donne mecaniquement de la valeur")
+--------------------------------------------------------------------------------
+La critique est juste sur le fond (pas d'intervention d'urgence, indispo
+jusqu'a la visite, cout des visites sans remplacement non compte), mais elle
+omet un garde-fou qui credite le banc : en monde NOMINAL, calendar et rul
+sont IDENTIQUES (82.029 kEUR tous les deux, maintenance_25y_T6m.txt, points
+nominaux) -- la valeur mesuree du pronostic est donc bien une valeur
+d'INCERTITUDE, conformement au recit du chapitre, et non un artefact grossier
+du modele logistique. La conclusion a retenir est celle du rapport
+(conditionner les chiffres au modele logistique), mais le montage est plus
+propre que le paragraphe ne le laisse entendre.
+
+4.2. Sur 3.7 (la prevision n'est pas la sortie reelle du LSTM)
+--------------------------------------------------------------------------------
+D'accord, et un element interne renforce encore la demande de rejeu par blocs
+empiriques : robustesse_bruit_prevision.txt qualifie la distribution d'erreur
+de "quasi-GAUSSIENNE" (sect. 2) alors que les quantiles cites par le rapport
+(-74.7/+51.6 kWh) sont nettement asymetriques -- une gaussienne de sigma
+39.4 kWh donnerait +/-64.8 autour du biais. La note et le rapport ne peuvent
+pas avoir raison tous les deux ; c'est un point a trancher AVANT de choisir
+le modele d'injection d'erreur (le rapport choisit le bon camp, mais sans
+relever la contradiction interne de la note source).
+
+4.3. Sur le recit propose (section 4 du rapport)
+--------------------------------------------------------------------------------
+Le pivot "valeur conditionnelle de l'information" est le bon et il est
+effectivement plus fort que la hierarchie SoH > prevision > RUL. Deux
+reserves d'execution :
+
+  - la proposition directrice (4.1) est un enonce de cadrage, pas un
+    theoreme : chaque terme ("variable absente de la regle", "echelle
+    temporelle de la decision", "exploitable sous incertitude") doit etre
+    adosse a l'experience qui le demontre, sinon le jury y verra une
+    generalisation a posteriori. Le rapport fournit la correspondance mais
+    ne l'exige pas explicitement ;
+  - la table 4.5 est un bon outil de synthese, mais elle deviendra fausse
+    si les controles 5.1 changent les chiffres (RUL notamment). La rediger
+    en dernier.
+
+
+5. SI ON NE RETIENT QUE TROIS ACTIONS (REVISION DE LA LISTE 5.1 DU RAPPORT)
+================================================================================
+
+ 1. AVANT TOUTE RE-EXECUTION : geler et etiqueter les trois RB1 (historique
+    0.20/0.60 ; defaillance-opt 0.40/0.75 ; unifie-V9_4 0.20/0.35) dans des
+    dossiers distincts, corriger le commentaire errone de
+    Vieillissement8/RB1/get_optimal_action_RB.py, et re-pointer
+    Defaillances/ vers la variante voulue. (Le rapport ne demande que
+    "conserver les deux noms" : insuffisant, il y en a trois.)
+
+ 2. Fusionner 5.1.2 et 5.1.3 du rapport en UN banc (cf. 3.2 ci-dessus) :
+    statique bas + Sched-age + RUL(large grille) + SoH, en nominal puis sous
+    les 200 mondes CRN. Y integrer la correction de la valeur par defaut de
+    l'estimateur RUL (3000 j), qui contamine les grands RUL_ref.
+
+ 3. Manifeste (5.1.1 du rapport) + la regle de gouvernance qui le rend
+    durable : strategie publiee immuable, tout changement = nouveau dossier +
+    entree de manifeste + run fumee de non-regression a graine figee.
+
+Le reste de la liste 5.1 du rapport (concurrent maintenance-SoH, decision
+sur SoH_bat, invariance de la metrique V9) est valide tel quel, avec les
+precisions des sections 2.3, 3.3 et 2.4 ci-dessus.
+
+
+CONCLUSION
+================================================================================
+
+Le rapport est fiable, dense, et ses quatre controles critiques (RUL
+conjoint, horloge recalee, maintenance SoH, coherence V8/V9) sont les bons ;
+son pivot narratif est celui que les resultats supportent reellement. Ses
+limites sont celles de son mode de production : une revue statique qui fait
+confiance aux commentaires et aux notes plutot qu'aux constantes chargees
+(d'ou le RB1 manque), qui ne relie pas ses constats entre eux (3.2/3.3),
+qui ne remonte pas des symptomes a la cause racine (versionnage par copie,
+edition en place), et qui recommande sans outiller (statistiques appariees,
+non-regression). Aucune de ses conclusions n'est a inverser ; les durcir
+selon les sections 3 et 5 ci-dessus rendrait le chapitre 3 defendable non
+seulement devant un jury, mais devant une re-execution complete du depot --
+ce qui est le vrai critere.
+
+================================================================================
+FIN DE LA CONTRE-EXPERTISE
+================================================================================

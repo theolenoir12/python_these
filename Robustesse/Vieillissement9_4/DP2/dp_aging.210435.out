@@ -1,0 +1,95 @@
+Job 210435  noeud=node4-26  script=dp_aging.py full
+cpus-per-task=4  debut=Sun Jun 28 02:25:08 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+======================================================================
+ PD VIEILLISSEMENT -- horizon 25 ans  grille 51x51  (FULL)
+======================================================================
+
+--- RB2 ---
+  pas=218999  (~25.0 ans)
+  SoH final : bat=0.875  fc=0.901  ely=0.905
+  remplacements : bat=6  fc=1  ely=1
+  SoH min   : bat=0.700  fc=0.900  ely=0.900
+  LPSP 2.4509%   deg 65.415 kEUR   UNIFIE 85.516 kEUR
+  (RB2 loop : 59s)
+   [DP rebuild #1] an 0  pas 0  SoH_bat=1.000  Pfc=1753W  Pely=18430W  (197s)
+
+--- PD BoL-figee ---
+  pas=218999  (~25.0 ans)
+  SoH final : bat=0.718  fc=0.908  ely=0.998
+  remplacements : bat=6  fc=14  ely=4
+  SoH min   : bat=0.700  fc=0.900  ely=0.900
+  LPSP 25.3627%   deg 103.664 kEUR   UNIFIE 311.674 kEUR
+  (PD-BoL : 266s, 1 rebuild)
+   [DP rebuild #1] an 0  pas 0  SoH_bat=1.000  Pfc=1753W  Pely=18430W  (198s)
+   [DP rebuild #2] an 1  pas 8760  SoH_bat=0.939  Pfc=1521W  Pely=18221W  (197s)
+   [DP rebuild #3] an 1  pas 17473  SoH_bat=0.857  Pfc=1753W  Pely=18035W  (197s)
+   [DP rebuild #4] an 2  pas 17520  SoH_bat=0.857  Pfc=1751W  Pely=18034W  (197s)
+   [DP rebuild #5] an 3  pas 26280  SoH_bat=0.774  Pfc=1517W  Pely=17738W  (197s)
+   [DP rebuild #6] an 3  pas 33925  SoH_bat=0.706  Pfc=1753W  Pely=17520W  (197s)
+   [DP rebuild #7] an 3  pas 34743  SoH_bat=1.000  Pfc=1728W  Pely=17492W  (197s)
+   [DP rebuild #8] an 4  pas 35040  SoH_bat=0.996  Pfc=1717W  Pely=17482W  (196s)
+   [DP rebuild #9] an 5  pas 43800  SoH_bat=0.899  Pfc=1481W  Pely=17032W  (196s)
+   [DP rebuild #10] an 5  pas 48891  SoH_bat=0.845  Pfc=1753W  Pely=16837W  (196s)
+   [DP rebuild #11] an 6  pas 52560  SoH_bat=0.810  Pfc=1644W  Pely=16690W  (196s)
+   [DP rebuild #12] an 7  pas 61320  SoH_bat=0.729  Pfc=1468W  Pely=16391W  (196s)
+   [DP rebuild #13] an 7  pas 64721  SoH_bat=1.000  Pfc=1414W  Pely=16287W  (196s)
+   [DP rebuild #14] an 7  pas 69582  SoH_bat=0.945  Pfc=1753W  Pely=16127W  (196s)
+   [DP rebuild #15] an 8  pas 70080  SoH_bat=0.939  Pfc=1738W  Pely=16113W  (196s)
+   [DP rebuild #16] an 9  pas 78840  SoH_bat=0.847  Pfc=1533W  Pely=15573W  (196s)
+   [DP rebuild #17] an 9  pas 86468  SoH_bat=0.773  Pfc=1753W  Pely=15129W  (196s)
+   [DP rebuild #18] an 10  pas 87600  SoH_bat=0.763  Pfc=1718W  Pely=15072W  (196s)
+   [DP rebuild #19] an 10  pas 94711  SoH_bat=1.000  Pfc=1549W  Pely=14661W  (196s)
+   [DP rebuild #20] an 11  pas 96360  SoH_bat=0.981  Pfc=1509W  Pely=14584W  (197s)
+   [DP rebuild #21] an 11  pas 103049  SoH_bat=0.907  Pfc=1753W  Pely=14270W  (197s)
+   [DP rebuild #22] an 12  pas 105120  SoH_bat=0.886  Pfc=1683W  Pely=14173W  (197s)
+   [DP rebuild #23] an 12  pas 109193  SoH_bat=0.844  Pfc=1581W  Pely=18430W  (197s)
+   [DP rebuild #24] an 13  pas 113880  SoH_bat=0.799  Pfc=1456W  Pely=18056W  (197s)
+   [DP rebuild #25] an 13  pas 116838  SoH_bat=0.771  Pfc=1753W  Pely=17827W  (196s)
+   [DP rebuild #26] an 14  pas 122640  SoH_bat=0.720  Pfc=1574W  Pely=17315W  (197s)
+   [DP rebuild #27] an 14  pas 124946  SoH_bat=1.000  Pfc=1509W  Pely=17121W  (197s)
+   [DP rebuild #28] an 14  pas 130302  SoH_bat=0.939  Pfc=1753W  Pely=16678W  (197s)
+   [DP rebuild #29] an 15  pas 131400  SoH_bat=0.928  Pfc=1709W  Pely=16579W  (197s)
+   [DP rebuild #30] an 16  pas 140160  SoH_bat=0.837  Pfc=1467W  Pely=15774W  (197s)
+   [DP rebuild #31] an 16  pas 144115  SoH_bat=0.799  Pfc=1753W  Pely=15494W  (197s)
+   [DP rebuild #32] an 17  pas 148920  SoH_bat=0.756  Pfc=1616W  Pely=15118W  (197s)
+   [DP rebuild #33] an 17  pas 155436  SoH_bat=1.000  Pfc=1469W  Pely=14688W  (197s)
+   [DP rebuild #34] an 18  pas 157680  SoH_bat=0.975  Pfc=1422W  Pely=14562W  (197s)
+   [DP rebuild #35] an 18  pas 159234  SoH_bat=0.958  Pfc=1753W  Pely=14486W  (196s)
+   [DP rebuild #36] an 19  pas 166440  SoH_bat=0.882  Pfc=1567W  Pely=14125W  (196s)
+   [DP rebuild #37] an 19  pas 169885  SoH_bat=0.848  Pfc=1493W  Pely=18430W  (196s)
+   [DP rebuild #38] an 19  pas 174336  SoH_bat=0.806  Pfc=1753W  Pely=18061W  (196s)
+   [DP rebuild #39] an 20  pas 175200  SoH_bat=0.798  Pfc=1718W  Pely=17980W  (196s)
+   [DP rebuild #40] an 21  pas 183960  SoH_bat=0.722  Pfc=1471W  Pely=17277W  (196s)
+   [DP rebuild #41] an 21  pas 186753  SoH_bat=1.000  Pfc=1418W  Pely=17167W  (196s)
+   [DP rebuild #42] an 21  pas 188230  SoH_bat=0.984  Pfc=1753W  Pely=17096W  (196s)
+   [DP rebuild #43] an 22  pas 192720  SoH_bat=0.936  Pfc=1627W  Pely=16866W  (196s)
+   [DP rebuild #44] an 23  pas 201480  SoH_bat=0.854  Pfc=1469W  Pely=16559W  (196s)
+   [DP rebuild #45] an 23  pas 209122  SoH_bat=0.787  Pfc=1753W  Pely=16383W  (196s)
+   [DP rebuild #46] an 24  pas 210240  SoH_bat=0.778  Pfc=1729W  Pely=16349W  (196s)
+
+--- PD sequentielle ---
+  pas=218999  (~25.0 ans)
+  SoH final : bat=0.712  fc=0.965  ely=0.958
+  remplacements : bat=6  fc=13  ely=2
+  SoH min   : bat=0.700  fc=0.900  ely=0.900
+  LPSP 23.7579%   deg 87.106 kEUR   UNIFIE 281.955 kEUR
+  (PD-seq : 9111s, 46 rebuild)
+
+======================================================================
+ COMPARATIF UNIFIE (25 ans, VoLL=3)  [borne sup de l'optimum global]
+======================================================================
+ strategie             LPSP%    deg_kE   UNIF_kE    gain%
+ RB2                  2.4509    65.415    85.516    +0.00
+ PD BoL-figee        25.3627   103.664   311.674  -264.46
+ PD sequentielle     23.7579    87.106   281.955  -229.71
+----------------------------------------------------------------------
+ optimum_global <= PD_seq <= RB2  ; gain(PD_seq) = borne INF du gain atteignable
+ grille 51x51  n_fc=10 n_ely=50  rebuilds PD-seq=46
+
+ Resultats -> /Work/Users/tlenoir/genial/Robustesse/Vieillissement8/DP/results/dp_aging_25y_51x51.txt (+ .npz)
+
+real	157m19.637s
+user	156m45.423s
+sys	0m1.476s
+fin=Sun Jun 28 05:02:28 CEST 2026

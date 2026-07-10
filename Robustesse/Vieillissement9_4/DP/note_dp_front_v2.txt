@@ -1,0 +1,158 @@
+================================================================================
+NOTE -- FRONT DE PARETO PD "V2" : POURQUOI LE FRONT V1 ETAIT BATTU, ET LE REMEDE
+Dossier : Robustesse/Vieillissement8/DP/
+Contexte: apres le programme Fable, RB2(SoH_all) (3.105 % / 52.870 kEUR) et
+          RB2(SoH_all+Pred) (2.942 % / 53.095 kEUR) passaient SOUS le front PD
+          v1 (job 210452) dans la zone LPSP 2.5-3 % -- alors que la PD, censee
+          approcher l'optimum global, devrait dominer toute regle.
+Redige  : 2026-07-04.
+================================================================================
+
+1. DIAGNOSTIC (decomposition get_cost_* des trajectoires 25 ans, npz meso)
+--------------------------------------------------------------------------------
+   deg kEUR / 25 ans        RB2 socle    RB2(SoH_all)    PD_seq v1 (eps=3)
+   batterie                   45.0          43.1            38.7   <- PD deja devant
+   electrolyseur              11.5           7.5             7.2   <- PD deja devant
+   pile a combustible          2.36          2.34           12.0   <- TOUT le handicap
+     dont "high power"         0             0              10.0
+     remplacements FC          1             1              10
+
+   Le front v1 perdait UNIQUEMENT sur la FC : 57 000 h passees au-dessus de
+   0.8 * P_fc_max(alpha_t) VIEILLI, payees FC_ALPHA_HIGH (0.174 EUR/h) en
+   silence. Deux points du front etaient en outre relies par une corde a
+   travers un TROU realise (eps=0.1 -> LPSP 5.64 % ; eps=0.2 -> LPSP 1.82 %) :
+   la corde n'est pas realisable, les strategies passaient dessous.
+
+2. CAUSE : DERIVE INTRA-ANNUELLE DES SEUILS DE DEGRADATION
+--------------------------------------------------------------------------------
+   Les seuils du modele de cout sont des FRACTIONS de Pmax (0.8*P_fc_max pour
+   la FC ; genou 30 % pour l'irreversible ELY). La PD sequentielle rebuild
+   chaque annee et price ces seuils au Pmax du REBUILD. Or la FC vieillit vite
+   (~-4 %/an de Pmax, vie ~2.3 ans) : la grille de controle contient un niveau
+   PILE a 0.8*Pmax_rebuild, gratuit au backward, qui passe au-dessus du seuil
+   reel des les premieres semaines. Idem, attenue, pour le genou ELY (~2 kEUR)
+   et la capacite batterie du plan (-7 %/an).
+
+3. REMEDES (v2, implementes dans dp_core.py / dp_aging.py / dp_pareto.py)
+--------------------------------------------------------------------------------
+   a) aging_proj (DPPolicy) : pentes de vieillissement estimees entre rebuilds;
+      les seuils de degradation sont prices au Pmax PROJETE fin d'annee
+      (precompute_controls(thr_fc_max, thr_ely_max) -- conservatif, car un
+      depassement silencieux coute bien plus cher qu'une marge), la capacite
+      batterie du plan est projetee a mi-annee, et deux niveaux de controle
+      "ride" sont inseres juste SOUS les seuils projetes (control_grid extra_u).
+   b) rollout (DPPolicy) : a chaque pas, le controle est choisi en minimisant
+      [cout EXACT du pas au vieillissement COURANT (seuils FC/ELY vieillis du
+      jour, shift FC, start-stop, batterie, VOLL=eps) + V(t+1) interpole].
+      V est reconstitue jour par jour depuis des checkpoints 24 h captures au
+      backward (~30 Mo, re-derivation de 24 pas par jour). Corrige a la fois
+      l'erreur de lookup plus-proche-voisin et la derive residuelle.
+   c) dp_pareto : grille eps densifiee dans le trou (ajout 0.12/0.15/0.25/0.3,
+      19 valeurs), masque NON-DOMINE ecrit dans le npz et affiche dans le txt;
+      les traces ne relient plus que les points non-domines (plus de corde a
+      travers un trou). Sorties taggees *_v2 (v1 non ecrase) ;
+      DP_PARETO_V2=0 retablit exactement le v1 pour A/B.
+
+4. VALIDATION LOCALE (donnees reconstruites, LUT extraites des PDF -> ecarts
+   ~1e-4 relatifs sur deg ; smoke 25x25, grille n_fc=7/n_ely=24)
+--------------------------------------------------------------------------------
+   2 ans, eps=3 :  v1 6.114 kEUR unifie  ->  v2 5.479 kEUR   (-10.4 %)
+   6 ans (A/B complet, v2 DOMINE v1 sur les DEUX axes aux deux eps) :
+     eps    variante   LPSP%    deg_kE   EENS_kWh   UNIF@3_kE
+     0.2    v1         1.7360   11.143   1138.8     14.560
+     0.2    v2         1.2593   10.799    826.1     13.277   (-8.8 %)
+     3.0    v1         0.2967   11.731    194.7     12.315
+     3.0    v2         0.2658   11.195    174.3     11.718   (-4.8 %)
+   NB : a 6 ans la derive FC n'a pas encore son plein effet (vie FC ~2.3 ans,
+   pentes estimees a partir de l'an 1) ; le gain a 25 ans est bien plus grand
+   (les ~10 kEUR de "FC high" v1 s'accumulent surtout apres l'an 5).
+   Surcout calcul v2 : ~+33 % en local (rollout + rederivation V journaliere).
+
+   25 ANS 51x51 (local, grille full n_fc=10/n_ely=50 -- la vraie) :
+     eps    variante      LPSP%    deg_kE   EENS_kWh   UNIF@3_kE   rebuilds
+     0.15   v2            2.2046   45.177   6027.1     63.258      31
+     3.0    v2            0.3143   47.765    859.1     50.343      31
+     3.0    v1 local      0.3059   55.676    836.4     58.185      38   <- A/B propre
+     3.0    v1 meso       0.3057   57.836    835.7     60.343       -   <- publie cluster
+   => A/B A DONNEES IDENTIQUES (v1 local vs v2 local, meme boucle, meme grille) :
+      a LPSP quasi egal (0.306 -> 0.314 %), la degradation passe de 55.68 ->
+      47.77 kEUR, soit -7.9 kEUR (-14 %) ; unifie 58.19 -> 50.34 kEUR.
+      v2 fait AUSSI 31 rebuilds vs 38 pour v1 : la FC durant plus longtemps,
+      elle declenche moins de reconstructions.
+   NB donnees : le DP RE-OPTIMISE contre les LUT de rendement, il est donc plus
+   sensible que RB2 a leur reconstruction (RB2 socle local 58.85 = ref 58.84 a
+   0.01 kEUR pres, mais le DP v1 local 55.68 vs meso 57.84 differe de ~2 kEUR).
+   => les chiffres ABSOLUS locaux sont indicatifs (+-2 kEUR) ; c'est le run
+      CLUSTER (LUT reelles) qui fixe le front definitif. En revanche le GAIN
+      relatif v1->v2 (-7.9 kEUR) et le MECANISME (FC-high, ci-dessous) sont
+      robustes a la reconstruction.
+
+   DECOMPOSITION (confirme le mecanisme, get_cost_* sur les trajectoires 25 ans):
+     poste FC            v1 meso eps=3    v2 local eps=3
+     FC "high power"       10.039 kEUR      0.374 kEUR    <- -9.7 kEUR (la cause)
+     remplacements FC      10               1             <- FC dure toute sa vie
+     heures > 80% Pmax     1829             706
+     ELY irreversible       1.998 kEUR      1.402 kEUR    <- -0.6 kEUR (genou 30%)
+   La batterie (~39 kEUR) et l'ELY start-stop bougent peu : le gain v2 vient
+   quasi ENTIEREMENT de la FC qui n'est plus garee au-dessus de son seuil de
+   haute puissance vieilli.
+
+   DOMINATION RETABLIE (donnees locales, fideles : RB2 socle local 58.85 vs
+   reference 58.84 ; RB2(SoH_all) local 52.92 vs reference 52.87 -> ecart
+   < 0.1 kEUR, la comparaison est valide) :
+     strategie            LPSP%   deg_kE
+     RB2(SoH_all)         3.09    52.92
+     RB2(SoH_all+Pred)    2.94    53.10   (reference these)
+     PD v2 eps=3          0.31    47.77   <- DOMINE (deg ET LPSP plus bas)
+     PD v2 eps=0.15       2.20    45.18   <- DOMINE (deg ET LPSP plus bas)
+   Le front PD v2 repasse donc SOUS les meilleures regles de la these : il
+   redevient une borne superieure credible de l'optimum global.
+
+5. RELANCE MESOCENTRE
+--------------------------------------------------------------------------------
+   sbatch run_dp_pareto.slurm     (19 eps, cpus-per-task=19, walltime 14 h)
+   puis  python plot_pareto_vs_strategies.py            (prend *_v2 en priorite)
+   et    python ../../Fable_pred/plot_pareto_ultime.py --dp   (overlay du front
+         sur la figure des strategies ultimes -- optionnel, defaut inchange)
+
+6. RESULTAT MESOCENTRE (job 213210, 19 eps, DP_PARETO_V2=1, 51x51, 5 h 10 wall)
+--------------------------------------------------------------------------------
+   Front v2 complet (LUT reelles cluster). Le v2 cluster CONFIRME le local :
+   eps=3 donne 47.768 kEUR (local 47.765) -> reconstruction LUT fidele.
+
+   Front v2 (extraits ; deg strictement croissante, front propre, seul eps=50
+   domine, marque '*') :
+     eps    LPSP%   deg_kE   EENS_kWh  UNIF@3_kE
+     0.12   3.272   44.600    8944.8    71.434
+     0.15   2.226   45.168    6085.2    63.424
+     0.2    1.606   45.541    4389.4    58.709
+     0.3    1.194   45.876    3263.6    55.667
+     0.5    0.717   46.382    1961.3    52.266
+     1.0    0.470   46.825    1286.1    50.683
+     3.0    0.320   47.768     874.2    50.390   (v1 etait 57.836 -> -10.07 kEUR)
+
+   GAIN v1 -> v2 (meme eps, front cluster) : -9.1 a -10.3 kEUR de degradation
+   sur tout le front, a LPSP quasi egal.
+
+   DOMINATION DE TOUTES LES STRATEGIES DE LA THESE (base Fable, meme metrique
+   get_cost_total ; marge = deg strategie - deg front AU MEME LPSP) :
+     strategie            LPSP%   deg_kE   marge front   domine ?
+     RB2 socle            2.592   58.85     +13.9 kEUR    OUI
+     RB2(Pred)            2.531   58.96     +14.0 kEUR    OUI
+     RB2(SoH_H2)          2.909   54.91     +10.1 kEUR    OUI
+     RB2(SoH_all)         3.105   52.87      +8.2 kEUR    OUI
+     RB2(SoH_all+Pred)    2.942   53.10      +8.3 kEUR    OUI   <- l'"ultime"
+   => le front PD v2 domine TOUTES les regles, y compris la meilleure de la
+      these (RB2(SoH_all+Pred)), de +8.3 kEUR de degradation a LPSP egal.
+      Il redevient une borne superieure credible de l'optimum global : plus
+      aucune strategie ne passe dessous. Probleme resolu.
+
+   Figures regenerees :
+     DP/figures_pareto_meso/pareto_strategies_vs_DP.{pdf,png}   (front + base)
+     Fable_pred/pareto_ems_ultime{,_isocost}.{pdf,png}         (--dp : overlay
+       du front sous RB2(SoH_all)/RB2(SoH_all+Pred), encart descendu a 42 kEUR)
+
+   Controle de robustesse : le job 213192 (soumis par erreur sur l'ancien code)
+   a reproduit le front v1 BIT A BIT (15/15 points = job 210452) -> chaine
+   deterministe, citable.
+================================================================================

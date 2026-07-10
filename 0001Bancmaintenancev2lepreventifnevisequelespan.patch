@@ -1,0 +1,321 @@
+From 062db4962aea1039c8780ddb0c78c405ae336c6b Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 10 Jul 2026 09:09:14 +0000
+Subject: [PATCH] Banc maintenance v2 : le preventif ne vise que les pannes
+ dures (FC, ELY)
+
+Diagnostic du run 214867 (job OK, ~40 s par run 25 ans -> 17 min au total,
+pas d'erreur d'execution) : la politique rul ecrasait les outages (FC 9162 h
+-> 137 h, ELY 927 h -> 7 h) et gagnait sur le service (d_uni0 -1.03 kEUR),
+mais perdait au total (+6.9 kEUR vs corrective) a cause des remplacements
+preventifs de BATTERIE : waste 5.8 kEUR en moyenne, corr(waste, m_bat) =
++0.76, queue P95 degradee. Or la batterie est une panne MOLLE par
+construction (capacite degradee, pas d'outage) : son preventif ne peut que
+jeter de la vie residuelle.
+
+Correction :
+- prev_scope=('fc','ely') par defaut dans la boucle (calendar ET rul) ;
+  contrefactuel via --prevbat (tag/cache distinct ; le run 214867 EST deja ce
+  contrefactuel, archive) ;
+- waste decompose par composant (wbat/wfc/wely) dans la boucle, le txt et le
+  cache ; header enrichi (prev=...) -> l'ancien format est ignore proprement ;
+- estimations de cout mises a jour (~20-30 min par job) : les balayages
+  --margin / --tvisit sont bon marche.
+
+Valide en local : batterie severe -> plus aucun preventif batterie par defaut
+(waste 0), contrefactuel --prevbat le retablit ; ancien txt rejete ; test nul
+instant==base exact ; idempotence du cache.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_015a63S8UWVq2qswrPvxcime
+---
+ .../Common/main_init_and_loop_maintenance.py  | 22 ++++-
+ .../Vieillissement9_4/bench_maintenance.py    | 83 ++++++++++++-------
+ .../run_meso_maintenance.slurm                |  6 +-
+ 3 files changed, 74 insertions(+), 37 deletions(-)
+
+diff --git a/Robustesse/Vieillissement9_4/Common/main_init_and_loop_maintenance.py b/Robustesse/Vieillissement9_4/Common/main_init_and_loop_maintenance.py
+index a841ed3..ccf0b77 100644
+--- a/Robustesse/Vieillissement9_4/Common/main_init_and_loop_maintenance.py
++++ b/Robustesse/Vieillissement9_4/Common/main_init_and_loop_maintenance.py
+@@ -33,6 +33,13 @@ REGLES DU MODELE
+                    (extrapolation lineaire du SoH, meme estimateur que la
+                    boucle de base + ajout batterie) est inferieure a
+                    l'intervalle jusqu'a la visite suivante x rul_margin.
++- PERIMETRE DU PREVENTIF (prev_scope, defaut ('fc','ely')) : le preventif ne
++  s'applique qu'aux composants a PANNE DURE (hors service a l'EoL -> outage).
++  La batterie est une panne MOLLE par construction (elle continue a capacite
++  degradee) : la remplacer preventivement n'evite aucun outage et ne fait que
++  jeter de la vie residuelle -- diagnostic du run 214867 : waste rul 5.8 kEUR
++  en moyenne, corr(waste, m_bat)=+0.76, entierement batterie. Le contrefactuel
++  (batterie incluse) reste accessible via prev_scope=('bat','fc','ely').
+ - COMPTABILITE : une INTERVENTION = une visite ou au moins un remplacement a
+   lieu (le cout fixe C_visite s'applique par intervention, en post-traitement:
+   il n'influence pas la simulation). Le remplacement preventif jette la vie
+@@ -40,7 +47,8 @@ REGLES DU MODELE
+ 
+ SORTIE : dict `data` identique a la boucle de base + cle 'maintenance' :
+     n_visits, n_interventions, n_repl {bat,fc,ely}, n_prev {bat,fc,ely},
+-    outage_h {fc,ely}, waste_eur, repl_log (liste (jour, comp, 'corr'/'prev')).
++    outage_h {fc,ely}, waste_eur, waste_comp {bat,fc,ely},
++    repl_log (liste (jour, comp, 'corr'/'prev')).
+ 
+ NOTE deg : les metriques financieres (get_cost_total) restent celles de la
+ these ; pendant un gel (composant HS, P=0) le recalcul standalone laisse la
+@@ -58,9 +66,11 @@ from .cost_fcn_total2 import _fc_advance, UV_TO_PCT_FC
+ 
+ def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
+                                   visit_period_months=6.0, policy='corrective',
+-                                  rul_margin=1.0, calendar_ages_y=None):
++                                  rul_margin=1.0, calendar_ages_y=None,
++                                  prev_scope=('fc', 'ely')):
+     """Cf. docstring module. calendar_ages_y = dict(bat=, fc=, ely=) en annees
+-    (None pour un composant = jamais de preventif calendaire)."""
++    (None pour un composant = jamais de preventif calendaire). prev_scope =
++    composants eligibles au remplacement PREVENTIF (defaut : pannes dures)."""
+     assert policy in ('instant', 'corrective', 'calendar', 'rul')
+     calendar_ages_y = calendar_ages_y or {}
+ 
+@@ -150,7 +160,8 @@ def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
+                  n_repl={'bat': 0, 'fc': 0, 'ely': 0},
+                  n_prev={'bat': 0, 'fc': 0, 'ely': 0},
+                  outage_h={'fc': 0.0, 'ely': 0.0},
+-                 waste_eur=0.0, repl_log=[])
++                 waste_eur=0.0, waste_comp={'bat': 0.0, 'fc': 0.0, 'ely': 0.0},
++                 repl_log=[])
+     comp_cost = {'bat': BAT['cost'], 'fc': FC['cost'], 'ely': ELY['cost']}
+     comp_eol  = {'bat': BAT['SoH_EoL'], 'fc': FC['SoH_EoL'], 'ely': ELY['SoH_EoL']}
+ 
+@@ -178,6 +189,8 @@ def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
+                 if pending[comp]:
+                     to_replace.append((comp, 'corr', soh_now))
+                     continue
++                if comp not in prev_scope:
++                    continue           # preventif reserve aux pannes dures
+                 if policy == 'rul':
+                     anchor = {'bat': j_rul_bat, 'fc': j_rul_fc, 'ely': j_rul_ely}[comp]
+                     arr    = {'bat': SoH_bat, 'fc': SoH_fc, 'ely': SoH_ely}[comp]
+@@ -194,6 +207,7 @@ def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
+                     maint['n_prev'][comp] += 1
+                     waste = max(0.0, (soh_before - comp_eol[comp]) / (1 - comp_eol[comp])) * comp_cost[comp]
+                     maint['waste_eur'] += waste
++                    maint['waste_comp'][comp] += waste
+                 maint['n_repl'][comp] += 1
+                 maint['repl_log'].append((round(j * day_per_step, 1), comp, kind))
+                 pending[comp] = False
+diff --git a/Robustesse/Vieillissement9_4/bench_maintenance.py b/Robustesse/Vieillissement9_4/bench_maintenance.py
+index 41275ac..296175c 100644
+--- a/Robustesse/Vieillissement9_4/bench_maintenance.py
++++ b/Robustesse/Vieillissement9_4/bench_maintenance.py
+@@ -28,8 +28,21 @@ mesure est attribuable a la POLITIQUE DE REMPLACEMENT seule. Quatre politiques
+               (mesurees sur le run nominal instant) x CAL_FRAC : c'est la
+               politique preventive SANS pronostic, calee sur le modele ;
+   rul         + preventif si la RUL ESTIMEE en ligne (extrapolation lineaire
+-              du SoH, batterie incluse) < intervalle jusqu'a la visite
+-              suivante x RUL_MARGIN : politique preventive AVEC pronostic.
++              du SoH) < intervalle jusqu'a la visite suivante x RUL_MARGIN :
++              politique preventive AVEC pronostic.
++
++PERIMETRE DU PREVENTIF (v2, correction du run 214867) : le preventif
++(calendar ET rul) ne vise que les PANNES DURES (FC, ELY : hors service a
++l'EoL -> outage). La batterie est une panne MOLLE (elle continue a capacite
++degradee) : la remplacer preventivement n'evite aucun outage et ne fait que
++jeter de la vie residuelle. Le run 214867 (batterie incluse) l'a montre :
++waste rul 5.8 kEUR en moyenne, corr(waste, m_bat) = +0.76, queue P95 du rul
++DEGRADEE par les seuls remplacements preventifs de batterie -- alors meme que
++le rul ecrasait les outages (FC 9162 h -> 137 h ; ELY 927 h -> 7 h) et
++gagnait sur le service (d_uni0 = -1.03 kEUR). Principe a retenir pour le
++manuscrit : LE PREVENTIF NE PAIE QUE POUR LES COMPOSANTS DONT LA PANNE COUTE
++PLUS CHER QUE LA VIE RESIDUELLE JETEE. Contrefactuel reproductible : --prevbat
++(re-inclut la batterie ; fichier de cache distinct).
+ En monde NOMINAL, calendar ~ rul (les durees de vie sont previsibles) : la
+ valeur du pronostic doit apparaitre SOUS INCERTITUDE du vieillissement --
+ memes 200 mondes perturbes que bench_valeur_info (CRN, meme graine) : les
+@@ -47,16 +60,12 @@ COMPTABILITE
+   C_visite est un POST-TRAITEMENT (grille C_VISIT_GRID) : il n'influence pas
+   la simulation -> 1 run par (politique, tirage).
+ 
+-MARGE RUL (constat de validation, a garder en tete pour la lecture) : la RUL
+-par extrapolation LINEAIRE est systematiquement OPTIMISTE pour la batterie,
+-dont la degradation ACCELERE en fin de vie (C-rate qui monte quand la capacite
+-baisse : a 6 mois de la mort, RUL_lin ~ 280 j pour 182 j reels sur le cas
+-teste). Avec marge 1.0 la politique 'rul' peut donc rater la derniere fenetre
+-sure ; la marge compense le biais de l'estimateur. Balayer --margin
+-{1.0, 1.5, 2.0} (jobs separes ; une marge != 1 est incluse dans le tag du
+-fichier -> chaque marge a son propre txt/cache, rien n'est ecrase). Le
+-compromis marge trop basse (morts) / trop haute (gaspillage) est un RESULTAT,
+-pas un reglage a cacher.
++MARGE RUL (constat de validation) : la RUL par extrapolation LINEAIRE est
++OPTIMISTE quand la degradation ACCELERE en fin de vie (cas batterie ; pour
++FC/ELY, pilotees par l'operation, elle est plus fidele). La marge compense le
++biais de l'estimateur : balayer --margin {1.0, 1.5, 2.0} (chaque marge a son
++propre txt/cache). Le compromis marge basse (morts) / haute (gaspillage) est
++un RESULTAT, pas un reglage a cacher.
+ 
+ REUTILISATION : comme bench_valeur_info, le banc relit son txt et ne relance
+ que les couples (politique, tirage) manquants. --fresh pour tout re-payer.
+@@ -72,11 +81,11 @@ LANCER
+ ------
+   local (fumee)        : python bench_maintenance.py --quick
+   mesocentre (nominal) : sbatch run_meso_maintenance.slurm
+-                         (~800 runs 25 ans, ~8-10 h / 32 coeurs ; autres
+-                          periodes : sbatch run_meso_maintenance.slurm
+-                          --tvisit 3 / --tvisit 12, jobs separes)
+-Options : --tvisit MOIS | --margin X | --nmc N | --years N | --seed S |
+-          --lo x --hi x | --workers N | --fresh
++                         (~800 runs 25 ans ~ 20 min / 32 coeurs (mesure job
++                          214867 : 40 s par run 25 ans) -> les balayages
++                          --tvisit 3/12 et --margin 1.5/2 sont bon marche)
++Options : --tvisit MOIS | --margin X | --prevbat | --nmc N | --years N |
++          --seed S | --lo x --hi x | --workers N | --fresh
+ """
+ import os
+ import re
+@@ -132,7 +141,8 @@ def evaluate(task):
+             data = init_and_run_loop_maintenance(
+                 strat, n_years=task['years'],
+                 visit_period_months=task['tvisit_m'], policy=task['policy'],
+-                rul_margin=task['margin'], calendar_ages_y=task['cal_ages'])
++                rul_margin=task['margin'], calendar_ages_y=task['cal_ages'],
++                prev_scope=task['prev_scope'])
+         lpsp, deg, eens, uni0 = VI.metrics(data)
+         m = data['maintenance']
+         ok = True
+@@ -141,13 +151,16 @@ def evaluate(task):
+                    nrep=sum(m['n_repl'].values()),
+                    nprev=sum(m['n_prev'].values()),
+                    waste=m['waste_eur'] / 1000.0,
++                   wbat=m['waste_comp']['bat'] / 1000.0,
++                   wfc=m['waste_comp']['fc'] / 1000.0,
++                   wely=m['waste_comp']['ely'] / 1000.0,
+                    outfc=m['outage_h']['fc'], outely=m['outage_h']['ely'],
+                    repl_log=m['repl_log'])
+     except Exception as e:
+         ok = False
+         out = dict(lpsp=None, deg=None, eens=None, uni0=None, nint=None,
+-                   nrep=None, nprev=None, waste=None, outfc=None, outely=None,
+-                   repl_log=[])
++                   nrep=None, nprev=None, waste=None, wbat=None, wfc=None,
++                   wely=None, outfc=None, outely=None, repl_log=[])
+         print("  [FAIL] %-10s draw=%s : %s" % (task['policy'], task['draw'], e), flush=True)
+     out.update(policy=task['policy'], draw=task['draw'], world=task['world'], ok=ok)
+     return out
+@@ -162,10 +175,10 @@ def _fmt(r):
+ 
+ 
+ # --------------------- reutilisation d'un resultat precedent ---------------------
+-COLS = ["lpsp", "deg", "uni0", "nint", "nprev", "waste", "outfc", "outely"]
++COLS = ["lpsp", "deg", "uni0", "nint", "nprev", "waste", "wbat", "wfc", "wely", "outfc", "outely"]
+ 
+ 
+-def load_previous(out_txt, seed, lo, hi, tvisit_m, margin):
++def load_previous(out_txt, seed, lo, hi, tvisit_m, margin, prev_tag):
+     """{(policy, draw): result} depuis un txt precedent (header verifie)."""
+     done, factors = {}, {}
+     if not os.path.isfile(out_txt):
+@@ -174,14 +187,14 @@ def load_previous(out_txt, seed, lo, hi, tvisit_m, margin):
+         lines = [l.rstrip("\n") for l in f]
+     head = " ".join(lines[:7])
+     m = re.search(r"mult U_log\[([0-9.]+),([0-9.]+)\] \| seed=(\d+) \| VoLL=([0-9.]+)"
+-                  r" \| Tvisite=([0-9.]+)m \| marge=([0-9.]+)", head)
++                  r" \| Tvisite=([0-9.]+)m \| marge=([0-9.]+) \| prev=([a-z+]+)", head)
+     if not m:
+         print("  (reuse) header illisible dans %s -> ignore" % out_txt, flush=True)
+         return {}, {}
+     vals = [float(m.group(i)) for i in range(1, 7)]
+     if (abs(vals[0] - lo) > 1e-9 or abs(vals[1] - hi) > 1e-9 or int(vals[2]) != seed
+             or abs(vals[3] - VOLL) > 1e-9 or abs(vals[4] - tvisit_m) > 1e-9
+-            or abs(vals[5] - margin) > 1e-9):
++            or abs(vals[5] - margin) > 1e-9 or m.group(7) != prev_tag):
+         print("  (reuse) header de %s different -> ignore" % out_txt, flush=True)
+         return {}, {}
+     section = None
+@@ -230,6 +243,8 @@ def main():
+     ap.add_argument("--quick", action="store_true", help="fumee locale : 2 ans, N_MC=4")
+     ap.add_argument("--tvisit", type=float, default=T_VISIT_M, help="periode de visite [mois]")
+     ap.add_argument("--margin", type=float, default=RUL_MARGIN)
++    ap.add_argument("--prevbat", action="store_true",
++                    help="re-inclut la batterie dans le preventif (contrefactuel 214867)")
+     ap.add_argument("--nmc", type=int, default=None)
+     ap.add_argument("--years", type=int, default=None)
+     ap.add_argument("--seed", type=int, default=MC_SEED)
+@@ -243,15 +258,19 @@ def main():
+     n_mc  = args.nmc if args.nmc is not None else (4 if args.quick else N_MC)
+     workers = args.workers or VI._detect_workers()
+ 
++    prev_scope = ('bat', 'fc', 'ely') if args.prevbat else ('fc', 'ely')
++    prev_tag = "+".join(prev_scope)
+     tag = "%dy_T%gm" % (years, args.tvisit)
+     if abs(args.margin - 1.0) > 1e-12:
+         tag += "_m%g" % args.margin       # une marge != 1 a son propre txt/cache
++    if args.prevbat:
++        tag += "_prevbat"                 # contrefactuel : cache distinct
+     out_txt = os.path.join(HERE, "maintenance_%s.txt" % tag)
+     out_fig = os.path.join(HERE, "maintenance_%s" % tag)
+ 
+     print("=== VALEUR DE LA RUL -- maintenance insulaire (fenetres + cout fixe) ===", flush=True)
+-    print("    horizon=%d ans | N_MC=%d | Tvisite=%gm | marge RUL=%g | mult U_log[%.2f, %.2f] | seed=%d"
+-          % (years, n_mc, args.tvisit, args.margin, args.lo, args.hi, args.seed), flush=True)
++    print("    horizon=%d ans | N_MC=%d | Tvisite=%gm | marge RUL=%g | prev=%s | mult U_log[%.2f, %.2f] | seed=%d"
++          % (years, n_mc, args.tvisit, args.margin, prev_tag, args.lo, args.hi, args.seed), flush=True)
+ 
+     # --- 1) nominal instant : ages calendaires de reference + TEST NUL vs boucle de base ---
+     VI.apply_world(VI.NOMINAL_WORLD)
+@@ -280,7 +299,7 @@ def main():
+               for _ in range(n_mc)]
+ 
+     done, prev_factors = ({}, {}) if args.fresh else load_previous(
+-        out_txt, args.seed, args.lo, args.hi, args.tvisit, args.margin)
++        out_txt, args.seed, args.lo, args.hi, args.tvisit, args.margin, prev_tag)
+     if done:
+         bad = [d for d, fac in prev_factors.items() if d < n_mc and any(
+             abs(fac[i] - worlds[d][k]) > 5e-4 for i, k in enumerate(VI.FACTOR_KEYS))]
+@@ -301,12 +320,16 @@ def main():
+             lpsp=lpsp_m, deg=deg_m, eens=(uni_m - deg_m) / VOLL * 1000.0, uni0=uni_m,
+             nint=m0['n_interventions'], nrep=sum(m0['n_repl'].values()),
+             nprev=sum(m0['n_prev'].values()), waste=m0['waste_eur'] / 1000.0,
++            wbat=m0['waste_comp']['bat'] / 1000.0,
++            wfc=m0['waste_comp']['fc'] / 1000.0,
++            wely=m0['waste_comp']['ely'] / 1000.0,
+             outfc=m0['outage_h']['fc'], outely=m0['outage_h']['ely'],
+             repl_log=m0['repl_log'])
+ 
+     def mk(policy, world, draw):
+         return dict(policy=policy, world=world, draw=draw, years=years,
+-                    tvisit_m=args.tvisit, margin=args.margin, cal_ages=cal_ages)
++                    tvisit_m=args.tvisit, margin=args.margin, cal_ages=cal_ages,
++                    prev_scope=prev_scope)
+ 
+     tasks = []
+     for p in POLICIES:
+@@ -353,8 +376,8 @@ def main():
+     # --- 4) txt ---
+     with open(out_txt, "w", encoding="utf-8") as f:
+         f.write("# Valeur de la RUL -- maintenance insulaire (fenetres de visite + cout fixe)\n")
+-        f.write("# horizon=%d ans | N_MC=%d | mult U_log[%.2f,%.2f] | seed=%d | VoLL=%.1f | Tvisite=%gm | marge=%g\n"
+-                % (years, n_mc, args.lo, args.hi, args.seed, VOLL, args.tvisit, args.margin))
++        f.write("# horizon=%d ans | N_MC=%d | mult U_log[%.2f,%.2f] | seed=%d | VoLL=%.1f | Tvisite=%gm | marge=%g | prev=%s\n"
++                % (years, n_mc, args.lo, args.hi, args.seed, VOLL, args.tvisit, args.margin, prev_tag))
+         f.write("# strategie de conduite FIXE : %s ; politiques : %s\n" % (STRATEGY, POLICIES))
+         f.write("# ages calendaires de ref (nominal x %.2f) : %s\n" % (CAL_FRAC,
+                 {k: (round(v, 2) if v else None) for k, v in cal_ages.items()}))
+diff --git a/Robustesse/Vieillissement9_4/run_meso_maintenance.slurm b/Robustesse/Vieillissement9_4/run_meso_maintenance.slurm
+index d9f9225..0dc071d 100644
+--- a/Robustesse/Vieillissement9_4/run_meso_maintenance.slurm
++++ b/Robustesse/Vieillissement9_4/run_meso_maintenance.slurm
+@@ -13,9 +13,9 @@
+ # A soumettre DEPUIS le dossier du banc (le script y trouve Common/ et ecrit
+ # maintenance_25y_T<mois>m.{txt,pdf,png} a cote).
+ # Fichier transfere depuis Windows : passer  dos2unix  une fois.
+-# Cout indicatif : ~800 runs 25 ans ~8-10 h / 32 coeurs (4 politiques x 201).
+-# Reuse : avec le txt du run precedent present, seuls les runs manquants sont
+-# relances. --fresh pour tout re-payer. Chaque --tvisit a son propre txt.
++# Cout indicatif : ~800 runs 25 ans ~20-30 min / 32 coeurs (40 s par run 25 ans,
++# mesure job 214867). Reuse : avec le txt precedent, seuls les runs manquants
++# sont relances. --fresh pour tout re-payer. Un txt par --tvisit/--margin.
+ # ============================================================================
+ 
+ #SBATCH --job-name=maintenance
+-- 
+2.43.0
+

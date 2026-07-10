@@ -1,0 +1,13 @@
+Job 214888  noeud=node4-11  args=__margin 1.5
+cpus-per-task=32  debut=Fri Jul 10 12:48:02 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+usage: bench_maintenance.py [-h] [--quick] [--tvisit TVISIT] [--margin MARGIN]
+                            [--prevbat] [--nmc NMC] [--years YEARS]
+                            [--seed SEED] [--lo LO] [--hi HI]
+                            [--workers WORKERS] [--fresh]
+bench_maintenance.py: error: unrecognized arguments: __margin 1.5
+
+real	0m1.359s
+user	0m1.019s
+sys	0m0.125s
+fin=Fri Jul 10 12:48:04 CEST 2026

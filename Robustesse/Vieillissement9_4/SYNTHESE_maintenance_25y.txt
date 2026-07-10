@@ -98,33 +98,69 @@ remplacer par anticipation n'evite rien et jette de la vie residuelle chere
     a l'EoL ; pas la batterie, degradation graduelle).
 Contrefactuel reproductible : option --prevbat (cache distinct).
 
-4. RESERVES / SUITES
+4. CARTE COMPLETE "QUAND LE PRONOSTIC PAIE" (jobs 214899-214903)
 --------------------------------------------------------------------------------
-  (a) Gains moyens modestes en euros (-0.5 a -1.2 kEUR, ~0.5-1 %) : le
-      message fort est OPERATIONNEL (disponibilite H2 x70, LPSP -0.23 pt) et
-      en risque (meilleur CVaR90 partout), pas en cout moyen.
-  (b) Marge RUL = 1.0 ici. L'estimateur lineaire est fidele pour FC/ELY
-      (degradation pilotee par l'operation) ; balayer --margin 1.5 / 2.0
-      (~20 min/job) pour completer le compromis morts residuelles (144 h) /
-      gaspillage. ATTENTION a la syntaxe : deux TIRETS (--margin 1.5) ; les
-      jobs 214888/214889 ont echoue sur "__margin" (underscores).
-  (c) Periode de visite fixee a 6 mois : --tvisit 3 / --tvisit 12 pour la
-      carte complete (la valeur du pronostic devrait croitre avec la periode:
-      fenetres rares = outages correctifs plus longs).
-  (d) Hypotheses O&M posees faute de donnees (periode, C_visite) : balayees,
-      a defendre comme ordres de grandeur insulaires.
-  (e) Pas de depannage d'urgence dans le modele (tout passe par les visites);
+Balayages : periode de visite T = 3 / 6 / 12 mois (marge 1.0) et marge
+RUL = 1.0 / 1.5 / 2.0 (T = 6 mois). Memes 200 mondes CRN partout ; controle
+de coherence : les politiques non-rul sont identiques au bit pres entre les
+fichiers de marge.
+
+  4.a  MATRICE rul - corrective [kEUR] (% de mondes gagnes) :
+        periode  | C_visite=0.5  | C_visite=1.5  | C_visite=3.0
+        3 mois   | -0.32 (65 %)  | +0.05 (57 %)  | +0.61 (55 %)
+        6 mois   | -0.88 (78 %)  | -0.53 (57 %)  | -0.02 (52 %)
+        12 mois  | -2.53 (82 %)  | -1.73 (66 %)  | -0.54 (48 %)
+       Loi MONOTONE dans les deux directions : la valeur du pronostic CROIT
+       avec la rarete des fenetres et DECROIT avec le cout d'intervention
+       (qui penalise ses interventions anticipees). Le pronostic paie partout
+       sauf dans le coin "visites frequentes ET interventions cheres".
+       rul bat le CALENDAIRE dans les 9 cases (-0.66 a -1.90, 56-77 %).
+       rul est la meilleure des 4 politiques en moyenne ET en CVaR90 dans
+       7 cases sur 9 (corrective prend le coin T=3 mois / C_visite eleve).
+
+  4.b  EQUIVALENCE OPERATIONNELLE (le resultat a mettre en avant) :
+       la RUL a 1 visite/an fournit le MEME service que le correctif a
+       4 visites/an (LPSP 3.072 % vs 3.062 %) en coutant MOINS CHER a tous
+       les couts d'intervention (-0.75 / -2.31 / -4.65 kEUR a C_visite
+       0.5/1.5/3, gagne 72-76 % des mondes, 9.1 vs 10.6 interventions).
+       => LE PRONOSTIC PERMET D'ESPACER LES VISITES x4 A ISO-SERVICE --
+       en logistique insulaire, c'est sa monetisation la plus parlante.
+       Le pronostic rend la qualite de service quasi INSENSIBLE a la rarete
+       des visites : LPSP rul 2.95 -> 3.07 % de T=3 a T=12 mois, la ou le
+       correctif derive de 3.06 -> 3.62 % (outage 5 327 -> 19 523 h ; avec
+       rul : 85 -> 208 h).
+
+  4.c  MARGE RUL (T = 6 mois) : la marge 1.0 est OPTIMALE en cout moyen
+       (104.89 ; +0.96 a marge 1.5, +1.39 a marge 2.0, gagnees dans 13-20 %
+       des mondes seulement) -- l'estimateur lineaire est bien calibre pour
+       FC/ELY (degradation pilotee par l'operation, quasi lineaire),
+       contrairement au cas batterie (acceleration de fin de vie). MAIS les
+       marges 1.5/2.0 achetent un outage STRICTEMENT NUL (0 h sur 200 mondes
+       x 25 ans, contre 144 h a marge 1.0) : si le cahier des charges impose
+       une disponibilite garantie, la marge est le prix de la certitude
+       (~+1 kEUR). Compromis a presenter tel quel.
+
+5. RESERVES / SUITES
+--------------------------------------------------------------------------------
+  (a) Gains moyens modestes en euros (~0.5-2.5 kEUR selon la case) : les
+      messages forts sont OPERATIONNELS (outage /60-90, equivalence x4 sur
+      les visites, LPSP insensible a la periode) et en risque (CVaR90).
+  (b) Hypotheses O&M posees faute de donnees (periode, C_visite) : balayees
+      sur 3x3, a defendre comme ordres de grandeur insulaires.
+  (c) Pas de depannage d'urgence dans le modele (tout passe par les visites);
       une variante "callout d'urgence a C_emerg >> C_visite" rapprocherait
       encore le modele du terrain et ne peut qu'augmenter la valeur du
       pronostic (il evite aussi la prime d'urgence).
 
-5. FICHIERS / REPRODUCTION
+6. FICHIERS / REPRODUCTION
 --------------------------------------------------------------------------------
   bench_maintenance.py               banc (v2 : preventif fc+ely, gaspillage
                                      par composant, cache par tag)
   Common/main_init_and_loop_maintenance.py   boucle a fenetres (prev_scope)
   run_meso_maintenance.slurm         sbatch run_meso_maintenance.slurm
                                      [--margin X | --tvisit M | --prevbat]
-  maintenance_25y_T6m.txt/.pdf/.png  resultats (job 214887)
+  maintenance_25y_T6m.txt/.pdf/.png  resultats centraux (job 214887)
+  maintenance_25y_T3m.txt, _T12m.txt balayage periode (jobs 214899/214900)
+  maintenance_25y_T6m_m1.5.txt, _m2.txt  balayage marge (jobs 214902/214903)
   maintenance.214867.out             v1 archive = contrefactuel batterie
 ================================================================================

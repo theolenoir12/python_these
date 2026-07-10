@@ -211,11 +211,15 @@ SYNTHESE_maintenance_25y.txt) :
 
 7. PROCHAINES ÉTAPES (dans l'ordre suggéré)
 --------------------------------------------------------------------------------
-  1. Balayages P3 restants (~20 min chacun) : marge (--margin 1.5, --margin 2
-     -- ATTENTION deux tirets, les jobs 214888/9 ont échoué sur "__margin")
-     et période (--tvisit 3, --tvisit 12) : carte complète "quand le
-     pronostic paie".
-  2. Reporter dans le manuscrit : cascade P1 (section 3) + résultats P3
+  1. [FAIT, jobs 214899-214903] Carte complète "quand le pronostic paie"
+     (T x C_visite 3x3 + marges) : cf. SYNTHESE_maintenance_25y.txt sect. 4.
+     Résultats clés : loi monotone (la valeur croît avec la rareté des
+     fenêtres, décroît avec le coût d'intervention) ; rul bat le calendaire
+     dans les 9 cases et est la meilleure des 4 politiques dans 7/9 ;
+     ÉQUIVALENCE x4 : la RUL à 1 visite/an = le service du correctif à
+     4 visites/an, en moins cher partout ; marge 1.0 optimale en coût,
+     marge 1.5+ = outage strictement nul (+1 kEUR, prix de la certitude).
+  2. Reporter dans le manuscrit : cascade P1 (section 3) + carte P3
      (section 4) + les deux règles générales (le préventif ne paie que pour
      les pannes dures ; le capteur est le seul ingrédient quasi certain).
   3. Restent ouvertes parmi les propositions : P4 (exploiter la physique V9 :

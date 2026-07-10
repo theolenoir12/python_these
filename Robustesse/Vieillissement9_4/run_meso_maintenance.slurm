@@ -13,9 +13,9 @@
 # A soumettre DEPUIS le dossier du banc (le script y trouve Common/ et ecrit
 # maintenance_25y_T<mois>m.{txt,pdf,png} a cote).
 # Fichier transfere depuis Windows : passer  dos2unix  une fois.
-# Cout indicatif : ~800 runs 25 ans ~8-10 h / 32 coeurs (4 politiques x 201).
-# Reuse : avec le txt du run precedent present, seuls les runs manquants sont
-# relances. --fresh pour tout re-payer. Chaque --tvisit a son propre txt.
+# Cout indicatif : ~800 runs 25 ans ~20-30 min / 32 coeurs (40 s par run 25 ans,
+# mesure job 214867). Reuse : avec le txt precedent, seuls les runs manquants
+# sont relances. --fresh pour tout re-payer. Un txt par --tvisit/--margin.
 # ============================================================================
 
 #SBATCH --job-name=maintenance

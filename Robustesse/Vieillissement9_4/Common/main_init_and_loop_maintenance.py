@@ -33,6 +33,13 @@ REGLES DU MODELE
                    (extrapolation lineaire du SoH, meme estimateur que la
                    boucle de base + ajout batterie) est inferieure a
                    l'intervalle jusqu'a la visite suivante x rul_margin.
+- PERIMETRE DU PREVENTIF (prev_scope, defaut ('fc','ely')) : le preventif ne
+  s'applique qu'aux composants a PANNE DURE (hors service a l'EoL -> outage).
+  La batterie est une panne MOLLE par construction (elle continue a capacite
+  degradee) : la remplacer preventivement n'evite aucun outage et ne fait que
+  jeter de la vie residuelle -- diagnostic du run 214867 : waste rul 5.8 kEUR
+  en moyenne, corr(waste, m_bat)=+0.76, entierement batterie. Le contrefactuel
+  (batterie incluse) reste accessible via prev_scope=('bat','fc','ely').
 - COMPTABILITE : une INTERVENTION = une visite ou au moins un remplacement a
   lieu (le cout fixe C_visite s'applique par intervention, en post-traitement:
   il n'influence pas la simulation). Le remplacement preventif jette la vie
@@ -40,7 +47,8 @@ REGLES DU MODELE
 
 SORTIE : dict `data` identique a la boucle de base + cle 'maintenance' :
     n_visits, n_interventions, n_repl {bat,fc,ely}, n_prev {bat,fc,ely},
-    outage_h {fc,ely}, waste_eur, repl_log (liste (jour, comp, 'corr'/'prev')).
+    outage_h {fc,ely}, waste_eur, waste_comp {bat,fc,ely},
+    repl_log (liste (jour, comp, 'corr'/'prev')).
 
 NOTE deg : les metriques financieres (get_cost_total) restent celles de la
 these ; pendant un gel (composant HS, P=0) le recalcul standalone laisse la
@@ -58,9 +66,11 @@ from .cost_fcn_total2 import _fc_advance, UV_TO_PCT_FC
 
 def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
                                   visit_period_months=6.0, policy='corrective',
-                                  rul_margin=1.0, calendar_ages_y=None):
+                                  rul_margin=1.0, calendar_ages_y=None,
+                                  prev_scope=('fc', 'ely')):
     """Cf. docstring module. calendar_ages_y = dict(bat=, fc=, ely=) en annees
-    (None pour un composant = jamais de preventif calendaire)."""
+    (None pour un composant = jamais de preventif calendaire). prev_scope =
+    composants eligibles au remplacement PREVENTIF (defaut : pannes dures)."""
     assert policy in ('instant', 'corrective', 'calendar', 'rul')
     calendar_ages_y = calendar_ages_y or {}
 
@@ -150,7 +160,8 @@ def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
                  n_repl={'bat': 0, 'fc': 0, 'ely': 0},
                  n_prev={'bat': 0, 'fc': 0, 'ely': 0},
                  outage_h={'fc': 0.0, 'ely': 0.0},
-                 waste_eur=0.0, repl_log=[])
+                 waste_eur=0.0, waste_comp={'bat': 0.0, 'fc': 0.0, 'ely': 0.0},
+                 repl_log=[])
     comp_cost = {'bat': BAT['cost'], 'fc': FC['cost'], 'ely': ELY['cost']}
     comp_eol  = {'bat': BAT['SoH_EoL'], 'fc': FC['SoH_EoL'], 'ely': ELY['SoH_EoL']}
 
@@ -178,6 +189,8 @@ def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
                 if pending[comp]:
                     to_replace.append((comp, 'corr', soh_now))
                     continue
+                if comp not in prev_scope:
+                    continue           # preventif reserve aux pannes dures
                 if policy == 'rul':
                     anchor = {'bat': j_rul_bat, 'fc': j_rul_fc, 'ely': j_rul_ely}[comp]
                     arr    = {'bat': SoH_bat, 'fc': SoH_fc, 'ely': SoH_ely}[comp]
@@ -194,6 +207,7 @@ def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
                     maint['n_prev'][comp] += 1
                     waste = max(0.0, (soh_before - comp_eol[comp]) / (1 - comp_eol[comp])) * comp_cost[comp]
                     maint['waste_eur'] += waste
+                    maint['waste_comp'][comp] += waste
                 maint['n_repl'][comp] += 1
                 maint['repl_log'].append((round(j * day_per_step, 1), comp, kind))
                 pending[comp] = False

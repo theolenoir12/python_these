@@ -28,8 +28,21 @@ mesure est attribuable a la POLITIQUE DE REMPLACEMENT seule. Quatre politiques
               (mesurees sur le run nominal instant) x CAL_FRAC : c'est la
               politique preventive SANS pronostic, calee sur le modele ;
   rul         + preventif si la RUL ESTIMEE en ligne (extrapolation lineaire
-              du SoH, batterie incluse) < intervalle jusqu'a la visite
-              suivante x RUL_MARGIN : politique preventive AVEC pronostic.
+              du SoH) < intervalle jusqu'a la visite suivante x RUL_MARGIN :
+              politique preventive AVEC pronostic.
+
+PERIMETRE DU PREVENTIF (v2, correction du run 214867) : le preventif
+(calendar ET rul) ne vise que les PANNES DURES (FC, ELY : hors service a
+l'EoL -> outage). La batterie est une panne MOLLE (elle continue a capacite
+degradee) : la remplacer preventivement n'evite aucun outage et ne fait que
+jeter de la vie residuelle. Le run 214867 (batterie incluse) l'a montre :
+waste rul 5.8 kEUR en moyenne, corr(waste, m_bat) = +0.76, queue P95 du rul
+DEGRADEE par les seuls remplacements preventifs de batterie -- alors meme que
+le rul ecrasait les outages (FC 9162 h -> 137 h ; ELY 927 h -> 7 h) et
+gagnait sur le service (d_uni0 = -1.03 kEUR). Principe a retenir pour le
+manuscrit : LE PREVENTIF NE PAIE QUE POUR LES COMPOSANTS DONT LA PANNE COUTE
+PLUS CHER QUE LA VIE RESIDUELLE JETEE. Contrefactuel reproductible : --prevbat
+(re-inclut la batterie ; fichier de cache distinct).
 En monde NOMINAL, calendar ~ rul (les durees de vie sont previsibles) : la
 valeur du pronostic doit apparaitre SOUS INCERTITUDE du vieillissement --
 memes 200 mondes perturbes que bench_valeur_info (CRN, meme graine) : les
@@ -47,16 +60,12 @@ COMPTABILITE
   C_visite est un POST-TRAITEMENT (grille C_VISIT_GRID) : il n'influence pas
   la simulation -> 1 run par (politique, tirage).
 
-MARGE RUL (constat de validation, a garder en tete pour la lecture) : la RUL
-par extrapolation LINEAIRE est systematiquement OPTIMISTE pour la batterie,
-dont la degradation ACCELERE en fin de vie (C-rate qui monte quand la capacite
-baisse : a 6 mois de la mort, RUL_lin ~ 280 j pour 182 j reels sur le cas
-teste). Avec marge 1.0 la politique 'rul' peut donc rater la derniere fenetre
-sure ; la marge compense le biais de l'estimateur. Balayer --margin
-{1.0, 1.5, 2.0} (jobs separes ; une marge != 1 est incluse dans le tag du
-fichier -> chaque marge a son propre txt/cache, rien n'est ecrase). Le
-compromis marge trop basse (morts) / trop haute (gaspillage) est un RESULTAT,
-pas un reglage a cacher.
+MARGE RUL (constat de validation) : la RUL par extrapolation LINEAIRE est
+OPTIMISTE quand la degradation ACCELERE en fin de vie (cas batterie ; pour
+FC/ELY, pilotees par l'operation, elle est plus fidele). La marge compense le
+biais de l'estimateur : balayer --margin {1.0, 1.5, 2.0} (chaque marge a son
+propre txt/cache). Le compromis marge basse (morts) / haute (gaspillage) est
+un RESULTAT, pas un reglage a cacher.
 
 REUTILISATION : comme bench_valeur_info, le banc relit son txt et ne relance
 que les couples (politique, tirage) manquants. --fresh pour tout re-payer.
@@ -72,11 +81,11 @@ LANCER
 ------
   local (fumee)        : python bench_maintenance.py --quick
   mesocentre (nominal) : sbatch run_meso_maintenance.slurm
-                         (~800 runs 25 ans, ~8-10 h / 32 coeurs ; autres
-                          periodes : sbatch run_meso_maintenance.slurm
-                          --tvisit 3 / --tvisit 12, jobs separes)
-Options : --tvisit MOIS | --margin X | --nmc N | --years N | --seed S |
-          --lo x --hi x | --workers N | --fresh
+                         (~800 runs 25 ans ~ 20 min / 32 coeurs (mesure job
+                          214867 : 40 s par run 25 ans) -> les balayages
+                          --tvisit 3/12 et --margin 1.5/2 sont bon marche)
+Options : --tvisit MOIS | --margin X | --prevbat | --nmc N | --years N |
+          --seed S | --lo x --hi x | --workers N | --fresh
 """
 import os
 import re
@@ -132,7 +141,8 @@ def evaluate(task):
             data = init_and_run_loop_maintenance(
                 strat, n_years=task['years'],
                 visit_period_months=task['tvisit_m'], policy=task['policy'],
-                rul_margin=task['margin'], calendar_ages_y=task['cal_ages'])
+                rul_margin=task['margin'], calendar_ages_y=task['cal_ages'],
+                prev_scope=task['prev_scope'])
         lpsp, deg, eens, uni0 = VI.metrics(data)
         m = data['maintenance']
         ok = True
@@ -141,13 +151,16 @@ def evaluate(task):
                    nrep=sum(m['n_repl'].values()),
                    nprev=sum(m['n_prev'].values()),
                    waste=m['waste_eur'] / 1000.0,
+                   wbat=m['waste_comp']['bat'] / 1000.0,
+                   wfc=m['waste_comp']['fc'] / 1000.0,
+                   wely=m['waste_comp']['ely'] / 1000.0,
                    outfc=m['outage_h']['fc'], outely=m['outage_h']['ely'],
                    repl_log=m['repl_log'])
     except Exception as e:
         ok = False
         out = dict(lpsp=None, deg=None, eens=None, uni0=None, nint=None,
-                   nrep=None, nprev=None, waste=None, outfc=None, outely=None,
-                   repl_log=[])
+                   nrep=None, nprev=None, waste=None, wbat=None, wfc=None,
+                   wely=None, outfc=None, outely=None, repl_log=[])
         print("  [FAIL] %-10s draw=%s : %s" % (task['policy'], task['draw'], e), flush=True)
     out.update(policy=task['policy'], draw=task['draw'], world=task['world'], ok=ok)
     return out
@@ -162,10 +175,10 @@ def _fmt(r):
 
 
 # --------------------- reutilisation d'un resultat precedent ---------------------
-COLS = ["lpsp", "deg", "uni0", "nint", "nprev", "waste", "outfc", "outely"]
+COLS = ["lpsp", "deg", "uni0", "nint", "nprev", "waste", "wbat", "wfc", "wely", "outfc", "outely"]
 
 
-def load_previous(out_txt, seed, lo, hi, tvisit_m, margin):
+def load_previous(out_txt, seed, lo, hi, tvisit_m, margin, prev_tag):
     """{(policy, draw): result} depuis un txt precedent (header verifie)."""
     done, factors = {}, {}
     if not os.path.isfile(out_txt):
@@ -174,14 +187,14 @@ def load_previous(out_txt, seed, lo, hi, tvisit_m, margin):
         lines = [l.rstrip("\n") for l in f]
     head = " ".join(lines[:7])
     m = re.search(r"mult U_log\[([0-9.]+),([0-9.]+)\] \| seed=(\d+) \| VoLL=([0-9.]+)"
-                  r" \| Tvisite=([0-9.]+)m \| marge=([0-9.]+)", head)
+                  r" \| Tvisite=([0-9.]+)m \| marge=([0-9.]+) \| prev=([a-z+]+)", head)
     if not m:
         print("  (reuse) header illisible dans %s -> ignore" % out_txt, flush=True)
         return {}, {}
     vals = [float(m.group(i)) for i in range(1, 7)]
     if (abs(vals[0] - lo) > 1e-9 or abs(vals[1] - hi) > 1e-9 or int(vals[2]) != seed
             or abs(vals[3] - VOLL) > 1e-9 or abs(vals[4] - tvisit_m) > 1e-9
-            or abs(vals[5] - margin) > 1e-9):
+            or abs(vals[5] - margin) > 1e-9 or m.group(7) != prev_tag):
         print("  (reuse) header de %s different -> ignore" % out_txt, flush=True)
         return {}, {}
     section = None
@@ -230,6 +243,8 @@ def main():
     ap.add_argument("--quick", action="store_true", help="fumee locale : 2 ans, N_MC=4")
     ap.add_argument("--tvisit", type=float, default=T_VISIT_M, help="periode de visite [mois]")
     ap.add_argument("--margin", type=float, default=RUL_MARGIN)
+    ap.add_argument("--prevbat", action="store_true",
+                    help="re-inclut la batterie dans le preventif (contrefactuel 214867)")
     ap.add_argument("--nmc", type=int, default=None)
     ap.add_argument("--years", type=int, default=None)
     ap.add_argument("--seed", type=int, default=MC_SEED)
@@ -243,15 +258,19 @@ def main():
     n_mc  = args.nmc if args.nmc is not None else (4 if args.quick else N_MC)
     workers = args.workers or VI._detect_workers()
 
+    prev_scope = ('bat', 'fc', 'ely') if args.prevbat else ('fc', 'ely')
+    prev_tag = "+".join(prev_scope)
     tag = "%dy_T%gm" % (years, args.tvisit)
     if abs(args.margin - 1.0) > 1e-12:
         tag += "_m%g" % args.margin       # une marge != 1 a son propre txt/cache
+    if args.prevbat:
+        tag += "_prevbat"                 # contrefactuel : cache distinct
     out_txt = os.path.join(HERE, "maintenance_%s.txt" % tag)
     out_fig = os.path.join(HERE, "maintenance_%s" % tag)
 
     print("=== VALEUR DE LA RUL -- maintenance insulaire (fenetres + cout fixe) ===", flush=True)
-    print("    horizon=%d ans | N_MC=%d | Tvisite=%gm | marge RUL=%g | mult U_log[%.2f, %.2f] | seed=%d"
-          % (years, n_mc, args.tvisit, args.margin, args.lo, args.hi, args.seed), flush=True)
+    print("    horizon=%d ans | N_MC=%d | Tvisite=%gm | marge RUL=%g | prev=%s | mult U_log[%.2f, %.2f] | seed=%d"
+          % (years, n_mc, args.tvisit, args.margin, prev_tag, args.lo, args.hi, args.seed), flush=True)
 
     # --- 1) nominal instant : ages calendaires de reference + TEST NUL vs boucle de base ---
     VI.apply_world(VI.NOMINAL_WORLD)
@@ -280,7 +299,7 @@ def main():
               for _ in range(n_mc)]
 
     done, prev_factors = ({}, {}) if args.fresh else load_previous(
-        out_txt, args.seed, args.lo, args.hi, args.tvisit, args.margin)
+        out_txt, args.seed, args.lo, args.hi, args.tvisit, args.margin, prev_tag)
     if done:
         bad = [d for d, fac in prev_factors.items() if d < n_mc and any(
             abs(fac[i] - worlds[d][k]) > 5e-4 for i, k in enumerate(VI.FACTOR_KEYS))]
@@ -301,12 +320,16 @@ def main():
             lpsp=lpsp_m, deg=deg_m, eens=(uni_m - deg_m) / VOLL * 1000.0, uni0=uni_m,
             nint=m0['n_interventions'], nrep=sum(m0['n_repl'].values()),
             nprev=sum(m0['n_prev'].values()), waste=m0['waste_eur'] / 1000.0,
+            wbat=m0['waste_comp']['bat'] / 1000.0,
+            wfc=m0['waste_comp']['fc'] / 1000.0,
+            wely=m0['waste_comp']['ely'] / 1000.0,
             outfc=m0['outage_h']['fc'], outely=m0['outage_h']['ely'],
             repl_log=m0['repl_log'])
 
     def mk(policy, world, draw):
         return dict(policy=policy, world=world, draw=draw, years=years,
-                    tvisit_m=args.tvisit, margin=args.margin, cal_ages=cal_ages)
+                    tvisit_m=args.tvisit, margin=args.margin, cal_ages=cal_ages,
+                    prev_scope=prev_scope)
 
     tasks = []
     for p in POLICIES:
@@ -353,8 +376,8 @@ def main():
     # --- 4) txt ---
     with open(out_txt, "w", encoding="utf-8") as f:
         f.write("# Valeur de la RUL -- maintenance insulaire (fenetres de visite + cout fixe)\n")
-        f.write("# horizon=%d ans | N_MC=%d | mult U_log[%.2f,%.2f] | seed=%d | VoLL=%.1f | Tvisite=%gm | marge=%g\n"
-                % (years, n_mc, args.lo, args.hi, args.seed, VOLL, args.tvisit, args.margin))
+        f.write("# horizon=%d ans | N_MC=%d | mult U_log[%.2f,%.2f] | seed=%d | VoLL=%.1f | Tvisite=%gm | marge=%g | prev=%s\n"
+                % (years, n_mc, args.lo, args.hi, args.seed, VOLL, args.tvisit, args.margin, prev_tag))
         f.write("# strategie de conduite FIXE : %s ; politiques : %s\n" % (STRATEGY, POLICIES))
         f.write("# ages calendaires de ref (nominal x %.2f) : %s\n" % (CAL_FRAC,
                 {k: (round(v, 2) if v else None) for k, v in cal_ages.items()}))

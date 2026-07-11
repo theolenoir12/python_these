@@ -1,5 +1,32 @@
 from .Init_EMR_MG_v16_python import *
 
+
+def _invert_monotone_h2_power(target_kw, load_min_pct, load_max_pct, h2_from_load):
+    """Return the largest load whose H2 power does not exceed target.
+
+    Interpolating the inverse only at the efficiency-LUT knots is not
+    consistent with the forward model, which interpolates efficiency and
+    then evaluates power/efficiency.  Near an H2 boundary, the old inverse
+    could therefore overshoot by a few Wh and make the next state
+    infeasible.  Bisection uses the exact same forward expression and the
+    lower bracket is deliberately returned to stay inside the reservoir.
+    """
+    lo = float(load_min_pct)
+    hi = float(load_max_pct)
+    target_kw = float(target_kw)
+    if target_kw < h2_from_load(lo):
+        return None
+    if target_kw >= h2_from_load(hi):
+        return hi
+    for _ in range(60):
+        mid = 0.5 * (lo + hi)
+        if h2_from_load(mid) <= target_kw:
+            lo = mid
+        else:
+            hi = mid
+    return lo
+
+
 def get_lol(SoC_t,action,P_tot_ref_t,defaillances,E_h2_t,E_h2_init,P_fc_max_t,P_ely_max_t,SoH_bat_t) :
 
         lol = 0
@@ -72,13 +99,16 @@ def get_lol(SoC_t,action,P_tot_ref_t,defaillances,E_h2_t,E_h2_init,P_fc_max_t,P_
                 stack_load_pct = ELY['lut'][0]
                 stack_eff_pct  = ELY['lut'][1]
                 
-                h2_curve_kw = (stack_load_pct / 100 * P_ely_max_t) * (stack_eff_pct / 100) / 1000
-                if P_h2_t < h2_curve_kw[0] : #tout en kW
+                def h2_from_load(load_pct):
+                    eff = np.interp(load_pct, stack_load_pct, stack_eff_pct) / 100
+                    return (load_pct / 100 * P_ely_max_t) * eff / 1000
+
+                new_load = _invert_monotone_h2_power(
+                    P_h2_t, stack_load_pct[0], stack_load_pct[-1], h2_from_load
+                )
+                if new_load is None: #tout en kW
                     P_dc_ely_t = 0
                 else : 
-                    # Interpolation inverse : Quel % de charge donne ce P_h2_req ?
-                    new_load = np.interp(P_h2_t, h2_curve_kw, stack_load_pct)
-                    
                     # Mise à jour (P_dc coté réseau = P_stack / Rendement Convertisseur)
                     P_dc_ely_t = -(new_load / 100 * P_ely_max_t) / CONV['eta']
                     eff_ely    = np.interp(new_load, *ELY['lut']) / 100
@@ -89,14 +119,16 @@ def get_lol(SoC_t,action,P_tot_ref_t,defaillances,E_h2_t,E_h2_init,P_fc_max_t,P_
                 stack_load_pct = FC['lut'][0]
                 stack_eff_pct  = FC['lut'][1]
                 
-                # Sécurité +1e-6 pour éviter division par zéro
-                h2_curve_kw = (stack_load_pct / 100 * P_fc_max_t) / ((stack_eff_pct + 1e-6) / 100) / 1000
-                if abs(P_h2_t) < h2_curve_kw[0] :
+                def h2_from_load(load_pct):
+                    eff = np.interp(load_pct, stack_load_pct, stack_eff_pct) / 100
+                    return (load_pct / 100 * P_fc_max_t) / eff / 1000
+
+                new_load = _invert_monotone_h2_power(
+                    abs(P_h2_t), stack_load_pct[0], stack_load_pct[-1], h2_from_load
+                )
+                if new_load is None:
                     P_dc_fc_t = 0
                 else :
-                    # Interpolation inverse (sur valeur absolue)
-                    new_load = np.interp(abs(P_h2_t), h2_curve_kw, stack_load_pct)
-                    
                     # Mise à jour (P_dc coté réseau = P_stack * Rendement Convertisseur)
                     P_dc_fc_t = (new_load / 100 * P_fc_max_t) * CONV['eta']
                     eff_fc    = np.interp(new_load, *FC['lut']) / 100

@@ -9,6 +9,13 @@ pas tous les resets et, en P3, le LOL pouvait créditer une FC/ELY hors service
 lorsque la batterie saturait. Les chiffres restent utiles au diagnostic, mais
 ne doivent pas être cités comme résultats finaux avant le rerun corrigé.
 
+MISE À JOUR TECHNIQUE : les lots corrigés rapatriés le 2026-07-11 ne donnent
+aucun résultat exploitable. Les matrices P3 215043/215055 ont échoué sur le
+chemin du sous-script ; 215063 sur un staging incomplet ; les logs P1/invariance
+sont vides. P4 215065 a échoué au plancher H2. L'inversion de LUT fautive et les
+lanceurs Slurm sont corrigés ; les quatre campagnes doivent être resoumises
+après mise à jour du dépôt, avec dépendance afterok sur l'invariance.
+
 Les qualificatifs « quasi certain », « meilleure politique » et « bat dans les
 9 cas » sont conditionnels à VoLL=3 et reposent en partie sur les argmin des
 niveaux marginaux. Le post-traitement apparié VoLL=1/3/10 se trouve dans
@@ -198,21 +205,21 @@ SYNTHESE_maintenance_25y.txt) :
   ANALYSE_CRITIQUE_integration_vieillissement.txt   diagnostic + propositions
   Vieillissement9_4/
     bench_valeur_info.py            banc P1 corrigé, cache empreint
-    valeur_info_25y.txt/.pdf/.png   ARCHIVE LEGACY P1
+    valeur_info_25y.pdf/.png        figures LEGACY P1 ; TXT brut retiré
     .science_cache/                 programme SoH nominal empreint
     runs/p1_value_info_*/           futures sorties P1 corrigées
     SYNTHESE_valeur_info_25y.txt    synthèse historique à revalider
     Common/main_init_and_loop_maintenance.py   boucle à fenêtres (v2 prev_scope)
     bench_maintenance.py            banc P3 corrigé (préventif pannes dures)
     run_meso_maintenance*.slurm     lanceur et matrice corrigée
-    maintenance_25y_T6m.txt/.pdf    ARCHIVE LEGACY P3 (job 214887)
+    maintenance_25y_T*.pdf/.png     figures LEGACY P3 ; TXT bruts retirés
     runs/p3_maintenance_*/          futures sorties P3 corrigées
     SYNTHESE_maintenance_25y.txt    synthèse historique à revalider
     maintenance.214867.out          v1 archivée = contrefactuel batterie
   NB : Vieillissement9/, 9_2/, 9_3/ = copies antérieures ; 9_4 fait foi.
-  Les bancs relisent leur txt et ne relancent que les runs manquants
-  (--fresh pour tout repayer ; supprimer le txt si stratégies ou modèles
-  changent ; un run 25 ans ~ 40 s sur le méso, un banc complet ~ 20 min).
+  Les bancs ne relisent jamais les anciens TXT. Seul results_raw.tsv d'un
+  dossier runs/<id>_<empreinte> identique peut être repris ; un changement de
+  source, donnée, runtime ou paramètre crée une nouvelle empreinte.
 
 6. MÉTHODES TRANSVERSES (pourquoi c'est défendable)
 --------------------------------------------------------------------------------
@@ -243,9 +250,13 @@ SYNTHESE_maintenance_25y.txt) :
      VoLL-invariant (seule l'amplitude change : ~-1.0/-1.9/-5.2 kEUR à
      VoLL=1/3/10, arithmétique de dominance sur les sorties legacy) ;
      falaise à N>=8 h ; diagnostic : start-stop = 89 % de l'usure ELY,
-     réversible résiduel = 0 (repos programmés sans gisement). À RE-PASSER
-     dans le même lot que P1/P3 : bench_dwell_ely.py appelle déjà la boucle
-     corrigée par défaut (compatibilité API vérifiée), re-sbatch ~10 min.
+     réversible résiduel = 0 (repos programmés sans gisement). Réserve
+     supplémentaire : le bruit AR(1) du job 214941 était réinitialisé à chaque
+     décision et les graines n'étaient pas des CRN stricts entre N. Le rerun
+     215065 est invalide (transition H2 infaisable). Le banc corrigé utilise une
+     trajectoire AR(1) persistante commune aux N, une inversion H2 cohérente,
+     un fail-fast et des sorties runs/p4_dwell_<empreinte>. À RE-PASSER par
+     dépendance afterok sur l'invariance ; aucun chiffre corrigé 25 ans acquis.
      P5 écartée : contexte équatorial, pas de cycle annuel du stock H2.
   5. Restent ouvertes : cumul des leviers RB2(SoH+Dwell) (interactions via le
      stock H2), P6 (indicateurs en durées de vie plutôt qu'en kEUR), P7

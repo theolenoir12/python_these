@@ -297,6 +297,18 @@ def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
                                               alpha_fc_t, alpha_ely_t, SoH_bat_t, E_h2_t,
                                               E_h2_init, P_fc_max_t, P_ely_max_t)
 
+        if SoC_tp1 < 0 or "P_bat" not in simOut:
+            raise RuntimeError(
+                "transition physique infaisable au pas %d (t=%.3f h): "
+                "SoC=%.12g E_h2=%.12g P_ref=%.12g action=%r "
+                "P_fc_max=%.12g P_ely_max=%.12g lol=%.12g policy=%s"
+                % (
+                    j, float(t) / 3600.0, SoC_t, E_h2_t, P_tot_ref_t,
+                    tuple(float(x) for x in action), P_fc_max_t,
+                    P_ely_max_t, lol, policy,
+                )
+            )
+
         P_bat[j]     = simOut['P_bat']
         P_fc[j]      = simOut['P_fc']
         P_ely[j]     = simOut['P_ely']

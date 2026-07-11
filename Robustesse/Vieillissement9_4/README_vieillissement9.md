@@ -99,15 +99,20 @@ V9_4 lisent ce ledger ; le recalcul sur une trace complète n'est plus un oracle
 valide après des resets.
 
 Le calcul de LOL a également été corrigé : après une panne FC/ELY, la puissance
-du composant hors service est retirée du bilan avant l'écrêtage batterie.
+du composant hors service est retirée du bilan avant l'écrêtage batterie. Aux
+bornes du réservoir H2, l'inversion rendement–puissance est maintenant résolue
+avec la même expression que la transition directe ; l'ancienne interpolation
+entre nœuds pouvait consommer quelques Wh de trop et rendre l'état suivant
+infaisable vers 12,6 ans.
 
-Les sorties P1/P3 de juillet antérieures à ces corrections sont des archives
-legacy et doivent être recalculées avant promotion. Le protocole d'acceptation
-est :
+Les sorties P1/P3/P4 de juillet antérieures à ces corrections sont des archives
+legacy et doivent être recalculées avant promotion. P4 corrige en plus son bruit
+de prévision : une graine définit désormais une trajectoire AR(1) horaire
+persistante, commune à tous les horizons N. Le protocole d'acceptation est :
 
 1. `run_meso_invariance.slurm` sur 25 ans : ledger = somme des segments,
    absence de rejeu, gels correctifs et boucle instantanée = boucle de base ;
-2. P1/P3 dans `runs/<id>_<empreinte>/`, avec cache brut pleine précision ;
+2. P1/P3/P4 dans `runs/<id>_<empreinte>/`, avec cache brut pleine précision ;
 3. statistiques appariées VoLL=1/3/10, puis promotion explicite au manifeste.
 
 Le mode `replacement_accounting="legacy_overlap"` est conservé uniquement pour

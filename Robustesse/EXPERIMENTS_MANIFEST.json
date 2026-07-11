@@ -19,16 +19,17 @@
         "Intervalles de vie disjoints : le pas de franchissement EoL n'est plus rejoue sur l'unite neuve.",
         "Cout de degradation issu d'un ledger unites retirees + unite courante.",
         "Une FC/ELY hors service n'est plus creditee dans le bilan LOL apres saturation batterie.",
+        "L'inversion de puissance aux bornes du reservoir H2 utilise le meme modele rendement-puissance que la transition et reste faisable entre les noeuds des LUT.",
         "Tests nuls P1/P3 fail-fast et caches bruts empreintes en pleine precision."
       ],
       "sources": [
         {
           "path": "Vieillissement9_4/Common/main_init_and_loop.py",
-          "sha256": "721b48ca039a26ba4c13ccb06e27e9ef7b5ec8c6dbbea72d3bf27da5bb48b680"
+          "sha256": "17eee6251ab55f3da3e374627b3861e9cbb86f5ff53de943e9e5ad372f98ad53"
         },
         {
           "path": "Vieillissement9_4/Common/main_init_and_loop_maintenance.py",
-          "sha256": "2313a91da23f1c0f679ad78843d9cf392a4a32c01b8f5e74156ccd5a96b44ed2"
+          "sha256": "f535547d47f9614542ebec27064ae59ae6e6bcc58647042b75dd55c2b854a050"
         },
         {
           "path": "Vieillissement9_4/Common/cost_fcn_total2.py",
@@ -36,7 +37,7 @@
         },
         {
           "path": "Vieillissement9_4/Common/get_lol.py",
-          "sha256": "3a6f4ffd88adb39946b25b0953051ac134a765fe59fa84ca41abbedcb80f1327"
+          "sha256": "42c601d047fd878d055bb25704dedd8ad3ea1304309610c7750fae1c3f0435f0"
         },
         {
           "path": "Vieillissement9_4/Common/replacement_ledger.py",
@@ -44,7 +45,7 @@
         },
         {
           "path": "Vieillissement9_4/check_cost_reset_invariance.py",
-          "sha256": "ed7dfb7b38781f175e284cbe34637f707ca187bea1ce453e6badea486d4145f4"
+          "sha256": "50aad0049ff213747db53d1e7bb3148cf6cf3061e62271361065f5ab9f7d94e5"
         }
       ],
       "required_validation": "run_meso_invariance.slurm sur 25 ans, puis P1/P3 N=200 et post-traitement apparie."
@@ -184,7 +185,7 @@
         "voll_eur_per_kwh": 3.0,
         "crn": true
       },
-      "artifacts": [
+      "retired_artifacts": [
         {
           "path": "Vieillissement9_4/valeur_info_25y.txt",
           "sha256": "f83932ea17c6613f05373a35df35ce0e419b5892867eba1d1da7e7eda75a8ff0"
@@ -195,6 +196,7 @@
         "Les couts par tirage sont arrondis a 0.001 kEUR.",
         "Le concurrent Sched historique suit le temps global et non l'age de l'unite.",
         "Le pas de franchissement EoL etait rejoue sur l'unite neuve et le cout full-trace ne respectait pas tous les resets.",
+        "Le TXT brut legacy a ete retire du working tree ; son SHA est conserve uniquement pour l'audit historique.",
         "Les conclusions de cascade dependent de la VoLL ; les chiffres ne sont pas promus pour le manuscrit avant rerun corrige."
       ]
     },
@@ -228,7 +230,7 @@
         "voll_eur_per_kwh": 3.0,
         "crn": true
       },
-      "artifacts": [
+      "retired_artifacts": [
         {
           "path": "Vieillissement9_4/maintenance_25y_T6m.txt",
           "sha256": "51e646a09279e50f8c2401b1df67a4c733f34a11e675b5863c69245b397fd6a9"
@@ -248,7 +250,46 @@
         "Les heures outfc+outely sont des heures-composant, pas une duree d'indisponibilite systeme.",
         "Le pas de franchissement EoL etait rejoue et le cout full-trace ne respectait pas tous les resets.",
         "Le LOL pouvait crediter la puissance d'une FC/ELY hors service lorsque la batterie saturait.",
+        "Les trois TXT bruts legacy ont ete retires du working tree ; leurs SHA sont conserves uniquement pour l'audit historique.",
         "Les cellules de la carte sont des argmin ponctuels ; elles ne prouvent pas toutes une superiorite statistique."
+      ]
+    },
+    {
+      "id": "p4_dwell_ely_25y_2026_07",
+      "status": "legacy_pre_correction_unfingerprinted",
+      "engine": "Vieillissement9_4_legacy_overlap",
+      "strategies": [
+        "RB2(SoH)"
+      ],
+      "parameters": {
+        "horizon_years": 25,
+        "dwell_h": [
+          2,
+          4,
+          6,
+          8,
+          12
+        ],
+        "n_noise_seeds": 32,
+        "noise_seed0": 3026,
+        "voll_eur_per_kwh": 3.0
+      },
+      "artifacts": [
+        {
+          "path": "Vieillissement9_4/dwell_ely_25y.txt",
+          "sha256": "1860c236cd0eb85eed328b620047077bee18bf1118460b9fe4c0acb0c7d2874a"
+        },
+        {
+          "path": "Vieillissement9_4/SYNTHESE_dwell_25y.txt",
+          "sha256": "da68c6cd42c7fd69a0af310143f1f4ecd3560f08682eae67d0714999975ac775"
+        }
+      ],
+      "source_commit": null,
+      "limitations": [
+        "Sortie du job 214941 produite avant la comptabilite corrigee des remplacements.",
+        "Le bruit AR(1) historique etait reinitialise a chaque decision ; une meme graine ne definissait donc pas une trajectoire horaire CRN commune aux horizons N.",
+        "Le rerun 215065 est invalide : toutes les trajectoires atteintes ont echoue sur une transition H2 infaisable avant la correction de l'inversion de LUT.",
+        "Les optima et gains P4 historiques restent exploratoires jusqu'au rerun corrige et empreinte."
       ]
     },
     {

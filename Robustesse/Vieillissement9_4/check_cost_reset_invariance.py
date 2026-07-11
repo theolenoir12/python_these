@@ -24,6 +24,7 @@ from Common import cost_fcn_total2 as C
 from Common.main_init_and_loop import init_and_run_loop
 from Common.main_init_and_loop_maintenance import init_and_run_loop_maintenance
 from reproducibility.provenance import (
+    acquire_run_lock,
     build_provenance,
     fingerprinted_run_dir,
     provenance_header_lines,
@@ -253,6 +254,7 @@ def main():
         run_dir = fingerprinted_run_dir(HERE, "invariance", provenance)
         run_dir.mkdir(parents=True, exist_ok=True)
         output = run_dir / "report.txt"
+    run_lock = acquire_run_lock(run_dir)
 
     VI.apply_world(VI.NOMINAL_WORLD)
     base = init_and_run_loop(
@@ -341,6 +343,7 @@ def main():
     print("Remplacements observes : %d" % replacement_count)
     print("Biais diagnostic trace complete - ledger : %+.6f kEUR"
           % (metric_full_trace[1] - metric_base[1]))
+    run_lock.close()
     return 0
 
 

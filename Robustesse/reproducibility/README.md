@@ -29,6 +29,13 @@ différences appariées dans `paired_stats.py`.
 
 ## Ordre des calculs corrigés V9_4
 
+État du lot rapatrié le 2026-07-11 : les matrices `215043` et `215055` ont
+échoué sur le chemin du sous-script ; `215063` a échoué avant calcul car
+`run_science_checks.py` n'était pas stagé. Les sorties P1/invariance copiées
+sont vides. Le job dwell `215065` a rencontré une inversion H2 incohérente
+entre deux nœuds de LUT ; ce défaut est corrigé et couvert par un test. Aucune
+de ces sorties ne doit être promue.
+
 Précondition Helios : le profil Sidelec doit être lisible avant soumission.
 Le lanceur utilise par défaut `$WORK/genial_data` ; pour un autre emplacement :
 
@@ -40,15 +47,30 @@ test -r "$WORK/genial_data/sidelec_roche_plate_csv.csv"
 export GENIAL_DATA_DIR="$WORK/genial_data"
 ```
 
+Le dépôt canonique s'appelle exactement `Vieillissement9_4` (casse comprise).
+Sous Slurm, le script est copié dans le spool : les lanceurs utilisent donc
+`SLURM_SUBMIT_DIR`. Il faut soumettre depuis le dossier du banc, ou exporter
+`GENIAL_V94_DIR` vers son chemin absolu. Copier de préférence tout
+`Robustesse/` afin d'embarquer les tests ; si seuls les fichiers V9_4 sont
+stagés, les lanceurs exécutent la compilation locale et l'invariance reste le
+verrou scientifique obligatoire.
+
 ```bash
-cd Robustesse/Vieillissement9_4
+cd /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4
 
 # 1. Validation physique et comptable, 1 coeur.
-sbatch run_meso_invariance.slurm
+JOB_INV_RAW=$(sbatch --parsable run_meso_invariance.slurm)
+JOB_INV=${JOB_INV_RAW%%;*}
 
-# 2. Après succès du job précédent (remplacer JOB_INV).
-sbatch --dependency=afterok:JOB_INV run_meso_valeur_info.slurm
-sbatch --dependency=afterok:JOB_INV run_meso_maintenance_matrix.slurm
+# 2. Les trois campagnes ne démarrent que si l'invariance termine avec code 0.
+JOB_P1_RAW=$(sbatch --parsable --dependency=afterok:${JOB_INV} run_meso_valeur_info.slurm)
+JOB_P1=${JOB_P1_RAW%%;*}
+JOB_P3_RAW=$(sbatch --parsable --dependency=afterok:${JOB_INV} run_meso_maintenance_matrix.slurm)
+JOB_P3=${JOB_P3_RAW%%;*}
+JOB_P4_RAW=$(sbatch --parsable --dependency=afterok:${JOB_INV} run_meso_dwell.slurm)
+JOB_P4=${JOB_P4_RAW%%;*}
+
+printf 'INV=%s P1=%s P3=%s P4=%s\n' "$JOB_INV" "$JOB_P1" "$JOB_P3" "$JOB_P4"
 ```
 
 La matrice P3 soumet cinq tâches : T=3/6/12 mois à marge 1, puis T=6 mois à
@@ -69,7 +91,13 @@ deviner l'empreinte :
 
 ```bash
 find runs -maxdepth 2 -name provenance.json -print
+sacct -j "$JOB_INV,$JOB_P1,$JOB_P3,$JOB_P4" --format=JobID,JobName,State,ExitCode,Elapsed
 ```
+
+Les dossiers `runs/` sont ignorés par défaut pour éviter de promouvoir un run
+simplement parce qu'il existe. Après validation du post-traitement, ajouter
+explicitement les six dossiers retenus avec `git add -f runs/<dossier>` (P1,
+cinq P3) et, séparément, le dossier P4 si son test nul et sa complétude passent.
 
 Le post-traitement lit ces fiches et refuse un fichier mal étiqueté (mauvaise
 période, marge, horizon, portée préventive ou mode de comptabilité). Les deux
@@ -79,3 +107,9 @@ apparié, avec tests nuls sur les trois politiques non-RUL.
 Les tests nuls P1 et P3 sont exécutés avant les Monte-Carlo et arrêtent le job
 en cas d'écart. `results_raw.tsv` est le seul cache numérique ; `results.txt`
 est un rapport lisible, jamais une entrée automatique.
+
+P4 écrit désormais `runs/p4_dwell_<empreinte>/`. Son bruit est une trajectoire
+AR(1) horaire persistante : une graine donnée produit exactement le même bruit
+pour tous les horizons N. L'ancien job 214941 réinitialisait l'AR(1) à chaque
+décision et n'avait donc pas de CRN strict entre horizons ; ses chiffres restent
+une exploration legacy, pas une conclusion à reprendre telle quelle.

@@ -10,11 +10,12 @@
 #     sbatch run_meso_dwell.slurm                       # nominal : 25 ans
 #     sbatch run_meso_dwell.slurm --seeds 64            # variante
 #
-# A soumettre DEPUIS le dossier du banc (le script y trouve Common/ et ecrit
-# dwell_ely_25y.{txt,pdf,png} a cote).
+# A soumettre DEPUIS le dossier du banc (ou avec GENIAL_V94_DIR). Les sorties
+# vont dans runs/p4_dwell_<empreinte>/.
 # Fichier transfere depuis Windows : passer  dos2unix  une fois.
 # Cout indicatif : ~170 runs 25 ans ~5-10 min / 32 coeurs (40 s par run).
-# Pas de cache : le banc re-execute tout (bon marche).
+# Pas de reprise automatique : le banc re-execute tout (bon marche), avec
+# verrou anti-double-ecriture et provenance finale.
 # ============================================================================
 
 #SBATCH --job-name=dwell_ely
@@ -28,17 +29,20 @@
 # #SBATCH --mail-user=theo.lenoir4@orange.fr
 # #SBATCH --mail-type=END,FAIL
 
+set -euo pipefail
+
 # --- Environnement ----------------------------------------------------------
+SCRIPT_DIR="${GENIAL_V94_DIR:-${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}}"
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 export MPLBACKEND=Agg
-export MPLCONFIGDIR="$WORK/.mplconfig"
+export MPLCONFIGDIR="${WORK:?WORK non defini}/.mplconfig"
 mkdir -p "$MPLCONFIGDIR"
 
 # Profil PV/conso (gros CSV) provisionne une fois dans $WORK (cf. MESOCENTRE.md).
-export GENIAL_DATA_DIR="$WORK/genial_data"
+export GENIAL_DATA_DIR="${GENIAL_DATA_DIR:-$WORK/genial_data}"
 
 module purge
 module load anaconda3@2022.10/gcc-12.1.0
@@ -48,9 +52,25 @@ echo "Job $SLURM_JOB_ID  noeud=$(hostname)  args=$@"
 echo "cpus-per-task=$SLURM_CPUS_PER_TASK  debut=$(date)"
 python -c "import numpy,scipy,sympy;print('numpy',numpy.__version__,'scipy',scipy.__version__)"
 
-# Dossier de soumission = Vieillissement9/ (Common/ trouve via le chemin du script).
-cd "$SLURM_SUBMIT_DIR" || exit 1
+for required in \
+    "$SCRIPT_DIR/bench_dwell_ely.py" \
+    "$GENIAL_DATA_DIR/sidelec_roche_plate_csv.csv" \
+    "$SCRIPT_DIR/Common/FC_efficiency_LU_table_power.csv" \
+    "$SCRIPT_DIR/Common/ELY_efficiency_LU_table_power.csv"; do
+    if [[ ! -r "$required" ]]; then
+        echo "ERREUR staging incomplet : fichier absent $required" >&2
+        exit 66
+    fi
+done
 
-time python bench_dwell_ely.py "$@"
+python -m py_compile "$SCRIPT_DIR/bench_dwell_ely.py" \
+    "$SCRIPT_DIR/Common/main_init_and_loop.py" "$SCRIPT_DIR/Common/get_lol.py"
+if [[ -r "$SCRIPT_DIR/../run_science_checks.py" ]]; then
+    python -u "$SCRIPT_DIR/../run_science_checks.py"
+else
+    echo "AVERTISSEMENT : tests unitaires complets non stages ; soumettre ce job avec afterok sur l'invariance." >&2
+fi
+
+time python -u "$SCRIPT_DIR/bench_dwell_ely.py" --output-root "$SCRIPT_DIR" "$@"
 
 echo "fin=$(date)"

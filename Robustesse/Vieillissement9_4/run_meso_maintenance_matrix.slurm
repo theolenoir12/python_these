@@ -17,6 +17,10 @@ set -euo pipefail
 # Sous SLURM le script batch est copie dans le spool : BASH_SOURCE ne pointe
 # plus vers le depot. On repart du repertoire de soumission.
 SCRIPT_DIR="${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}"
+if [[ ! -r "$SCRIPT_DIR/run_meso_maintenance.slurm" ]]; then
+  echo "ERREUR : soumettre depuis Vieillissement9_4 ou definir un staging complet ($SCRIPT_DIR)." >&2
+  exit 66
+fi
 case "$SLURM_ARRAY_TASK_ID" in
   0) PARAMS=(--tvisit 3  --margin 1) ;;
   1) PARAMS=(--tvisit 6  --margin 1) ;;

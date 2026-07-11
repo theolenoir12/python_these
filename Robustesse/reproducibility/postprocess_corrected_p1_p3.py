@@ -18,6 +18,7 @@ try:
         summarize_difference,
     )
     from .provenance import (
+        acquire_run_lock,
         build_provenance,
         fingerprinted_run_dir,
         provenance_header_lines,
@@ -33,6 +34,7 @@ except ImportError:
         summarize_difference,
     )
     from provenance import (
+        acquire_run_lock,
         build_provenance,
         fingerprinted_run_dir,
         provenance_header_lines,
@@ -373,6 +375,7 @@ def main():
     )
     output_dir = fingerprinted_run_dir(args.output_root, "p1_p3_stats", provenance)
     output_dir.mkdir(parents=True, exist_ok=True)
+    run_lock = acquire_run_lock(output_dir)
     report_path = output_dir / "report.txt"
     table_path = output_dir / "contrasts.tsv"
 
@@ -442,6 +445,7 @@ def main():
     print("Controles CRN/fermeture : OK")
     print("Contrastes : %d" % len(records))
     print("Rapport : %s" % report_path)
+    run_lock.close()
     return 0
 
 

@@ -12,10 +12,15 @@ tous les resets). Pertinence pour CE banc :
     biais de mode commun sur les ECARTS, niveaux a regenerer ;
   - le diagnostic (ii) (parts ss/idle/rev/irr) reste en trace complete par
     construction (parts relatives, information ordinale).
-RERUN : bench_dwell_ely.py est deja compatible avec le moteur corrige
-(init_and_run_loop par defaut 'corrected', metrics par ledger, signatures
-inchangees -- verifie) ; re-sbatch run_meso_dwell.slurm (~10 min) dans le
-meme lot que les reruns P1/P3, apres le job d'invariance.
+  - reserve additionnelle : le bruit AR(1) etait reinitialise a chaque decision.
+    Une graine ne definissait donc pas une trajectoire horaire commune aux N ;
+    les comparaisons d'horizons ne beneficiaient pas de CRN stricts.
+RERUN 215065 INVALIDE : toutes les trajectoires atteintes ont echoue au
+plancher H2 sur une inversion de LUT legerement incoherente avec la transition.
+Le banc courant corrige ce point, pre-genere une trajectoire AR(1) persistante
+commune aux N, echoue avec un code non nul si un worker manque et ecrit dans
+runs/p4_dwell_<empreinte>. Un smoke 1 an passe, mais le 25 ans doit etre
+resoumis apres l'invariance ; aucun chiffre corrige n'est encore acquis.
 CONDITIONNALITE VoLL : contrairement aux increments P1/P3 (qui changent de
 signe avec la VoLL, cf. STATISTIQUES_APPARIEES_P1_P3.txt), le point dwell
 N=4 DOMINE la base (LPSP ET degradation meilleures) : le SIGNE de son gain

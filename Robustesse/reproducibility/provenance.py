@@ -100,9 +100,10 @@ def build_provenance(experiment_id, files, parameters, repo_root=None):
     """Construit une fiche de provenance et son empreinte deterministe.
 
     ``files`` doit contenir toutes les sources, tables et donnees qui peuvent
-    changer le resultat. L'horodatage, le commit et l'environnement ne sont pas
-    inclus dans l'empreinte : deux executions bit-a-bit du meme protocole
-    partagent ainsi le meme identifiant de run.
+    changer le resultat. Les versions Python/NumPy/SciPy/SymPy font partie de
+    l'identite numerique. L'horodatage, le commit, l'hote et les variables Slurm
+    restent des metadonnees : deux executions du meme protocole dans le meme
+    runtime numerique partagent ainsi le meme identifiant de run.
     """
     raw_paths = [item[1] if isinstance(item, (tuple, list)) and len(item) == 2 else item
                  for item in files]

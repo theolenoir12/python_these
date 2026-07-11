@@ -28,7 +28,8 @@ graines de bruit (CRN) :
   omni(N)       PREVISIONNEL OMNISCIENT : demarrage autorise ssi les N
                 prochaines heures ont TOUTES un surplus superieur au setpoint
                 ELY courant (le vrai futur ; borne superieure) ;
-  noisy(N)      idem avec prevision BRUITEE : bruit AR(1) horaire (rho=0.8)
+  noisy(N)      idem avec prevision BRUITEE : trajectoire AR(1) horaire
+                persistante (rho=0.8), commune aux horizons N pour une graine,
                 calibre pour retrouver le backtest LSTM a 18 h
                 (sigma = 39.38 kWh, biais = -2.32 kWh), memes constantes de
                 design que RB2(Pred)/MPC. N_SEEDS realisations par N.
@@ -46,10 +47,11 @@ part REVERSIBLE. Si le reversible residuel est negligeable (repos naturels
 suffisants : tau_rest ELY ~ 0.3 min, FC ~ 0.5 h), le levier "repos
 programmes" n'a PAS de gisement -> resultat negatif documente sans banc.
 
-SORTIES (a cote de ce script)
------------------------------
-  dwell_ely_<Ny>y.txt      diagnostic + table par config + stats noisy
-  dwell_ely_<Ny>y.pdf/.png (1) plan LPSP/deg parametre par N (3 familles)
+SORTIES (runs/p4_dwell_<empreinte>/)
+-----------------------------------
+  results_raw.tsv           table pleine precision de toutes les trajectoires
+  results.txt               diagnostic + table par config + stats noisy
+  figure.pdf/.png           (1) plan LPSP/deg parametre par N (3 familles)
                            (2) demarrages ELY vs N
                            (3) cout unifie vs N (base / minoff / omni / noisy)
 LANCER
@@ -67,6 +69,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
@@ -76,6 +79,13 @@ import bench_valeur_info as VI                              # noqa: E402
 from Common import Init_EMR_MG_v16_python as I              # noqa: E402
 from Common import cost_fcn_total2 as C                     # noqa: E402
 from Common.main_init_and_loop import init_and_run_loop     # noqa: E402
+from reproducibility.provenance import (                    # noqa: E402
+    acquire_run_lock,
+    build_provenance,
+    fingerprinted_run_dir,
+    provenance_header_lines,
+    write_provenance_sidecar,
+)
 
 # ============================ CONFIGURATION ============================
 N_YEARS  = 25
@@ -108,8 +118,8 @@ STRATEGY = "RB2(SoH)"
 # (omni : vrai futur ; noisy : + bruit AR(1) ; minoff : pas de prevision,
 # simple delai apres le dernier arret). Blocage via SoH_ely_t = 0 (setpoint
 # ELY nul dans la vraie RB2(SoH)) ; tout le reste de la regle est inchange.
-_DW = {"base": None, "net": None, "j": 0, "prev_on": False,
-       "N": 0, "mode": "omni", "rng": None, "last_stop": None}
+_DW = {"base": None, "net": None, "noise": None, "j": 0,
+       "prev_on": False, "N": 0, "mode": "omni", "last_stop": None}
 
 
 def dwell_reset(N, mode, seed=0):
@@ -119,8 +129,22 @@ def dwell_reset(N, mode, seed=0):
         # net "verite terrain" = meme formule que la boucle (P_dc_load - P_pv)
         _DW["net"] = (np.asarray(I.LOAD['P_ref'], dtype=float) / I.CONV['eta']
                       - np.asarray(I.PV['P'], dtype=float))
+    noise = None
+    if mode == "noisy":
+        # Une trajectoire d'erreur horaire unique par graine, reutilisee a
+        # l'identique pour tous les horizons N. Cela assure de vrais CRN et
+        # evite de reinitialiser artificiellement l'AR(1) a chaque decision.
+        rng = np.random.default_rng(seed)
+        innovations = rng.standard_normal(len(_DW["net"]))
+        ar = np.empty_like(innovations)
+        if len(ar):
+            ar[0] = innovations[0]  # distribution stationnaire N(0,1)
+            scale = np.sqrt(1 - NOISE_RHO ** 2)
+            for k in range(1, len(ar)):
+                ar[k] = NOISE_RHO * ar[k - 1] + scale * innovations[k]
+        noise = SIGMA_H_W * ar + BIAS_H_W
     _DW.update(j=0, prev_on=False, N=int(N), mode=mode,
-               rng=np.random.default_rng(seed), last_stop=None)
+               noise=noise, last_stop=None)
 
 
 def dwell_strategy(SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t,
@@ -137,12 +161,7 @@ def dwell_strategy(SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t,
             P_set = DWELL_C_ELY * I.ELY['P_ely_max'] * SoH_ely_t ** DWELL_G_ELY
             seg = _DW["net"][j:j + N]
             if _DW["mode"] == "noisy" and len(seg):
-                eps = np.empty(len(seg))
-                e = 0.0
-                for k in range(len(seg)):     # AR(1) stationnaire, re-tire a chaque appel
-                    e = NOISE_RHO * e + np.sqrt(1 - NOISE_RHO ** 2) * _DW["rng"].standard_normal()
-                    eps[k] = e
-                seg = seg + SIGMA_H_W * eps + BIAS_H_W
+                seg = seg + _DW["noise"][j:j + N]
             # demarrage autorise ssi surplus > setpoint sur TOUTES les N heures
             allow = len(seg) >= N and bool(np.all(seg < -P_set))
         if not allow:
@@ -168,13 +187,35 @@ def ely_starts(data):
 
 
 def deg_breakdown(data):
-    """Decomposition standalone (%) ss/idle/rev/irr pour ELY et FC sur toute
-    la trajectoire (get_cost_* integre depuis 0, conventions de la these)."""
-    alpha_ely = data["alpha_ely"][:-1]; alpha_fc = data["alpha_fc"][:-1]
-    _, ss_e, idle_e, rev_e, irr_e = C.get_cost_ely(alpha_ely, data["P_ely"])
-    _, ss_f, idle_f, rev_f, irr_f = C.get_cost_fc(alpha_fc, data["P_fc"])
-    return dict(ely=dict(ss=ss_e, idle=idle_e, rev=rev_e, irr=irr_e),
-                fc=dict(ss=ss_f, idle=idle_f, rev=rev_f, irr=irr_f))
+    """Somme des decompositions (%) sur les unites physiques disjointes."""
+    ledger = data.get("degradation_ledger")
+
+    def one(component, cost_function):
+        stops = [] if ledger is None else [
+            int(event["stop_step_exclusive"])
+            for event in ledger["events"] if event["component"] == component
+        ]
+        bounds = stops + [len(data["P_" + component])]
+        start = 0
+        total = np.zeros(4, dtype=float)
+        cost_eur = 0.0
+        for stop in bounds:
+            if stop > start:
+                values = cost_function(
+                    data["alpha_" + component][start:stop],
+                    data["P_" + component][start:stop],
+                )
+                cost_eur += float(values[0])
+                total += np.asarray(values[1:5], dtype=float)
+            start = stop
+        if ledger is not None and not np.isclose(
+            cost_eur, ledger["total_eur"][component], rtol=1e-10, atol=1e-6
+        ):
+            raise RuntimeError("decomposition segmentee incoherente pour " + component)
+        return dict(ss=total[0], idle=total[1], rev=total[2], irr=total[3])
+
+    return dict(ely=one("ely", C.get_cost_ely),
+                fc=one("fc", C.get_cost_fc))
 
 
 # ------------------------------- worker -------------------------------
@@ -192,14 +233,19 @@ def evaluate(task):
         lpsp, deg, eens, uni = VI.metrics(data)
         lb, lf, le = VI.lifetimes(data)
         starts = ely_starts(data)
+        trace_digest = VI.trajectory_digest(data)
         ok = True
+        error = ""
     except Exception as e:
         lpsp = deg = eens = uni = lb = lf = le = starts = None
+        trace_digest = ""
         ok = False
+        error = "%s: %s" % (type(e).__name__, e)
         print("  [FAIL] %-7s N=%-3s seed=%s : %s" % (task['family'], task['N'], task['seed'], e), flush=True)
     return dict(family=task['family'], N=task['N'], seed=task['seed'],
                 lpsp=lpsp, deg=deg, eens=eens, uni=uni, starts=starts,
-                life_bat=lb, life_fc=lf, life_ely=le, ok=ok)
+                life_bat=lb, life_fc=lf, life_ely=le,
+                trace_digest=trace_digest, ok=ok, error=error)
 
 
 def _fmt(r):
@@ -217,21 +263,57 @@ def main():
     ap.add_argument("--seeds", type=int, default=None)
     ap.add_argument("--years", type=int, default=None)
     ap.add_argument("--workers", type=int, default=None)
+    ap.add_argument("--output-root", default=HERE,
+                    help="racine de runs/ (defaut : dossier V9_4)")
     args = ap.parse_args()
 
-    years   = args.years or (2 if args.quick else N_YEARS)
+    years   = args.years if args.years is not None else (2 if args.quick else N_YEARS)
     n_list  = ([int(x) for x in args.nlist.split(",")] if args.nlist
                else ([2, 4] if args.quick else N_LIST))
     n_seeds = args.seeds if args.seeds is not None else (2 if args.quick else N_SEEDS)
-    workers = args.workers or VI._detect_workers()
+    workers = args.workers if args.workers is not None else VI._detect_workers()
+    if years <= 0 or n_seeds <= 0 or workers <= 0:
+        ap.error("years, seeds et workers doivent etre strictement positifs")
+    if not n_list or any(value <= 0 for value in n_list):
+        ap.error("nlist doit contenir des durees strictement positives")
+    if len(n_list) != len(set(n_list)):
+        ap.error("nlist contient des doublons")
+    if abs(VOLL - VI.VOLL) > 1e-12:
+        raise RuntimeError("VoLL incoherente avec bench_valeur_info")
 
-    tag = "%dy" % years
-    out_txt = os.path.join(HERE, "dwell_ely_%s.txt" % tag)
-    out_fig = os.path.join(HERE, "dwell_ely_%s" % tag)
+    provenance = build_provenance(
+        "p4_dwell_ely",
+        VI.provenance_files([Path(__file__)]),
+        {
+            "horizon_years": years,
+            "strategy": STRATEGY,
+            "replacement_accounting": VI.REPLACEMENT_ACCOUNTING,
+            "n_list_h": n_list,
+            "n_noise_seeds": n_seeds,
+            "noise_seed0": SEED0,
+            "noise_model": "persistent_hourly_ar1_crn",
+            "noise_rho": NOISE_RHO,
+            "sigma_18h_kwh": SIGMA_18H_KWH,
+            "bias_18h_kwh": BIAS_18H_KWH,
+            "dwell_c_ely": DWELL_C_ELY,
+            "dwell_gamma_ely": DWELL_G_ELY,
+            "voll_eur_per_kwh": VOLL,
+            "families": ["base", "minoff", "omni", "noisy"],
+        },
+        repo_root=Path(HERE).parents[1],
+    )
+    run_dir = fingerprinted_run_dir(args.output_root, "p4_dwell", provenance)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    run_lock = acquire_run_lock(run_dir)
+    out_txt = str(run_dir / "results.txt")
+    out_raw = str(run_dir / "results_raw.tsv")
+    out_fig = str(run_dir / "figure")
 
     print("=== P4 -- DEMARRAGES ELY : filtre previsionnel de demarrage ===", flush=True)
     print("    horizon=%d ans | N=%s | %d graines/N | bruit AR(1) rho=%.1f sigma_h=%.0f W (18h: %.1f kWh)"
           % (years, n_list, n_seeds, NOISE_RHO, SIGMA_H_W, SIGMA_18H_KWH), flush=True)
+    print("    empreinte=%s | sortie=%s"
+          % (provenance["run_fingerprint"][:12], run_dir), flush=True)
 
     tasks = [dict(family='base', N=0, seed=0, years=years)]
     tasks += [dict(family='omni', N=0, seed=0, years=years)]        # test nul : == base
@@ -249,14 +331,52 @@ def main():
             print("  [%3d/%d] %s" % (i, len(tasks), _fmt(r)), flush=True)
     print("  (%.0fs)" % (time.time() - t0), flush=True)
 
+    raw_fields = ["family", "N", "seed", "ok", "lpsp", "deg", "eens", "uni",
+                  "starts", "life_bat", "life_fc", "life_ely", "trace_digest",
+                  "error"]
+    with open(out_raw, "w", encoding="utf-8") as stream:
+        for line in provenance_header_lines(provenance):
+            stream.write(line + "\n")
+        stream.write(";".join(raw_fields) + "\n")
+        for result in res:
+            row = []
+            for field in raw_fields:
+                value = result[field]
+                if value is None:
+                    row.append("")
+                elif isinstance(value, float):
+                    row.append(format(value, ".17g"))
+                else:
+                    row.append(str(value).replace(";", ",").replace("\n", " "))
+            stream.write(";".join(row) + "\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    failed = [result for result in res if not result["ok"]]
+    if failed:
+        write_provenance_sidecar(run_dir / "provenance.failed.json", provenance, [out_raw])
+        raise RuntimeError(
+            "P4 incomplet : %d/%d runs en echec ; details dans %s"
+            % (len(failed), len(res), out_raw)
+        )
+
     base = next(r for r in res if r['family'] == 'base' and r['ok'])
     null = next((r for r in res if r['family'] == 'omni' and r['N'] == 0 and r['ok']), None)
     null_ok = None
     if null is not None:
-        gap = abs(null['uni'] - base['uni'])
-        null_ok = gap < 1e-6
-        print("\nTEST NUL (omni N=0 == base) : ecart %.3e kEUR -> %s"
-              % (gap, "OK" if null_ok else "ECHEC"), flush=True)
+        gaps = {key: abs(null[key] - base[key])
+                for key in ("lpsp", "deg", "eens", "uni")}
+        trace_equal = null["trace_digest"] == base["trace_digest"]
+        null_ok = all(value < 1e-12 for value in gaps.values()) and trace_equal
+        print("\nTEST NUL (omni N=0 == base) : LPSP %.3e | deg %.3e | "
+              "EENS %.3e | trace=%s -> %s"
+              % (gaps["lpsp"], gaps["deg"], gaps["eens"],
+                 "identique" if trace_equal else "differente",
+                 "OK" if null_ok else "ECHEC"), flush=True)
+        if not null_ok:
+            write_provenance_sidecar(
+                run_dir / "provenance.failed.json", provenance, [out_raw]
+            )
+            raise RuntimeError("test nul P4 invalide")
 
     # --- diagnostic (ii) : gisement reversible sur le run de base ---
     print("\n--- Diagnostic reversible/start-stop (run de base, re-simulation)...", flush=True)
@@ -287,6 +407,8 @@ def main():
 
     # --- txt ---
     with open(out_txt, "w", encoding="utf-8") as f:
+        for line in provenance_header_lines(provenance):
+            f.write(line + "\n")
         f.write("# P4 -- filtre previsionnel de demarrage ELY (base %s, monde nominal)\n" % STRATEGY)
         f.write("# horizon=%d ans | N=%s | %d graines/N | AR(1) rho=%.1f sigma_h=%.0f W | VoLL=%.1f\n"
                 % (years, n_list, n_seeds, NOISE_RHO, SIGMA_H_W, VOLL))
@@ -361,6 +483,11 @@ def main():
     fig.savefig(out_fig + ".png", dpi=160, bbox_inches="tight")
     plt.close()
 
+    write_provenance_sidecar(
+        run_dir / "provenance.json", provenance,
+        [out_raw, out_txt, out_fig + ".pdf", out_fig + ".png"],
+    )
+
     # --- resume console ---
     print("\n" + "=" * 78)
     print("base : LPSP %.4f%%  deg %.3f  unifie %.3f  starts %d"
@@ -375,7 +502,9 @@ def main():
                   % (fam, N, um, (" +/- %.3f" % us) if k > 1 else "", um - base['uni'], sm))
     print("=" * 78)
     print("Resultats : %s" % out_txt)
+    print("Cache brut: %s" % out_raw)
     print("Figure    : %s.pdf" % out_fig)
+    run_lock.close()
 
 
 if __name__ == "__main__":

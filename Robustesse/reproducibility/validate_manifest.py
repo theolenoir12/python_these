@@ -93,6 +93,7 @@ def validate(manifest_path):
         "validated_fingerprinted",
     }
     artifact_paths = []
+    retired_paths = []
     for experiment in experiments:
         if experiment.get("status") not in allowed_statuses:
             errors.append(
@@ -117,8 +118,22 @@ def validate(manifest_path):
                     "artefact modifie : %s (%s != %s)"
                     % (path, actual, artifact["sha256"])
                 )
+        for artifact in experiment.get("retired_artifacts", []):
+            retired_paths.append(artifact.get("path"))
+            digest = artifact.get("sha256", "")
+            if (not isinstance(digest, str) or len(digest) != 64
+                    or any(char not in "0123456789abcdef" for char in digest)):
+                errors.append(
+                    "SHA d'artefact retire invalide : %s"
+                    % artifact.get("path")
+                )
     if len(artifact_paths) != len(set(artifact_paths)):
         errors.append("un artefact est reference par plusieurs experiences")
+    if len(retired_paths) != len(set(retired_paths)):
+        errors.append("un artefact retire est reference plusieurs fois")
+    overlap = set(artifact_paths).intersection(retired_paths)
+    if overlap:
+        errors.append("artefact a la fois actif et retire : %s" % sorted(overlap))
     return errors
 
 

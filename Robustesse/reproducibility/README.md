@@ -50,28 +50,21 @@ export GENIAL_DATA_DIR="$WORK/genial_data"
 Le dépôt canonique s'appelle exactement `Vieillissement9_4` (casse comprise).
 Sous Slurm, le script est copié dans le spool : les lanceurs utilisent donc
 `SLURM_SUBMIT_DIR`. Il faut soumettre depuis le dossier du banc, ou exporter
-`GENIAL_V94_DIR` vers son chemin absolu. Copier de préférence tout
-`Robustesse/` afin d'embarquer les tests ; si seuls les fichiers V9_4 sont
-stagés, les lanceurs exécutent la compilation locale et l'invariance reste le
-verrou scientifique obligatoire.
+`GENIAL_V94_DIR` vers son chemin absolu. Le transfert minimal doit conserver
+les deux dossiers frères `Robustesse/Vieillissement9_4/` et
+`Robustesse/reproducibility/`. Le second contient les utilitaires de provenance
+et de statistiques importés par les bancs.
 
 ```bash
 cd /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4
-
-# 1. Validation physique et comptable, 1 coeur.
-JOB_INV_RAW=$(sbatch --parsable run_meso_invariance.slurm)
-JOB_INV=${JOB_INV_RAW%%;*}
-
-# 2. Les trois campagnes ne démarrent que si l'invariance termine avec code 0.
-JOB_P1_RAW=$(sbatch --parsable --dependency=afterok:${JOB_INV} run_meso_valeur_info.slurm)
-JOB_P1=${JOB_P1_RAW%%;*}
-JOB_P3_RAW=$(sbatch --parsable --dependency=afterok:${JOB_INV} run_meso_maintenance_matrix.slurm)
-JOB_P3=${JOB_P3_RAW%%;*}
-JOB_P4_RAW=$(sbatch --parsable --dependency=afterok:${JOB_INV} run_meso_dwell.slurm)
-JOB_P4=${JOB_P4_RAW%%;*}
-
-printf 'INV=%s P1=%s P3=%s P4=%s\n' "$JOB_INV" "$JOB_P1" "$JOB_P3" "$JOB_P4"
+bash submit_all_meso.sh
 ```
+
+Ces deux lignes constituent la procédure normale. Le lanceur vérifie les
+fichiers requis, soumet d'abord l'invariance, place P1/P3/P4 en dépendance et
+enregistre les quatre identifiants dans `DERNIERS_JOBS_SOUMIS.txt`. Une version
+à recopier ligne par ligne se trouve dans
+`Vieillissement9_4/LANCEMENT_MESOCENTRE_SIMPLE.txt`.
 
 La matrice P3 soumet cinq tâches : T=3/6/12 mois à marge 1, puis T=6 mois à
 marges 1,5 et 2. Les trois caches T=3/6/12 à marge 1 alimentent ensuite :

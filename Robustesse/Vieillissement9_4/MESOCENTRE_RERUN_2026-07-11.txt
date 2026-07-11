@@ -2,6 +2,18 @@
 RERUN MESOCENTRE V9_4 -- ETAT ET COMMANDES CANONIQUES (2026-07-11)
 ================================================================================
 
+PROCEDURE NORMALE, SANS SYNTAXE SLURM A RECOPIER
+------------------------------------------------
+Lire en priorite : LANCEMENT_MESOCENTRE_SIMPLE.txt
+
+Il suffit ensuite de taper ces deux lignes, l'une apres l'autre :
+
+   cd /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4
+   bash submit_all_meso.sh
+
+Le reste de ce fichier est une documentation technique et ne doit pas etre
+recopie pour lancer les jobs.
+
 STATUT DES LOTS RAPATRIES
 -------------------------
 - P3 215043 et 215055 : echec avant simulation (chemin du sous-script dans le
@@ -31,26 +43,16 @@ PRECONDITIONS
 SOUMISSION (PUIS ON PEUT QUITTER LA SESSION)
 --------------------------------------------
    cd /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4
+   bash submit_all_meso.sh
 
-   JOB_INV_RAW=$(sbatch --parsable run_meso_invariance.slurm)
-   JOB_INV=${JOB_INV_RAW%%;*}
+Le script affiche et enregistre les quatre numeros de jobs. Il gere lui-meme
+les dependances qui empechent P1/P3/P4 de demarrer si l'invariance echoue.
 
-   JOB_P1_RAW=$(sbatch --parsable --dependency=afterok:${JOB_INV} run_meso_valeur_info.slurm)
-   JOB_P1=${JOB_P1_RAW%%;*}
-   JOB_P3_RAW=$(sbatch --parsable --dependency=afterok:${JOB_INV} run_meso_maintenance_matrix.slurm)
-   JOB_P3=${JOB_P3_RAW%%;*}
-   JOB_P4_RAW=$(sbatch --parsable --dependency=afterok:${JOB_INV} run_meso_dwell.slurm)
-   JOB_P4=${JOB_P4_RAW%%;*}
+SUIVI SIMPLE
+------------
+   squeue -u tlenoir
 
-   printf 'INV=%s P1=%s P3=%s P4=%s\n' "$JOB_INV" "$JOB_P1" "$JOB_P3" "$JOB_P4"
-
-Les dependances afterok empechent P1/P3/P4 de demarrer si l'invariance echoue.
-
-SUIVI
------
-   squeue -j "$JOB_INV,$JOB_P1,$JOB_P3,$JOB_P4"
-   sacct -j "$JOB_INV,$JOB_P1,$JOB_P3,$JOB_P4" \
-     --format=JobID,JobName,State,ExitCode,Elapsed,MaxRSS
+Les numeros exacts restent disponibles dans DERNIERS_JOBS_SOUMIS.txt.
 
 SORTIES ATTENDUES
 -----------------

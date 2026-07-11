@@ -1,0 +1,35 @@
+From f97e94a44f853811d667c5243e46b2cafd3ed5bb Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 11 Jul 2026 13:37:08 +0000
+Subject: [PATCH] Fix matrix slurm : SLURM_SUBMIT_DIR au lieu de BASH_SOURCE
+ (spool)
+
+Les jobs 215043_* echouaient : sous SLURM le script batch est copie dans
+/var/spool/slurm/jobXXXX/ et BASH_SOURCE ne pointe plus vers le depot ->
+run_meso_maintenance.slurm introuvable. On repart de SLURM_SUBMIT_DIR
+(repli BASH_SOURCE pour un lancement manuel hors SLURM).
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_015a63S8UWVq2qswrPvxcime
+---
+ .../Vieillissement9_4/run_meso_maintenance_matrix.slurm       | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/Robustesse/Vieillissement9_4/run_meso_maintenance_matrix.slurm b/Robustesse/Vieillissement9_4/run_meso_maintenance_matrix.slurm
+index 009b98f..af10331 100644
+--- a/Robustesse/Vieillissement9_4/run_meso_maintenance_matrix.slurm
++++ b/Robustesse/Vieillissement9_4/run_meso_maintenance_matrix.slurm
+@@ -14,7 +14,9 @@
+ 
+ set -euo pipefail
+ 
+-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
++# Sous SLURM le script batch est copie dans le spool : BASH_SOURCE ne pointe
++# plus vers le depot. On repart du repertoire de soumission.
++SCRIPT_DIR="${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}"
+ case "$SLURM_ARRAY_TASK_ID" in
+   0) PARAMS=(--tvisit 3  --margin 1) ;;
+   1) PARAMS=(--tvisit 6  --margin 1) ;;
+-- 
+2.43.0
+

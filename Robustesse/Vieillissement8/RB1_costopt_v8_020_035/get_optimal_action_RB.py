@@ -1,10 +1,4 @@
-"""Alias de compatibilite vers RB1_costopt_v8_020_035.
-
-Le nom nu ``RB1`` est desormais interdit dans les nouveaux bancs de
-defaillance, car il a designe successivement trois parametrages. Ce fichier
-conserve strictement le comportement 0.20/0.35 installe par le commit f562d47
-afin de ne pas casser les scripts historiques qui l'importent directement.
-"""
+"""Variante immuable RB1 issue de l'optimisation nominale V8."""
 
 from rb1_variants import run_rb1
 

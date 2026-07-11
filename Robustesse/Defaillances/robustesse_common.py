@@ -104,6 +104,21 @@ SCENARIOS = {
 # Strategies candidates : EXACTEMENT celles du nuage de Pareto
 # (Vieillissement8/Pareto_2d_25y.py), a l'exception de RB2(vieillissement) =
 # RB2(SoH)/RB2(RUL) (hors scope). SoC09 n'en fait pas partie -> exclue.
+RB1_VARIANTS = {
+    "RB1_hist_020_060": "RB1 historique (0.20/0.60)",
+    "RB1_failopt_040_075": "RB1-opt defaillances (0.40/0.75)",
+    "RB1_costopt_v8_020_035": "RB1 cout-unifie V8 (0.20/0.35)",
+}
+RB1_VARIANT_THRESHOLDS = {
+    "RB1_hist_020_060": (0.20, 0.60),
+    "RB1_failopt_040_075": (0.40, 0.75),
+    "RB1_costopt_v8_020_035": (0.20, 0.35),
+}
+RB1_FAILOPT_THRESHOLDS = RB1_VARIANT_THRESHOLDS["RB1_failopt_040_075"]
+
+# Le banc initial de comparaison des reactions aux pannes utilisait la RB1 du
+# chapitre 2. Le nom est desormais explicite : le dossier generique ``RB1`` a
+# change deux fois de parametrage et ne constitue plus une preuve de provenance.
 DEFAULT_STRATEGIES = [
     "0-100",
     "25-75",
@@ -111,13 +126,16 @@ DEFAULT_STRATEGIES = [
     "75-25",
     "100-0",
     "RB2",
-    "RB1",
+    "RB1_hist_020_060",
     "SoC1",
     "SoC06",
 ]
 
 # Etiquettes des figures = noms reels des strategies (Full-H2/Full-bat obsoletes).
 STRATEGY_LABELS = {s: s for s in DEFAULT_STRATEGIES}
+STRATEGY_LABELS.update(RB1_VARIANTS)
+# Lecture des anciens caches seulement. Les nouveaux calculs refusent cet alias.
+STRATEGY_LABELS["RB1"] = "RB1 alias legacy (parametrage non trace)"
 SCENARIO_LABELS = {
     "FC_total": "PEMFC totale", "FC_50": "PEMFC 50%",
     "ELY_total": "PEMWE totale", "ELY_50": "PEMWE 50%",
@@ -142,6 +160,12 @@ def load_strategy(folder_name):
     renvoyee conserve ses propres globals (Common.get_lol, FC, ...) ; on peut
     donc charger plusieurs strategies homonymes dans le meme process et garder
     chaque fonction independamment."""
+    if folder_name == "RB1":
+        raise ValueError(
+            "Le nom 'RB1' est ambigu (0.20/0.60, 0.40/0.75 ou 0.20/0.35). "
+            "Utiliser explicitement l'un de : %s"
+            % ", ".join(sorted(RB1_VARIANTS))
+        )
     folder_path = os.path.join(VIEIL8, folder_name)
     if not os.path.isdir(folder_path):
         raise FileNotFoundError("Strategie introuvable : %s" % folder_path)

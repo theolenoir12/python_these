@@ -59,7 +59,10 @@ POINTS = {
     "75-25": (3.8032, 59.6765),
     "100-0": (2.4851, 66.4122),
     "RB2":   (2.5921, 58.8431),   # socle cost-min (setpoints actuels : main RB2/)
-    "RB1":   (1.7307, 71.0565),
+    "RB1":   (1.2597, 80.1562),   # variante historique du panel chapitre 2
+    # Minimiseur de la grille V8 a VoLL=3, conserve sous un nom distinct et
+    # volontairement absent du panel BASE tant que son role n'est pas redige.
+    "RB1-costopt-V8": (1.7307, 71.0565),
     "SoC1":  (1.3389, 140.6745),
     "SoC06": (29.4642, 109.2535),
     "Ideal": (0.0, 0.0),

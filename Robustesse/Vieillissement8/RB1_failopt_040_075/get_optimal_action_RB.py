@@ -1,16 +1,10 @@
-"""Alias de compatibilite vers RB1_costopt_v8_020_035.
-
-Le nom nu ``RB1`` est desormais interdit dans les nouveaux bancs de
-defaillance, car il a designe successivement trois parametrages. Ce fichier
-conserve strictement le comportement 0.20/0.35 installe par le commit f562d47
-afin de ne pas casser les scripts historiques qui l'importent directement.
-"""
+"""Variante immuable RB1 optimisee pour la robustesse sous defaillance."""
 
 from rb1_variants import run_rb1
 
-VARIANT_ID = "rb1_costopt_v8_020_035"
-SOC_LOW = 0.20
-SOC_HIGH = 0.35
+VARIANT_ID = "rb1_failopt_040_075"
+SOC_LOW = 0.40
+SOC_HIGH = 0.75
 
 
 def get_optimal_action_RB(

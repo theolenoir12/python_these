@@ -7,6 +7,8 @@ __pycache__/
 # Données lourdes
 *.mat
 *.csv
+!Robustesse/Vieillissement9_4/Common/FC_efficiency_LU_table_power.csv
+!Robustesse/Vieillissement9_4/Common/ELY_efficiency_LU_table_power.csv
 *.h5
 *.pkl
 
@@ -17,3 +19,7 @@ __pycache__/
 .vscode/
 .spyproject/
 .claude/settings.local.json
+
+# Caches scientifiques locaux : nommes par empreinte, jamais publies tels quels.
+Robustesse/**/.science_cache/
+Robustesse/**/runs/

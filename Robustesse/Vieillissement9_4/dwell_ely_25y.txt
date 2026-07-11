@@ -1,0 +1,30 @@
+# P4 -- filtre previsionnel de demarrage ELY (base RB2(SoH), monde nominal)
+# horizon=25 ans | N=[2, 4, 6, 8, 12] | 32 graines/N | AR(1) rho=0.8 sigma_h=3555 W | VoLL=3.0
+# setpoint duplique : c_ely=0.300 gamma=1.5 (a maintenir aligne avec RB2(SoH))
+# TEST NUL omni(N=0)==base : OK
+
+## Diagnostic (ii) -- gisement de la part reversible (run de base)
+ELY : total 8.10 % dont start-stop 7.17 (89 %) | irr 0.05 | rev RESIDUEL 0.000 (0.0 %) | idle 0.88 ; niveau rev moyen 0.0000 %, max 0.0007 %
+FC  : total 44.76 % dont start-stop 22.56 (50 %) | irr 22.19 | rev RESIDUEL 0.013 (0.0 %) | idle 0.00 ; niveau rev moyen 0.0106 %, max 0.0513 %
+
+## Reference
+family;N;LPSP_%;deg_kEUR;unifie_kEUR;starts;vie_ely
+base;0;2.9099;58.024;81.889;9193;None
+
+## Configurations (minoff/omni : deterministes ; noisy : moyenne +/- std sur 32 graines)
+family;N;LPSP_mean;LPSP_std;deg_mean;deg_std;uni_mean;uni_std;starts_mean;d_uni_vs_base;N_ok
+minoff;2;2.8304;0.0000;57.945;0.000;81.158;0.000;9067;-0.731;1
+minoff;4;2.8375;0.0000;57.774;0.000;81.046;0.000;8863;-0.844;1
+minoff;6;2.8437;0.0000;57.600;0.000;80.923;0.000;8683;-0.966;1
+minoff;8;2.8384;0.0000;57.524;0.000;80.803;0.000;8573;-1.086;1
+minoff;12;2.8384;0.0000;57.524;0.000;80.803;0.000;8573;-1.086;1
+omni;2;2.7369;0.0000;57.804;0.000;80.250;0.000;8626;-1.639;1
+omni;4;2.6839;0.0000;57.440;0.000;79.452;0.000;8083;-2.437;1
+omni;6;2.7947;0.0000;56.880;0.000;79.800;0.000;7486;-2.089;1
+omni;8;6.3240;0.0000;54.025;0.000;105.891;0.000;4664;+24.002;1
+omni;12;13.5267;0.0000;48.360;0.000;159.298;0.000;0;+77.408;1
+noisy;2;2.7887;0.0108;57.782;0.011;80.653;0.085;8725;-1.236;32
+noisy;4;2.7389;0.0137;57.524;0.019;79.987;0.102;8266;-1.902;32
+noisy;6;2.9127;0.0167;56.977;0.021;80.865;0.126;7702;-1.024;32
+noisy;8;6.2869;0.0543;54.108;0.033;105.669;0.419;4861;+23.780;32
+noisy;12;12.9264;0.6372;48.495;0.104;154.510;5.123;17;+72.621;32

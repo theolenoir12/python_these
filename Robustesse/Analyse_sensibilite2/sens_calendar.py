@@ -50,7 +50,7 @@ EMS_LIST = [
     ("100-0",    "100-0"),
     ("RB2",      "RB2"),
     ("RB2(SoH)", "RB2(SoH)"),
-    ("RB1",      "RB1"),
+    ("RB1_hist_020_060", "RB1 historique"),
     ("SoC1",     "SoC1"),
     ("SoC06",    "SoC06"),
 ]

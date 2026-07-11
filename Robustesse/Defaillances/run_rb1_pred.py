@@ -25,7 +25,7 @@ import robustesse_common as rc
 import rb1_pred_common as rp
 
 # ======================= CONFIGURATION =======================
-RB1_OPT   = (0.40, 0.75)          # seuils optimises (sweep_rb1.py, plateau 1.481%)
+RB1_OPT   = rc.RB1_FAILOPT_THRESHOLDS  # variante gelee, plateau 1.481 %
 B_RESERVE = 0.95                   # seuil haut en mode reserve (smoke : optimum)
 H2_GATE   = 0.7                    # reserve active seulement si reservoir H2 > 70% (garde anti-famine ELY)
 H_PRE     = 18                     # horizon de prevision [h] (== RB2(Pred))

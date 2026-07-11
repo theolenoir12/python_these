@@ -105,15 +105,20 @@ avec la même expression que la transition directe ; l'ancienne interpolation
 entre nœuds pouvait consommer quelques Wh de trop et rendre l'état suivant
 infaisable vers 12,6 ans.
 
-Les sorties P1/P3/P4 de juillet antérieures à ces corrections sont des archives
-legacy et doivent être recalculées avant promotion. P4 corrige en plus son bruit
-de prévision : une graine définit désormais une trajectoire AR(1) horaire
-persistante, commune à tous les horizons N. Le protocole d'acceptation est :
+Les sorties P1/P3/P4 de juillet antérieures aux jobs 215088-215091 sont des
+archives legacy. Le rerun corrigé a maintenant passé le protocole d'acceptation
+et est audité dans `AUDIT_RERUN_CORRIGE_2026-07-11.txt`. P4 corrige en plus son
+bruit de prévision : une graine définit désormais une trajectoire AR(1) horaire
+persistante, commune à tous les horizons N. Le protocole d'acceptation était :
 
 1. `run_meso_invariance.slurm` sur 25 ans : ledger = somme des segments,
    absence de rejeu, gels correctifs et boucle instantanée = boucle de base ;
 2. P1/P3/P4 dans `runs/<id>_<empreinte>/`, avec cache brut pleine précision ;
-3. statistiques appariées VoLL=1/3/10, puis promotion explicite au manifeste.
+3. statistiques appariées VoLL=1/3/10, puis promotion explicite.
+
+Ces trois étapes passent. Le CSV Sidelec identifié par la provenance est
+exactement reproductible depuis la copie locale datée en supprimant la colonne
+date ; aucune récupération du mésocentre n'est nécessaire.
 
 Le mode `replacement_accounting="legacy_overlap"` est conservé uniquement pour
 diagnostiquer les anciennes sorties ; il ne doit pas produire un nouveau

@@ -1,0 +1,169 @@
+================================================================================
+PLAN DE CONSOLIDATION AVANT REDACTION CHIFFREE DU CHAPITRE 3 -- 2026-07-11
+================================================================================
+
+VERDICT
+-------
+
+Les reruns corriges P1/P3/P4 suffisent pour construire le recit scientifique
+et commencer la redaction des methodes, des mecanismes et des limites.
+
+Ils ne suffisent pas encore pour figer les tableaux finaux du chapitre. Le
+blocage principal n'est pas leur qualite : c'est l'absence de socle commun avec
+les resultats Fable actuellement dans le manuscrit.
+
+Les valeurs Fable 80,102 / 78,336 / 77,224 kEUR utilisent
+`Robustesse/Predictions/Common` :
+
+- pas de ReplacementLedger ;
+- pas de convention corrected ;
+- rejeu du pas de franchissement sur l'unite neuve ;
+- cout reconstruit sur la trace complete ;
+- ancien modele FC high/idle/transient ;
+- autre get_lol et autre traitement des bornes H2.
+
+Elles sont donc legacy pour les tableaux finaux. Leurs enseignements
+qualitatifs restent des hypotheses solides a revalider.
+
+Le CSV Sidelec n'est plus un sujet : le fichier mesocentre est exactement la
+vue PV/consommation de la copie locale datee, apres retrait de la date.
+
+
+CHANTIER OBLIGATOIRE A -- UN SEUL MOTEUR CANONIQUE
+--------------------------------------------------
+
+1. Construire une boucle forecast a partir de V9_4 corrige, et non corriger par
+   petites touches l'ancienne boucle Predictions.
+2. Conserver dans cette boucle : ledger segmente, remplacement a j+1, modele FC
+   stateful reversible/irreversible, inversion H2 exacte et get_lol corrige.
+3. Reintegrer explicitement les hooks Fable utiles : bruit CRN, prevision,
+   plafond SoC dependant du SoH batterie et cible de pre-charge.
+4. Lire le cout canonique depuis le ledger, jamais depuis la trace complete.
+
+Tests d'acceptation avant tout calcul long :
+
+- forecast et leviers OFF = boucle V9_4 de base bit-a-bit ;
+- strategie Fable desactivee = RB2 corrige bit-a-bit ;
+- ledger = somme des segments ;
+- tests nuls des niveaux SoH_bat, SoH_H2 et prediction ;
+- memes trajectoires de bruit entre variantes ;
+- fermeture unifie = degradation + VoLL x EENS.
+
+
+CHANTIER OBLIGATOIRE B -- REOPTIMISATION HARMONISEE
+---------------------------------------------------
+
+Les anciens optimums 0,440/0,310 et gamma_FC/gamma_ELY=1/2 ne doivent pas etre
+simplement recopies : le moteur physique et la comptabilite ont change.
+
+Ordre minimal :
+
+1. re-optimiser le socle RB2 dans V9_4 corrige ;
+2. re-optimiser les gammas SoH_H2 sur ce socle ;
+3. revalider le plafond SoH_bat autour de g=0,2 ;
+4. revalider la bande/cible/horizon de prevision sur ce socle ;
+5. executer ensuite seulement le Monte-Carlo final N=200.
+
+Sorties finales attendues sur un meme moteur et un meme profil :
+
+  RB2
+  RB2(SoH_H2)
+  RB2(SoH_bat)
+  RB2(SoH_all)
+  RB2(Pred)
+  RB2(SoH_all+Pred)
+
+
+CHANTIER OBLIGATOIRE C -- ATTRIBUTION SoH ALIGNEE
+-------------------------------------------------
+
+Relancer P1 avec le socle et les gammas retenus au chantier B. Conserver :
+
+  RB2 ; Recale ; Sched-global ; Sched-age ; SoH.
+
+`Sched-age` doit reinitialiser le programme nominal propre a la FC et a l'ELY
+quand l'unite correspondante est remplacee. C'est le concurrent sans capteur le
+plus fort : l'age depuis remplacement est observable gratuitement.
+
+Sans Sched-age, SoH-Sched-global melange retour SoH et recalage de phase. Le
+resultat actuel -0,716 kEUR reste valide face a l'horloge globale, mais ne doit
+pas etre appele valeur causale definitive du capteur.
+
+Ajouter dans le meme banc au moins une sensibilite SoH estime : bruit
+hebdomadaire calibre et biais lent. Le retard peut rester une perspective.
+
+
+CHANTIER RUL -- MINIMUM A FAIRE
+-------------------------------
+
+Le texte RUL actuel doit etre reorganise avant toute compilation finale :
+
+1. conserver le resultat negatif du derating continu : le gain n'apparait qu'a
+   RUL_ref=9000 j, lorsque RUL devient un proxy continu et moins direct du SoH ;
+2. retirer l'ellipse actuelle : elle a ete calculee pour RUL_ref=1000 j,
+   exposant=0,10, pas pour le point 9000 j / 0,20 annonce dans le texte ;
+3. pivoter vers la maintenance P3 comme usage propre de la RUL.
+
+P3 corrige est publiable comme borne structurelle a RUL exacte. Pour affirmer
+une valeur pratique du pronostic, ajouter un seul banc central :
+
+  T=6 mois ; VoLL=3 ; C_intervention=1,5 kEUR ; marges 1 et 1,5 ;
+  biais RUL -20/0/+20 % ; bruit 0,5x et 1x la calibration disponible.
+
+Les politiques non-RUL doivent etre reprises des caches ; seuls les cas RUL
+sont a recalculer. Rapporter moyenne appariee, IC95, ES90 de la difference,
+gains/pertes, heures-composant, gaspillage et interventions.
+
+
+PLACE DE P4
+-----------
+
+Ne pas resoumettre P4 a protocole identique. Le resultat actuel est suffisant
+comme resultat mecanistique separe : N=4 bruite bat la base de 1,470 kEUR, mais
+la valeur propre de la prevision au-dela du meilleur minoff n'est que
+0,387 kEUR.
+
+P4 ne doit rejoindre la strategie finale que s'il est porte sur le moteur et le
+socle harmonises, puis teste en cumul avec RB2(SoH_all+Pred). Sinon, le presenter
+comme une analyse complementaire de l'anti-cyclage et non comme un etage de la
+strategie finale.
+
+
+REDACTION : CE QUI PEUT COMMENCER AVANT LES RERUNS
+-------------------------------------------------
+
+Peuvent etre rediges immediatement :
+
+- la distinction performance nominale / valeur informationnelle ;
+- les protocoles CRN, tests nuls et incertitudes ;
+- le mecanisme du SoH comme retour contre l'erreur de modele ;
+- l'echec du derating RUL continu et le pivot vers la maintenance ;
+- le mecanisme P3 et ses hypotheses ;
+- le mecanisme prevision -> faux declenchements -> hysteresis/persistance ;
+- les limites et les formulations autorisees.
+
+Doivent rester provisoires jusqu'au chantier B/C :
+
+- toutes les valeurs absolues Fable ;
+- les optimums du socle, des gammas et de la strategie finale ;
+- les figures Pareto codees en dur ;
+- les pourcentages de gain final ;
+- la qualification de meilleure strategie.
+
+
+ORDRE OPERATIONNEL RECOMMANDE
+-----------------------------
+
+1. implementer et tester le moteur forecast V9_4 ;
+2. preparer les jobs de re-optimisation et un lanceur mesocentre simple ;
+3. lancer socle -> SoH -> prediction avec dependances ;
+4. lancer P1 aligne et la sensibilite RUL centrale ;
+5. pendant les calculs, restructurer les sections SoH et RUL sans figer les
+   nombres ;
+6. auditer les sorties, regenerer les figures et remplir les tableaux ;
+7. seulement alors rediger la synthese et la conclusion finales.
+
+Aucun nouveau job ne doit etre soumis avant que les tests du chantier A ne
+passent. Les commandes seront fournies dans un fichier a deux lignes, comme le
+lanceur precedent.
+================================================================================

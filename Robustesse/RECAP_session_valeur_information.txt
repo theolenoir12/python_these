@@ -1,25 +1,26 @@
 ================================================================================
 
-AVERTISSEMENT DE VALIDATION -- AUDIT DU 2026-07-11
+MISE A JOUR DE VALIDATION -- RERUN CORRIGE DU 2026-07-11
 --------------------------------------------------------------------------------
-Ce document conserve le récit et les chiffres des jobs historiques. Les sorties
-P1/P3 qu'il décrit sont classées LEGACY PRÉ-CORRECTION : le moteur rejouait le
-pas de remplacement sur l'unité neuve, le coût sur trace complète ne respectait
-pas tous les resets et, en P3, le LOL pouvait créditer une FC/ELY hors service
-lorsque la batterie saturait. Les chiffres restent utiles au diagnostic, mais
-ne doivent pas être cités comme résultats finaux avant le rerun corrigé.
+Les jobs corrigés 215088-215091 sont désormais rapatriés et validés. La note
+canonique qui les audite est :
 
-MISE À JOUR TECHNIQUE : les lots corrigés rapatriés le 2026-07-11 ne donnent
-aucun résultat exploitable. Les matrices P3 215043/215055 ont échoué sur le
-chemin du sous-script ; 215063 sur un staging incomplet ; les logs P1/invariance
-sont vides. P4 215065 a échoué au plancher H2. L'inversion de LUT fautive et les
-lanceurs Slurm sont corrigés ; les quatre campagnes doivent être resoumises
-après mise à jour du dépôt, avec dépendance afterok sur l'invariance.
+Vieillissement9_4/AUDIT_RERUN_CORRIGE_2026-07-11.txt
+
+Elle remplace les chiffres P1/P3/P4 historiques de ce document. Le
+post-traitement apparié corrigé se trouve dans le run empreint
+Vieillissement9_4/runs/p1_p3_stats_dc427b9da2f4/. Aucun rerun à protocole
+identique n'est requis.
+
+La traçabilité Sidelec est résolue : le fichier mésocentre e18721aa...91284 est
+exactement la vue PV/consommation de la copie locale datée, après suppression
+de la colonne date et conversion CRLF vers LF. Aucune récupération ni aucun
+rerun n'est requis.
 
 Les qualificatifs « quasi certain », « meilleure politique » et « bat dans les
-9 cas » sont conditionnels à VoLL=3 et reposent en partie sur les argmin des
-niveaux marginaux. Le post-traitement apparié VoLL=1/3/10 se trouve dans
-Vieillissement9_4/STATISTIQUES_APPARIEES_P1_P3.txt. `outfc+outely` désigne des
+9 cas » restent conditionnels à la VoLL et au protocole. Le nouveau
+post-traitement distingue les différences de moyennes, les queues marginales et
+le pire décile de la différence appariée. `outfc+outely` désigne des
 heures-composant, pas l'indisponibilité du site.
 --------------------------------------------------------------------------------
 RÉCAPITULATIF DE LA DÉMARCHE -- SESSION DE TRAVAIL DU 2026-07-09

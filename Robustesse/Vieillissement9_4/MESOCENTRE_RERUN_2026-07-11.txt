@@ -2,6 +2,17 @@
 RERUN MESOCENTRE V9_4 -- ETAT ET COMMANDES CANONIQUES (2026-07-11)
 ================================================================================
 
+STATUT FINAL : TERMINE ET VALIDE
+-------------------------------
+
+Les jobs 215088 (invariance), 215089 (P1), 215090 (matrice P3) et 215091 (P4)
+ont termine avec succes. Ne pas les resoumettre a protocole identique.
+
+Lire maintenant : AUDIT_RERUN_CORRIGE_2026-07-11.txt
+
+La procedure de soumission ci-dessous est conservee comme documentation pour
+un futur protocole, pas comme prochaine action immediate.
+
 PROCEDURE NORMALE, SANS SYNTAXE SLURM A RECOPIER
 ------------------------------------------------
 Lire en priorite : LANCEMENT_MESOCENTRE_SIMPLE.txt

@@ -1,1 +1,5 @@
-identique à RB5 le 22/09, permet de faire des copies de la trame (avec temps de calcul réduit) pour y incorporer les règles qu'on veut
+ALIAS LEGACY AMBIGU -- NE PAS UTILISER DANS UN NOUVEAU CALCUL
+
+Ce dossier pointe actuellement vers rb1_costopt_v8_020_035 (seuils 0.20/0.35)
+afin de conserver la compatibilite des anciens lanceurs. Utiliser le dossier
+nomme RB1_costopt_v8_020_035 et consigner cet identifiant dans toute sortie.

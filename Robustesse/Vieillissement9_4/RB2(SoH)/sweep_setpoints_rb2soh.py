@@ -52,7 +52,7 @@ PARENT = os.path.dirname(HERE)                               # .../Vieillissemen
 sys.path.insert(0, PARENT)
 from Common import Init_EMR_MG_v16_python as I
 from Common.main_init_and_loop import init_and_run_loop
-from Common.cost_fcn_total2 import get_cost_total
+from Common.cost_fcn_total2 import get_cost_from_ledger
 from Common.get_lol import get_lol
 sys.path.insert(0, os.path.abspath(os.path.join(PARENT, "..", "Analyse_sensibilite")))
 import voll_common as V                                       # cout unifie (VoLL)
@@ -120,8 +120,7 @@ def _metrics(data):
     Pr = np.array([(a-b)*(1-c)/1000 for a, b, c in zip(P_dc_load, P_dc_pv, lol_tab)])
     p, r = np.clip(Pp, 0, None), np.clip(Pr, 0, None)
     lpsp = (np.clip(p-r, 0, None).sum()/p.sum()*100) if p.sum() > 0 else 0.0
-    deg = get_cost_total(af, P_fc, ae, P_ely, P_bat, SoC,
-                         I.LOAD, I.BAT, I.FC, I.ELY, SoH_bat) / 1000
+    deg = get_cost_from_ledger(data) / 1000.0
     return float(lpsp), float(deg)
 
 

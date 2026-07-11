@@ -19,7 +19,7 @@ scenarios = [
     ("100-0", "100-0"),
     ("RB2",   "RB2"),
     ("RB2(SoH)",   "RB2(SoH)"),
-    ("RB1",   "RB1"),
+    ("RB1_costopt_v8_020_035", "RB1-costopt-V8"),
     ("SoC1",   "SoC1"),
     ("SoC06",   "SoC06")
     # ("RB2(RUL)",  "RB2(RUL)")
@@ -35,30 +35,12 @@ N_WORKERS = max(1, min(len(scenarios), (os.cpu_count() or 2) - 1))
 # On ajoute le chemin courant pour trouver Common
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from Common.main_init_and_loop import init_and_run_loop
-from Common.cost_fcn_total2 import get_cost_total
-from Common.Init_EMR_MG_v16_python import LOAD, BAT, FC, ELY
 
 
 def _compute_metrics(data):
     """Reproduit EXACTEMENT le calcul (LPSP %, coût k€) de run_main_plot, sans aucun plot.
     -> Extrait des lignes 47-49 / 330-331 / 436-477 de Common/main_plot.py."""
-    P_bat = data["P_bat"]; P_fc = data["P_fc"]; P_ely = data["P_ely"]
     P_dc_load = data["P_dc_load"]; P_dc_pv = data["P_dc_pv"]; lol_tab = data["lol_tab"]
-    SoC = data["SoC"]
-    alpha_fc  = data["alpha_fc"][:-1]
-    alpha_ely = data["alpha_ely"][:-1]
-    SoH_bat   = data["SoH_bat"][:-1].copy()
-
-    # Insertion des NaN juste avant un remplacement batterie (lignes 71-73 de main_plot ;
-    # seul SoH_bat influe sur le coût). Puis interpolation (lignes 442-445).
-    for k in range(1, len(SoH_bat)):
-        if SoH_bat[k] == 1:
-            SoH_bat[k - 1] = np.nan
-    if np.isnan(SoH_bat).any():
-        SoH_bat[np.isnan(SoH_bat)] = np.interp(
-            np.flatnonzero(np.isnan(SoH_bat)),
-            np.flatnonzero(~np.isnan(SoH_bat)),
-            SoH_bat[~np.isnan(SoH_bat)])
 
     # LPSP (lignes 330-331 + 436-439)
     P_planned = np.array([(a - b) / 1000 for a, b in zip(P_dc_load, P_dc_pv)])
@@ -66,9 +48,10 @@ def _compute_metrics(data):
     p, r = np.clip(P_planned, 0, None), np.clip(P_real, 0, None)
     lpsp = (np.clip(p - r, 0, None).sum() / p.sum() * 100) if p.sum() > 0 else 0.0
 
-    # Coût de dégradation [k€] (ligne 477)
-    cost_keur = get_cost_total(alpha_fc, P_fc, alpha_ely, P_ely, P_bat, SoC,
-                               LOAD, BAT, FC, ELY, SoH_bat) / 1000
+    ledger = data.get("degradation_ledger")
+    if ledger is None:
+        raise RuntimeError("batch V9_4 corrige sans degradation_ledger")
+    cost_keur = sum(ledger["total_eur"].values()) / 1000.0
     return float(lpsp), float(cost_keur)
 
 
@@ -95,7 +78,7 @@ def run_one(args):
         return label, np.nan, np.nan
 
     t0 = timer()
-    data = init_and_run_loop(get_action_func)
+    data = init_and_run_loop(get_action_func, replacement_accounting="corrected")
     lpsp, cost = _compute_metrics(data)
     print(f"  [OK] {label:10s} -> LPSP {lpsp:7.4f}%  cost {cost:8.3f} k€  ({timer()-t0:.0f}s)", flush=True)
     return label, lpsp, cost

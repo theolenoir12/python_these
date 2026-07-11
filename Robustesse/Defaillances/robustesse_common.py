@@ -25,25 +25,23 @@ METHODOLOGIE (validee avec l'auteur, juin 2026)
      - '50'    : composant a 50 % de puissance (P_max derate x0.5).
 
 3. BRANCHE. A t0 on REPART du snapshot RB2 (SoC, E_h2, SoH...) et on simule la
-   SEULE semaine de panne, en gelant les SoH/alpha (degradation negligeable sur
-   1 semaine). Pendant cette semaine on applique une STRATEGIE DE REACTION
-   candidate (RB2, RB1, 100-0, 50-50, ...) : on mesure ainsi comment chaque EMS
-   s'adapte a la panne, a regime permanent identique.
+   semaine de panne puis, par defaut, trois semaines de reprise, en gelant les
+   SoH/alpha. On applique une strategie candidate et un dispatcher conscient
+   de la panne qui plafonne le composant puis reroute le manque vers la
+   batterie.
 
-4. METRIQUE. LPSP (Loss of Power Supply Probability) sur la semaine de panne,
-   calculee EXACTEMENT comme sens_common.metrics / batch_pareto (memes clips).
-   On renvoie aussi l'energie non servie [kWh].
+4. METRIQUE. LPSP sur `EVAL_HOURS` (defaut 4 semaines : panne + reprise),
+   calculee comme sens_common.metrics / batch_pareto. On renvoie aussi
+   l'energie non servie [kWh].
 
 5. MONTE-CARLO. On tire `N_DRAWS` instants t0 (memes tirages pour TOUTES les
    strategies/scenarios -> comparaison APPARIEE) puis etude statistique
    (distribution de LPSP, meilleure strategie par scenario).
 
-NB physique : `get_lol` (le "referee") plafonne les puissances FC/ELY a leur
-P_max effectif mais ne re-route PAS automatiquement vers la batterie l'exces
-commande au-dela du plafond -> ce surplus devient de l'energie non servie. La
-robustesse mesuree reflete donc la LOGIQUE PROPRE de chaque strategie (une
-strategie qui sur-sollicite le composant en panne est penalisee), ce qui est
-precisement l'objet de la comparaison.
+NB physique : le harness applique explicitement le derating et reroute le
+manque vers la batterie avant le referee. La LPSP residuelle vient donc des
+contraintes physiques (SoC, H2, Pmax), pas d'une puissance fantome du composant
+en panne.
 """
 import os
 import sys
@@ -76,8 +74,8 @@ os.makedirs(RESULTS_DIR, exist_ok=True)
 YEARS_BASELINE = 2.0                       # horizon de la trajectoire RB2
 SETTLE_HOURS   = 730                        # ~1 mois : pas d'instant de panne avant
 WEEK_HOURS     = 7 * 24                     # duree d'une panne (1 semaine)
-# Fenetre sur laquelle on mesure la LPSP. Par defaut = la semaine de panne
-# (specification initiale). La mettre a un multiple de WEEK_HOURS permet de
+# Fenetre sur laquelle on mesure la LPSP. La specification initiale etait la
+# seule semaine de panne ; le defaut actuel inclut la reprise afin de
 # capter la REPRISE post-reparation (utile pour les pannes ELY, dont le cout
 # reel -- reservoir H2 vide -> famine FC -- tombe APRES la semaine de panne).
 # Le composant est en panne pendant WEEK_HOURS puis repare ; la mesure continue.
@@ -105,16 +103,21 @@ SCENARIOS = {
 # (Vieillissement8/Pareto_2d_25y.py), a l'exception de RB2(vieillissement) =
 # RB2(SoH)/RB2(RUL) (hors scope). SoC09 n'en fait pas partie -> exclue.
 RB1_VARIANTS = {
-    "RB1_hist_020_060": "RB1 historique (0.20/0.60)",
-    "RB1_failopt_040_075": "RB1-opt defaillances (0.40/0.75)",
-    "RB1_costopt_v8_020_035": "RB1 cout-unifie V8 (0.20/0.35)",
+    "rb1_hist_020_060": "RB1 historique (0.20/0.60)",
+    "rb1_failopt_040_075": "RB1-opt defaillances (0.40/0.75)",
+    "rb1_costopt_v8_020_035": "RB1 cout-unifie V8 (0.20/0.35)",
 }
 RB1_VARIANT_THRESHOLDS = {
-    "RB1_hist_020_060": (0.20, 0.60),
-    "RB1_failopt_040_075": (0.40, 0.75),
-    "RB1_costopt_v8_020_035": (0.20, 0.35),
+    "rb1_hist_020_060": (0.20, 0.60),
+    "rb1_failopt_040_075": (0.40, 0.75),
+    "rb1_costopt_v8_020_035": (0.20, 0.35),
 }
-RB1_FAILOPT_THRESHOLDS = RB1_VARIANT_THRESHOLDS["RB1_failopt_040_075"]
+RB1_VARIANT_FOLDERS = {
+    "rb1_hist_020_060": "RB1_hist_020_060",
+    "rb1_failopt_040_075": "RB1_failopt_040_075",
+    "rb1_costopt_v8_020_035": "RB1_costopt_v8_020_035",
+}
+RB1_FAILOPT_THRESHOLDS = RB1_VARIANT_THRESHOLDS["rb1_failopt_040_075"]
 
 # Le banc initial de comparaison des reactions aux pannes utilisait la RB1 du
 # chapitre 2. Le nom est desormais explicite : le dossier generique ``RB1`` a
@@ -126,7 +129,7 @@ DEFAULT_STRATEGIES = [
     "75-25",
     "100-0",
     "RB2",
-    "RB1_hist_020_060",
+    "rb1_hist_020_060",
     "SoC1",
     "SoC06",
 ]
@@ -166,6 +169,7 @@ def load_strategy(folder_name):
             "Utiliser explicitement l'un de : %s"
             % ", ".join(sorted(RB1_VARIANTS))
         )
+    folder_name = RB1_VARIANT_FOLDERS.get(folder_name, folder_name)
     folder_path = os.path.join(VIEIL8, folder_name)
     if not os.path.isdir(folder_path):
         raise FileNotFoundError("Strategie introuvable : %s" % folder_path)

@@ -48,12 +48,13 @@ REGLES DU MODELE
 SORTIE : dict `data` identique a la boucle de base + cle 'maintenance' :
     n_visits, n_interventions, n_repl {bat,fc,ely}, n_prev {bat,fc,ely},
     outage_h {fc,ely}, waste_eur, waste_comp {bat,fc,ely},
-    repl_log (liste (jour, comp, 'corr'/'prev')).
+    repl_log (liste (jour, comp, 'corr'/'prev')),
+    failure_log (frontieres d'arret dur). Le dict principal contient aussi
+    `degradation_ledger` en comptabilite corrigee.
 
-NOTE deg : les metriques financieres (get_cost_total) restent celles de la
-these ; pendant un gel (composant HS, P=0) le recalcul standalone laisse la
-part reversible recuperer -- artefact minime, identique pour toutes les
-politiques comparees (memes conventions partout).
+NOTE deg : la boucle fournit un ledger des couts par unite physique. Pendant
+un gel, l'etat et son cout restent donc geles ; un pas n'est jamais attribue
+a la fois a l'unite retiree et a sa remplacante.
 """
 import numpy as np
 from scipy.optimize import brentq
@@ -62,16 +63,21 @@ from .simulate_transition import simulate_transition
 from .cost_fcn_total2 import *
 from .cost_fcn_total2 import _ely_advance, UV_TO_PCT
 from .cost_fcn_total2 import _fc_advance, UV_TO_PCT_FC
+from .cost_fcn_total2 import cost_fc_state_eur, cost_ely_state_eur
+from .replacement_ledger import ReplacementLedger
 
 
 def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
                                   visit_period_months=6.0, policy='corrective',
                                   rul_margin=1.0, calendar_ages_y=None,
-                                  prev_scope=('fc', 'ely')):
+                                  prev_scope=('fc', 'ely'),
+                                  replacement_accounting='corrected'):
     """Cf. docstring module. calendar_ages_y = dict(bat=, fc=, ely=) en annees
     (None pour un composant = jamais de preventif calendaire). prev_scope =
     composants eligibles au remplacement PREVENTIF (defaut : pannes dures)."""
     assert policy in ('instant', 'corrective', 'calendar', 'rul')
+    if replacement_accounting not in ('corrected', 'legacy_overlap'):
+        raise ValueError('replacement_accounting inconnu : %s' % replacement_accounting)
     calendar_ages_y = calendar_ages_y or {}
 
     T = (SIM['Tend'] / 365) * 365 * n_years
@@ -149,6 +155,7 @@ def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
     V_irr_ely = V_rev_ely = V_ss_ely = V_idle_ely = 0.0
     Ts_h = LOAD['Ts'] / 3600.0
     day_per_step = LOAD['Ts'] / 3600.0 / 24.0
+    ledger = ReplacementLedger() if replacement_accounting == 'corrected' else None
 
     # --- etat maintenance ---
     visit_steps = max(1, int(round(visit_period_months * 730.0 * 3600.0 / LOAD['Ts'])))
@@ -161,7 +168,7 @@ def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
                  n_prev={'bat': 0, 'fc': 0, 'ely': 0},
                  outage_h={'fc': 0.0, 'ely': 0.0},
                  waste_eur=0.0, waste_comp={'bat': 0.0, 'fc': 0.0, 'ely': 0.0},
-                 repl_log=[])
+                 repl_log=[], failure_log=[])
     comp_cost = {'bat': BAT['cost'], 'fc': FC['cost'], 'ely': ELY['cost']}
     comp_eol  = {'bat': BAT['SoH_EoL'], 'fc': FC['SoH_EoL'], 'ely': ELY['SoH_EoL']}
 
@@ -203,6 +210,15 @@ def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
                     if age_ref is not None and (j - j_new + visit_steps) * day_per_step / 365.0 > age_ref:
                         to_replace.append((comp, 'prev', soh_now))
             for comp, kind, soh_before in to_replace:
+                if ledger is not None:
+                    current_cost = {
+                        'bat': cum_bat,
+                        'fc': cost_fc_state_eur(V_irr_fc, V_rev_fc, V_ss_fc, V_idle_fc),
+                        'ely': cost_ely_state_eur(V_irr_ely, V_rev_ely, V_ss_ely, V_idle_ely),
+                    }[comp]
+                    ledger.retire(
+                        comp, current_cost, j, 'maintenance_' + kind, soh_before
+                    )
                 if kind == 'prev':
                     maint['n_prev'][comp] += 1
                     waste = max(0.0, (soh_before - comp_eol[comp]) / (1 - comp_eol[comp])) * comp_cost[comp]
@@ -345,45 +361,81 @@ def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
         # ============ TRAVERSEE DE L'EoL ============
         if SoH_bat_tp1 < BAT['SoH_EoL']:
             if policy == 'instant':
+                soh_retired = SoH_bat_tp1
                 SoH_bat_tp1 = 1
-                j_new_bat = j
                 j_rul_bat = j + 1
-                cum_bat = get_cost_bat(P_bat[j:j+1], SoC[j:j+2], SoH_bat[j:j+1])
+                if replacement_accounting == 'corrected':
+                    ledger.retire('bat', cum_bat, j + 1, 'instant_eol', soh_retired)
+                    j_new_bat = j + 1
+                    cum_bat = 0.0
+                else:
+                    j_new_bat = j
+                    cum_bat = get_cost_bat(
+                        P_bat[j:j+1], SoC[j:j+2], SoH_bat[j:j+1]
+                    )
                 maint['n_repl']['bat'] += 1
                 maint['n_interventions'] += 1
-                maint['repl_log'].append((round(j * day_per_step, 1), 'bat', 'inst'))
+                maint['repl_log'].append((round((j + 1) * day_per_step, 1), 'bat', 'inst'))
             elif not pending['bat']:
                 pending['bat'] = True   # continue a capacite degradee jusqu'a la visite
         if SoH_fc_tp1 < FC['SoH_EoL']:
             if policy == 'instant':
+                soh_retired = SoH_fc_tp1
                 SoH_fc_tp1 = 1
-                j_new_fc = j
                 j_rul_fc = j + 1
-                V_irr_fc, V_rev_fc, d_ss_fc, d_idle_fc = _fc_advance(
-                    0.0, 0.0, P_fc[j], P_fc[j], P_fc_max_t, Ts_h)
-                V_ss_fc   = d_ss_fc
-                V_idle_fc = d_idle_fc
+                if replacement_accounting == 'corrected':
+                    ledger.retire(
+                        'fc', cost_fc_state_eur(V_irr_fc, V_rev_fc, V_ss_fc, V_idle_fc),
+                        j + 1, 'instant_eol', soh_retired,
+                    )
+                    j_new_fc = j + 1
+                    V_irr_fc = V_rev_fc = V_ss_fc = V_idle_fc = 0.0
+                else:
+                    j_new_fc = j
+                    V_irr_fc, V_rev_fc, d_ss_fc, d_idle_fc = _fc_advance(
+                        0.0, 0.0, P_fc[j], P_fc[j], P_fc_max_t, Ts_h
+                    )
+                    V_ss_fc = d_ss_fc
+                    V_idle_fc = d_idle_fc
                 maint['n_repl']['fc'] += 1
                 maint['n_interventions'] += 1
-                maint['repl_log'].append((round(j * day_per_step, 1), 'fc', 'inst'))
+                maint['repl_log'].append((round((j + 1) * day_per_step, 1), 'fc', 'inst'))
             elif avail_fc:
                 pending['fc'] = True
                 avail_fc = False        # HS + gel jusqu'a la visite
+                maint['failure_log'].append({
+                    'component': 'fc', 'state_index': j + 1,
+                    'day': (j + 1) * day_per_step, 'soh': float(SoH_fc_tp1),
+                })
         if SoH_ely_tp1 < ELY['SoH_EoL']:
             if policy == 'instant':
+                soh_retired = SoH_ely_tp1
                 SoH_ely_tp1 = 1
-                j_new_ely = j
                 j_rul_ely = j + 1
-                V_irr_ely, V_rev_ely, d_ss_ely, d_idle_ely = _ely_advance(
-                    0.0, 0.0, P_ely[j], P_ely[j], P_ely_max_t, Ts_h)
-                V_ss_ely   = d_ss_ely
-                V_idle_ely = d_idle_ely
+                if replacement_accounting == 'corrected':
+                    ledger.retire(
+                        'ely', cost_ely_state_eur(V_irr_ely, V_rev_ely, V_ss_ely, V_idle_ely),
+                        j + 1, 'instant_eol', soh_retired,
+                    )
+                    j_new_ely = j + 1
+                    V_irr_ely = V_rev_ely = V_ss_ely = V_idle_ely = 0.0
+                else:
+                    j_new_ely = j
+                    V_irr_ely, V_rev_ely, d_ss_ely, d_idle_ely = _ely_advance(
+                        0.0, 0.0, P_ely[j], P_ely[j], P_ely_max_t, Ts_h
+                    )
+                    V_ss_ely = d_ss_ely
+                    V_idle_ely = d_idle_ely
                 maint['n_repl']['ely'] += 1
                 maint['n_interventions'] += 1
-                maint['repl_log'].append((round(j * day_per_step, 1), 'ely', 'inst'))
+                maint['repl_log'].append((round((j + 1) * day_per_step, 1), 'ely', 'inst'))
             elif avail_ely:
                 pending['ely'] = True
                 avail_ely = False
+                maint['failure_log'].append({
+                    'component': 'ely', 'state_index': j + 1,
+                    'day': (j + 1) * day_per_step, 'soh': float(SoH_ely_tp1),
+                })
 
         # alphas : bornes de la LUT = EoL ; sous l'EoL (gel FC/ELY) on borne a
         # l'alpha EoL (np.interp sature en bord de grille -> OK).
@@ -409,5 +461,13 @@ def init_and_run_loop_maintenance(get_optimal_action_RB, n_years=25,
         "SoH_bat": SoH_bat, "SoH_fc": SoH_fc, "SoH_ely": SoH_ely,
         "deg_fc": deg_fc, "deg_ely": deg_ely,
         "maintenance": maint,
+        "replacement_accounting": replacement_accounting,
     }
+    if ledger is not None:
+        current_eur = {
+            'bat': cum_bat,
+            'fc': cost_fc_state_eur(V_irr_fc, V_rev_fc, V_ss_fc, V_idle_fc),
+            'ely': cost_ely_state_eur(V_irr_ely, V_rev_ely, V_ss_ely, V_idle_ely),
+        }
+        data['degradation_ledger'] = ledger.snapshot(current_eur, n)
     return data

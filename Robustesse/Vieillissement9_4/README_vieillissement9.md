@@ -88,3 +88,28 @@ cellule BoL au courant nominal (~0,86 V), robuste aux paramètres.
 Anciennes clés `['start-stop','idling','transient','high']` →
 nouvelles `['start-stop','idling','reversible','irreversible']` (+ `total`).
 `main_plot.py` et `milp_weekly.py` ont été adaptés en conséquence.
+
+## Statut de la comptabilité des remplacements
+
+Depuis l'audit du 2026-07-11, la boucle rule-based corrigée ne rejoue plus sur
+l'unité neuve le pas qui vient de déclencher son remplacement. Elle expose un
+ledger par composant : coût des unités retirées + coût de l'unité courante,
+avec intervalles demi-ouverts disjoints. Les métriques rule-based et les sweeps
+V9_4 lisent ce ledger ; le recalcul sur une trace complète n'est plus un oracle
+valide après des resets.
+
+Le calcul de LOL a également été corrigé : après une panne FC/ELY, la puissance
+du composant hors service est retirée du bilan avant l'écrêtage batterie.
+
+Les sorties P1/P3 de juillet antérieures à ces corrections sont des archives
+legacy et doivent être recalculées avant promotion. Le protocole d'acceptation
+est :
+
+1. `run_meso_invariance.slurm` sur 25 ans : ledger = somme des segments,
+   absence de rejeu, gels correctifs et boucle instantanée = boucle de base ;
+2. P1/P3 dans `runs/<id>_<empreinte>/`, avec cache brut pleine précision ;
+3. statistiques appariées VoLL=1/3/10, puis promotion explicite au manifeste.
+
+Le mode `replacement_accounting="legacy_overlap"` est conservé uniquement pour
+diagnostiquer les anciennes sorties ; il ne doit pas produire un nouveau
+résultat scientifique.

@@ -14,6 +14,9 @@ def get_lol(SoC_t,action,P_tot_ref_t,defaillances,E_h2_t,E_h2_init,P_fc_max_t,P_
             P_dc_fc_t = 0
         if 'ELY' in defaillances :
             P_dc_ely_t = 0
+        # Le bilan doit utiliser les puissances APRES application des pannes.
+        # Sans ce recalcul, lol_soc creditait encore un composant hors service.
+        P_dc_h2_t = P_dc_fc_t + P_dc_ely_t
         
         P_bat_t = P_dc_bat_t / CONV['eta']**np.sign(P_dc_bat_t) 
         
@@ -88,7 +91,7 @@ def get_lol(SoC_t,action,P_tot_ref_t,defaillances,E_h2_t,E_h2_init,P_fc_max_t,P_
                 
                 # Sécurité +1e-6 pour éviter division par zéro
                 h2_curve_kw = (stack_load_pct / 100 * P_fc_max_t) / ((stack_eff_pct + 1e-6) / 100) / 1000
-                if P_h2_t < h2_curve_kw[0] :
+                if abs(P_h2_t) < h2_curve_kw[0] :
                     P_dc_fc_t = 0
                 else :
                     # Interpolation inverse (sur valeur absolue)
@@ -104,7 +107,17 @@ def get_lol(SoC_t,action,P_tot_ref_t,defaillances,E_h2_t,E_h2_init,P_fc_max_t,P_
         else : 
             lol_storage = 0
             
-        lol = max(lol_pmax,lol_storage,lol_soc)
+        # Garde-fou de bilan : meme sans saturation SoC/Pmax/H2, une puissance
+        # annulee par une panne ne doit jamais disparaitre silencieusement.
+        # En surplus (P_tot_ref_t <= 0), l'ecart est un ecretage et non une
+        # energie de charge non servie.
+        lol_balance = 0
+        if P_tot_ref_t > 0:
+            lol_balance = max(
+                0.0, 1 - (P_dc_bat_t + P_dc_fc_t + P_dc_ely_t) / P_tot_ref_t
+            )
+
+        lol = max(lol_pmax, lol_storage, lol_soc, lol_balance)
         
         action = (P_dc_bat_t, P_dc_fc_t, P_dc_ely_t)
         

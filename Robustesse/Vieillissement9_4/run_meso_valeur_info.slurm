@@ -1,57 +1,38 @@
 #!/usr/bin/bash -l
-# ============================================================================
-# run_meso_valeur_info.slurm -- banc "valeur de l'information SoH" sur Helios.
-# ----------------------------------------------------------------------------
-# Lance bench_valeur_info.py (boucle fermee RB2(SoH) vs boucle ouverte
-# RB2(Sched) vs RB2 statique, Monte-Carlo sur les parametres des modeles de
-# degradation). Noeud unique, parallelisme par processus (ProcessPoolExecutor,
-# dimensionne via SLURM_CPUS_PER_TASK).
-#
-#     sbatch run_meso_valeur_info.slurm                 # nominal : 25 ans, N=200
-#     sbatch run_meso_valeur_info.slurm --nmc 64        # variante
-#
-# A soumettre DEPUIS le dossier Vieillissement9/ (le script y trouve Common/
-# et ecrit valeur_info_25y.{txt,pdf,png} a cote).
-# Fichier transfere depuis Windows : passer  dos2unix  une fois.
-# Cout indicatif : ~800 runs 25 ans ~8-10 h / 32 coeurs ; avec le txt du run
-# precedent present, seuls les runs manquants sont lances (ex. ajout de
-# RB2(Recale) : ~200 runs, ~2-3 h). --fresh pour tout re-payer.
-# ============================================================================
+# P1 corrige : valeur informationnelle du SoH, N=200 mondes CRN.
+# Soumission depuis n'importe quel dossier :
+#   sbatch run_meso_valeur_info.slurm
 
-#SBATCH --job-name=valeur_info
-#SBATCH --output=%x.%J.out        ## %x=nom du job, %J=id du job
+#SBATCH --job-name=p1_soh_corr
+#SBATCH --output=%x.%J.out
 #SBATCH --error=%x.%J.out
-#SBATCH --time=24:00:00           ## walltime hh:mm:ss
-#SBATCH --partition=smp           ## noeuds 32 coeurs / 96 Go
-#SBATCH --cpus-per-task=32        ## 1 tache, 32 coeurs (= workers Python)
-#SBATCH --mem=80G                 ## <= 96 Go (RAM du noeud smp)
-## Notifications mail DESACTIVEES par defaut. Pour activer, decommente :
-# #SBATCH --mail-user=theo.lenoir4@orange.fr
-# #SBATCH --mail-type=END,FAIL
+#SBATCH --time=24:00:00
+#SBATCH --partition=smp
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=80G
 
-# --- Environnement ----------------------------------------------------------
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 export MPLBACKEND=Agg
-export MPLCONFIGDIR="$WORK/.mplconfig"
+export MPLCONFIGDIR="${WORK:?WORK non defini}/.mplconfig"
+export GENIAL_DATA_DIR="${GENIAL_DATA_DIR:-$WORK/genial_data}"
 mkdir -p "$MPLCONFIGDIR"
-
-# Profil PV/conso (gros CSV) provisionne une fois dans $WORK (cf. MESOCENTRE.md).
-export GENIAL_DATA_DIR="$WORK/genial_data"
 
 module purge
 module load anaconda3@2022.10/gcc-12.1.0
-# conda activate genial    # si environnement dedie
 
-echo "Job $SLURM_JOB_ID  noeud=$(hostname)  args=$@"
-echo "cpus-per-task=$SLURM_CPUS_PER_TASK  debut=$(date)"
-python -c "import numpy,scipy,sympy;print('numpy',numpy.__version__,'scipy',scipy.__version__)"
+test -r "$GENIAL_DATA_DIR/sidelec_roche_plate_csv.csv"
+test -r "$SCRIPT_DIR/Common/FC_efficiency_LU_table_power.csv"
+test -r "$SCRIPT_DIR/Common/ELY_efficiency_LU_table_power.csv"
 
-# Dossier de soumission = Vieillissement9/ (Common/ trouve via le chemin du script).
-cd "$SLURM_SUBMIT_DIR" || exit 1
-
-time python bench_valeur_info.py "$@"
-
-echo "fin=$(date)"
+echo "job=$SLURM_JOB_ID host=$(hostname) cpus=$SLURM_CPUS_PER_TASK debut=$(date --iso-8601=seconds)"
+echo "script=$SCRIPT_DIR/bench_valeur_info.py args=$*"
+python -c "import numpy,scipy,sympy; print('numpy',numpy.__version__,'scipy',scipy.__version__,'sympy',sympy.__version__)"
+python -u "$SCRIPT_DIR/../run_science_checks.py"
+time python -u "$SCRIPT_DIR/bench_valeur_info.py" --output-root "$SCRIPT_DIR" "$@"
+echo "fin=$(date --iso-8601=seconds)"

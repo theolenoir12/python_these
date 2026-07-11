@@ -36,7 +36,7 @@ from concurrent.futures import ProcessPoolExecutor
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from Common import Init_EMR_MG_v16_python as I
 from Common.main_init_and_loop import init_and_run_loop
-from Common.cost_fcn_total2 import get_cost_total
+from Common.cost_fcn_total2 import get_cost_from_ledger
 from Common.get_lol import get_lol
 
 # ============================ CONFIGURATION ============================
@@ -143,9 +143,7 @@ def evaluate(params):
     AF = annuity_factor(DISCOUNT_RATE, N)
 
     lpsp, e_unserved = _lpsp_unserved(data)
-    deg = get_cost_total(data["alpha_fc"][:-1], data["P_fc"], data["alpha_ely"][:-1],
-                         data["P_ely"], data["P_bat"], data["SoC"],
-                         I.LOAD, I.BAT, I.FC, I.ELY, data["SoH_bat"][:-1])
+    deg = get_cost_from_ledger(data)
     bop = _bop_fixe()
     deg_k = deg / 1000.0                          # OBJECTIF : cout total de degradation [k€]
     npc = (bop + AF * deg) / 1000.0               # info : cout net actualise

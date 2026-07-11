@@ -1,0 +1,127 @@
+{
+  "artifacts": [
+    {
+      "path": "/home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Vieillissement9_4/STATISTIQUES_APPARIEES_P1_P3.txt",
+      "sha256": "7b0b7b26c5ed35eda1137edad3f849c1fb97941753d142afeeccd7cc1bfaad88",
+      "size": 13613
+    },
+    {
+      "path": "/home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Vieillissement9_4/STATISTIQUES_APPARIEES_P1_P3.tsv",
+      "sha256": "85d90c617958d411fa0bad855bedcb1de2542eae837b91585cf2c15bffa5c4c4",
+      "size": 11345
+    }
+  ],
+  "created_utc": "2026-07-11T09:16:56.923795+00:00",
+  "experiment_id": "postprocess_p1_p3_legacy_2026_07",
+  "git": {
+    "commit": "8b7849ea36527562002412ecb26970e97e852a71",
+    "relevant_inputs_dirty": true,
+    "repo_dirty": true
+  },
+  "input_locations": [
+    {
+      "path": "Robustesse/Vieillissement9_4/maintenance_25y_T12m.txt",
+      "resolved_path": "/home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Vieillissement9_4/maintenance_25y_T12m.txt"
+    },
+    {
+      "path": "Robustesse/Vieillissement9_4/maintenance_25y_T3m.txt",
+      "resolved_path": "/home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Vieillissement9_4/maintenance_25y_T3m.txt"
+    },
+    {
+      "path": "Robustesse/Vieillissement9_4/maintenance_25y_T6m.txt",
+      "resolved_path": "/home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Vieillissement9_4/maintenance_25y_T6m.txt"
+    },
+    {
+      "path": "Robustesse/Vieillissement9_4/maintenance_25y_T6m_m1.5.txt",
+      "resolved_path": "/home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Vieillissement9_4/maintenance_25y_T6m_m1.5.txt"
+    },
+    {
+      "path": "Robustesse/Vieillissement9_4/maintenance_25y_T6m_m2.txt",
+      "resolved_path": "/home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Vieillissement9_4/maintenance_25y_T6m_m2.txt"
+    },
+    {
+      "path": "Robustesse/Vieillissement9_4/valeur_info_25y.txt",
+      "resolved_path": "/home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Vieillissement9_4/valeur_info_25y.txt"
+    },
+    {
+      "path": "Robustesse/reproducibility/paired_stats.py",
+      "resolved_path": "/home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/reproducibility/paired_stats.py"
+    },
+    {
+      "path": "Robustesse/reproducibility/postprocess_p1_p3.py",
+      "resolved_path": "/home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/reproducibility/postprocess_p1_p3.py"
+    }
+  ],
+  "inputs": [
+    {
+      "path": "Robustesse/Vieillissement9_4/maintenance_25y_T12m.txt",
+      "sha256": "2f13313112c1192442b8e1811fd6b2642f0c84432f1b84284090be037bb06651",
+      "size": 71723
+    },
+    {
+      "path": "Robustesse/Vieillissement9_4/maintenance_25y_T3m.txt",
+      "sha256": "53542287e6a1447418ab77b2b82d479c08ef633f1a0889c8015e3a7d80ce44fd",
+      "size": 71760
+    },
+    {
+      "path": "Robustesse/Vieillissement9_4/maintenance_25y_T6m.txt",
+      "sha256": "51e646a09279e50f8c2401b1df67a4c733f34a11e675b5863c69245b397fd6a9",
+      "size": 71886
+    },
+    {
+      "path": "Robustesse/Vieillissement9_4/maintenance_25y_T6m_m1.5.txt",
+      "sha256": "7d9116241c41cee6e6b2622ef057c43b483b184484c8832e39a72c0e0ce2a3f3",
+      "size": 71775
+    },
+    {
+      "path": "Robustesse/Vieillissement9_4/maintenance_25y_T6m_m2.txt",
+      "sha256": "aa8fb84ff43565d8a6720139eaaa0f3b1a6b01e0e114d04c845dd48ef1fc7653",
+      "size": 71776
+    },
+    {
+      "path": "Robustesse/Vieillissement9_4/valeur_info_25y.txt",
+      "sha256": "f83932ea17c6613f05373a35df35ce0e419b5892867eba1d1da7e7eda75a8ff0",
+      "size": 29991
+    },
+    {
+      "path": "Robustesse/reproducibility/paired_stats.py",
+      "sha256": "d578dd72125a3126b5aac7f7f0ec563f8f01d1202ef52743150ad07c2c3e71dd",
+      "size": 4602
+    },
+    {
+      "path": "Robustesse/reproducibility/postprocess_p1_p3.py",
+      "sha256": "df406cc091c7548939e154dc27eed5c71dbaa6a747f309e011bc46767f5cc702",
+      "size": 17142
+    }
+  ],
+  "parameters": {
+    "bootstrap_resamples": 30000,
+    "bootstrap_seed": 20260711,
+    "c_visits_keur": [
+      0.5,
+      1.5,
+      3.0
+    ],
+    "reference_voll": 3.0,
+    "tail_definition": "largest_exact_ceil((1-q)*N)",
+    "volls": [
+      1.0,
+      3.0,
+      10.0
+    ]
+  },
+  "run_fingerprint": "58969b197cf9aa19817782cacb51e337d83cef8b92e858168e98379df8d9f3dd",
+  "runtime": {
+    "argv": [
+      "Robustesse/reproducibility/postprocess_p1_p3.py"
+    ],
+    "hostname": "theo-IdeaPad-3-15ITL6",
+    "numpy": "2.4.6",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "python": "3.13.13",
+    "scipy": null,
+    "slurm": {},
+    "sympy": null
+  },
+  "schema_version": 2
+}

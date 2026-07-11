@@ -7,7 +7,10 @@ import json
 import sys
 from pathlib import Path
 
-from provenance import sha256_file
+try:
+    from .provenance import sha256_file
+except ImportError:
+    from provenance import sha256_file
 
 
 def _literal_assignments(path):
@@ -32,6 +35,17 @@ def validate(manifest_path):
 
     if data.get("schema_version") != 1:
         errors.append("schema_version doit valoir 1")
+    revisions = data.get("engine_revisions", [])
+    revision_ids = [revision.get("id") for revision in revisions]
+    if len(revision_ids) != len(set(revision_ids)):
+        errors.append("identifiants de revisions moteur dupliques")
+    for revision in revisions:
+        for source in revision.get("sources", []):
+            path = robustesse / source["path"]
+            if not path.is_file():
+                errors.append("source moteur absente : %s" % path)
+            elif sha256_file(path) != source["sha256"]:
+                errors.append("source moteur modifiee : %s" % path)
     variants = data.get("strategy_variants", [])
     ids = [v.get("id") for v in variants]
     if len(ids) != len(set(ids)):
@@ -55,13 +69,36 @@ def validate(manifest_path):
                 )
         if not variant.get("immutable"):
             errors.append("variante publiee non immuable : %s" % variant["id"])
+        actual_wrapper = sha256_file(module)
+        if actual_wrapper != variant.get("wrapper_sha256"):
+            errors.append(
+                "wrapper modifie : %s (%s != %s)"
+                % (module, actual_wrapper, variant.get("wrapper_sha256"))
+            )
+        logic = robustesse / variant.get("logic_path", "")
+        if not logic.is_file():
+            errors.append("noyau de strategie absent : %s" % logic)
+        elif sha256_file(logic) != variant.get("logic_sha256"):
+            errors.append("noyau de strategie modifie : %s" % logic)
 
     experiments = data.get("experiments", [])
     exp_ids = [e.get("id") for e in experiments]
     if len(exp_ids) != len(set(exp_ids)):
         errors.append("identifiants d'experiences dupliques")
     known_variants = set(ids)
+    allowed_statuses = {
+        "published_legacy_unfingerprinted",
+        "legacy_pre_correction_unfingerprinted",
+        "diagnostic_legacy_fingerprinted",
+        "validated_fingerprinted",
+    }
+    artifact_paths = []
     for experiment in experiments:
+        if experiment.get("status") not in allowed_statuses:
+            errors.append(
+                "%s a un statut inconnu : %s"
+                % (experiment.get("id"), experiment.get("status"))
+            )
         for strategy in experiment.get("strategies", []):
             if strategy.startswith("rb1_") and strategy not in known_variants:
                 errors.append(
@@ -69,6 +106,7 @@ def validate(manifest_path):
                     % (experiment.get("id"), strategy)
                 )
         for artifact in experiment.get("artifacts", []):
+            artifact_paths.append(artifact["path"])
             path = robustesse / artifact["path"]
             if not path.is_file():
                 errors.append("artefact absent : %s" % path)
@@ -79,6 +117,8 @@ def validate(manifest_path):
                     "artefact modifie : %s (%s != %s)"
                     % (path, actual, artifact["sha256"])
                 )
+    if len(artifact_paths) != len(set(artifact_paths)):
+        errors.append("un artefact est reference par plusieurs experiences")
     return errors
 
 

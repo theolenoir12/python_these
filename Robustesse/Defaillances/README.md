@@ -1,5 +1,17 @@
 # Étude de robustesse des EMS sous défaillance (composants H₂)
 
+## Nomenclature RB1 immuable
+
+- `rb1_hist_020_060` : historique 0,20/0,60 ; référence du panel initial ;
+- `rb1_failopt_040_075` : minimum du sweep sous défaillance 0,40/0,75 et
+  socle exact de RB1(Pred) ;
+- `rb1_costopt_v8_020_035` : minimum de la grille de coût unifié V8
+  0,20/0,35, non qualifié avec V9_4.
+
+Le nom nu `RB1` est ambigu et ne doit plus apparaître dans une nouvelle sortie.
+Le fichier legacy `results/robustesse_summary.txt` étiqueté seulement `RB1`
+correspond aux seuils 0,40/0,75 ; il n'est pas le panel historique initial.
+
 Remplace les anciens scripts `Robustesse/Défaillances.py` et
 `Robustesse/Défaillances_50%.py` (qui n'étaient que des nuages de points avec
 des LPSP codées en dur). Ce dossier régénère ces résultats proprement, de bout
@@ -34,11 +46,12 @@ d'énergie (EMS) encaisse la panne**, et quelle stratégie est la plus robuste.
    (écrêtage SoC + réservoir H₂). Par construction, **plus de capacité ⇒ moins de
    stress batterie**, donc **LPSP(50 %) ≤ LPSP(total)** : la monotonie physique
    est garantie. Les stratégies candidates sont exactement celles du nuage de
-   Pareto (`Pareto_2d_25y.py`) : `0-100, 25-75, 50-50, 75-25, 100-0, RB2, RB1,
-   SoC1, SoC06`.
+   Pareto (`Pareto_2d_25y.py`) : `0-100, 25-75, 50-50, 75-25, 100-0, RB2,
+   rb1_hist_020_060, SoC1, SoC06`.
 
-4. **Métrique.** **LPSP** sur la fenêtre d'évaluation `EVAL_HOURS` (défaut = la
-   semaine de panne), calculée comme `sens_common.metrics`. On calcule aussi,
+4. **Métrique.** **LPSP** sur la fenêtre d'évaluation `EVAL_HOURS` (défaut
+   actuel = 1 semaine de panne + 3 semaines de reprise), calculée comme
+   `sens_common.metrics`. On calcule aussi,
    **pour chaque tirage, la LPSP de la même fenêtre SANS panne** (contrefactuel,
    même stratégie) → le **surcoût de robustesse** = LPSP(panne) − LPSP(normale)
    isole l'effet propre de la panne et répond à « comment une stratégie pourrait
@@ -70,8 +83,10 @@ python plot_robustesse.py
 ```
 
 Paramètres en tête de `run_robustesse.py` : `N_DRAWS`, `SEED`, `STRATEGIES`,
-`SCENARIOS`. Le cache baseline (`results/baseline_rb2_2y.npz`) n'est recalculé
-que s'il est absent.
+`SCENARIOS`. Le cache baseline (`results/baseline_rb2_2y.npz`) est legacy et
+n'est recalculé que s'il est absent. Pour un nouveau protocole, l'existence
+seule ne suffit pas : le cache doit porter une empreinte des sources, données
+et paramètres.
 
 ## Choix de modélisation à connaître
 

@@ -7,9 +7,21 @@ from .get_soh import get_soh
 from .cost_fcn_total2 import *
 from .cost_fcn_total2 import _ely_advance, UV_TO_PCT  # helpers prefixes _ non importes par *
 from .cost_fcn_total2 import _fc_advance, UV_TO_PCT_FC  # PEMFC stateful (rev/irrev)
+from .cost_fcn_total2 import cost_fc_state_eur, cost_ely_state_eur
+from .replacement_ledger import ReplacementLedger
 
 
-def init_and_run_loop(get_optimal_action_RB, n_years=25):
+def init_and_run_loop(get_optimal_action_RB, n_years=25,
+                      replacement_accounting="corrected"):
+    """Simule l'EMS avec une comptabilite explicite des remplacements.
+
+    ``corrected`` (defaut) attribue chaque pas a une seule unite physique et
+    fournit ``data['degradation_ledger']``. ``legacy_overlap`` reproduit le
+    rejeu historique du pas de franchissement sur l'unite neuve ; il n'est
+    conserve que pour diagnostiquer les anciennes sorties.
+    """
+    if replacement_accounting not in ("corrected", "legacy_overlap"):
+        raise ValueError("replacement_accounting inconnu : %s" % replacement_accounting)
 
     # Initialisation des variables
     T = (SIM['Tend'] / 365)*365*n_years  # horizon de temps (defaut 25 ans)
@@ -121,6 +133,7 @@ def init_and_run_loop(get_optimal_action_RB, n_years=25):
     V_idle_ely = 0.0
     Ts_h = LOAD['Ts'] / 3600.0
     range_useful_ely = (1 - ELY['SoH_EoL']) * 100
+    ledger = ReplacementLedger() if replacement_accounting == "corrected" else None
     
     # --- Initialisation des tableaux ---
     data = {
@@ -272,28 +285,56 @@ def init_and_run_loop(get_optimal_action_RB, n_years=25):
         deg_ely['irreversible'][j]  = deg_irr_ely
         deg_ely['total'][j]         = deg_pct_ely
         
-        if SoH_bat_tp1 < BAT['SoH_EoL'] :
+        if SoH_bat_tp1 < BAT['SoH_EoL']:
+            soh_retired = SoH_bat_tp1
             SoH_bat_tp1 = 1
-            j_new_bat = j
-            cum_bat = get_cost_bat(P_bat[j:j+1], SoC[j:j+2], SoH_bat[j:j+1])
-        if SoH_fc_tp1 < FC['SoH_EoL'] :
+            if replacement_accounting == "corrected":
+                ledger.retire("bat", cum_bat, j + 1, "instant_eol", soh_retired)
+                # Le pas j appartient a l'ancienne unite ; la neuve commence a j+1.
+                j_new_bat = j + 1
+                cum_bat = 0.0
+            else:
+                # Convention historique : le pas j est rejoue sur l'unite neuve.
+                j_new_bat = j
+                cum_bat = get_cost_bat(
+                    P_bat[j:j+1], SoC[j:j+2], SoH_bat[j:j+1]
+                )
+        if SoH_fc_tp1 < FC['SoH_EoL']:
+            soh_retired = SoH_fc_tp1
             SoH_fc_tp1 = 1
-            j_new_fc = j
-            j_rul_fc = j + 1   # la nouvelle unite est a SoH=1 a l'index j+1
-            # Unite neuve : etats remis a 0 puis 1er pas (P_prev = P[j] -> pas de start-stop)
-            V_irr_fc, V_rev_fc, d_ss_fc, d_idle_fc = _fc_advance(
-                0.0, 0.0, P_fc[j], P_fc[j], P_fc_max_t, Ts_h)
-            V_ss_fc   = d_ss_fc
-            V_idle_fc = d_idle_fc
-        if SoH_ely_tp1 < ELY['SoH_EoL'] :
+            j_rul_fc = j + 1
+            if replacement_accounting == "corrected":
+                ledger.retire(
+                    "fc", cost_fc_state_eur(V_irr_fc, V_rev_fc, V_ss_fc, V_idle_fc),
+                    j + 1, "instant_eol", soh_retired,
+                )
+                j_new_fc = j + 1
+                V_irr_fc = V_rev_fc = V_ss_fc = V_idle_fc = 0.0
+            else:
+                j_new_fc = j
+                V_irr_fc, V_rev_fc, d_ss_fc, d_idle_fc = _fc_advance(
+                    0.0, 0.0, P_fc[j], P_fc[j], P_fc_max_t, Ts_h
+                )
+                V_ss_fc = d_ss_fc
+                V_idle_fc = d_idle_fc
+        if SoH_ely_tp1 < ELY['SoH_EoL']:
+            soh_retired = SoH_ely_tp1
             SoH_ely_tp1 = 1
-            j_new_ely = j
-            j_rul_ely = j + 1  # idem
-            # Unite neuve : etats remis a 0 puis 1er pas (P_prev = P[j] -> pas de start-stop)
-            V_irr_ely, V_rev_ely, d_ss_ely, d_idle_ely = _ely_advance(
-                0.0, 0.0, P_ely[j], P_ely[j], P_ely_max_t, Ts_h)
-            V_ss_ely   = d_ss_ely
-            V_idle_ely = d_idle_ely
+            j_rul_ely = j + 1
+            if replacement_accounting == "corrected":
+                ledger.retire(
+                    "ely", cost_ely_state_eur(V_irr_ely, V_rev_ely, V_ss_ely, V_idle_ely),
+                    j + 1, "instant_eol", soh_retired,
+                )
+                j_new_ely = j + 1
+                V_irr_ely = V_rev_ely = V_ss_ely = V_idle_ely = 0.0
+            else:
+                j_new_ely = j
+                V_irr_ely, V_rev_ely, d_ss_ely, d_idle_ely = _ely_advance(
+                    0.0, 0.0, P_ely[j], P_ely[j], P_ely_max_t, Ts_h
+                )
+                V_ss_ely = d_ss_ely
+                V_idle_ely = d_idle_ely
         
         alpha_fc_tp1  = np.interp(SoH_fc_tp1,  _soh_grid_flip, _alpha_fc_grid_flip)
         alpha_ely_tp1 = np.interp(SoH_ely_tp1, _soh_grid_flip, _alpha_ely_grid_flip)
@@ -328,6 +369,14 @@ def init_and_run_loop(get_optimal_action_RB, n_years=25):
     data["SoH_ely"] = SoH_ely
     data["deg_fc"] = deg_fc
     data["deg_ely"] = deg_ely
+    data["replacement_accounting"] = replacement_accounting
+    if ledger is not None:
+        current_eur = {
+            "bat": cum_bat,
+            "fc": cost_fc_state_eur(V_irr_fc, V_rev_fc, V_ss_fc, V_idle_fc),
+            "ely": cost_ely_state_eur(V_irr_ely, V_rev_ely, V_ss_ely, V_idle_ely),
+        }
+        data["degradation_ledger"] = ledger.snapshot(current_eur, n)
 
 
     return data

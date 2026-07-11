@@ -1,6 +1,18 @@
 ================================================================================
+
+STATUT AU 2026-07-11 : ARCHIVE LEGACY PRÉ-CORRECTION
+--------------------------------------------------------------------------------
+Les chiffres ci-dessous sont conditionnels à VoLL=3 et à l'ancien moteur de
+remplacement. « Quasi certain » signifie uniquement : quasi certain dans les
+200 mondes U_log[0.5,2] de cette expérience et avec cette VoLL. Le delta ES90
+marginal de SoH-Sched vaut historiquement -0.930 kEUR, tandis que ES90 de
+l'écart SoH-Sched vaut seulement -0.085 kEUR. Le post-traitement VoLL=1/3/10
+est dans STATISTIQUES_APPARIEES_P1_P3.txt. Rerun corrigé requis avant citation.
+Le dossier d'archive actuel est Vieillissement9_4 ; le libellé V9_2 de la note
+initiale ne prouve pas le moteur effectivement chargé lors du calcul.
+--------------------------------------------------------------------------------
 SYNTHESE -- VALEUR INFORMATIONNELLE DU SoH SOUS INCERTITUDE DE VIEILLISSEMENT
-Dossier : Robustesse/Vieillissement9_2/     Redige : 2026-07-09
+Dossier d'archive actuel : Robustesse/Vieillissement9_4/  Redige : 2026-07-09
 Donnees : valeur_info_25y.txt (job meso 214530 : 25 ans, N_MC=200, seed=2026,
           multiplicateurs U_log[0.5, 2] sur FC(a_irr,b_rev,s)/ELY(a2,b2,s)/BAT,
           VoLL=3, CRN). Banc : bench_valeur_info.py (cf. docstring).

@@ -1,4 +1,15 @@
 ================================================================================
+
+STATUT AU 2026-07-11 : ARCHIVE LEGACY PRÉ-CORRECTION
+--------------------------------------------------------------------------------
+Les tableaux ci-dessous décrivent les sorties historiques à VoLL=3. Le moteur
+rejouait le pas de remplacement, la métrique ne respectait pas tous les resets
+et le LOL pouvait créditer une FC/ELY hors service quand la batterie saturait.
+Les cellules de la carte sont des argmin ponctuels, pas toutes des supériorités
+démontrées. À VoLL=3/C=1.5, delta_ES90(RUL-correctif)=-1.101 kEUR mais
+ES90(RUL-correctif)=+4.565 kEUR. `outfc+outely` est une somme
+d'heures-composant. Rerun corrigé requis avant citation.
+--------------------------------------------------------------------------------
 SYNTHESE -- VALEUR DE LA RUL POUR LA MAINTENANCE INSULAIRE (P3)
 Dossier : Robustesse/Vieillissement9_4/     Redige : 2026-07-10
 Donnees : maintenance_25y_T6m.txt (job meso 214887 : 25 ans, N_MC=200,

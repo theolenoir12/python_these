@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 from time import time as timer
 from .get_rul import get_rul
-from .cost_fcn_total2 import get_cost_total
+from .cost_fcn_total2 import get_cost_from_ledger
 from .physics import *
 from .Init_EMR_MG_v16_python import *
 import matplotlib.gridspec as gs
@@ -522,7 +522,7 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
         np.flatnonzero(np.isnan(SoH_bat)), 
         np.flatnonzero(~np.isnan(SoH_bat)), 
         SoH_bat[~np.isnan(SoH_bat)])
-    deg_eur = get_cost_total(alpha_fc, P_fc, alpha_ely, P_ely, P_bat, SoC, LOAD, BAT, FC, ELY, SoH_bat)
+    deg_eur = get_cost_from_ledger(data)
     print("Dégradations : ", deg_eur, '(EUR)')
     # --- Décomposition coût total de possession : BoP (installation, payé 1 fois) +
     #     dégradation actualisée (facteur d'annuité present-worth) = NPC ---
@@ -553,7 +553,7 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
         idx = np.arange(len(SoH_clean))
         SoH_clean = np.interp(idx, idx[~np.isnan(SoH_clean)], SoH_clean[~np.isnan(SoH_clean)])
     
-    cost_keur = get_cost_total(alpha_fc, P_fc, alpha_ely, P_ely, P_bat, SoC, LOAD, BAT, FC, ELY, SoH_clean) / 1000
+    cost_keur = get_cost_from_ledger(data) / 1000.0
         
    # --- Courant et tension en fonction du temps : PEMFC et PEMWE ---
     from scipy.optimize import brentq

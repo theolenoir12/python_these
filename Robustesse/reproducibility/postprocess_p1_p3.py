@@ -351,7 +351,7 @@ def analyse():
     report.append("Une meilleure ES90 marginale ne signifie donc pas que A gagne dans le pire decile de A-B.")
 
     report.append("")
-    report.append("CARTE DES GAGNANTS DE NIVEAU P3 (politiques fixes)")
+    report.append("CARTE DES ARGMIN PONCTUELS P3 (politiques fixes ; pas une preuve de superiorite)")
     report.append("-" * 96)
     report.append("T     VoLL  Cvis   min_moyenne       min_ES90")
     for tag in ("T3m", "T6m", "T12m"):
@@ -385,7 +385,8 @@ def analyse():
     report.append("- A VoLL differente, on reevalue les politiques reglees a VoLL=3 sans les reoptimiser.")
     report.append("- Les couts arrondis a 0.001 kEUR induisent quelques euros d'erreur, surtout pres des egalites.")
     report.append("- outfc+outely est une somme d'heures-composant, pas une duree d'indisponibilite du site.")
-    report.append("- Le moteur legacy double-compte le pas de remplacement et la metrique finale ignore certains resets.")
+    report.append("- Le moteur legacy rejoue le pas de remplacement, la metrique ignore certains resets et le LOL")
+    report.append("  pouvait crediter un composant FC/ELY hors service lorsque la batterie saturait.")
 
     provenance = build_provenance(
         "postprocess_p1_p3_legacy_2026_07",

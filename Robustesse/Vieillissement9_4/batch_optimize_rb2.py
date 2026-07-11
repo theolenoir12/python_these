@@ -27,7 +27,7 @@ from concurrent.futures import ProcessPoolExecutor
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from Common import Init_EMR_MG_v16_python as I
 from Common.main_init_and_loop import init_and_run_loop
-from Common.cost_fcn_total2 import get_cost_total
+from Common.cost_fcn_total2 import get_cost_from_ledger
 from Common.get_lol import get_lol
 
 # ======================= CONFIGURATION =======================
@@ -85,9 +85,7 @@ def _lpsp_cost(data):
     p, r = np.clip(P_planned, 0, None), np.clip(P_real, 0, None)
     tot = p.sum()
     lpsp = (np.clip(p - r, 0, None).sum() / tot * 100) if tot > 0 else 0.0
-    cost_keur = get_cost_total(data["alpha_fc"][:-1], data["P_fc"], data["alpha_ely"][:-1],
-                               data["P_ely"], data["P_bat"], data["SoC"],
-                               I.LOAD, I.BAT, I.FC, I.ELY, data["SoH_bat"][:-1]) / 1000
+    cost_keur = get_cost_from_ledger(data) / 1000.0
     return float(lpsp), float(cost_keur)
 
 

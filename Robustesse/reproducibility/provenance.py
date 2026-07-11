@@ -9,15 +9,17 @@ ajoute les informations Git uniquement comme metadonnees explicatives.
 from __future__ import annotations
 
 import hashlib
+import importlib.metadata
 import json
 import os
 import platform
+import socket
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 3
 
 
 def sha256_file(path):
@@ -33,6 +35,13 @@ def _json_bytes(value):
     return json.dumps(
         value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
     ).encode("utf-8")
+
+
+def _distribution_version(name):
+    try:
+        return importlib.metadata.version(name)
+    except importlib.metadata.PackageNotFoundError:
+        return None
 
 
 def _run_git(repo_root, args):
@@ -64,6 +73,29 @@ def _display_path(path, repo_root):
     return resolved.as_posix()
 
 
+def _normalise_files(files, repo_root):
+    """Retourne ``(nom_logique, chemin)`` sans faire entrer le chemin physique
+    des donnees externes dans l'identite du calcul.
+
+    Un element peut etre un simple chemin, ou un couple
+    ``("nom/logique/stable", chemin_physique)``.
+    """
+    normalised = []
+    for item in files:
+        if isinstance(item, (tuple, list)) and len(item) == 2:
+            logical, physical = item
+            logical = str(logical).replace("\\", "/")
+            path = Path(physical).resolve()
+        else:
+            path = Path(item).resolve()
+            logical = _display_path(path, repo_root)
+        normalised.append((logical, path))
+    labels = [logical for logical, _ in normalised]
+    if len(labels) != len(set(labels)):
+        raise ValueError("noms logiques de provenance dupliques")
+    return normalised
+
+
 def build_provenance(experiment_id, files, parameters, repo_root=None):
     """Construit une fiche de provenance et son empreinte deterministe.
 
@@ -72,7 +104,9 @@ def build_provenance(experiment_id, files, parameters, repo_root=None):
     inclus dans l'empreinte : deux executions bit-a-bit du meme protocole
     partagent ainsi le meme identifiant de run.
     """
-    paths = [Path(p).resolve() for p in files]
+    raw_paths = [item[1] if isinstance(item, (tuple, list)) and len(item) == 2 else item
+                 for item in files]
+    paths = [Path(p).resolve() for p in raw_paths]
     missing = [str(p) for p in paths if not p.is_file()]
     if missing:
         raise FileNotFoundError("Entrees de provenance absentes : %s" % missing)
@@ -82,21 +116,31 @@ def build_provenance(experiment_id, files, parameters, repo_root=None):
     elif repo_root is not None:
         repo_root = Path(repo_root).resolve()
 
+    logical_files = _normalise_files(files, repo_root)
     entries = []
-    for path in sorted(paths, key=lambda p: _display_path(p, repo_root)):
+    locations = []
+    for logical, path in sorted(logical_files, key=lambda item: item[0]):
         entries.append(
             {
-                "path": _display_path(path, repo_root),
+                "path": logical,
                 "size": path.stat().st_size,
                 "sha256": sha256_file(path),
             }
         )
+        locations.append({"path": logical, "resolved_path": path.as_posix()})
 
+    numerical_runtime = {
+        "python": platform.python_version(),
+        "numpy": _distribution_version("numpy"),
+        "scipy": _distribution_version("scipy"),
+        "sympy": _distribution_version("sympy"),
+    }
     identity = {
         "schema_version": SCHEMA_VERSION,
         "experiment_id": experiment_id,
         "parameters": parameters,
         "inputs": entries,
+        "numerical_runtime": numerical_runtime,
     }
     fingerprint = hashlib.sha256(_json_bytes(identity)).hexdigest()
 
@@ -115,26 +159,33 @@ def build_provenance(experiment_id, files, parameters, repo_root=None):
                 repo_root, ["status", "--porcelain", "--"] + relative
             )
 
-    try:
-        import numpy as np
-
-        numpy_version = np.__version__
-    except ImportError:
-        numpy_version = None
+    slurm = {
+        key: os.environ.get(key)
+        for key in ("SLURM_JOB_ID", "SLURM_JOB_NAME", "SLURM_CPUS_PER_TASK", "SLURM_SUBMIT_DIR")
+        if os.environ.get(key) is not None
+    }
 
     return {
         **identity,
+        "input_locations": locations,
         "run_fingerprint": fingerprint,
         "created_utc": datetime.now(timezone.utc).isoformat(),
         "git": {
             "commit": git_commit,
-            "repo_dirty": bool(git_status),
-            "relevant_inputs_dirty": bool(relevant_status),
+            "repo_dirty": None if git_status is None else bool(git_status),
+            "relevant_inputs_dirty": (
+                None if relevant_status is None else bool(relevant_status)
+            ),
         },
         "runtime": {
             "python": sys.version.split()[0],
-            "numpy": numpy_version,
+            "numpy": numerical_runtime["numpy"],
+            "scipy": numerical_runtime["scipy"],
+            "sympy": numerical_runtime["sympy"],
             "platform": platform.platform(),
+            "hostname": socket.gethostname(),
+            "argv": list(sys.argv),
+            "slurm": slurm,
         },
     }
 
@@ -142,13 +193,15 @@ def build_provenance(experiment_id, files, parameters, repo_root=None):
 def provenance_header_lines(record):
     """Lignes de commentaire compactes a inserer dans une sortie texte."""
     git = record.get("git", {})
+    def flag(value):
+        return "unavailable" if value is None else str(int(bool(value)))
     return [
         "# provenance_schema=%s" % record["schema_version"],
         "# experiment_id=%s" % record["experiment_id"],
         "# run_fingerprint=%s" % record["run_fingerprint"],
         "# git_commit=%s" % (git.get("commit") or "unavailable"),
         "# git_repo_dirty=%s | relevant_inputs_dirty=%s"
-        % (int(bool(git.get("repo_dirty"))), int(bool(git.get("relevant_inputs_dirty")))),
+        % (flag(git.get("repo_dirty")), flag(git.get("relevant_inputs_dirty"))),
     ]
 
 
@@ -191,6 +244,7 @@ def validate_cache(path, expected_record, allow_legacy=False):
 
 def write_provenance_sidecar(path, record, artifacts=()):
     """Ecrit une fiche JSON, avec hash des artefacts deja produits."""
+    path = Path(path)
     enriched = dict(record)
     enriched["artifacts"] = [
         {
@@ -201,12 +255,105 @@ def write_provenance_sidecar(path, record, artifacts=()):
         for p in artifacts
         if Path(p).is_file()
     ]
-    with open(path, "w", encoding="utf-8") as stream:
+    temporary = path.with_name(path.name + ".tmp.%d" % os.getpid())
+    with open(temporary, "w", encoding="utf-8") as stream:
         json.dump(enriched, stream, indent=2, ensure_ascii=False, sort_keys=True)
         stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, path)
+
+
+def validate_sidecar_artifact(sidecar_path, artifact_path, expected_record):
+    """Valide l'empreinte du run et le SHA d'un artefact de cache binaire."""
+    sidecar_path = Path(sidecar_path)
+    artifact_path = Path(artifact_path)
+    if not sidecar_path.is_file() or not artifact_path.is_file():
+        return False, "artefact ou fiche absent"
+    try:
+        with open(sidecar_path, encoding="utf-8") as stream:
+            record = json.load(stream)
+    except (OSError, ValueError) as exc:
+        return False, "fiche illisible : %s" % exc
+    if record.get("run_fingerprint") != expected_record["run_fingerprint"]:
+        return False, "empreinte de fiche differente"
+    actual = sha256_file(artifact_path)
+    for artifact in record.get("artifacts", []):
+        if Path(artifact.get("path", "")).name == artifact_path.name:
+            if artifact.get("sha256") == actual:
+                return True, "empreinte et SHA identiques"
+            return False, "SHA artefact different"
+    return False, "artefact absent de la fiche"
+
+
+def validate_append_only_artifact(sidecar_path, artifact_path, expected_record):
+    """Valide un journal, y compris une extension apres un crash pre-sidecar.
+
+    Si le SHA courant differe mais que le prefixe de taille enregistree possede
+    toujours le SHA consigne, le fichier n'a subi qu'un append. L'appelant doit
+    encore parser integralement les nouvelles lignes avant de ratifier le SHA.
+    """
+    sidecar_path = Path(sidecar_path)
+    artifact_path = Path(artifact_path)
+    if not sidecar_path.is_file() or not artifact_path.is_file():
+        return False, "artefact ou fiche absent"
+    try:
+        with open(sidecar_path, encoding="utf-8") as stream:
+            record = json.load(stream)
+    except (OSError, ValueError) as exc:
+        return False, "fiche illisible : %s" % exc
+    if record.get("run_fingerprint") != expected_record["run_fingerprint"]:
+        return False, "empreinte de fiche differente"
+    entry = next(
+        (item for item in record.get("artifacts", [])
+         if Path(item.get("path", "")).name == artifact_path.name),
+        None,
+    )
+    if entry is None:
+        return False, "artefact absent de la fiche"
+    actual_size = artifact_path.stat().st_size
+    recorded_size = int(entry.get("size", -1))
+    if actual_size == recorded_size:
+        same = sha256_file(artifact_path) == entry.get("sha256")
+        return same, "SHA identique" if same else "SHA different"
+    if actual_size < recorded_size or recorded_size < 0:
+        return False, "journal tronque"
+    digest = hashlib.sha256()
+    remaining = recorded_size
+    with open(artifact_path, "rb") as stream:
+        while remaining:
+            block = stream.read(min(1024 * 1024, remaining))
+            if not block:
+                return False, "prefixe tronque"
+            digest.update(block)
+            remaining -= len(block)
+    if digest.hexdigest() != entry.get("sha256"):
+        return False, "prefixe historique modifie"
+    return True, "extension append-only a parser"
 
 
 def fingerprinted_run_dir(base_dir, slug, record):
     """Dossier immuable par contenu pour une nouvelle execution."""
     return Path(base_dir) / "runs" / (slug + "_" + record["run_fingerprint"][:12])
 
+
+def acquire_run_lock(run_dir):
+    """Verrouille un dossier de run sur POSIX pour eviter un double append."""
+    path = Path(run_dir) / ".run.lock"
+    stream = open(path, "a+", encoding="utf-8")
+    try:
+        import fcntl
+
+        fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except ImportError:
+        # Windows : pas de verrou inter-processus sans dependance additionnelle.
+        # Les jobs Slurm, cible critique, sont POSIX et donc proteges.
+        return stream
+    except BlockingIOError:
+        stream.close()
+        raise RuntimeError("un autre processus utilise deja %s" % run_dir)
+    stream.seek(0)
+    stream.truncate()
+    stream.write("pid=%d host=%s\n" % (os.getpid(), socket.gethostname()))
+    stream.flush()
+    return stream

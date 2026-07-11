@@ -20,7 +20,8 @@ l'on a le DROIT de presenter : seule la version ROBUSTE au bruit de prevision.
 
   DEUX FIGURES SEPAREES (les ellipses etant minuscules a l'echelle du plan) :
     1) pareto_strategies.{pdf,png}     -- plot_pareto_strategies.py
-         plan de Pareto, TOUTES les strategies (0-100, ..., RB1, RB2, RB2(SoH),
+         plan de Pareto, TOUTES les strategies (0-100, ...,
+         rb1_hist_020_060 affichee « RB1 historique », RB2, RB2(SoH),
          RB2(RUL), SoC..., "Ideal") + FRONT PD NETTOYE, SANS ellipses. Sert a
          situer les positions RELATIVES. RB2(Pred)/RB2(SoH+Pred) y sont a leur
          moyenne Monte-Carlo (hyst).

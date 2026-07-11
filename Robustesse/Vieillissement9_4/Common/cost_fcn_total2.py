@@ -184,6 +184,29 @@ _V_cell_ref_fc = (FC['E_0']
 UV_TO_PCT_FC = (1e-6 / _V_cell_ref_fc) * 100   # uV (sur cellule ~0.86 V) -> % de tension
 
 
+def cost_fc_state_eur(V_irr, V_rev, V_ss, V_idle):
+    """Valeur financiere de l'etat courant d'une unite PEMFC [EUR]."""
+    deg_pct = (V_irr + V_rev + V_ss + V_idle) * UV_TO_PCT_FC
+    return float(deg_pct / ((1 - FC['SoH_EoL']) * 100) * FC['cost'])
+
+
+def cost_ely_state_eur(V_irr, V_rev, V_ss, V_idle):
+    """Valeur financiere de l'etat courant d'une unite PEMWE [EUR]."""
+    deg_pct = (V_irr + V_rev + V_ss + V_idle) * UV_TO_PCT
+    return float(deg_pct / ((1 - ELY['SoH_EoL']) * 100) * ELY['cost'])
+
+
+def get_cost_from_ledger(data):
+    """Cout de degradation total [EUR] d'une simulation a remplacements."""
+    ledger = data.get("degradation_ledger")
+    if ledger is None:
+        raise RuntimeError("simulation sans degradation_ledger")
+    total = ledger.get("total_eur", {})
+    if set(total) != {"bat", "fc", "ely"}:
+        raise RuntimeError("ledger incomplet : %s" % sorted(total))
+    return float(sum(total.values()))
+
+
 def _fc_pmax(alpha_fc):
     """P_max de la PEMFC (vieillissement inclus) ; meme formule que la boucle."""
     i_fc_max = (-234.8032 * alpha_fc + 238.8252)

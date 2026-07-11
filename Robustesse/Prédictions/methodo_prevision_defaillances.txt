@@ -1,4 +1,10 @@
 ================================================================================
+NOMENCLATURE IMMUTABLE -- AUDIT 2026-07-11
+  rb1_hist_020_060       = historique 0.20/0.60
+  rb1_failopt_040_075    = optimum defaillances 0.40/0.75, socle RB1(Pred)
+  rb1_costopt_v8_020_035 = minimum cout unifie V8 0.20/0.35, non qualifie V9_4
+Le nom nu RB1 est ambigu et ne doit plus etre utilise dans un nouveau calcul.
+
 METHODOLOGIE : INTEGRATION DES PREVISIONS DE PROFILS DE PUISSANCE A LA
                ROBUSTESSE AUX DEFAILLANCES  (axe RB1(Pred))
 Dossier : Robustesse/Predictions/         Source 100% ASCII (evite tout mojibake).
@@ -44,8 +50,10 @@ defaillance donne l'OPTIMUM RB1-opt = (SoC_low=0.40, SoC_high=0.75) :
   score de panne 1.481 % (vs 1.669 % historique, -11 %) ET LPSP nominale amelioree
   (0.743 % vs 1.053 %). RB1-opt s'appuie plus sur la FC en decharge (batterie
   preservee) et garde plus de surplus en batterie. C'est la reference "nu" des
-  figures. (Application : Vieillissement8/RB1/get_optimal_action_RB.py edite en
-  0.40/0.75 -> redefinit RB1 partout, reversible via git.)
+  figures. Les calculs utilisent la variante figee rb1_failopt_040_075 ; le
+  dossier nu Vieillissement8/RB1 a ensuite designe 0.20/0.35 et ne doit pas
+  servir a reproduire RB1(Pred). Le test nul levier OFF doit etre identique a
+  rb1_failopt_040_075.
 
 
 2. POURQUOI LE LEVIER DE RB2(Pred) NE MARCHE PAS SUR RB1

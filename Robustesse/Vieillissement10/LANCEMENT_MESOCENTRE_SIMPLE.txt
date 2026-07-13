@@ -1,0 +1,57 @@
+================================================================================
+LANCEMENT SIMPLE DES JOBS MESOCENTRE
+================================================================================
+
+Il n'y a que DEUX lignes a taper. Taper une ligne, puis appuyer sur Entree.
+Chaque ligne est une commande complete. Il n'y a aucun caractere de
+continuation et aucune commande a recopier sur plusieurs lignes.
+
+LIGNE 1
+-------
+cd /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4
+
+LIGNE 2
+-------
+bash submit_all_meso.sh
+
+C'est tout. Le script soumet automatiquement :
+
+1. run_meso_invariance.slurm ;
+2. run_meso_valeur_info.slurm ;
+3. run_meso_maintenance_matrix.slurm ;
+4. run_meso_dwell.slurm.
+
+P1, P3 et P4 restent en attente tant que l'invariance n'est pas terminee avec
+succes. Une fois les quatre numeros affiches, il est possible de quitter le
+terminal.
+
+Le script cree aussi le fichier suivant dans le meme dossier :
+
+DERNIERS_JOBS_SOUMIS.txt
+
+Pour revoir plus tard l'etat des jobs, taper cette unique ligne :
+
+squeue -u tlenoir
+
+ETAT NORMAL JUSTE APRES LA SOUMISSION
+-------------------------------------
+
+- invariance : PENDING ou RUNNING ;
+- P1, P3 et P4 : PENDING, avec la raison Dependency.
+
+Le terminal doit afficher SOUMISSION REUSSIE et quatre numeros de jobs.
+
+SI LE SCRIPT AFFICHE ERREUR
+---------------------------
+
+Ne pas resoumettre les quatre jobs un par un. Conserver le message complet :
+il indiquera precisement quel fichier manque sur le mesocentre.
+
+DOSSIERS A TRANSFERER SUR LE MESOCENTRE
+---------------------------------------
+
+Robustesse/Vieillissement9_4/
+Robustesse/reproducibility/
+
+Le nouveau fichier submit_all_meso.sh doit donc bien etre present dans
+Vieillissement9_4 sur le mesocentre.

@@ -1,0 +1,140 @@
+================================================================================
+DEMARCHE -- RESSERRER LE FRONT DE PARETO PD (programmation dynamique) "v1 -> v2"
+Comment le front de reference optimal a ete corrige pour redominer les regles.
+Dossier : Robustesse/Vieillissement8/DP/
+Redige  : 2026-07-05.  Complement narratif de note_dp_front_v2.txt (chiffres).
+================================================================================
+
+0. LE PROBLEME DE DEPART
+--------------------------------------------------------------------------------
+Le front de Pareto "degradation <-> fiabilite" produit par la PD (dp_pareto.py,
+run v1) est cense etre une BORNE SUPERIEURE de l'optimum global 25 ans : aucune
+regle de conduite (RB2 et ses variantes) ne devrait passer dessous. Or, apres
+le programme Fable, deux strategies le franchissaient :
+    RB2(SoH_all)       LPSP 3.11 %  deg 52.87 kEUR
+    RB2(SoH_all+Pred)  LPSP 2.94 %  deg 53.10 kEUR
+alors que le front v1 plafonnait vers 56-58 kEUR de degradation dans cette zone.
+Une borne superieure franchie par une solution realisable est incoherente : le
+front n'etait donc pas aussi serre qu'il aurait du l'etre. But de la demarche :
+comprendre POURQUOI, puis resserrer le front SANS changer le modele physique ni
+la metrique (comparaison equitable avec le reste de la these).
+
+1. DIAGNOSTIC : OU LA PD PERDAIT-ELLE ?
+--------------------------------------------------------------------------------
+Methode : rejouer les trajectoires 25 ans stockees (dp_aging_*.npz) et DECOMPOSER
+le cout de degradation poste par poste (get_cost_bat / get_cost_fc / get_cost_ely)
+pour la PD v1 et pour RB2, sur les MEMES donnees. Resultat (eps=3) :
+
+   poste            RB2 socle   RB2(SoH_all)   PD v1
+   batterie           45.0        43.1          38.7   <- PD deja devant
+   electrolyseur      11.5         7.5           7.2   <- PD deja devant
+   pile a combustible  2.36        2.34         12.0   <- TOUT le handicap
+     dont "high power"  0           0           10.0
+     remplacements FC   1           1             10
+
+La PD gagnait sur la batterie et l'electrolyseur, mais PERDAIT 10 kEUR sur la
+seule pile a combustible, via un poste "haute puissance" (>80 % de Pmax) qui
+valait 0 chez RB2 et 10 kEUR chez la PD -- avec 10 remplacements FC sur 25 ans
+au lieu de 1. Le handicap etait donc entierement localise, et non diffus.
+
+2. LA CAUSE : UN SEUIL QUI DERIVE ENTRE DEUX RESOLUTIONS
+--------------------------------------------------------------------------------
+Les seuils du modele de degradation sont des FRACTIONS de la puissance max :
+    - FC  : penalite "haute puissance" au-dessus de 0.80 * P_fc_max
+    - ELY : degradation irreversible au-dessus du "genou" 30 % * P_ely_max
+La PD sequentielle RESOUT sa table une fois par an, au niveau de vieillissement
+courant, et fige la grille de controle au Pmax de CETTE resolution. Or la FC
+vieillit vite (Pmax -~4 %/an, duree de vie ~2.3 ans). Consequence : la grille
+contenait un niveau de controle "pile a 0.80 * Pmax_resolution", GRATUIT au moment
+du calcul (backward), mais qui passe AU-DESSUS du vrai seuil des les premieres
+semaines de l'annee, quand Pmax a deja baisse. La PD garait donc la FC dans une
+zone qu'elle croyait gratuite et qui ne l'etait plus -> 10 kEUR de degradation
+"aveugle", non anticipee par l'optimisation. Meme mecanisme, attenue (~2 kEUR),
+pour le genou 30 % de l'electrolyseur, et pour la capacite batterie du plan.
+Autrement dit : le front v1 etait une borne LACHE non par manque de finesse de
+grille, mais par une INCOHERENCE entre le cout que la PD optimisait et le cout
+reellement paye pendant l'annee.
+
+3. LE CORRECTIF (v2) : DEUX LEVIERS COMPLEMENTAIRES
+--------------------------------------------------------------------------------
+On corrige l'incoherence sans toucher a la physique ni a la metrique.
+
+ (a) PROJECTION DU VIEILLISSEMENT  (option aging_proj, dp_core + dp_aging)
+     A chaque resolution annuelle, on estime la PENTE de vieillissement observee
+     depuis la resolution precedente, et on price les seuils de degradation au
+     Pmax PROJETE en fin d'annee (pas au Pmax du jour). Choix conservatif : un
+     depassement de seuil non facture coute bien plus cher qu'une petite marge.
+     On ajoute aussi deux niveaux de controle "ride" cales juste SOUS les seuils
+     projetes, pour que la grille reguliere ait toujours une option propre.
+     Detail technique : precompute_controls(thr_fc_max, thr_ely_max) separe le
+     Pmax "rendement/faisabilite" (courant) du Pmax "seuils de degradation"
+     (projete) ; control_grid(extra_u=...) insere les niveaux ride.
+
+ (b) ROLLOUT EXACT AU PAS DE TEMPS  (option rollout, dp_aging)
+     Au lieu de lire la table PD au plus-proche-voisin (erreur de discretisation
+     d'etat + seuils figes), chaque pas CHOISIT son controle en minimisant le
+     cout EXACT du pas au vieillissement COURANT (seuils FC/ELY du jour, shift
+     FC, start-stop, batterie, energie non servie a eps) + la valeur future
+     V(t+1). V est reconstitue jour par jour a partir de checkpoints journaliers
+     captures pendant le backward (~30 Mo, 24 pas re-derives par jour), donc sans
+     stocker les 8760 tranches. C'est un rollout de programmation dynamique :
+     table pour l'ESTIMATION de la valeur future, mais decision recalculee
+     exactement a l'etat reel.
+
+ Non-regression : par defaut (aging_proj=False, rollout=False) le code est
+ STRICTEMENT identique au v1 (verifie : precompute_controls sans thr_* rend des
+ tableaux egaux au bit pres). Le v2 est donc un ajout, pas une reecriture.
+
+ Cote balayage (dp_pareto.py) : grille eps densifiee dans le "trou" realise du
+ v1 (LPSP 1.8-5.6 %) avec 0.12/0.15/0.25/0.30 (19 eps au lieu de 15), masque
+ NON-DOMINE ecrit dans le npz et affiche dans le txt (les traces ne relient plus
+ que les points non domines -> plus de corde a travers un trou). Sortie taggee
+ *_v2 pour ne PAS ecraser le front v1 (comparaison A/B possible ; DP_PARETO_V2=0
+ rejoue exactement le v1).
+
+4. VALIDATION (avant de depenser des heures-coeur)
+--------------------------------------------------------------------------------
+ (i)  A/B a donnees identiques (local, meme boucle, meme grille) :
+        6 ans, eps=3 : deg 11.73 -> 11.20 kEUR (le mecanisme s'amorce)
+        25 ans, eps=3 : deg 55.68 -> 47.77 kEUR (-7.9 kEUR, -14 %) a LPSP egal
+ (ii) Fidelite du diagnostic : la decomposition v2 montre FC "high" 10.0 -> 0.4
+        kEUR et remplacements FC 10 -> 1. Le gain vient donc bien de la FC qui
+        n'est plus garee au-dessus de son seuil vieilli, exactement comme prevu.
+ (iii) Le run cluster (LUT reelles) confirme le local a 0.003 kEUR pres (eps=3 :
+        47.768 vs 47.765). La reconstruction locale des LUT etait donc fidele.
+
+5. RESULTAT (job mesocentre 213210, 19 eps, LUT reelles, 51x51)
+--------------------------------------------------------------------------------
+Le front v2 descend de ~9-10 kEUR sur tout son parcours et DOMINE desormais
+TOUTES les regles de la these (marge = deg strategie - deg front au meme LPSP) :
+    RB2 socle           +13.9 kEUR
+    RB2(Pred)           +14.0 kEUR
+    RB2(SoH_H2)         +10.1 kEUR
+    RB2(SoH_all)         +8.2 kEUR
+    RB2(SoH_all+Pred)    +8.3 kEUR   (la meilleure de la these)
+Plus aucune strategie ne passe sous le front : il redevient une borne superieure
+credible de l'optimum global. Probleme resolu.
+
+6. CE QU'IL FAUT RETENIR (pour le manuscrit)
+--------------------------------------------------------------------------------
+ - Une borne "optimale" par PD sequentielle n'est valable que si le cout qu'elle
+   OPTIMISE coincide avec le cout reellement PAYE sur l'horizon. Quand un seuil
+   de degradation est defini en fraction d'une grandeur qui DERIVE (Pmax vieilli),
+   il faut soit projeter le seuil, soit decider a l'etat reel (rollout) -- sinon
+   la borne est lache la ou le vieillissement est le plus rapide (ici la FC).
+ - Le correctif ne change ni la physique ni la metrique : la comparaison au reste
+   de la these reste equitable, et le gain est attribue a un mecanisme unique et
+   localise (la FC), pas a un artefact numerique.
+
+FICHIERS
+--------------------------------------------------------------------------------
+ Code    : dp_core.py (control_grid extra_u, precompute_controls thr_*,
+           backward/solve_cyclic checkpoints) ; dp_aging.py (DPPolicy aging_proj
+           + rollout) ; dp_pareto.py (19 eps, masque non-domine, tag _v2).
+ Chiffres: note_dp_front_v2.txt (tables completes) ; resultats versionnes dans
+           results_meso/dp_pareto_25y_51x51_v2.{npz,txt}.
+ Figures : figures_pareto_meso/pareto_strategies_vs_DP.{pdf,png} ;
+           ../../Fable_pred/pareto_ems_ultime{,_isocost}.{pdf,png} (overlay --dp).
+ Repro   : sbatch run_dp_pareto.slurm (DP_PARETO_V2=1 ; verifier en tete du .out
+           "19 epsilon" + "variante : V2"). DP_PARETO_V2=0 rejoue le v1.
+================================================================================

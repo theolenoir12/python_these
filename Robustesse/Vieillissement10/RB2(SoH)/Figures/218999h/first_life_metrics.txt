@@ -1,0 +1,115 @@
+METRIQUES DE PREMIERE VIE
+
+PEMFC
+  EoL atteinte : True
+  Duree calendaire : 7.944 ans (69589 h)
+  Temps ON : 38459 h
+  EFPH : 19870.2 h
+  Demarrages : 3083
+  Energie : 30659.2 kWh
+  j moyen ON : 0.3619 A/cm2
+  Taux total equivalent : 2.2370 uV/h ON
+
+PEMWE
+  EoL atteinte : True
+  Duree calendaire : 11.474 ans (100515 h)
+  Temps ON : 27559 h
+  EFPH : 7879.4 h
+  Demarrages : 4235
+  Energie : 122849.9 kWh
+  j moyen ON : 1.1642 A/cm2
+  Taux total equivalent : 7.4426 uV/h ON
+
+
+DONNEES JSON
+{
+  "conventions": {
+    "year_h": 8760.0,
+    "on_threshold_fraction_pmax": 0.0005,
+    "efph_definition": "sum(abs(P)/Pmax(alpha)*dt_h)",
+    "life_interval": "from initial unit to first reset; censored if no reset"
+  },
+  "battery": {
+    "eol_reached": true,
+    "calendar_h": 34121.0,
+    "calendar_years_8760": 3.895091324200913
+  },
+  "fc": {
+    "eol_reached": true,
+    "calendar_h": 69589.0,
+    "calendar_years_8760": 7.943949771689498,
+    "on_h": 38459.0,
+    "utilization_on": 0.5526591846412507,
+    "efph": 19870.184789831466,
+    "capacity_factor_equivalent": 0.2855362886351502,
+    "energy_kwh": 30659.232775528715,
+    "starts": 3083,
+    "mean_run_h": 12.47453778786896,
+    "mean_load_fraction_on": 0.5166589040232835,
+    "mean_current_density_on_A_cm2": 0.361912271561956,
+    "p95_current_density_on_A_cm2": 0.3667777308266621,
+    "hours_by_current_density": {
+      "off": 31130.0,
+      "0-0.5_A_cm2": 38459.0,
+      "0.5-1_A_cm2": 0.0,
+      "1-2_A_cm2": 0.0,
+      "above_2_A_cm2": 0.0
+    },
+    "degradation_pct_end": {
+      "start-stop": 7.168361439375847,
+      "idling": 0.00034876880178604506,
+      "reversible": 0.02155128424272998,
+      "irreversible": 2.8113942380842927,
+      "total": 10.001655730504655
+    },
+    "voltage_loss_uV_end": {
+      "start-stop": 61659.99999999999,
+      "idling": 2.9999999999999996,
+      "reversible": 185.37739728180256,
+      "irreversible": 24182.7327188138,
+      "total": 86031.1101160956
+    },
+    "equivalent_rate_total_uV_per_on_h": 2.236956502147627,
+    "equivalent_rate_permanent_uV_per_on_h": 2.23213637168969,
+    "equivalent_rate_irreversible_uV_per_on_h": 0.6287925509975246
+  },
+  "ely": {
+    "eol_reached": true,
+    "calendar_h": 100515.0,
+    "calendar_years_8760": 11.474315068493151,
+    "on_h": 27559.0,
+    "utilization_on": 0.2741779833855643,
+    "efph": 7879.446482578989,
+    "capacity_factor_equivalent": 0.07839075245066894,
+    "energy_kwh": 122849.92820111936,
+    "starts": 4235,
+    "mean_run_h": 6.507438016528925,
+    "mean_load_fraction_on": 0.2859061740249541,
+    "mean_current_density_on_A_cm2": 1.164215686102676,
+    "p95_current_density_on_A_cm2": 1.2892468579187017,
+    "hours_by_current_density": {
+      "off": 69533.0,
+      "0-0.5_A_cm2": 3881.0,
+      "0.5-1_A_cm2": 572.0,
+      "1-2_A_cm2": 26529.0,
+      "above_2_A_cm2": 0.0
+    },
+    "degradation_pct_end": {
+      "start-stop": 2.415992066191807,
+      "maintaining": 0.25810662070025,
+      "reversible": 0.0060025049741680514,
+      "irreversible": 7.320873426527795,
+      "total": 10.00097461839402
+    },
+    "voltage_loss_uV_end": {
+      "start-stop": 49549.499999997264,
+      "maintaining": 5293.5,
+      "reversible": 123.10517256223102,
+      "irreversible": 150143.54679545556,
+      "total": 205109.65196801507
+    },
+    "equivalent_rate_total_uV_per_on_h": 7.442565113683917,
+    "equivalent_rate_permanent_uV_per_on_h": 7.438098145631294,
+    "equivalent_rate_irreversible_uV_per_on_h": 5.448076737017147
+  }
+}

@@ -1,0 +1,306 @@
+================================================================================
+SYNTHÈSE SCIENTIFIQUE (v2) -- DE VIEILLISSEMENT9 À VIEILLISSEMENT9_4 :
+MESURER LA VALEUR DE L'INFORMATION DE VIEILLISSEMENT DANS UN EMS À RÈGLES
+Micro-réseau isolé PV / batterie / H2 (PEMFC-PEMWE), 25 ans, La Réunion
+Tâches AAPG GENIAL 3.2 (adaptation au vieillissement) et 3.4 (planification H2)
+Rédigé : 2026-07-12. Chiffres = reruns CORRIGÉS (jobs 215088-215091) ;
+détails et intervalles dans AUDIT_RERUN_CORRIGE_2026-07-11.txt.
+================================================================================
+
+0. LE CONTEXTE ET LA QUESTION SCIENTIFIQUE
+--------------------------------------------------------------------------------
+Point de départ (état "Vieillissement9") : un simulateur de micro-réseau isolé
+sur 25 ans au pas horaire, avec des modèles de dégradation par composant
+(batterie : table de dommage en cyclage ; PEMFC et électrolyseur : modèles à
+états réversible/irréversible calibrés sur la littérature récente), et un
+comparatif de stratégies de gestion à règles (RB1, RB2 et variantes) selon
+deux indicateurs -- la LPSP (fiabilité de fourniture) et le coût de
+dégradation 25 ans -- agrégés en un coût unifié :
+    coût unifié = coût de dégradation + VoLL x énergie non servie,
+avec VoLL = 3 EUR/kWh au scénario central (balayé à 1 et 10 en post-
+traitement). Les remplacements de composants en fin de vie sont simulés.
+
+Le projet attend que l'intégration des données de vieillissement -- état de
+santé mesuré (SoH), durée de vie restante pronostiquée (RUL), prévision des
+profils de puissance -- améliore la gestion. Or les premières intégrations
+donnaient des gains faibles (~2 % du coût unifié), identiques quelle que soit
+la fonction de coût PEMFC utilisée. D'où la question scientifique de cette
+étape, qui est une question de VALEUR DE L'INFORMATION :
+
+    Ces trois informations (SoH, RUL, prévision) apportent-elles une valeur
+    PROPRE, séparée de la valeur de la simple forme de la règle qui les
+    utilise -- et dans quelles conditions (incertitude, type de décision,
+    valorisation de l'énergie non servie) ?
+
+La démarche : pour chaque information, construire un concurrent qui applique
+la MÊME règle mais SANS l'information, et mesurer l'écart en apparié. Trois
+expériences : P1 pour le SoH, P3 pour la RUL, P4 pour la prévision.
+
+1. LE POINT CONCEPTUEL CENTRAL : BOUCLE FERMÉE vs BOUCLE OUVERTE
+--------------------------------------------------------------------------------
+Les stratégies étudiées sont toutes "online" : à chaque pas, elles lisent des
+mesures (SoC, stock H2, SoH...) et en déduisent leurs consignes. Mais être
+online ne suffit pas à prouver que l'INFORMATION a de la valeur. Dans une
+évaluation déterministe (profil fixe, modèle de vieillissement fixe), la
+trajectoire qu'une règle pilotée par le SoH va suivre est entièrement
+reproductible à l'avance par quiconque possède le modèle nominal : il existe
+donc une stratégie en boucle OUVERTE -- enregistrer ce que la règle a fait,
+puis le rejouer comme un simple programme horaire, sans lire aucun capteur --
+qui produit exactement les mêmes actions. C'est un résultat classique de la
+commande : en monde parfaitement connu, boucle fermée = boucle ouverte ; la
+rétroaction ne gagne sa vie que lorsqu'il y a de l'IMPRÉVU à corriger.
+
+Conséquence : tous les protocoles antérieurs (un seul monde, nominal) ne
+pouvaient pas distinguer "la règle est bien informée" de "la règle a un bon
+profil temporel". Ce n'est pas que le SoH était inutile -- c'est que le
+protocole était structurellement incapable de le prouver. Il fallait donc
+créer les imprévus.
+
+2. LA MÉTHODE : L'INCERTITUDE COMME OBJET, LA RIGUEUR COMME OUTIL
+--------------------------------------------------------------------------------
+Deux choses distinctes, à ne pas confondre :
+
+(a) LE MONTE-CARLO SUR LES PARAMÈTRES DE DÉGRADATION EST L'OBJET DE
+    L'EXPÉRIENCE, pas une analyse de sensibilité de validation. La grandeur
+    que l'on veut mesurer (la valeur de la rétroaction) est identiquement
+    NULLE en monde nominal (section 1) : sans population de mondes perturbés,
+    il n'y a rien à mesurer. On tire donc 200 "vrais mondes" : multiplicateurs
+    log-uniformes x[0,5 ; 2] appliqués conjointement aux taux de dégradation
+    (PEMFC : irréversible, réversible, start-stop ; électrolyseur : idem ;
+    batterie : échelle de la table de dommage). La plage x2 correspond aux
+    écarts entre études expérimentales de durabilité. Dans chaque monde, la
+    physique simulée ET la métrique finale utilisent les taux perturbés ; la
+    stratégie, elle, ne connaît que ses signaux mesurés. On observe ainsi
+    comment chaque stratégie encaisse un monde qui ne se déroule pas comme
+    son concepteur l'avait prévu. (Ceci diffère des analyses de sensibilité
+    historiques sens_*, qui vérifiaient la tenue de conclusions déjà acquises.)
+
+(b) LA RIGUEUR DE MESURE, elle, tient à quatre garde-fous :
+    - variables aléatoires communes (CRN) : les mêmes 200 mondes pour tous
+      les concurrents -> les différences appariées mesurent l'ingrédient
+      testé, pas le bruit d'échantillonnage ;
+    - concurrents à INGRÉDIENT UNIQUE : chaque stratégie ajoute exactement
+      une chose à la précédente (implémentés comme wrappers de la vraie
+      fonction, zéro duplication de code) ;
+    - TESTS NULS intégrés : quand l'ingrédient est neutralisé, le montage
+      retombe bit à bit sur sa référence (vérifié avant tout run payant) ;
+    - VALIDATION DU MOTEUR : un audit a corrigé trois défauts de la
+      comptabilité historique (rejeu du pas de remplacement sur l'unité
+      neuve ; coût recalculé sans respecter tous les resets ; bilan de
+      puissance créditant un composant hors service). Le moteur corrigé
+      tient un journal des coûts par unité physique (ledger), vérifié par un
+      test d'invariance 25 ans, et chaque run est identifié par une empreinte
+      SHA de ses sources, données et paramètres. La correction a matériellement
+      changé certains résultats (section 7) -- preuve que ce n'était pas du luxe.
+
+3. EXPÉRIENCE P1 -- QUE VAUT LE CAPTEUR D'ÉTAT DE SANTÉ ? (tâche 3.2)
+--------------------------------------------------------------------------------
+La règle RB2 pilote la répartition déficit/surplus entre batterie et chaîne H2
+par deux consignes (P_fc_set, P_ely_set). Sa variante RB2(SoH) module ces
+consignes par l'état de santé mesuré : P_set = c x Pmax x SoH^gamma. Les
+optimisations de setpoints montraient que la famille SoH atteint des points du
+plan (LPSP, dégradation) inaccessibles à la famille statique. Mais ce gain
+mélange trois ingrédients. On le décompose par une échelle de quatre
+stratégies, chaque barreau ajoutant UN ingrédient :
+
+    RB2          consignes constantes, réglage historique (0,400/0,260)
+    RB2(Recale)  consignes constantes, aux valeurs de RB2(SoH) à l'état neuf
+                 (0,42/0,30)          -> mesure le RÉGLAGE des constantes
+    RB2(Sched)   consignes suivant le profil temporel exact de RB2(SoH) en
+                 monde nominal, enregistré puis rejoué en aveugle ("horloge")
+                                      -> mesure la NON-STATIONNARITÉ seule
+    RB2(SoH)     consignes pilotées par le SoH mesuré
+                                      -> mesure le CAPTEUR seul
+
+Test nul : en monde nominal, l'horloge rejoue RB2(SoH) bit à bit (vérifié).
+
+Résultats (200 mondes, VoLL = 3, différences appariées, négatif = gain) :
+
+    réglage  (Recale-RB2)  : -0,941 kEUR [IC95 -1,12;-0,76]   gagne 165/200
+    horloge  (Sched-Recale): -0,648 kEUR [-0,79;-0,50]        gagne 143/200
+    capteur  (SoH-Sched)   : -0,716 kEUR [-0,78;-0,66]        gagne 198/200
+    total    (SoH-RB2)     : -2,305 kEUR [-2,37;-2,24]        gagne 200/200
+
+LECTURE, en trois temps :
+
+(i)  Le gain total de RB2(SoH) sur RB2 est réel et systématique (200/200) --
+     les optimisations de setpoints antérieures ne sont pas contredites.
+
+(ii) Mais les trois ingrédients n'ont pas le même STATUT. Le réglage et
+     l'horloge sont des PARIS sur le modèle de conception : ils perdent dans
+     18 à 29 % des mondes, et leur signe DÉPEND de la valorisation de
+     l'énergie non servie (le réglage vaut +2,29 à VoLL=1 et -12,2 à VoLL=10 ;
+     l'horloge change aussi de signe). Le capteur est le SEUL ingrédient
+     quasi certain : il gagne dans 198/200 mondes, reste négatif à toutes les
+     VoLL testées (-0,60 / -0,72 / -1,13 à VoLL = 1/3/10) et jusque dans le
+     pire décile des différences appariées (ES90 = -0,09 kEUR, contre +1,8 et
+     +0,9 pour les deux autres). Mécanisme identifié : le "genou" de
+     zéro-usure de l'électrolyseur dérive avec la puissance max vieillie ;
+     la rétroaction y asservit la consigne quel que soit le monde, là où un
+     réglage figé parie sur la position nominale du genou.
+
+(iii) CAVEAT SUR LE BARREAU "RÉGLAGE" (objection légitime, assumée) : si la
+     baseline RB2 était exactement à l'optimum statique sous le moteur et la
+     métrique corrigés, ce barreau devrait être >= 0 en monde nominal (aucun
+     point statique ne peut battre l'optimum statique). Le -0,94 mesuré
+     signifie donc que le réglage historique (grilles grossières, calées
+     avant correction du moteur) n'est PAS l'optimum statique actuel : ce
+     barreau est un ARTEFACT DE RÉGLAGE DE BASELINE, pas une propriété de
+     l'information -- exactement le biais que cette thèse reproche aux
+     comparaisons de la littérature, ici attrapé dans nos propres données par
+     la décomposition. Correction prévue : re-sweep de l'optimum statique de
+     RB2 sous moteur corrigé, qui deviendra le vrai barreau du bas.
+     IMPORTANT : ce caveat ne touche que le premier barreau et le total ; les
+     mesures de l'horloge et du capteur comparent des stratégies au même
+     ancrage et y sont insensibles.
+
+Enfin, la décomposition physique du gain total montre qu'il est surtout un
+gain de FIABILITÉ valorisé par la VoLL (énergie non servie -942 kWh) et non
+une économie d'usure (+0,52 kEUR de dégradation).
+
+CONCLUSION 3.2 : oui, on implémente RB2(SoH) -- lire un capteur coûte moins
+cher que programmer une rampe en espérant que le modèle soit bon. Mais la
+raison scientifique n'est pas "le SoH optimise le nominal" (une horloge y
+suffirait) : le jumeau numérique est une ASSURANCE contre l'erreur de modèle
+de vieillissement. C'est une valeur de robustesse, quasi certaine, et c'est
+précisément ce qui la rend défendable.
+
+4. EXPÉRIENCE P3 -- QUE VAUT LE PRONOSTIC (RUL) POUR LA MAINTENANCE ? (tâche 3.4)
+--------------------------------------------------------------------------------
+POURQUOI LA RUL, ALORS QU'ON A DÉJÀ LE SoH ? Au sens strict, la RUL n'ajoute
+aucune information : elle est DÉRIVÉE du SoH (extrapolation de sa pente).
+C'est d'ailleurs pourquoi, en pilotage continu des consignes, RB2(RUL) était
+dominée par RB2(SoH) (résultat antérieur de la thèse, conservé). Mais une
+décision de MAINTENANCE n'est pas une question de niveau ("à combien régler
+la consigne ?" -> le SoH suffit) : c'est une question de DATE ("ce composant
+survivra-t-il jusqu'à la prochaine visite ?"). Le SoH instantané seul n'y
+répond pas : SoH = 0,92 peut signifier "encore deux ans" ou "mort dans trois
+semaines" selon le taux d'usure -- qui varie d'un facteur 4 entre les mondes
+perturbés. La RUL = SoH + pente projetée sur l'horizon : c'est la MISE EN
+FORME du même signal pour une décision datée.
+
+LE CADRE (contexte insulaire, hypothèses balayées faute de données O&M) :
+remplacements possibles uniquement aux visites périodiques (T = 3/6/12 mois) ;
+coût fixe par intervention (0,5/1,5/3 kEUR, groupage possible) ; une PEMFC ou
+un électrolyseur qui atteint sa fin de vie entre deux visites est HORS
+SERVICE jusqu'à la suivante (panne "dure") ; la batterie continue à capacité
+dégradée (panne "molle"). L'INDICATEUR est le coût unifié étendu :
+    dégradation + VoLL x EENS + C_intervention x interventions
+    + vie résiduelle jetée par les remplacements préventifs.
+(Il ne s'agit PAS de l'indicateur de robustesse aux défaillances aléatoires
+du chapitre Défaillances : ici les indisponibilités sont ENDOGÈNES, causées
+par l'usure ; leur coût passe par la LPSP/EENS.)
+
+QUATRE POLITIQUES de remplacement, à stratégie de conduite identique
+(RB2(SoH)) pour que l'écart mesure la politique seule : instantané (référence
+continentale, = boucle de base, test nul exact) ; correctif (à la première
+visite après la panne) ; calendaire (préventif à âge nominal -- le préventif
+SANS pronostic) ; RUL (préventif si la RUL estimée en ligne < intervalle
+jusqu'à la visite suivante). Le préventif ne vise que les pannes dures : un
+premier run avait montré que prévenir la batterie (panne molle) ne fait que
+jeter de la vie résiduelle sans éviter aucune indisponibilité.
+
+RÉSULTATS CORRIGÉS (VoLL = 3, C = 1,5 kEUR, T = 6 mois, 200 mondes) :
+
+    politique     coût kEUR   ES90     LPSP %   heures-composant hors service
+    instantané     106,78     148,8    2,91            0
+    correctif      107,55     147,6    3,46       10 095
+    calendaire     107,56     148,5    3,32        7 224
+    RUL            104,92     143,8    2,99          142
+
+    RUL - correctif  : -2,625 kEUR [IC95 -3,04;-2,21], gagne 178/200
+    RUL - calendaire : -2,636 kEUR ; calendaire - correctif : ~0 (indistincts)
+
+Le pronostic écrase l'indisponibilité (facteur ~70) pour une prime quasi
+nulle (les composants sont remplacés à quelques pourcents de leur fin de
+vie). Sa valeur CROÎT avec l'espacement des visites (-0,99 à T=3 mois ;
+-6,65 à T=12) et avec la VoLL (~0 à VoLL=1 ; -11,8 à VoLL=10) : c'est une
+ASSURANCE DE DISPONIBILITÉ, précieuse quand les fenêtres sont rares et
+l'énergie non servie chère. Le calendaire, lui, n'apporte RIEN par rapport au
+correctif : il ne peut pas planifier ce que le modèle nominal n'a jamais
+montré (l'électrolyseur ne meurt jamais en monde nominal), et à âge figé il
+anticipe trop ou trop peu selon le monde -- c'est l'avantage structurel du
+pronostic EN LIGNE sur le préventif calendaire.
+
+5. EXPÉRIENCE P4 -- QUE VAUT LA PRÉVISION DES PROFILS ? (tâche 3.4)
+--------------------------------------------------------------------------------
+Votre lecture est la bonne : il s'agit de montrer que la prévision de
+puissance permet d'ajouter une COUCHE DE RÈGLE qui réduit le coût unifié.
+
+LE GISEMENT, identifié par un diagnostic préalable sur le modèle V9 : 89 % de
+l'usure de l'électrolyseur est du START-STOP (9 193 démarrages en 25 ans,
+~1/jour) ; la part réversible résiduelle est nulle (les repos naturels la
+récupèrent -> le levier "repos programmés" n'a aucun gisement, résultat
+négatif acquis sans banc dédié). Un démarrage pour une heure de surplus coûte
+plus qu'il ne stocke.
+
+LA RÈGLE : ne démarrer l'électrolyseur que si le surplus prévu dépasse la
+consigne pendant au moins N heures. Attribution en trois familles, mêmes
+graines : anti-cyclage AVEUGLE (interdiction de redémarrer N h après un
+arrêt : ce qu'on peut faire SANS prévision) ; prévision OMNISCIENTE (borne
+supérieure) ; prévision BRUITÉE (bruit AR(1) calibré sur le backtest LSTM,
+32 réalisations).
+
+RÉSULTATS CORRIGÉS (VoLL = 3) :
+
+    base RB2(SoH)            81,89 kEUR                9 193 démarrages
+    meilleur aveugle (N=8)   -1,084                    8 573
+    omniscient (N=4)         -2,462                    8 083
+    bruité (N=4)             -1,470 [32/32 graines]    8 065
+
+Le point bruité N=4 DOMINE la base sur les deux axes (LPSP ET dégradation)
+dans les 32 réalisations -- le signe de son gain ne dépend donc pas de la
+VoLL. Mécanisme du gagnant-gagnant : les démarrages bloqués sont ceux des
+surplus courts, qui stockaient peu d'hydrogène ; le surplus est alors absorbé
+par la batterie (rendement aller-retour environ trois fois meilleur que la
+chaîne H2) et restitué le soir même. La valeur PROPRE de la prévision, au-delà
+du meilleur anti-cyclage aveugle, vaut -0,387 kEUR [32/32]. Le domaine utile
+est étroit (N = 2-4 h) : au-delà, exiger un surplus continu trop long tue la
+chaîne H2 (falaise de LPSP) -- la borne de faisabilité est la distribution
+des durées de surplus du gisement solaire local. La piste "réserve H2
+saisonnière" a été écartée en amont : contexte équatorial, pas de cycle
+annuel du stock à exploiter.
+
+POURQUOI CETTE RÈGLE RÉSISTE AU BRUIT là où la pré-charge historique s'y
+noyait (~60 % du gain omniscient conservé, contre ~37 %) : la décision porte
+sur la PERSISTANCE des gros surplus de mi-journée (signal >> écart-type de
+prévision), pas sur le signe d'une énergie nette marginale. La valeur d'une
+prévision dépend moins de sa précision que du rapport signal/bruit de la
+grandeur qu'on lui fait décider.
+
+6. CE QU'IL FAUT RETENIR
+--------------------------------------------------------------------------------
+1. En évaluation déterministe, boucle fermée = boucle ouverte : la valeur
+   d'un capteur d'état de santé y est nulle par construction. Tout gain
+   publié sans décomposition réglage/horloge/capteur mélange trois choses --
+   et notre propre baseline s'est fait prendre (barreau "réglage" non nul =
+   sweep statique à refaire sous moteur corrigé).
+2. La valeur du SoH en boucle fermée est une valeur de ROBUSTESSE : ~0,7 kEUR,
+   quasi certaine (198/200), croissante avec l'erreur de modèle, stable en
+   signe à toutes les VoLL -- le seul ingrédient de la cascade dans ce cas.
+3. La même information doit être MISE EN FORME pour sa décision : niveau ->
+   SoH (consignes), date -> RUL (maintenance : -2,6 kEUR au scénario central,
+   croissant avec la rareté des visites et la VoLL), durée -> prévision
+   (filtre de démarrage : -1,5 kEUR, dominance bi-axes).
+4. Le préventif ne paie que pour les composants dont la panne coûte plus cher
+   que la vie résiduelle jetée (pannes dures FC/ELY ; pas la batterie). Le
+   préventif calendaire sans pronostic n'apporte rien.
+5. La rigueur de mesure change les conclusions : la seule correction du bilan
+   de puissance en panne a multiplié par cinq la valeur mesurée du pronostic
+   (P3 : -0,5 -> -2,6 kEUR) et réduit d'un quart celle du filtre prévisionnel
+   (P4 : -1,9 -> -1,5). Tests nuls, CRN, invariance comptable et provenance
+   font partie du résultat.
+
+7. LIMITES ET SUITES
+--------------------------------------------------------------------------------
+Limites : SoH et RUL supposés exacts (bornes hautes de la valeur du capteur ;
+le bruit d'estimation est un axe séparé) ; un profil annuel répété, 200 mondes
+à multiplicateurs indépendants (pas une loi terrain) ; hypothèses O&M posées
+et balayées, à défendre comme ordres de grandeur insulaires ; IC exploratoires
+non ajustés pour multiplicité. Suites priorisées : (i) re-sweep de l'optimum
+statique RB2 sous moteur corrigé (assainit le barreau "réglage" de P1) ;
+(ii) horloge par âge d'unité, recalée aux remplacements (contrôle plus dur
+pour le capteur) ; (iii) erreur de pronostic RUL calibrée (P3) ; (iv) tirages
+joints vieillissement x prévision et variabilité météo interannuelle (P4) ;
+(v) cumul des leviers RB2(SoH + filtre N=4) comme stratégie finale.
+================================================================================

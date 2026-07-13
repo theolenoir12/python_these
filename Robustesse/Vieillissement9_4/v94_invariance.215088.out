@@ -1,0 +1,11 @@
+job=215088 host=node4-26 debut=2026-07-11T17:07:29+02:00
+numpy 1.21.5 scipy 1.9.1 sympy 1.10.1
+AVERTISSEMENT : tests unitaires complets non stages ; validation d'invariance autonome poursuivie.
+Validation OK : /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4/runs/invariance_10b390bb2f56/report.txt
+Remplacements observes : 10
+Biais diagnostic trace complete - ledger : -0.016444 kEUR
+
+real	2m56.123s
+user	2m54.686s
+sys	0m0.430s
+fin=2026-07-11T17:10:26+02:00

@@ -1,0 +1,91 @@
+================================================================================
+RERUN MESOCENTRE V9_4 -- ETAT ET COMMANDES CANONIQUES (2026-07-11)
+================================================================================
+
+STATUT FINAL : TERMINE ET VALIDE
+-------------------------------
+
+Les jobs 215088 (invariance), 215089 (P1), 215090 (matrice P3) et 215091 (P4)
+ont termine avec succes. Ne pas les resoumettre a protocole identique.
+
+Lire maintenant : AUDIT_RERUN_CORRIGE_2026-07-11.txt
+
+La procedure de soumission ci-dessous est conservee comme documentation pour
+un futur protocole, pas comme prochaine action immediate.
+
+PROCEDURE NORMALE, SANS SYNTAXE SLURM A RECOPIER
+------------------------------------------------
+Lire en priorite : LANCEMENT_MESOCENTRE_SIMPLE.txt
+
+Il suffit ensuite de taper ces deux lignes, l'une apres l'autre :
+
+   cd /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4
+   bash submit_all_meso.sh
+
+Le reste de ce fichier est une documentation technique et ne doit pas etre
+recopie pour lancer les jobs.
+
+STATUT DES LOTS RAPATRIES
+-------------------------
+- P3 215043 et 215055 : echec avant simulation (chemin du sous-script dans le
+  spool Slurm).
+- P3 215063 : echec avant simulation (run_science_checks.py non stage).
+- P1 215042/215054/215062 et invariance 215041/215053/215061 : journaux
+  rapatries vides, aucune validation exploitable.
+- P4 215065 : invalide. Les trajectoires atteintes echouaient au plancher H2
+  car l'inversion de la LUT et le modele direct differaient entre deux noeuds.
+
+Le code courant corrige les chemins Slurm, l'inversion H2 et les CRN de P4.
+Ne promouvoir aucun des lots ci-dessus.
+
+PRECONDITIONS
+-------------
+1. Mettre a jour le depot complet sur Helios. Le dossier doit s'appeler
+   exactement Robustesse/Vieillissement9_4 (casse comprise).
+2. Se placer dans ce dossier avant sbatch. A defaut, definir GENIAL_V94_DIR sur
+   son chemin absolu.
+3. Verifier le profil externe :
+
+   export GENIAL_DATA_DIR="${GENIAL_DATA_DIR:-$WORK/genial_data}"
+   test -r "$GENIAL_DATA_DIR/sidelec_roche_plate_csv.csv"
+   test -r Common/FC_efficiency_LU_table_power.csv
+   test -r Common/ELY_efficiency_LU_table_power.csv
+
+SOUMISSION (PUIS ON PEUT QUITTER LA SESSION)
+--------------------------------------------
+   cd /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4
+   bash submit_all_meso.sh
+
+Le script affiche et enregistre les quatre numeros de jobs. Il gere lui-meme
+les dependances qui empechent P1/P3/P4 de demarrer si l'invariance echoue.
+
+SUIVI SIMPLE
+------------
+   squeue -u tlenoir
+
+Les numeros exacts restent disponibles dans DERNIERS_JOBS_SOUMIS.txt.
+
+SORTIES ATTENDUES
+-----------------
+- runs/invariance_<empreinte>/report.txt (+ sidecar) ; status=OK obligatoire.
+- runs/p1_value_info_<empreinte>/results_raw.tsv + provenance.json.
+- cinq runs/p3_maintenance_<empreinte>/results_raw.tsv + provenance.json :
+  T=3/6/12 mois, marge=1 ; T=6 mois, marges=1.5/2.
+- runs/p4_dwell_<empreinte>/results_raw.tsv + provenance.json.
+
+   find runs -maxdepth 2 -name provenance.json -print
+
+POST-TRAITEMENT P1/P3 (APRES LES SIX RUNS COMPLETS)
+---------------------------------------------------
+   python ../reproducibility/postprocess_corrected_p1_p3.py \
+     --p1 /chemin/P1/results_raw.tsv \
+     --p3-t3 /chemin/P3_T3/results_raw.tsv \
+     --p3-t6 /chemin/P3_T6/results_raw.tsv \
+     --p3-t12 /chemin/P3_T12/results_raw.tsv \
+     --p3-t6-m15 /chemin/P3_T6_m15/results_raw.tsv \
+     --p3-t6-m2 /chemin/P3_T6_m2/results_raw.tsv
+
+Le post-traitement refuse les protocoles, runtimes, CRN, fermetures numeriques
+ou SHA incoherents. Les dossiers runs/ sont ignores par Git par defaut : ne les
+ajouter avec git add -f qu'apres cette validation et une relecture scientifique.
+================================================================================

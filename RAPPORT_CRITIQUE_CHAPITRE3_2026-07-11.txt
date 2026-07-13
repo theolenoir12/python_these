@@ -1,0 +1,630 @@
+================================================================================
+RAPPORT CRITIQUE DU CHAPITRE 3 ET DE L'AUGMENTATION DES REGLES
+Date : 2026-07-11
+Perimetre : manuscrit de these GENIAL, chapitre 3 logique (imprime chapitre 4)
+================================================================================
+
+VERDICT GENERAL
+--------------------------------------------------------------------------------
+
+Le travail contient un noyau scientifique solide et assez original pour
+constituer un tres bon chapitre de these. Sa contribution la plus forte n'est
+toutefois pas « une nouvelle strategie ameliore RB2 de 3 a 4 % ». Elle est plus
+generale :
+
+    La valeur d'une information depend de ce que la regle sait deja, de la
+    decision sur laquelle cette information peut agir, de son horizon temporel
+    et de son incertitude.
+
+Les resultats recents donnent deja trois illustrations convaincantes :
+
+  - le SoH vaut surtout comme retroaction face a une erreur du modele de
+    vieillissement ;
+  - la RUL est peu pertinente pour un derating continu, mais potentiellement
+    precieuse pour decider d'un remplacement ;
+  - une prevision n'a de valeur que si elle alimente un levier non redondant et
+    si son incertitude est integree dans la decision.
+
+C'est un recit scientifique plus fort que celui du manuscrit actuel, encore
+centre sur une hierarchie simple « SoH > prevision > RUL ».
+
+Le travail n'est neanmoins pas encore pret a etre fige. Les principaux risques
+sont :
+
+  1. la coexistence de resultats issus de V8, V9 et de plusieurs socles RB2 ;
+  2. une contradiction non resolue sur la valeur du derating par RUL ;
+  3. des concurrents encore insuffisamment forts pour isoler la valeur propre
+     du SoH et de la RUL ;
+  4. une evaluation previsionnelle qui injecte un bruit synthetique sur le
+     futur reel, mais ne fait pas encore fonctionner reellement le LSTM dans la
+     boucle ;
+  5. certaines conclusions formulees plus largement que ce que les experiences
+     demontrent.
+
+Aucun de ces points ne detruit le travail. En revanche, ils doivent etre
+traites avant que les chiffres centraux ne deviennent ceux du manuscrit
+definitif.
+
+
+1. COMPREHENSION FACTUELLE DU TRAVAIL
+================================================================================
+
+Le systeme est un micro-reseau photovoltaique isole associant :
+
+  - une batterie pour le stockage court terme ;
+  - un electrolyseur et un reservoir d'hydrogene pour le stockage long terme ;
+  - une pile a combustible pour restituer l'energie.
+
+Le chapitre precedent etablit un cadre commun de simulation sur 25 ans, avec
+vieillissement, remplacement des composants, LPSP, EENS et cout equivalent de
+degradation. RB2 est retenue comme strategie de reference sur le compromis
+fiabilite-durabilite.
+
+Le chapitre 3 cherche ensuite a augmenter les decisions de l'EMS avec trois
+connaissances :
+
+  - SoH : etat present des composants ;
+  - RUL : projection de leur fin de vie ;
+  - prevision : futur de la production et de la consommation.
+
+1.1. Resultats actuellement disponibles
+--------------------------------------------------------------------------------
+
+RB2(SoH_H2)
+  Resultat : 80,102 -> 78,764 kEUR ; degradation 58,84 -> 54,91 kEUR ;
+             LPSP 2,59 -> 2,91 %.
+  Lecture  : le SoH echange de la fiabilite contre de la durabilite, surtout
+             via l'electrolyseur.
+
+RB2(SoH_bat)
+  Resultat : 80,102 -> 79,543 kEUR.
+  Lecture  : un plafond haut de SoC decroit avec le vieillissement de la
+             batterie.
+
+RB2(SoH_all)
+  Resultat : 78,336 kEUR.
+  Lecture  : les leviers H2 et batterie sont presque additifs.
+
+RB2(Pred)
+  Resultat : environ 79,722 kEUR sous bruit, contre 79,03 kEUR en omniscient.
+  Lecture  : la prevision ameliore surtout la fiabilite par pre-charge.
+
+RB2(SoH_all+Pred)
+  Resultat : 77,224 kEUR dans l'index actuel.
+  Lecture  : meilleure combinaison calculee sous VoLL = 3 EUR/kWh.
+
+SoH sous erreur de vieillissement
+  Resultat : la boucle fermee est 0,71 kEUR meilleure que l'horloge, dans 99 %
+             des 200 mondes construits.
+  Lecture  : valeur informationnelle du diagnostic comme retroaction.
+
+RUL en derating
+  Resultat : conclusions actuellement contradictoires : -0,40 kEUR dans le
+             manuscrit, presque zero dans une note ulterieure.
+  Statut   : non resolu.
+
+RUL en maintenance
+  Resultat : outage H2 moyen 10 088 h -> 144 h face au correctif, pour un gain
+             moyen de 0,53 kEUR dans le cas central.
+  Lecture  : valeur de planification plutot que de commande continue.
+
+RB1(Pred) sous panne
+  Resultat : score 1,481 -> 1,455 % sous bruit ; 55 % du potentiel omniscient
+             recupere.
+  Lecture  : la prevision alimente une reserve batterie anticipee.
+
+Les resultats « Fable » sont cartographies dans :
+  Robustesse/INDEX_MANUSCRIT_FABLE.txt
+
+Les experiences recentes sur la valeur informationnelle sont resumees dans :
+  Robustesse/RECAP_session_valeur_information.txt
+
+
+2. POINTS PARTICULIEREMENT SOLIDES
+================================================================================
+
+2.1. L'attributabilite est prise au serieux
+--------------------------------------------------------------------------------
+
+L'utilisation de tests nuls, de graines communes et de differences appariees
+est excellente. Cela evite plusieurs travers frequents :
+
+  - comparer une nouvelle regle optimisee a une reference laissee avec ses
+    anciens parametres ;
+  - attribuer au SoH un simple recalage de constantes ;
+  - interpreter comme gain un effet du a des tirages Monte-Carlo differents ;
+  - masquer un resultat faible derriere une variance non controlee.
+
+La decomposition RB2 -> RB2(Recale) -> RB2(Sched) -> RB2(SoH) est
+conceptuellement tres bonne. Elle distingue enfin :
+
+  1. le recalage statique ;
+  2. la non-stationnarite de la politique ;
+  3. la retroaction permise par l'information reelle.
+
+C'est probablement l'element le plus original de tout le chapitre.
+
+2.2. Les resultats negatifs sont utilises intelligemment
+--------------------------------------------------------------------------------
+
+Plusieurs alternatives plausibles ont ete reellement testees :
+
+  - modulation continue de la prevision ;
+  - pre-decharge symetrique ;
+  - seuils de confiance plus etroits ;
+  - report vers la chaine H2 lorsque la batterie vieillit ;
+  - utilisation de la RUL pour un derating tardif.
+
+Elles ne sont pas seulement rejetees par leurs scores : des mecanismes
+physiques sont proposes pour expliquer leur echec. C'est beaucoup plus
+convaincant qu'une succession de tableaux d'optimisation.
+
+2.3. Les mecanismes causaux commencent a apparaitre
+--------------------------------------------------------------------------------
+
+Le travail ne s'arrete plus a « gamma = 2 donne le meilleur resultat ». Il
+identifie notamment :
+
+  - le genou de degradation de l'electrolyseur autour de 30 % de Pmax ;
+  - le fait qu'un reglage statique sur ce genou constitue un pari sur le modele
+    nominal ;
+  - le role de la retroaction SoH pour suivre sa derive ;
+  - l'asymetrie entre faux declenchement de pre-charge et faux declenchement
+    d'une reserve de decharge ;
+  - la difference entre panne dure et degradation progressive pour la
+    maintenance.
+
+Ce sont ces mecanismes, plus que les optimums numeriques, qui rendront les
+resultats generalisables.
+
+2.4. Le resultat RUL-maintenance ouvre un second niveau de contribution
+--------------------------------------------------------------------------------
+
+La conclusion « la RUL n'est pas utile dans la regle energetique continue »
+aurait pu paraitre decevante. La deplacer vers les fenetres de maintenance est
+intellectuellement juste : une information prospective a davantage de valeur
+pour une decision discrete, couteuse et anticipative que pour reproduire une
+modulation deja accessible au SoH.
+
+L'equivalence annoncee -- une visite annuelle avec RUL procurant un service
+comparable a quatre visites annuelles en correctif -- est potentiellement un
+resultat tres parlant, sous reserve de consolider le modele economique.
+
+
+3. FAILLES OU POINTS NON ENCORE DEMONTRES
+================================================================================
+
+3.1. La coherence V8/V9 est le premier probleme a regler
+--------------------------------------------------------------------------------
+
+Le programme Fable et le manuscrit utilisent essentiellement le socle V8 avec
+RB2 (0,440/0,310). Les nouvelles experiences P1/P3 utilisent
+Vieillissement9_4, avec une autre fonction de vieillissement PEMFC et des
+constantes differentes.
+
+Or :
+
+  - les couts nominaux ne sont pas directement comparables ;
+  - la programmation dynamique de V9 emploie encore le modele PEMFC historique
+    de Pei ;
+  - plusieurs notes ou en-tetes designent encore Vieillissement9_2 ou 9_3,
+    alors que 9_4 est annonce comme canonique ;
+  - certains scripts et tableaux utilisent encore des parametres differents
+    pour une strategie portant le meme nom.
+
+Il faut choisir une reference experimentale principale :
+
+  - soit V8 reste le modele du manuscrit et V9 devient une analyse de robustesse
+    du modele ;
+  - soit V9 devient la reference et les resultats centraux utiles doivent y
+    etre regeneres ;
+  - mais il ne faut pas melanger les chiffres dans une meme synthese Pareto.
+
+Le front de programmation dynamique ne doit pas non plus etre appele simplement
+« front optimal » s'il n'emploie pas le meme modele ou s'il reste une
+approximation discretisee. « Borne clairvoyante numerique » serait plus juste.
+
+3.2. La conclusion sur RB2(RUL) est actuellement indecidable
+--------------------------------------------------------------------------------
+
+C'est l'incoherence la plus concrete identifiee.
+
+Le manuscrit rapporte un optimum a :
+
+  - RUL_ref = 9000 jours ;
+  - exposant = 0,20 ;
+  - cout = 79,70 kEUR, soit environ -0,40 kEUR.
+
+Ces valeurs existent bien dans Predictions/sweep_rul2.txt.
+
+Mais la note post-correction conclut ensuite a un gain de seulement
+-0,0017 kEUR. Le probleme est que le balayage presente comme « attribution
+honnete » ne teste que les seuils 1000, 2000 et 3000 jours dans
+Predictions/sweep_rul_attribution.py. Il exclut donc precisement les seuils
+7000-9000 jours ou l'ancien balayage trouvait le gain.
+
+La conclusion « la RUL ne rapporte rien » n'est donc pas demontree par ce
+balayage conjoint. Inversement, l'optimum a 9000 jours est au bord de la plage
+et peut masquer un simple effet de modulation continue.
+
+Il faut refaire un seul balayage conjoint couvrant au minimum :
+
+  - c_ELY autour de 0,28-0,34 ;
+  - RUL_ref jusqu'a 10 000 ou 12 000 jours ;
+  - l'exposant ;
+  - idealement plusieurs valeurs de c_FC ou une valeur justifiee.
+
+Tant que ce controle n'est pas fait, la valeur du derating par RUL doit rester
+marquee « ouverte ».
+
+3.3. Le concurrent RB2(Sched) est trop faible
+--------------------------------------------------------------------------------
+
+Dans Vieillissement9_4/bench_valeur_info.py, RB2(Sched) rejoue une trajectoire
+nominale indexee par le temps global. Le compteur est remis a zero au debut de
+la simulation, mais il ne semble pas etre recale sur l'age de l'unite apres un
+remplacement reel.
+
+Sous vieillissement perturbe, les remplacements surviennent plus tot ou plus
+tard que dans le monde nominal. Une politique ouverte raisonnable saurait
+pourtant qu'un composant vient d'etre remplace et pourrait recommencer son
+programme a l'age zero, sans avoir besoin de mesurer son SoH.
+
+La difference actuelle SoH-Sched peut donc inclure deux avantages :
+
+  - la correction apportee par le SoH ;
+  - la simple resynchronisation avec l'age reel de l'unite.
+
+Trois concurrents sont recommandes :
+
+  1. calendrier global actuel ;
+  2. calendrier indexe sur l'age depuis le remplacement ;
+  3. boucle fermee SoH.
+
+Le second est le vrai concurrent de la retroaction. Il pourrait reduire les
+0,71 kEUR, mais rendrait la contribution beaucoup plus robuste si le gain
+subsiste.
+
+3.4. Le levier SoH batterie n'a presque pas de valeur informationnelle demontree
+--------------------------------------------------------------------------------
+
+Le controle deja realise dans Fable/bench_socwin_fixed.txt montre qu'au reglage
+retenu g=0,2, un plafond fixe amene au meme niveau de LPSP reproduit
+pratiquement le resultat : valeur propre estimee du SoH d'environ 0,048 kEUR
+seulement.
+
+Cela signifie que le gain de RB2(SoH_bat) provient surtout d'une restriction de
+la fenetre de SoC, pas necessairement de son adaptation en ligne au
+vieillissement.
+
+Par consequent :
+
+  - le levier peut rester interessant comme politique de protection ;
+  - mais il ne faut pas compter ses 0,56 kEUR comme « valeur de l'information
+    SoH » ;
+  - il faudrait lui appliquer une decomposition analogue a P1 sous incertitude
+    du vieillissement batterie.
+
+En l'etat, la strategie « SoH_all » additionne un vrai levier de retroaction H2
+et un levier batterie dont la valeur informationnelle est quasiment nulle en
+nominal.
+
+3.5. La maintenance RUL manque de son concurrent principal
+--------------------------------------------------------------------------------
+
+Les concurrents actuels sont :
+
+  - remplacement immediat ;
+  - correctif ;
+  - calendaire a age nominal ;
+  - RUL.
+
+Le concurrent decisif manque : une politique de remplacement pilotee
+uniquement par le SoH courant.
+
+Par exemple : remplacer a une visite si le SoH est inferieur a un seuil
+optimise ou si une marge fixe au-dessus de l'EoL est franchie. Cette politique
+disposerait du diagnostic, mais pas du pronostic.
+
+Sans elle, on demontre que la RUL bat le calendrier, mais pas qu'elle apporte
+une information supplementaire par rapport au SoH. Or l'objectif scientifique
+est precisement de distinguer diagnostic et pronostic.
+
+Le concurrent calendaire est par ailleurs assez faible : si l'electrolyseur ne
+meurt pas dans le monde nominal, son age calendaire vaut None, donc il n'est
+jamais remplace preventivement. Un calendrier optimise sur la distribution des
+mondes ou un seuil d'heures de fonctionnement serait plus honnete.
+
+3.6. Le modele de maintenance donne mecaniquement beaucoup de valeur au pronostic
+--------------------------------------------------------------------------------
+
+Le cadre suppose :
+
+  - des remplacements possibles uniquement aux visites ;
+  - aucune intervention d'urgence ;
+  - un composant H2 totalement indisponible jusqu'a la prochaine visite ;
+  - des coefficients de degradation constants dans chaque monde ;
+  - une RUL extrapolee depuis un SoH vrai, sans erreur de diagnostic explicite.
+
+Avec une visite annuelle, une panne peut donc rester non reparee presque un an.
+Cela explique les milliers d'heures d'indisponibilite et donne une forte valeur
+mecanique a l'anticipation.
+
+C'est une experience utile, mais la conclusion doit rester conditionnelle a ce
+modele logistique. Une intervention d'urgence reduirait le cout de service de
+la politique corrective tout en ajoutant un cout de deplacement. Son effet net
+sur la valeur de la RUL n'est pas necessairement toujours positif,
+contrairement a ce qu'avance la synthese actuelle.
+
+Autre ambiguite : le « cout de visite » est en realite applique aux seules
+visites avec remplacement, via n_interventions, et non a toutes les visites
+planifiees. L'affirmation « espacer les visites par quatre » devrait integrer
+explicitement le cout de toutes les visites si le deplacement periodique est
+reellement couteux.
+
+3.7. La prevision evaluee dans l'EMS n'est pas encore la sortie reelle du LSTM
+--------------------------------------------------------------------------------
+
+La simulation donne a la strategie le futur exact puis lui ajoute une erreur
+gaussienne :
+
+  - le futur exact est construit dans
+    Predictions/Common/main_init_and_loop_forecast.py ;
+  - la regle calcule ensuite net_pred = net_vrai + bruit dans
+    Predictions/RB2(Pred)/get_optimal_action_RB.py.
+
+Cela constitue une bonne experience controlee sur l'effet d'un niveau d'erreur.
+Mais cela ne demontre pas encore la performance du LSTM en boucle fermee, car
+le bruit reel peut etre :
+
+  - biaise selon la saison ;
+  - heteroscedastique ;
+  - correle a l'amplitude du signal ;
+  - asymetrique ;
+  - dependant de l'horizon et de la meteo ;
+  - temporellement plus complexe qu'un AR(1).
+
+Le backtest ne comporte que 216 origines, espacees de 12 h et donc fortement
+chevauchantes. Ses quantiles sont deja asymetriques : environ -74,7/+51,6 kWh
+aux quantiles 5/95 %, ce qui invite a preferer la distribution empirique au
+seul couple moyenne-ecart-type.
+
+Il faudrait au minimum :
+
+  - rejouer les erreurs empiriques par blocs temporels ;
+  - ou injecter directement des series de previsions issues d'un rolling
+    backtest ;
+  - comparer le LSTM a une persistance, une climatologie et une moyenne
+    saisonniere ;
+  - idealement prevoir directement l'energie nette ou la probabilite du
+    deficit, puisque c'est la seule grandeur utilisee par la decision.
+
+3.8. Le protocole de defaillance part d'etats produits par RB2
+--------------------------------------------------------------------------------
+
+Toutes les strategies candidates sont branchees depuis des snapshots generes
+par RB2 dans Robustesse/Defaillances/robustesse_common.py.
+
+Cela mesure correctement une capacite conditionnelle a encaisser une panne
+depuis un etat commun. Mais cela ne mesure pas la resilience operationnelle
+propre de RB1, car RB1 aurait produit avant la panne une autre distribution de
+SoC et de stock H2.
+
+Deux evaluations sont necessaires :
+
+  - etat initial commun : effet propre de la reaction a la panne ;
+  - etat stationnaire propre a chaque strategie : resilience operationnelle
+    complete.
+
+Par ailleurs, le RB1 historique a ete remplace dans le code partage par RB1-opt.
+Il faut conserver les deux noms. Modifier silencieusement RB1 risque
+d'invalider les comparaisons anterieures du chapitre 2.
+
+3.9. Les formulations statistiques sont parfois trop fortes
+--------------------------------------------------------------------------------
+
+Quelques exemples :
+
+  - « 99 % des mondes » signifie 99 % des mondes generes par une loi
+    log-uniforme independante particuliere, pas 99 % des situations reelles ;
+  - « aucune regression » signifie souvent aucune degradation de la moyenne
+    des quatre scenarios, pas aucune perte tirage par tirage ;
+  - les +/- rapportes sont generalement des ecarts-types, pas des intervalles
+    de confiance sur la moyenne ;
+  - la faible variance de RB1(Pred) est calculee sur 30 realisations du bruit
+    pour les memes 200 instants de panne ; elle ne couvre pas l'incertitude liee
+    au choix des instants ;
+  - « meilleure strategie » n'est vrai que pour VoLL = 3 EUR/kWh et le
+    dimensionnement considere.
+
+Les ecarts P1 sont statistiquement tres nets. Pour la maintenance, le gain
+moyen central de -0,53 kEUR est beaucoup plus disperse : ecart-type 2,84 kEUR,
+seulement 57 % des mondes gagnes. Il faut distinguer une moyenne favorable
+d'une domination robuste.
+
+3.10. Un dernier audit de la metrique de degradation V9 est prudent
+--------------------------------------------------------------------------------
+
+La boucle V9 remet explicitement les etats reversibles/irreversibles a zero
+lors des remplacements. La metrique finale get_cost_total reintegre cependant
+les traces de puissance completes. Il faut verifier par un test d'invariance
+que :
+
+  - le cout calcule sur toute la trace ;
+  - la somme des couts unite par unite, decoupee aux remplacements ;
+  - et les fractions de vie consommees
+
+donnent bien le meme resultat.
+
+Le code de maintenance reconnait deja un petit artefact lie a la recuperation
+reversible durant les arrets. Cela ne signifie pas que les resultats sont faux,
+mais ce controle fermerait une objection technique importante.
+
+
+4. RECIT PROPOSE POUR LE MANUSCRIT
+================================================================================
+
+Le chapitre gagnerait a pivoter autour de la « valeur conditionnelle de
+l'information », plutot que d'une simple accumulation de regles augmentees.
+
+4.1. Proposition directrice
+--------------------------------------------------------------------------------
+
+    Une connaissance supplementaire n'ameliore une strategie que si elle
+    revele une variable absente de la regle de reference, agit a l'echelle
+    temporelle de la decision et reste exploitable sous son incertitude reelle.
+
+4.2. SoH : separer performance de la politique et valeur du diagnostic
+--------------------------------------------------------------------------------
+
+Presenter successivement :
+
+  1. le gain nominal de RB2(SoH) dans le plan de Pareto ;
+  2. le mecanisme physique de suivi du genou de l'electrolyseur ;
+  3. la decomposition recalage-horloge-retroaction ;
+  4. la valeur de robustesse sous erreur du modele ;
+  5. la sensibilite au bruit et au biais de l'estimation SoH.
+
+La conclusion ne serait plus « le SoH rapporte 1,34 kEUR », mais :
+
+    La politique dependante du SoH ameliore le compromis nominal, mais seule
+    une partie de ce gain constitue la valeur propre du diagnostic en ligne.
+    Cette valeur apparait lorsque le vieillissement reel s'ecarte du modele de
+    conception.
+
+4.3. RUL : faire du resultat negatif un pivot
+--------------------------------------------------------------------------------
+
+Apres resolution du balayage contradictoire :
+
+  - montrer que la RUL est redondante ou peu avantageuse pour le derating
+    continu ;
+  - expliquer pourquoi : elle est une transformation du SoH et de sa pente ;
+  - deplacer ensuite le pronostic vers une decision ou l'horizon futur est
+    intrinsequement necessaire : la maintenance.
+
+La transition devient naturelle :
+
+    La RUL n'est pas un meilleur etat de commande ; elle est une information de
+    calendrier.
+
+4.4. Prevision : distinguer potentiel, erreur et exploitation robuste
+--------------------------------------------------------------------------------
+
+Separer clairement :
+
+  1. potentiel omniscient du levier ;
+  2. performance propre du modele de prevision ;
+  3. effet de l'erreur sur la decision ;
+  4. dispositif robuste ;
+  5. limites de transfert du modele d'erreur.
+
+Le resultat central n'est pas simplement la bande +/- sigma. Il est que la
+meme information demande des usages differents selon la structure de la regle :
+
+  - RB2 : pre-charge en coupant l'electrolyseur ;
+  - RB1 : reserve de batterie en engageant plus tot la pile.
+
+4.5. Synthese finale proposee
+--------------------------------------------------------------------------------
+
+Information : SoH
+  Decision adaptee  : modulation/suivi d'un seuil physique
+  Horizon           : semaines-annees
+  Valeur principale : robustesse a l'erreur de vieillissement
+  Limite             : erreur d'estimation, redondance avec calendrier
+
+Information : RUL
+  Decision adaptee  : remplacement et maintenance
+  Horizon           : mois-annees
+  Valeur principale : disponibilite/logistique
+  Limite             : incertitude de projection
+
+Information : prevision
+  Decision adaptee  : constitution d'une reserve energetique
+  Horizon           : heures-jours
+  Valeur principale : fiabilite
+  Limite             : calibration et dependance au regime
+
+Information : detection de panne
+  Decision adaptee  : redistribution immediate
+  Horizon           : secondes-semaines
+  Valeur principale : continuite de service
+  Limite             : etat initial et modele de panne
+
+
+5. AMELIORATIONS RECOMMANDEES
+================================================================================
+
+5.1. Priorite absolue avant de figer les conclusions
+--------------------------------------------------------------------------------
+
+  1. Creer un manifeste des experiences : modele V8/V9, commit, strategie,
+     parametres, donnees, seed, sortie canonique et statut.
+  2. Refaire le balayage conjoint complet de RB2(RUL), notamment jusqu'a
+     9000-12 000 jours.
+  3. Ajouter RB2(Sched-age), reinitialise a chaque remplacement reel.
+  4. Ajouter une politique de maintenance fondee uniquement sur un seuil de
+     SoH.
+  5. Decider si le levier SoH batterie reste dans la strategie finale, sachant
+     que son information propre est presque nulle en nominal.
+  6. Verifier la metrique V9 par decoupage aux remplacements.
+
+5.2. Ameliorations a tres fort rendement scientifique
+--------------------------------------------------------------------------------
+
+  7. Remplacer la loi empirique SoH^gamma par, ou au moins la comparer a, une
+     loi physique du type P_ELY,set = c * Pmax,vieilli.
+  8. Injecter les erreurs reelles du backtest par blocs ou brancher directement
+     les previsions LSTM.
+  9. Comparer le LSTM a des modeles naifs ; le chapitre doit demontrer la
+     valeur de la prevision, pas necessairement celle d'un LSTM complexe.
+ 10. Simuler la maintenance avec appels d'urgence et couts explicites des
+     visites planifiees.
+ 11. Evaluer les defaillances depuis les etats stationnaires propres a chaque
+     EMS.
+ 12. Separer entrainement/reglage et evaluation finale des hyperparametres, ou
+     au moins effectuer une validation croisee par scenarios.
+
+5.3. Perspectives utiles mais non bloquantes
+--------------------------------------------------------------------------------
+
+ 13. Tester des changements de regime de vieillissement et une dispersion
+     entre unites successives.
+ 14. Coupler erreur de modele et erreur de diagnostic dans la meme experience
+     P1.
+ 15. Etudier la reserve H2 sur plusieurs jours ou a l'echelle saisonniere.
+ 16. Traduire les gains en durees de vie, remplacements evites et marges de
+     dimensionnement.
+ 17. Caracteriser explicitement les conditions ou chaque levier fonctionne :
+     presence d'un genou, panne dure ou molle, cout de l'intervention, capacite
+     relative des stockages.
+
+
+CONCLUSION
+================================================================================
+
+Le chapitre possede deja une contribution defendable, mais elle n'est pas
+exactement celle annoncee aujourd'hui. Le resultat scientifique le plus
+interessant est que l'information ne constitue pas automatiquement une valeur :
+elle doit etre comparee a un concurrent qui sait deja tout ce qui peut etre
+programme, utilisee sur la bonne decision et confrontee a son incertitude.
+
+La colonne vertebrale recommandee est donc :
+
+  - le SoH comme retroaction assurant la strategie contre l'erreur du modele ;
+  - la RUL comme information de planification, sous reserve du concurrent SoH ;
+  - la prevision comme information de reserve, dont l'usage depend de la
+    structure de la regle ;
+  - les resultats negatifs comme demonstration des limites de l'augmentation
+    naive.
+
+La priorite immediate n'est pas de chercher encore un nouveau levier. C'est de
+fermer les quatre controles critiques -- RUL conjoint, horloge reinitialisee,
+maintenance SoH et coherence V8/V9. Une fois ces points resolus, le chapitre
+pourra etre a la fois plus ambitieux dans son message et plus prudent dans ses
+affirmations.
+
+================================================================================
+FIN DU RAPPORT
+================================================================================

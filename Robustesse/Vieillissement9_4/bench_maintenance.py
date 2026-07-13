@@ -67,15 +67,18 @@ biais de l'estimateur : balayer --margin {1.0, 1.5, 2.0} (chaque marge a son
 propre txt/cache). Le compromis marge basse (morts) / haute (gaspillage) est
 un RESULTAT, pas un reglage a cacher.
 
-REUTILISATION : comme bench_valeur_info, le banc relit son txt et ne relance
-que les couples (politique, tirage) manquants. --fresh pour tout re-payer.
+REUTILISATION : uniquement depuis results_raw.tsv pleine precision dans le
+dossier runs/p3_maintenance_<empreinte> correspondant exactement aux sources,
+donnees et parametres. Les TXT historiques ne sont jamais repris.
 
-SORTIES (a cote de ce script ; tag = <Ny>y_T<mois>m)
-----------------------------------------------------
-  maintenance_<tag>.txt       nominaux + table par tirage + stats par C_visite
-  maintenance_<tag>.pdf/.png  (1) cout total moyen vs C_visite par politique
+SORTIES (runs/p3_maintenance_<empreinte>/)
+------------------------------------------
+  results_raw.tsv             cache pleine precision, empreinte
+  results.txt                 nominaux + table par tirage + stats par C_visite
+  figure.pdf/.png             (1) cout total moyen vs C_visite par politique
                               (2) histogramme apparie rul - calendar
                               (3) gain du pronostic vs severite du monde
+  provenance.json             sources, donnees, parametres et SHA artefacts
 
 LANCER
 ------
@@ -92,6 +95,7 @@ import re
 import sys
 import time
 import argparse
+from pathlib import Path
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
@@ -107,6 +111,15 @@ if HERE not in sys.path:
 import bench_valeur_info as VI                                        # noqa: E402
 from Common.main_init_and_loop import init_and_run_loop              # noqa: E402
 from Common.main_init_and_loop_maintenance import init_and_run_loop_maintenance  # noqa: E402
+from reproducibility.provenance import (                          # noqa: E402
+    acquire_run_lock,
+    build_provenance,
+    fingerprinted_run_dir,
+    provenance_header_lines,
+    validate_append_only_artifact,
+    validate_cache,
+    write_provenance_sidecar,
+)
 
 # ============================ CONFIGURATION ============================
 N_MC      = 200
@@ -115,6 +128,7 @@ MC_LO     = 0.5
 MC_HI     = 2.0
 N_YEARS   = 25
 VOLL      = 3.0           # doit = VI.VOLL (verifie a l'import plus bas)
+REPLACEMENT_ACCOUNTING = VI.REPLACEMENT_ACCOUNTING
 
 T_VISIT_M   = 6.0         # periode de visite [mois] (--tvisit)
 RUL_MARGIN  = 1.0         # preventif si RUL_est < intervalle*marge (--margin)
@@ -136,13 +150,15 @@ def evaluate(task):
         strat = VI.load_strategy(STRATEGY)
         if task['policy'] == 'instant':
             data = init_and_run_loop_maintenance(strat, n_years=task['years'],
-                                                 policy='instant')
+                                                 policy='instant',
+                                                 replacement_accounting=task['replacement_accounting'])
         else:
             data = init_and_run_loop_maintenance(
                 strat, n_years=task['years'],
                 visit_period_months=task['tvisit_m'], policy=task['policy'],
                 rul_margin=task['margin'], calendar_ages_y=task['cal_ages'],
-                prev_scope=task['prev_scope'])
+                prev_scope=task['prev_scope'],
+                replacement_accounting=task['replacement_accounting'])
         lpsp, deg, eens, uni0 = VI.metrics(data)
         m = data['maintenance']
         ok = True
@@ -178,8 +194,8 @@ def _fmt(r):
 COLS = ["lpsp", "deg", "uni0", "nint", "nprev", "waste", "wbat", "wfc", "wely", "outfc", "outely"]
 
 
-def load_previous(out_txt, seed, lo, hi, tvisit_m, margin, prev_tag):
-    """{(policy, draw): result} depuis un txt precedent (header verifie)."""
+def _load_previous_legacy_forensics(out_txt, seed, lo, hi, tvisit_m, margin, prev_tag):
+    """Lecteur historique pour audit manuel, jamais appele par main."""
     done, factors = {}, {}
     if not os.path.isfile(out_txt):
         return done, factors
@@ -237,6 +253,76 @@ def load_previous(out_txt, seed, lo, hi, tvisit_m, margin, prev_tag):
     return done, factors
 
 
+RAW_METRICS = [
+    "lpsp", "deg", "eens", "uni0", "nint", "nrep", "nprev", "waste",
+    "wbat", "wfc", "wely", "outfc", "outely",
+]
+RAW_COLUMNS = ["policy", "draw"] + VI.FACTOR_KEYS + RAW_METRICS
+
+
+def _raw_value(value):
+    return "" if value is None else format(float(value), ".17g")
+
+
+def initialise_raw(path, provenance):
+    with open(path, "w", encoding="utf-8") as stream:
+        for line in provenance_header_lines(provenance):
+            stream.write(line + "\n")
+        stream.write(";".join(RAW_COLUMNS) + "\n")
+    write_provenance_sidecar(str(path) + ".provenance.json", provenance, [path])
+
+
+def append_raw(path, result, provenance):
+    if not result["ok"]:
+        return
+    row = [result["policy"], str(int(result["draw"]))]
+    row.extend(_raw_value(result["world"][key]) for key in VI.FACTOR_KEYS)
+    row.extend(_raw_value(result[key]) for key in RAW_METRICS)
+    with open(path, "a", encoding="utf-8") as stream:
+        stream.write(";".join(row) + "\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    write_provenance_sidecar(str(path) + ".provenance.json", provenance, [path])
+
+
+def load_raw(path, provenance):
+    valid, reason = validate_cache(path, provenance, allow_legacy=False)
+    if valid:
+        valid, reason = validate_append_only_artifact(
+            str(path) + ".provenance.json", path, provenance
+        )
+    if not valid:
+        if os.path.isfile(path):
+            print("  (reuse) cache brut ignore : %s" % reason, flush=True)
+        return {}
+    with open(path, encoding="utf-8") as stream:
+        rows = [line.rstrip("\n") for line in stream if not line.startswith("#")]
+    if not rows or rows[0].split(";") != RAW_COLUMNS:
+        print("  (reuse) colonnes du cache brut invalides -> ignore", flush=True)
+        return {}
+    done = {}
+    for line in rows[1:]:
+        if not line:
+            continue
+        parts = line.split(";")
+        if len(parts) != len(RAW_COLUMNS):
+            raise ValueError("ligne incomplete dans %s" % path)
+        values = dict(zip(RAW_COLUMNS, parts))
+        result = {
+            "policy": values["policy"], "draw": int(values["draw"]),
+            "world": {key: float(values[key]) for key in VI.FACTOR_KEYS},
+            "ok": True, "repl_log": [],
+        }
+        for key in RAW_METRICS:
+            result[key] = None if values[key] == "" else float(values[key])
+        key = (result["policy"], result["draw"])
+        if key in done:
+            raise ValueError("resultat brut duplique : %r" % (key,))
+        done[key] = result
+    write_provenance_sidecar(str(path) + ".provenance.json", provenance, [path])
+    return done
+
+
 # ------------------------------- main -------------------------------
 def main():
     ap = argparse.ArgumentParser(description="Valeur de la RUL pour la maintenance insulaire")
@@ -251,12 +337,20 @@ def main():
     ap.add_argument("--lo", type=float, default=MC_LO)
     ap.add_argument("--hi", type=float, default=MC_HI)
     ap.add_argument("--workers", type=int, default=None)
+    ap.add_argument("--output-root", default=HERE,
+                    help="racine de runs/ (defaut : dossier V9_4)")
     ap.add_argument("--fresh", action="store_true")
     args = ap.parse_args()
 
-    years = args.years or (2 if args.quick else N_YEARS)
+    years = args.years if args.years is not None else (2 if args.quick else N_YEARS)
     n_mc  = args.nmc if args.nmc is not None else (4 if args.quick else N_MC)
-    workers = args.workers or VI._detect_workers()
+    workers = args.workers if args.workers is not None else VI._detect_workers()
+    if years <= 0 or n_mc <= 0 or workers <= 0:
+        ap.error("years, nmc et workers doivent etre strictement positifs")
+    if args.lo <= 0 or args.hi < args.lo:
+        ap.error("exiger 0 < lo <= hi pour les multiplicateurs log-uniformes")
+    if args.tvisit <= 0 or args.margin <= 0:
+        ap.error("tvisit et margin doivent etre strictement positifs")
 
     prev_scope = ('bat', 'fc', 'ely') if args.prevbat else ('fc', 'ely')
     prev_tag = "+".join(prev_scope)
@@ -265,26 +359,66 @@ def main():
         tag += "_m%g" % args.margin       # une marge != 1 a son propre txt/cache
     if args.prevbat:
         tag += "_prevbat"                 # contrefactuel : cache distinct
-    out_txt = os.path.join(HERE, "maintenance_%s.txt" % tag)
-    out_fig = os.path.join(HERE, "maintenance_%s" % tag)
+    repo_root = Path(HERE).parents[1]
+    run_provenance = build_provenance(
+        "p3_rul_maintenance",
+        VI.provenance_files([
+            Path(HERE) / "bench_maintenance.py",
+            Path(HERE) / "Common" / "main_init_and_loop_maintenance.py",
+        ]),
+        {
+            "horizon_years": years, "n_worlds": n_mc, "seed": args.seed,
+            "multipliers_log_uniform": [args.lo, args.hi],
+            "factor_keys": VI.FACTOR_KEYS, "strategy": STRATEGY,
+            "policies": POLICIES, "visit_period_months": args.tvisit,
+            "rul_margin": args.margin, "calendar_fraction": CAL_FRAC,
+            "preventive_scope": list(prev_scope),
+            "visit_cost_grid_keur": C_VISIT_GRID,
+            "voll_eur_per_kwh": VOLL,
+            "replacement_accounting": REPLACEMENT_ACCOUNTING,
+        }, repo_root=repo_root,
+    )
+    run_dir = fingerprinted_run_dir(args.output_root, "p3_maintenance", run_provenance)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    run_lock = acquire_run_lock(run_dir)
+    out_txt = str(run_dir / "results.txt")
+    out_raw = str(run_dir / "results_raw.tsv")
+    out_fig = str(run_dir / "figure")
 
     print("=== VALEUR DE LA RUL -- maintenance insulaire (fenetres + cout fixe) ===", flush=True)
     print("    horizon=%d ans | N_MC=%d | Tvisite=%gm | marge RUL=%g | prev=%s | mult U_log[%.2f, %.2f] | seed=%d"
           % (years, n_mc, args.tvisit, args.margin, prev_tag, args.lo, args.hi, args.seed), flush=True)
+    print("    empreinte=%s | sortie=%s"
+          % (run_provenance["run_fingerprint"][:12], run_dir), flush=True)
 
     # --- 1) nominal instant : ages calendaires de reference + TEST NUL vs boucle de base ---
     VI.apply_world(VI.NOMINAL_WORLD)
     strat = VI.load_strategy(STRATEGY)
     print("\n--- Run nominal 'instant' (ages calendaires + test nul vs boucle de base)...", flush=True)
     t0 = time.time()
-    data_m = init_and_run_loop_maintenance(strat, n_years=years, policy='instant')
-    data_b = init_and_run_loop(strat, n_years=years)
-    lpsp_m, deg_m, _, uni_m = VI.metrics(data_m)
+    data_m = init_and_run_loop_maintenance(
+        strat, n_years=years, policy='instant',
+        replacement_accounting=REPLACEMENT_ACCOUNTING,
+    )
+    data_b = init_and_run_loop(
+        strat, n_years=years, replacement_accounting=REPLACEMENT_ACCOUNTING,
+    )
+    lpsp_m, deg_m, eens_m, uni_m = VI.metrics(data_m)
     VI.apply_world(VI.NOMINAL_WORLD)   # metrics ne change pas le monde, par surete
-    lpsp_b, deg_b, _, uni_b = VI.metrics(data_b)
+    lpsp_b, deg_b, eens_b, uni_b = VI.metrics(data_b)
+    null_gaps = {
+        'lpsp': abs(lpsp_m - lpsp_b), 'deg': abs(deg_m - deg_b),
+        'eens': abs(eens_m - eens_b),
+    }
+    trace_equal = VI.trajectory_digest(data_m) == VI.trajectory_digest(data_b)
+    null_ok = all(value < 1e-9 for value in null_gaps.values()) and trace_equal
     gap = abs(uni_m - uni_b)
-    print("    TEST NUL instant==base : |unifie %.3f - %.3f| = %.3e kEUR -> %s  (%.0fs)"
-          % (uni_m, uni_b, gap, "OK" if gap < 1e-6 else "ECHEC", time.time() - t0), flush=True)
+    print("    TEST NUL instant==base : LPSP %.3e | deg %.3e kEUR | EENS %.3e kWh | trace=%s -> %s  (%.0fs)"
+          % (null_gaps['lpsp'], null_gaps['deg'], null_gaps['eens'],
+             "identique" if trace_equal else "differente",
+             "OK" if null_ok else "ECHEC", time.time() - t0), flush=True)
+    if not null_ok:
+        raise RuntimeError("test nul P3 invalide : aucun Monte-Carlo lance")
     lives = VI.lifetimes(data_m)                 # [bat, fc, ely], None si aucun
     cal_ages = {c: (l * CAL_FRAC if l is not None else None)
                 for c, l in zip(('bat', 'fc', 'ely'), lives)}
@@ -298,26 +432,27 @@ def main():
     worlds = [{k: float(np.exp(rng.uniform(lo, hi))) for k in VI.FACTOR_KEYS}
               for _ in range(n_mc)]
 
-    done, prev_factors = ({}, {}) if args.fresh else load_previous(
-        out_txt, args.seed, args.lo, args.hi, args.tvisit, args.margin, prev_tag)
+    done = {} if args.fresh else load_raw(out_raw, run_provenance)
     if done:
-        bad = [d for d, fac in prev_factors.items() if d < n_mc and any(
-            abs(fac[i] - worlds[d][k]) > 5e-4 for i, k in enumerate(VI.FACTOR_KEYS))]
+        bad = [d for (_, d), result in done.items() if d >= 0 and (
+            d >= n_mc or any(result['world'][key] != worlds[d][key]
+                             for key in VI.FACTOR_KEYS)
+        )]
         if bad:
-            print("  (reuse) facteurs incoherents avec la graine -> reuse IGNORE", flush=True)
+            print("  (reuse) facteurs bruts incoherents -> cache ignore", flush=True)
             done = {}
         else:
-            done = {k: v for k, v in done.items() if k[1] < n_mc}
-            for (p, d), r in done.items():
-                r['world'] = dict(VI.NOMINAL_WORLD) if d == -1 else worlds[d]
-            print("  (reuse) %d resultats repris de %s" % (len(done), out_txt), flush=True)
+            print("  (reuse) %d resultats pleine precision repris de %s"
+                  % (len(done), out_raw), flush=True)
+    if args.fresh or not done:
+        initialise_raw(out_raw, run_provenance)
 
     # le run nominal 'instant' (test nul + ages calendaires) compte comme resultat
     if ('instant', -1) not in done:
         m0 = data_m['maintenance']
         done[('instant', -1)] = dict(
             policy='instant', draw=-1, world=dict(VI.NOMINAL_WORLD), ok=True,
-            lpsp=lpsp_m, deg=deg_m, eens=(uni_m - deg_m) / VOLL * 1000.0, uni0=uni_m,
+            lpsp=lpsp_m, deg=deg_m, eens=eens_m, uni0=uni_m,
             nint=m0['n_interventions'], nrep=sum(m0['n_repl'].values()),
             nprev=sum(m0['n_prev'].values()), waste=m0['waste_eur'] / 1000.0,
             wbat=m0['waste_comp']['bat'] / 1000.0,
@@ -325,11 +460,13 @@ def main():
             wely=m0['waste_comp']['ely'] / 1000.0,
             outfc=m0['outage_h']['fc'], outely=m0['outage_h']['ely'],
             repl_log=m0['repl_log'])
+        append_raw(out_raw, done[('instant', -1)], run_provenance)
 
     def mk(policy, world, draw):
         return dict(policy=policy, world=world, draw=draw, years=years,
                     tvisit_m=args.tvisit, margin=args.margin, cal_ages=cal_ages,
-                    prev_scope=prev_scope)
+                    prev_scope=prev_scope,
+                    replacement_accounting=REPLACEMENT_ACCOUNTING)
 
     tasks = []
     for p in POLICIES:
@@ -346,8 +483,19 @@ def main():
         with ProcessPoolExecutor(max_workers=workers) as ex:
             for i, r in enumerate(ex.map(evaluate, tasks), 1):
                 res.append(r)
+                append_raw(out_raw, r, run_provenance)
                 print("  [%3d/%d] %s" % (i, len(tasks), _fmt(r)), flush=True)
     print("  (%.0fs)" % (time.time() - t0), flush=True)
+    failed = [(r["policy"], r["draw"]) for r in res if not r["ok"]]
+    expected = {(policy, draw) for policy in POLICIES
+                for draw in [-1] + list(range(n_mc))}
+    completed = {(r["policy"], r["draw"]) for r in res if r["ok"]}
+    missing = sorted(expected.difference(completed), key=lambda item: (item[1], item[0]))
+    if failed or missing:
+        raise RuntimeError(
+            "P3 incomplet : echecs=%s ; manquants=%s (cache partiel conserve)"
+            % (failed[:10], missing[:10])
+        )
 
     # --- 3) tri + stats ---
     nom = {r['policy']: r for r in res if r['draw'] == -1 and r['ok']}
@@ -363,11 +511,7 @@ def main():
         return col(p, 'uni0') + cv * col(p, 'nint') + col(p, 'waste')
 
     def cvar_hi(x, q=0.9):
-        if len(x) == 0:
-            return float('nan')
-        thr = np.quantile(x, q)
-        tail = x[x >= thr]
-        return float(tail.mean()) if len(tail) else float('nan')
+        return VI.cvar_high(x, q=q)
 
     if draws_ok:
         sev = np.array([np.exp(np.mean([np.log(worlds[d][k]) for k in VI.FACTOR_KEYS]))
@@ -375,6 +519,8 @@ def main():
 
     # --- 4) txt ---
     with open(out_txt, "w", encoding="utf-8") as f:
+        for line in provenance_header_lines(run_provenance):
+            f.write(line + "\n")
         f.write("# Valeur de la RUL -- maintenance insulaire (fenetres de visite + cout fixe)\n")
         f.write("# horizon=%d ans | N_MC=%d | mult U_log[%.2f,%.2f] | seed=%d | VoLL=%.1f | Tvisite=%gm | marge=%g | prev=%s\n"
                 % (years, n_mc, args.lo, args.hi, args.seed, VOLL, args.tvisit, args.margin, prev_tag))
@@ -382,7 +528,10 @@ def main():
         f.write("# ages calendaires de ref (nominal x %.2f) : %s\n" % (CAL_FRAC,
                 {k: (round(v, 2) if v else None) for k, v in cal_ages.items()}))
         f.write("# cout total = uni0 + C_visite*n_interventions + gaspillage ; C_visite en post-proc\n")
-        f.write("# TEST NUL instant==base : %s (ecart %.3e kEUR)\n" % ("OK" if gap < 1e-6 else "ECHEC", gap))
+        f.write("# TEST NUL instant==base : %s (LPSP %.3e ; deg %.3e kEUR ; EENS %.3e kWh ; trace=%s)\n"
+                % ("OK" if null_ok else "ECHEC", null_gaps['lpsp'],
+                   null_gaps['deg'], null_gaps['eens'],
+                   "identique" if trace_equal else "differente"))
         f.write("\n## Points nominaux (multiplicateurs = 1)\n")
         f.write("policy;" + ";".join(COLS) + "\n")
         for p in POLICIES:
@@ -404,7 +553,7 @@ def main():
         if draws_ok:
             for cv in C_VISIT_GRID:
                 f.write("\n## Cout total (kEUR) a C_visite = %.1f kEUR/intervention\n" % cv)
-                f.write("policy;mean;std;P5;P50;P95;CVaR90;LPSP_mean;nint_mean;waste_mean;outage_h_mean\n")
+                f.write("policy;mean;std;P5;P50;P95;ES90;LPSP_mean;nint_mean;waste_mean;component_outage_h_mean\n")
                 for p in POLICIES:
                     u = total(p, cv)
                     f.write("%s;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.4f;%.2f;%.3f;%.0f\n"
@@ -475,13 +624,20 @@ def main():
         fig.savefig(out_fig + ".png", dpi=160, bbox_inches="tight")
         plt.close()
 
+    artifacts = [out_raw, out_raw + ".provenance.json", out_txt,
+                 out_fig + ".pdf", out_fig + ".png"]
+    write_provenance_sidecar(
+        run_dir / "provenance.json", run_provenance,
+        [path for path in artifacts if os.path.isfile(path)],
+    )
+
     # --- 6) resume console ---
     print("\n" + "=" * 78)
     if draws_ok:
         cv0 = C_VISIT_GRID[len(C_VISIT_GRID) // 2]
         print("COUT TOTAL [kEUR] a C_visite=%.1f (N=%d, Tvisite=%gm)" % (cv0, len(draws_ok), args.tvisit))
         print("%-11s | %8s | %8s | %8s | %6s | %7s | %8s" %
-              ("policy", "mean", "P95", "CVaR90", "nint", "waste", "outage h"))
+              ("policy", "mean", "P95", "ES90", "nint", "waste", "comp.-h"))
         for p in POLICIES:
             u = total(p, cv0)
             print("%-11s | %8.3f | %8.3f | %8.3f | %6.2f | %7.3f | %8.0f"
@@ -495,7 +651,9 @@ def main():
                   % ("%s - %s" % (a, b), dif.mean(), dif.std(), 100.0 * (dif < 0).mean()))
     print("=" * 78)
     print("Resultats : %s" % out_txt)
+    print("Cache brut: %s" % out_raw)
     print("Figure    : %s.pdf" % out_fig)
+    run_lock.close()
 
 
 if __name__ == "__main__":

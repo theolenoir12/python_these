@@ -1,0 +1,4 @@
+job=215075 host=node4-11 cpus=32 debut=2026-07-11T15:58:05+02:00
+script=/Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4/bench_maintenance.py args=--tvisit 6 --margin 1
+numpy 1.21.5 scipy 1.9.1 sympy 1.10.1
+python: can't open file '/Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4/../run_science_checks.py': [Errno 2] No such file or directory

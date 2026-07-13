@@ -29,7 +29,7 @@ import robustesse_common as rc
 import rb1_pred_common as rp
 
 # ======================= CONFIGURATION =======================
-RB1_OPT   = (0.40, 0.75)
+RB1_OPT   = rc.RB1_FAILOPT_THRESHOLDS
 WIN = dict(b_reserve=0.99, h_pre=18, h2_gate=0.5, m_sigma=2.0, min_dwell=12)
 N_DRAWS   = 200
 SEED      = 0

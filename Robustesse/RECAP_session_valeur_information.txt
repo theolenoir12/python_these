@@ -1,4 +1,28 @@
 ================================================================================
+
+MISE A JOUR DE VALIDATION -- RERUN CORRIGE DU 2026-07-11
+--------------------------------------------------------------------------------
+Les jobs corrigés 215088-215091 sont désormais rapatriés et validés. La note
+canonique qui les audite est :
+
+Vieillissement9_4/AUDIT_RERUN_CORRIGE_2026-07-11.txt
+
+Elle remplace les chiffres P1/P3/P4 historiques de ce document. Le
+post-traitement apparié corrigé se trouve dans le run empreint
+Vieillissement9_4/runs/p1_p3_stats_dc427b9da2f4/. Aucun rerun à protocole
+identique n'est requis.
+
+La traçabilité Sidelec est résolue : le fichier mésocentre e18721aa...91284 est
+exactement la vue PV/consommation de la copie locale datée, après suppression
+de la colonne date et conversion CRLF vers LF. Aucune récupération ni aucun
+rerun n'est requis.
+
+Les qualificatifs « quasi certain », « meilleure politique » et « bat dans les
+9 cas » restent conditionnels à la VoLL et au protocole. Le nouveau
+post-traitement distingue les différences de moyennes, les queues marginales et
+le pire décile de la différence appariée. `outfc+outely` désigne des
+heures-composant, pas l'indisponibilité du site.
+--------------------------------------------------------------------------------
 RÉCAPITULATIF DE LA DÉMARCHE -- SESSION DE TRAVAIL DU 2026-07-09
 "Rendre pertinente l'intégration des données de vieillissement dans les règles"
 (tâches AAPG 3.2 / 3.4 -- lecture conseillée du début à la fin, ~10 min)
@@ -72,7 +96,7 @@ DÉCOMPOSITION EN CASCADE du gain total RB2(SoH) - RB2 :
 Deux jobs mésocentre : 214530 (3 stratégies) puis 214863 (ajout de Recale ;
 le banc réutilise les 603 runs déjà payés, seuls les ~201 nouveaux tournent).
 
-3. RÉSULTATS ACQUIS DE P1 (fichiers valeur_info_25y.* + SYNTHESE dans V9_3)
+3. RÉSULTATS HISTORIQUES P1 À REVALIDER (valeur_info_25y.*)
 --------------------------------------------------------------------------------
 Coût unifié = dégradation + VoLL x EENS [kEUR / 25 ans], 200 mondes :
 
@@ -117,7 +141,7 @@ ASSURANCE contre l'erreur de modèle de vieillissement, pas un optimiseur
 nominal".
 
 4. ÉTAPE 3 -- EXPÉRIENCE P3 : "VALEUR DE LA RUL POUR LA MAINTENANCE INSULAIRE"
-   (Vieillissement9_4/bench_maintenance.py -- TERMINÉE, jobs 214867 puis 214887)
+   (calcul historique terminé ; validation corrigée en attente)
 --------------------------------------------------------------------------------
 IDÉE : votre readme RB2(RUL) a montré que la RUL ne vaut rien comme signal de
 derating continu (le SoH la domine). Sa place est la PLANIFICATION. On ajoute
@@ -181,20 +205,22 @@ SYNTHESE_maintenance_25y.txt) :
 --------------------------------------------------------------------------------
   ANALYSE_CRITIQUE_integration_vieillissement.txt   diagnostic + propositions
   Vieillissement9_4/
-    bench_valeur_info.py            banc P1 (4 compétiteurs, cascade, reuse)
-    valeur_info_25y.txt/.pdf/.png   RÉSULTATS P1 (200 mondes, cascade, sévérité)
-    valeur_info_sched_25y.npz       programme SoH nominal (l'"horloge")
-    SYNTHESE_valeur_info_25y.txt    synthèse P1 complète (chiffres + récit)
+    bench_valeur_info.py            banc P1 corrigé, cache empreint
+    valeur_info_25y.pdf/.png        figures LEGACY P1 ; TXT brut retiré
+    .science_cache/                 programme SoH nominal empreint
+    runs/p1_value_info_*/           futures sorties P1 corrigées
+    SYNTHESE_valeur_info_25y.txt    synthèse historique à revalider
     Common/main_init_and_loop_maintenance.py   boucle à fenêtres (v2 prev_scope)
-    bench_maintenance.py            banc P3 v2 (préventif pannes dures)
-    run_meso_maintenance.slurm      son lanceur
-    maintenance_25y_T6m.txt/.pdf    RÉSULTATS P3 (job 214887)
-    SYNTHESE_maintenance_25y.txt    synthèse P3 complète (chiffres + règle)
+    bench_maintenance.py            banc P3 corrigé (préventif pannes dures)
+    run_meso_maintenance*.slurm     lanceur et matrice corrigée
+    maintenance_25y_T*.pdf/.png     figures LEGACY P3 ; TXT bruts retirés
+    runs/p3_maintenance_*/          futures sorties P3 corrigées
+    SYNTHESE_maintenance_25y.txt    synthèse historique à revalider
     maintenance.214867.out          v1 archivée = contrefactuel batterie
   NB : Vieillissement9/, 9_2/, 9_3/ = copies antérieures ; 9_4 fait foi.
-  Les bancs relisent leur txt et ne relancent que les runs manquants
-  (--fresh pour tout repayer ; supprimer le txt si stratégies ou modèles
-  changent ; un run 25 ans ~ 40 s sur le méso, un banc complet ~ 20 min).
+  Les bancs ne relisent jamais les anciens TXT. Seul results_raw.tsv d'un
+  dossier runs/<id>_<empreinte> identique peut être repris ; un changement de
+  source, donnée, runtime ou paramètre crée une nouvelle empreinte.
 
 6. MÉTHODES TRANSVERSES (pourquoi c'est défendable)
 --------------------------------------------------------------------------------
@@ -204,27 +230,37 @@ SYNTHESE_maintenance_25y.txt) :
     (P3). Écart mesuré 0.0 dans les deux cas avant tout run payant.
   - Wrappers plutôt que copies : Recale et Sched appellent la vraie RB2(SoH) ;
     tout re-calage futur des setpoints se propage automatiquement.
-  - Réutilisation des runs payés : cache txt vérifié (graine/plage/VoLL +
-    recoupement des facteurs à 5e-4).
-  - Métriques inchangées vs le reste de la thèse (metrics de sens_common,
-    coût unifié VoLL=3 des bancs Fable) -> comparaison équitable.
+  - Protocole corrigé : sorties dans runs/<id>_<empreinte>, cache brut pleine
+    précision et ancien TXT jamais repris automatiquement.
+  - Comptabilité corrigée : intervalles d'unités disjoints et ledger ; le coût
+    sur trace complète n'est plus un oracle après remplacement.
 
 7. PROCHAINES ÉTAPES (dans l'ordre suggéré)
 --------------------------------------------------------------------------------
-  1. [FAIT, jobs 214899-214903] Carte complète "quand le pronostic paie"
-     (T x C_visite 3x3 + marges) : cf. SYNTHESE_maintenance_25y.txt sect. 4.
-     Résultats clés : loi monotone (la valeur croît avec la rareté des
-     fenêtres, décroît avec le coût d'intervention) ; rul bat le calendaire
-     dans les 9 cases et est la meilleure des 4 politiques dans 7/9 ;
-     ÉQUIVALENCE x4 : la RUL à 1 visite/an = le service du correctif à
-     4 visites/an, en moins cher partout ; marge 1.0 optimale en coût,
-     marge 1.5+ = outage strictement nul (+1 kEUR, prix de la certitude).
-  2. Reporter dans le manuscrit : cascade P1 (section 3) + carte P3
-     (section 4) + les deux règles générales (le préventif ne paie que pour
-     les pannes dures ; le capteur est le seul ingrédient quasi certain).
-  3. Restent ouvertes parmi les propositions : P4 (exploiter la physique V9 :
-     démarrages ELY ~70 % d'une vie de stack, repos programmés), P5 (réserve
-     H2 saisonnière pilotée par la prévision J+3/J+7), P6 (indicateurs en
-     durées de vie plutôt qu'en kEUR), P7 (table levier x propriété du modèle
-     de coût), P8 (distillation de la DP en règles).
+  1. Soumettre run_meso_invariance.slurm et exiger la fermeture du ledger,
+     l'égalité segments/ledger et le test instant=base sur 25 ans.
+  2. Si ce job passe, relancer P1 puis la matrice P3 avec les mêmes 200 mondes
+     CRN ; ne promouvoir aucune sortie avant le post-traitement VoLL=1/3/10.
+  3. Reporter alors seulement la cascade P1 et la carte P3 dans le manuscrit,
+     en donnant leurs conditions et intervalles appariés.
+  4. P4 EXÉCUTÉE EN LEGACY (job 214941, moteur pré-correction) : filtre
+     prévisionnel de démarrage ELY, synthèse SYNTHESE_dwell_25y.txt (statut
+     LEGACY, mêmes réserves que P1/P3). Chiffres historiques : N=4 h optimal,
+     -2.44 kEUR omniscient / -1.90 sous bruit (78 % conservés), gagnant sur
+     les DEUX axes -- le point DOMINE la base, donc le SIGNE du gain est
+     VoLL-invariant (seule l'amplitude change : ~-1.0/-1.9/-5.2 kEUR à
+     VoLL=1/3/10, arithmétique de dominance sur les sorties legacy) ;
+     falaise à N>=8 h ; diagnostic : start-stop = 89 % de l'usure ELY,
+     réversible résiduel = 0 (repos programmés sans gisement). Réserve
+     supplémentaire : le bruit AR(1) du job 214941 était réinitialisé à chaque
+     décision et les graines n'étaient pas des CRN stricts entre N. Le rerun
+     215065 est invalide (transition H2 infaisable). Le banc corrigé utilise une
+     trajectoire AR(1) persistante commune aux N, une inversion H2 cohérente,
+     un fail-fast et des sorties runs/p4_dwell_<empreinte>. À RE-PASSER par
+     dépendance afterok sur l'invariance ; aucun chiffre corrigé 25 ans acquis.
+     P5 écartée : contexte équatorial, pas de cycle annuel du stock H2.
+  5. Restent ouvertes : cumul des leviers RB2(SoH+Dwell) (interactions via le
+     stock H2), P6 (indicateurs en durées de vie plutôt qu'en kEUR), P7
+     (table levier x propriété du modèle de coût), P8 (distillation de la DP
+     en règles).
 ================================================================================

@@ -37,6 +37,9 @@ CMAP     = "RdYlGn_r"     # heatmaps : vert = faible (favorable), rouge = eleve
 # Couleurs coherentes par strategie (memes d'une figure a l'autre)
 _TAB = plt.cm.tab10(np.linspace(0, 1, 10))
 STRATEGY_COLOR = {s: _TAB[i] for i, s in enumerate(rc.DEFAULT_STRATEGIES)}
+# Compatibilite de lecture des NPZ historiques, qui stockaient seulement
+# l'etiquette ambigue "RB1". Les nouveaux calculs emploient un nom explicite.
+STRATEGY_COLOR.setdefault("RB1", _TAB[len(STRATEGY_COLOR) % len(_TAB)])
 
 # Etiquette des panneaux (a, b, c, d)
 PANEL = ["(a)", "(b)", "(c)", "(d)"]

@@ -74,7 +74,7 @@ RESULTS_MESO = os.path.join(HERE, "results_meso")
 TMP_DIR = os.path.join(HERE, "_tmp_rb2_splice")
 
 # strategie(s) re-simulee(s) : (dossier Vieillissement8, label)
-ONLY = [("RB1", "RB1"), ("RB2", "RB2"), ("RB2(SoH)", "RB2(SoH)")]
+ONLY = [("RB1_hist_020_060", "RB1"), ("RB2", "RB2"), ("RB2(SoH)", "RB2(SoH)")]
 RB_KEYS = ("RB1", "RB2", "RB2(SoH)")
 
 # axe -> (module, fichier canonique dans results_meso, a-t-il un bloc ## OAT ?)

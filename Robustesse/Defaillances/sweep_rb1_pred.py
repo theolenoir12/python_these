@@ -39,7 +39,7 @@ import robustesse_common as rc
 import rb1_pred_common as rp
 
 # ======================= CONFIGURATION =======================
-RB1_OPT   = (0.40, 0.75)                            # seuils optimises (etape 1)
+RB1_OPT   = rc.RB1_FAILOPT_THRESHOLDS                # variante gelee (etape 1)
 N_DRAWS   = 200
 SEED      = 0
 GRID_BRES = np.round(np.array([0.75, 0.80, 0.85, 0.90, 0.95, 0.99]), 3)  # 0.75 = nu

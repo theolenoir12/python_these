@@ -1,0 +1,14 @@
+Job 215046  noeud=node4-11  args=
+cpus-per-task=32  debut=sam. juil. 11 12:17:36 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+Traceback (most recent call last):
+  File "/Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4/bench_dwell_ely.py", line 75, in <module>
+    import bench_valeur_info as VI                              # noqa: E402
+  File "/Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4/bench_valeur_info.py", line 119, in <module>
+    from reproducibility.provenance import (                  # noqa: E402
+ModuleNotFoundError: No module named 'reproducibility'
+
+real	0m1,451s
+user	0m1,011s
+sys	0m0,141s
+fin=sam. juil. 11 12:17:38 CEST 2026

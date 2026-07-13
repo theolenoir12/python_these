@@ -1,0 +1,177 @@
+================================================================================
+
+STATUT AU 2026-07-11 : ARCHIVE LEGACY PRÉ-CORRECTION
+--------------------------------------------------------------------------------
+Les tableaux ci-dessous décrivent les sorties historiques à VoLL=3. Le moteur
+rejouait le pas de remplacement, la métrique ne respectait pas tous les resets
+et le LOL pouvait créditer une FC/ELY hors service quand la batterie saturait.
+Les cellules de la carte sont des argmin ponctuels, pas toutes des supériorités
+démontrées. À VoLL=3/C=1.5, delta_ES90(RUL-correctif)=-1.101 kEUR mais
+ES90(RUL-correctif)=+4.565 kEUR. `outfc+outely` est une somme
+d'heures-composant. Rerun corrigé requis avant citation.
+--------------------------------------------------------------------------------
+SYNTHESE -- VALEUR DE LA RUL POUR LA MAINTENANCE INSULAIRE (P3)
+Dossier : Robustesse/Vieillissement9_4/     Redige : 2026-07-10
+Donnees : maintenance_25y_T6m.txt (job meso 214887 : 25 ans, N_MC=200,
+          Tvisite=6 mois, marge RUL=1.0, preventif = pannes dures fc+ely,
+          memes 200 mondes CRN que bench_valeur_info, seed=2026, VoLL=3).
+Contexte : proposition P3 de ../ANALYSE_CRITIQUE_integration_vieillissement.txt ;
+          banc bench_maintenance.py + Common/main_init_and_loop_maintenance.py.
+Historique : le run 214867 (v1, preventif incluant la batterie) est ARCHIVE
+          dans git -- il sert de contrefactuel, cf. section 3.
+================================================================================
+
+0. RESUME (l'essentiel pour le manuscrit)
+--------------------------------------------------------------------------------
+Dans un contexte insulaire (remplacements uniquement aux visites periodiques,
+cout fixe par intervention), le pronostic trouve la place que le derating
+temps reel lui refusait : LE TIMING DES REMPLACEMENTS. A strategie de
+conduite identique (RB2(SoH)), la politique de remplacement guidee par la
+RUL estimee en ligne :
+  - ecrase l'indisponibilite : 10 088 h de composants H2 hors service sur
+    25 ans (politique corrective) -> 144 h (facteur ~70), LPSP 3.21 -> 2.98 % ;
+  - pour une prime quasi nulle : 0.31 kEUR de vie residuelle jetee (le
+    preventif remplace la FC a SoH ~ 0.90, la ou la vie residuelle ne vaut
+    presque rien) + 0.3 intervention supplementaire ;
+  - est la MEILLEURE politique en moyenne ET en queue (CVaR90) aux trois
+    couts d'intervention testes (0.5 / 1.5 / 3 kEUR).
+Le preventif SANS pronostic (calendaire, age nominal) DETRUIT de la valeur :
+il ne gagne que 7 % des mondes contre la simple politique corrective.
+
+1. CHIFFRES (cout total = deg + VoLL*EENS + C_visite*interventions + gaspillage)
+--------------------------------------------------------------------------------
+A C_visite = 1.5 kEUR (25 ans, N=200 mondes perturbes x[0.5,2]) :
+
+    politique     moyenne    P95     CVaR90   LPSP moy  interv.  outage
+    instant       106.76    147.73   148.79    2.91 %    11.6        0 h
+    corrective    105.43    143.59   144.88    3.21 %     9.9   10 088 h
+    calendar      106.12    145.52   146.35    3.15 %    10.4    7 220 h
+    rul           104.89    143.16   143.78    2.98 %    10.2      144 h
+
+  Differences appariees (CRN, negatif = le 1er gagne) :
+    rul - corrective : -0.53 +/- 2.84  gagne 57 %
+    rul - calendar   : -1.23 +/- 3.24  gagne 63 %
+    calendar - corr. : +0.69 +/- 1.69  gagne  7 %   <- le calendaire PERD
+
+  Decomposition du gain rul vs corrective : service -1.36 kEUR (outages
+  evites) contre prime +0.52 (interventions) + 0.31 (gaspillage). Le
+  gaspillage est negligeable parce que le preventif vise des composants
+  remplaces a ~SoH_EoL + epsilon (FC : 0.27 kEUR ; ELY : 0.04).
+
+  Effet du cout d'intervention (tables completes dans le txt) :
+    C_visite = 0.5 : rul - corrective = -0.88, gagne 78.5 % ; rul bat meme
+                     l'instantane (-0.47, 59 %) ;
+    C_visite = 3.0 : rul - corrective ~ 0 (52.5 %) -- la prime d'interventions
+                     mange le gain de service -- mais rul reste devant
+                     l'instantane (-3.96) et le calendaire (-1.42), et garde
+                     le meilleur CVaR90.
+  Lecture : la valeur du pronostic CROIT quand l'intervention est bon marche
+  (on peut se permettre d'anticiper) et se replie vers l'egalite avec le
+  correctif quand chaque visite coute cher. Dans tous les cas la RUL domine
+  le calendaire et l'instantane.
+
+  NOMINAL (test nul instant==boucle de base : ecart 0.0) :
+    instant 81.89 | corrective 84.32 (16 358 h d'outage FC !) |
+    calendar = rul 82.03 (4 preventifs FC, gaspillage 39 EUR au total).
+  Meme en monde nominal, les fenetres seules coutent ~2.4 kEUR de service ;
+  le preventif les recupere presque entierement, a gaspillage quasi nul.
+
+2. STRUCTURE DU RESULTAT (par tirage)
+--------------------------------------------------------------------------------
+  - Le gain du rul est reparti sur tout l'espace des mondes (corr avec la
+    severite : -0.07 ; facteur le plus lie : m_ely_s, -0.18). Contrairement
+    au capteur de P1 (asservissement continu, gain croissant avec l'ecart au
+    modele), la valeur du pronostic est du TIMING DISCRET : elle depend de la
+    position des morts par rapport aux fenetres, pas de l'amplitude de la
+    derive -- d'ou un gain plus uniforme et plus bruite (57-78 % de mondes
+    gagnes selon C_visite, contre 99 % pour le capteur P1).
+  - Dans les mondes a fort outage correctif (>10 000 h, N=88) : rul-corr
+    -0.97 kEUR ; dans les mondes calmes : -0.19. Le pronostic est une
+    ASSURANCE DE DISPONIBILITE : prime faible, payoff la ou la panne tombe
+    mal.
+  - Pourquoi le calendaire echoue : (i) il ne voit pas l'ELY (aucun age de
+    reference : l'ELY ne meurt jamais dans le monde nominal -> le calendaire
+    ne peut pas planifier ce que le modele de conception n'a jamais montre --
+    c'est PRECISEMENT l'avantage structurel du pronostic en ligne) ; (ii) a
+    age fixe, il anticipe trop (mondes lents) ou trop peu (mondes rapides).
+
+3. LE CONTREFACTUEL QUI FONDE LA REGLE DE PERIMETRE (run 214867, v1 archive)
+--------------------------------------------------------------------------------
+La v1 du banc incluait la BATTERIE dans le perimetre preventif. Resultat :
+rul PERDAIT +6.9 kEUR contre corrective (gagne 6 % des mondes), avec 5.8 kEUR
+de vie residuelle jetee, corr(gaspillage, m_bat) = +0.76 -- alors meme que le
+service etait gagnant (-1.03). Cause : la batterie est une panne MOLLE (sous
+l'EoL elle continue a capacite degradee, aucune indisponibilite) ; la
+remplacer par anticipation n'evite rien et jette de la vie residuelle chere
+(~7 kEUR le pack). REGLE GENERALE pour le manuscrit :
+    LE PREVENTIF NE PAIE QUE POUR LES COMPOSANTS DONT LA PANNE COUTE PLUS
+    CHER QUE LA VIE RESIDUELLE JETEE (pannes dures : FC, ELY -- hors service
+    a l'EoL ; pas la batterie, degradation graduelle).
+Contrefactuel reproductible : option --prevbat (cache distinct).
+
+4. CARTE COMPLETE "QUAND LE PRONOSTIC PAIE" (jobs 214899-214903)
+--------------------------------------------------------------------------------
+Balayages : periode de visite T = 3 / 6 / 12 mois (marge 1.0) et marge
+RUL = 1.0 / 1.5 / 2.0 (T = 6 mois). Memes 200 mondes CRN partout ; controle
+de coherence : les politiques non-rul sont identiques au bit pres entre les
+fichiers de marge.
+
+  4.a  MATRICE rul - corrective [kEUR] (% de mondes gagnes) :
+        periode  | C_visite=0.5  | C_visite=1.5  | C_visite=3.0
+        3 mois   | -0.32 (65 %)  | +0.05 (57 %)  | +0.61 (55 %)
+        6 mois   | -0.88 (78 %)  | -0.53 (57 %)  | -0.02 (52 %)
+        12 mois  | -2.53 (82 %)  | -1.73 (66 %)  | -0.54 (48 %)
+       Loi MONOTONE dans les deux directions : la valeur du pronostic CROIT
+       avec la rarete des fenetres et DECROIT avec le cout d'intervention
+       (qui penalise ses interventions anticipees). Le pronostic paie partout
+       sauf dans le coin "visites frequentes ET interventions cheres".
+       rul bat le CALENDAIRE dans les 9 cases (-0.66 a -1.90, 56-77 %).
+       rul est la meilleure des 4 politiques en moyenne ET en CVaR90 dans
+       7 cases sur 9 (corrective prend le coin T=3 mois / C_visite eleve).
+
+  4.b  EQUIVALENCE OPERATIONNELLE (le resultat a mettre en avant) :
+       la RUL a 1 visite/an fournit le MEME service que le correctif a
+       4 visites/an (LPSP 3.072 % vs 3.062 %) en coutant MOINS CHER a tous
+       les couts d'intervention (-0.75 / -2.31 / -4.65 kEUR a C_visite
+       0.5/1.5/3, gagne 72-76 % des mondes, 9.1 vs 10.6 interventions).
+       => LE PRONOSTIC PERMET D'ESPACER LES VISITES x4 A ISO-SERVICE --
+       en logistique insulaire, c'est sa monetisation la plus parlante.
+       Le pronostic rend la qualite de service quasi INSENSIBLE a la rarete
+       des visites : LPSP rul 2.95 -> 3.07 % de T=3 a T=12 mois, la ou le
+       correctif derive de 3.06 -> 3.62 % (outage 5 327 -> 19 523 h ; avec
+       rul : 85 -> 208 h).
+
+  4.c  MARGE RUL (T = 6 mois) : la marge 1.0 est OPTIMALE en cout moyen
+       (104.89 ; +0.96 a marge 1.5, +1.39 a marge 2.0, gagnees dans 13-20 %
+       des mondes seulement) -- l'estimateur lineaire est bien calibre pour
+       FC/ELY (degradation pilotee par l'operation, quasi lineaire),
+       contrairement au cas batterie (acceleration de fin de vie). MAIS les
+       marges 1.5/2.0 achetent un outage STRICTEMENT NUL (0 h sur 200 mondes
+       x 25 ans, contre 144 h a marge 1.0) : si le cahier des charges impose
+       une disponibilite garantie, la marge est le prix de la certitude
+       (~+1 kEUR). Compromis a presenter tel quel.
+
+5. RESERVES / SUITES
+--------------------------------------------------------------------------------
+  (a) Gains moyens modestes en euros (~0.5-2.5 kEUR selon la case) : les
+      messages forts sont OPERATIONNELS (outage /60-90, equivalence x4 sur
+      les visites, LPSP insensible a la periode) et en risque (CVaR90).
+  (b) Hypotheses O&M posees faute de donnees (periode, C_visite) : balayees
+      sur 3x3, a defendre comme ordres de grandeur insulaires.
+  (c) Pas de depannage d'urgence dans le modele (tout passe par les visites);
+      une variante "callout d'urgence a C_emerg >> C_visite" rapprocherait
+      encore le modele du terrain et ne peut qu'augmenter la valeur du
+      pronostic (il evite aussi la prime d'urgence).
+
+6. FICHIERS / REPRODUCTION
+--------------------------------------------------------------------------------
+  bench_maintenance.py               banc (v2 : preventif fc+ely, gaspillage
+                                     par composant, cache par tag)
+  Common/main_init_and_loop_maintenance.py   boucle a fenetres (prev_scope)
+  run_meso_maintenance.slurm         sbatch run_meso_maintenance.slurm
+                                     [--margin X | --tvisit M | --prevbat]
+  maintenance_25y_T6m.txt/.pdf/.png  resultats centraux (job 214887)
+  maintenance_25y_T3m.txt, _T12m.txt balayage periode (jobs 214899/214900)
+  maintenance_25y_T6m_m1.5.txt, _m2.txt  balayage marge (jobs 214902/214903)
+  maintenance.214867.out             v1 archive = contrefactuel batterie
+================================================================================

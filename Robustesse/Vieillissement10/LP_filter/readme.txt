@@ -1,0 +1,1 @@
+identique à RB5 le 22/09, permet de faire des copies de la trame (avec temps de calcul réduit) pour y incorporer les règles qu'on veut

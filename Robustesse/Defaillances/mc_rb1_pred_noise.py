@@ -33,7 +33,7 @@ import robustesse_common as rc
 import rb1_pred_common as rp
 
 # ======================= CONFIGURATION =======================
-RB1_OPT   = (0.40, 0.75)
+RB1_OPT   = rc.RB1_FAILOPT_THRESHOLDS
 B_RESERVE = 0.99          # geometrie figee (optimum omniscient)
 H_PRE     = 18
 MIN_DWELL = 12            # maintien hysteresis (production RB2(Pred))

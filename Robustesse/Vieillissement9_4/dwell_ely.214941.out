@@ -1,0 +1,212 @@
+Job 214941  noeud=node4-11  args=
+cpus-per-task=32  debut=Sat Jul 11 09:36:37 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+=== P4 -- DEMARRAGES ELY : filtre previsionnel de demarrage ===
+    horizon=25 ans | N=[2, 4, 6, 8, 12] | 32 graines/N | bruit AR(1) rho=0.8 sigma_h=3555 W (18h: 39.4 kWh)
+
+--- 172 runs (32 workers) ---
+  [  1/172] base    N=0   seed=0   LPSP  2.9099%  deg  58.024  unifie   81.889  starts  9193
+  [  2/172] omni    N=0   seed=0   LPSP  2.9099%  deg  58.024  unifie   81.889  starts  9193
+  [  3/172] minoff  N=2   seed=0   LPSP  2.8304%  deg  57.945  unifie   81.158  starts  9067
+  [  4/172] omni    N=2   seed=0   LPSP  2.7369%  deg  57.804  unifie   80.250  starts  8626
+  [  5/172] noisy   N=2   seed=3026 LPSP  2.7782%  deg  57.775  unifie   80.560  starts  8714
+  [  6/172] noisy   N=2   seed=3027 LPSP  2.7915%  deg  57.781  unifie   80.675  starts  8721
+  [  7/172] noisy   N=2   seed=3028 LPSP  2.7948%  deg  57.798  unifie   80.719  starts  8733
+  [  8/172] noisy   N=2   seed=3029 LPSP  2.7874%  deg  57.788  unifie   80.648  starts  8735
+  [  9/172] noisy   N=2   seed=3030 LPSP  2.7838%  deg  57.779  unifie   80.610  starts  8715
+  [ 10/172] noisy   N=2   seed=3031 LPSP  2.7972%  deg  57.776  unifie   80.717  starts  8727
+  [ 11/172] noisy   N=2   seed=3032 LPSP  2.7809%  deg  57.795  unifie   80.602  starts  8719
+  [ 12/172] noisy   N=2   seed=3033 LPSP  2.7829%  deg  57.792  unifie   80.616  starts  8717
+  [ 13/172] noisy   N=2   seed=3034 LPSP  2.7872%  deg  57.777  unifie   80.636  starts  8730
+  [ 14/172] noisy   N=2   seed=3035 LPSP  2.7666%  deg  57.798  unifie   80.489  starts  8723
+  [ 15/172] noisy   N=2   seed=3036 LPSP  2.7672%  deg  57.784  unifie   80.479  starts  8724
+  [ 16/172] noisy   N=2   seed=3037 LPSP  2.7998%  deg  57.784  unifie   80.746  starts  8718
+  [ 17/172] noisy   N=2   seed=3038 LPSP  2.7768%  deg  57.774  unifie   80.548  starts  8722
+  [ 18/172] noisy   N=2   seed=3039 LPSP  2.7943%  deg  57.768  unifie   80.686  starts  8729
+  [ 19/172] noisy   N=2   seed=3040 LPSP  2.7957%  deg  57.773  unifie   80.702  starts  8725
+  [ 20/172] noisy   N=2   seed=3041 LPSP  2.7919%  deg  57.778  unifie   80.676  starts  8701
+  [ 21/172] noisy   N=2   seed=3042 LPSP  2.7929%  deg  57.781  unifie   80.686  starts  8726
+  [ 22/172] noisy   N=2   seed=3043 LPSP  2.7947%  deg  57.802  unifie   80.722  starts  8744
+  [ 23/172] noisy   N=2   seed=3044 LPSP  2.7742%  deg  57.797  unifie   80.549  starts  8719
+  [ 24/172] noisy   N=2   seed=3045 LPSP  2.7990%  deg  57.754  unifie   80.710  starts  8714
+  [ 25/172] noisy   N=2   seed=3046 LPSP  2.7999%  deg  57.785  unifie   80.748  starts  8721
+  [ 26/172] noisy   N=2   seed=3047 LPSP  2.8100%  deg  57.771  unifie   80.817  starts  8741
+  [ 27/172] noisy   N=2   seed=3048 LPSP  2.7988%  deg  57.781  unifie   80.735  starts  8731
+  [ 28/172] noisy   N=2   seed=3049 LPSP  2.7927%  deg  57.781  unifie   80.685  starts  8734
+  [ 29/172] noisy   N=2   seed=3050 LPSP  2.8089%  deg  57.769  unifie   80.807  starts  8738
+  [ 30/172] noisy   N=2   seed=3051 LPSP  2.7794%  deg  57.777  unifie   80.572  starts  8721
+  [ 31/172] noisy   N=2   seed=3052 LPSP  2.7919%  deg  57.792  unifie   80.689  starts  8738
+  [ 32/172] noisy   N=2   seed=3053 LPSP  2.7750%  deg  57.777  unifie   80.536  starts  8704
+  [ 33/172] noisy   N=2   seed=3054 LPSP  2.7856%  deg  57.791  unifie   80.637  starts  8734
+  [ 34/172] noisy   N=2   seed=3055 LPSP  2.7836%  deg  57.799  unifie   80.629  starts  8729
+  [ 35/172] noisy   N=2   seed=3056 LPSP  2.7748%  deg  57.790  unifie   80.547  starts  8731
+  [ 36/172] noisy   N=2   seed=3057 LPSP  2.7993%  deg  57.772  unifie   80.730  starts  8726
+  [ 37/172] minoff  N=4   seed=0   LPSP  2.8375%  deg  57.774  unifie   81.046  starts  8863
+  [ 38/172] omni    N=4   seed=0   LPSP  2.6839%  deg  57.440  unifie   79.452  starts  8083
+  [ 39/172] noisy   N=4   seed=3026 LPSP  2.7085%  deg  57.543  unifie   79.756  starts  8273
+  [ 40/172] noisy   N=4   seed=3027 LPSP  2.7447%  deg  57.533  unifie   80.043  starts  8272
+  [ 41/172] noisy   N=4   seed=3028 LPSP  2.7388%  deg  57.501  unifie   79.963  starts  8249
+  [ 42/172] noisy   N=4   seed=3029 LPSP  2.7352%  deg  57.500  unifie   79.933  starts  8227
+  [ 43/172] noisy   N=4   seed=3030 LPSP  2.7367%  deg  57.531  unifie   79.976  starts  8280
+  [ 44/172] noisy   N=4   seed=3031 LPSP  2.7442%  deg  57.518  unifie   80.025  starts  8263
+  [ 45/172] noisy   N=4   seed=3032 LPSP  2.7292%  deg  57.539  unifie   79.922  starts  8268
+  [ 46/172] noisy   N=4   seed=3033 LPSP  2.7483%  deg  57.514  unifie   80.054  starts  8271
+  [ 47/172] noisy   N=4   seed=3034 LPSP  2.7674%  deg  57.494  unifie   80.191  starts  8259
+  [ 48/172] noisy   N=4   seed=3035 LPSP  2.7631%  deg  57.491  unifie   80.153  starts  8236
+  [ 49/172] noisy   N=4   seed=3036 LPSP  2.7507%  deg  57.509  unifie   80.068  starts  8277
+  [ 50/172] noisy   N=4   seed=3037 LPSP  2.7440%  deg  57.545  unifie   80.050  starts  8268
+  [ 51/172] noisy   N=4   seed=3038 LPSP  2.7565%  deg  57.513  unifie   80.120  starts  8273
+  [ 52/172] noisy   N=4   seed=3039 LPSP  2.7405%  deg  57.545  unifie   80.021  starts  8295
+  [ 53/172] noisy   N=4   seed=3040 LPSP  2.7225%  deg  57.562  unifie   79.891  starts  8294
+  [ 54/172] noisy   N=4   seed=3041 LPSP  2.7493%  deg  57.499  unifie   80.047  starts  8253
+  [ 55/172] noisy   N=4   seed=3042 LPSP  2.7299%  deg  57.529  unifie   79.918  starts  8265
+  [ 56/172] noisy   N=4   seed=3043 LPSP  2.7276%  deg  57.517  unifie   79.888  starts  8257
+  [ 57/172] noisy   N=4   seed=3044 LPSP  2.7468%  deg  57.529  unifie   80.057  starts  8258
+  [ 58/172] noisy   N=4   seed=3045 LPSP  2.7448%  deg  57.492  unifie   80.003  starts  8238
+  [ 59/172] noisy   N=4   seed=3046 LPSP  2.7275%  deg  57.526  unifie   79.895  starts  8260
+  [ 60/172] noisy   N=4   seed=3047 LPSP  2.7119%  deg  57.543  unifie   79.784  starts  8259
+  [ 61/172] noisy   N=4   seed=3048 LPSP  2.7370%  deg  57.530  unifie   79.978  starts  8281
+  [ 62/172] noisy   N=4   seed=3049 LPSP  2.7243%  deg  57.534  unifie   79.877  starts  8267
+  [ 63/172] noisy   N=4   seed=3050 LPSP  2.7501%  deg  57.506  unifie   80.061  starts  8252
+  [ 64/172] noisy   N=4   seed=3051 LPSP  2.7275%  deg  57.570  unifie   79.940  starts  8287
+  [ 65/172] noisy   N=4   seed=3052 LPSP  2.7523%  deg  57.514  unifie   80.086  starts  8281
+  [ 66/172] noisy   N=4   seed=3053 LPSP  2.7207%  deg  57.517  unifie   79.831  starts  8243
+  [ 67/172] noisy   N=4   seed=3054 LPSP  2.7313%  deg  57.527  unifie   79.928  starts  8280
+  [ 68/172] noisy   N=4   seed=3055 LPSP  2.7523%  deg  57.519  unifie   80.092  starts  8279
+  [ 69/172] noisy   N=4   seed=3056 LPSP  2.7512%  deg  57.541  unifie   80.105  starts  8273
+  [ 70/172] noisy   N=4   seed=3057 LPSP  2.7313%  deg  57.537  unifie   79.937  starts  8271
+  [ 71/172] minoff  N=6   seed=0   LPSP  2.8437%  deg  57.600  unifie   80.923  starts  8683
+  [ 72/172] omni    N=6   seed=0   LPSP  2.7947%  deg  56.880  unifie   79.800  starts  7486
+  [ 73/172] noisy   N=6   seed=3026 LPSP  2.9210%  deg  56.937  unifie   80.893  starts  7683
+  [ 74/172] noisy   N=6   seed=3027 LPSP  2.9256%  deg  56.961  unifie   80.956  starts  7683
+  [ 75/172] noisy   N=6   seed=3028 LPSP  2.9454%  deg  56.974  unifie   81.130  starts  7709
+  [ 76/172] noisy   N=6   seed=3029 LPSP  2.9145%  deg  56.977  unifie   80.880  starts  7696
+  [ 77/172] noisy   N=6   seed=3030 LPSP  2.9263%  deg  56.949  unifie   80.949  starts  7688
+  [ 78/172] noisy   N=6   seed=3031 LPSP  2.8911%  deg  57.032  unifie   80.743  starts  7741
+  [ 79/172] noisy   N=6   seed=3032 LPSP  2.8768%  deg  56.992  unifie   80.586  starts  7728
+  [ 80/172] noisy   N=6   seed=3033 LPSP  2.8821%  deg  56.998  unifie   80.635  starts  7722
+  [ 81/172] noisy   N=6   seed=3034 LPSP  2.9222%  deg  56.986  unifie   80.953  starts  7715
+  [ 82/172] noisy   N=6   seed=3035 LPSP  2.9134%  deg  56.990  unifie   80.883  starts  7701
+  [ 83/172] noisy   N=6   seed=3036 LPSP  2.9231%  deg  56.954  unifie   80.928  starts  7669
+  [ 84/172] noisy   N=6   seed=3037 LPSP  2.9216%  deg  56.964  unifie   80.925  starts  7688
+  [ 85/172] noisy   N=6   seed=3038 LPSP  2.9100%  deg  57.001  unifie   80.867  starts  7717
+  [ 86/172] noisy   N=6   seed=3039 LPSP  2.9055%  deg  56.980  unifie   80.810  starts  7706
+  [ 87/172] noisy   N=6   seed=3040 LPSP  2.9132%  deg  56.962  unifie   80.855  starts  7686
+  [ 88/172] noisy   N=6   seed=3041 LPSP  2.9048%  deg  56.963  unifie   80.786  starts  7697
+  [ 89/172] noisy   N=6   seed=3042 LPSP  2.9016%  deg  56.973  unifie   80.770  starts  7701
+  [ 90/172] noisy   N=6   seed=3043 LPSP  2.9013%  deg  56.988  unifie   80.783  starts  7706
+  [ 91/172] noisy   N=6   seed=3044 LPSP  2.9017%  deg  56.984  unifie   80.782  starts  7707
+  [ 92/172] noisy   N=6   seed=3045 LPSP  2.9446%  deg  56.953  unifie   81.103  starts  7686
+  [ 93/172] noisy   N=6   seed=3046 LPSP  2.9168%  deg  56.986  unifie   80.908  starts  7726
+  [ 94/172] noisy   N=6   seed=3047 LPSP  2.8962%  deg  56.977  unifie   80.731  starts  7720
+  [ 95/172] noisy   N=6   seed=3048 LPSP  2.9205%  deg  56.982  unifie   80.934  starts  7704
+  [ 96/172] noisy   N=6   seed=3049 LPSP  2.9052%  deg  56.988  unifie   80.815  starts  7705
+  [ 97/172] noisy   N=6   seed=3050 LPSP  2.9007%  deg  56.944  unifie   80.734  starts  7682
+  [ 98/172] noisy   N=6   seed=3051 LPSP  2.9098%  deg  56.988  unifie   80.853  starts  7718
+  [ 99/172] noisy   N=6   seed=3052 LPSP  2.9236%  deg  56.962  unifie   80.940  starts  7696
+  [100/172] noisy   N=6   seed=3053 LPSP  2.8829%  deg  57.021  unifie   80.665  starts  7724
+  [101/172] noisy   N=6   seed=3054 LPSP  2.9462%  deg  56.956  unifie   81.119  starts  7695
+  [102/172] noisy   N=6   seed=3055 LPSP  2.9146%  deg  56.974  unifie   80.878  starts  7680
+  [103/172] noisy   N=6   seed=3056 LPSP  2.9150%  deg  56.998  unifie   80.905  starts  7706
+  [104/172] noisy   N=6   seed=3057 LPSP  2.9285%  deg  56.959  unifie   80.977  starts  7685
+  [105/172] minoff  N=8   seed=0   LPSP  2.8384%  deg  57.524  unifie   80.803  starts  8573
+  [106/172] omni    N=8   seed=0   LPSP  6.3240%  deg  54.025  unifie  105.891  starts  4664
+  [107/172] noisy   N=8   seed=3026 LPSP  6.4059%  deg  54.049  unifie  106.587  starts  4813
+  [108/172] noisy   N=8   seed=3027 LPSP  6.2314%  deg  54.148  unifie  105.255  starts  4886
+  [109/172] noisy   N=8   seed=3028 LPSP  6.2657%  deg  54.088  unifie  105.476  starts  4864
+  [110/172] noisy   N=8   seed=3029 LPSP  6.3716%  deg  54.056  unifie  106.312  starts  4831
+  [111/172] noisy   N=8   seed=3030 LPSP  6.3215%  deg  54.058  unifie  105.903  starts  4812
+  [112/172] noisy   N=8   seed=3031 LPSP  6.3864%  deg  54.067  unifie  106.445  starts  4827
+  [113/172] noisy   N=8   seed=3032 LPSP  6.2519%  deg  54.133  unifie  105.408  starts  4889
+  [114/172] noisy   N=8   seed=3033 LPSP  6.2249%  deg  54.143  unifie  105.196  starts  4894
+  [115/172] noisy   N=8   seed=3034 LPSP  6.3173%  deg  54.066  unifie  105.877  starts  4837
+  [116/172] noisy   N=8   seed=3035 LPSP  6.2561%  deg  54.128  unifie  105.437  starts  4881
+  [117/172] noisy   N=8   seed=3036 LPSP  6.3081%  deg  54.113  unifie  105.849  starts  4847
+  [118/172] noisy   N=8   seed=3037 LPSP  6.3297%  deg  54.105  unifie  106.018  starts  4851
+  [119/172] noisy   N=8   seed=3038 LPSP  6.1630%  deg  54.167  unifie  104.712  starts  4897
+  [120/172] noisy   N=8   seed=3039 LPSP  6.2186%  deg  54.102  unifie  105.104  starts  4855
+  [121/172] noisy   N=8   seed=3040 LPSP  6.2443%  deg  54.135  unifie  105.347  starts  4877
+  [122/172] noisy   N=8   seed=3041 LPSP  6.3337%  deg  54.080  unifie  106.025  starts  4843
+  [123/172] noisy   N=8   seed=3042 LPSP  6.2986%  deg  54.089  unifie  105.746  starts  4829
+  [124/172] noisy   N=8   seed=3043 LPSP  6.2433%  deg  54.140  unifie  105.344  starts  4864
+  [125/172] noisy   N=8   seed=3044 LPSP  6.2438%  deg  54.113  unifie  105.321  starts  4853
+  [126/172] noisy   N=8   seed=3045 LPSP  6.2133%  deg  54.153  unifie  105.111  starts  4911
+  [127/172] noisy   N=8   seed=3046 LPSP  6.3130%  deg  54.096  unifie  105.872  starts  4870
+  [128/172] noisy   N=8   seed=3047 LPSP  6.3304%  deg  54.091  unifie  106.010  starts  4867
+  [129/172] noisy   N=8   seed=3048 LPSP  6.2754%  deg  54.140  unifie  105.607  starts  4883
+  [130/172] noisy   N=8   seed=3049 LPSP  6.2281%  deg  54.119  unifie  105.198  starts  4875
+  [131/172] noisy   N=8   seed=3050 LPSP  6.2568%  deg  54.161  unifie  105.476  starts  4891
+  [132/172] noisy   N=8   seed=3051 LPSP  6.2955%  deg  54.114  unifie  105.746  starts  4862
+  [133/172] noisy   N=8   seed=3052 LPSP  6.3176%  deg  54.085  unifie  105.898  starts  4848
+  [134/172] noisy   N=8   seed=3053 LPSP  6.3565%  deg  54.055  unifie  106.187  starts  4813
+  [135/172] noisy   N=8   seed=3054 LPSP  6.3367%  deg  54.101  unifie  106.071  starts  4849
+  [136/172] noisy   N=8   seed=3055 LPSP  6.2644%  deg  54.086  unifie  105.463  starts  4872
+  [137/172] noisy   N=8   seed=3056 LPSP  6.2879%  deg  54.151  unifie  105.720  starts  4905
+  [138/172] noisy   N=8   seed=3057 LPSP  6.2887%  deg  54.118  unifie  105.694  starts  4860
+  [139/172] minoff  N=12  seed=0   LPSP  2.8384%  deg  57.524  unifie   80.803  starts  8573
+  [140/172] omni    N=12  seed=0   LPSP 13.5267%  deg  48.360  unifie  159.298  starts     0
+  [141/172] noisy   N=12  seed=3026 LPSP 12.0457%  deg  48.646  unifie  147.437  starts    20
+  [142/172] noisy   N=12  seed=3027 LPSP 12.1471%  deg  48.622  unifie  148.245  starts    17
+  [143/172] noisy   N=12  seed=3028 LPSP 12.7281%  deg  48.537  unifie  152.925  starts    18
+  [144/172] noisy   N=12  seed=3029 LPSP 13.4132%  deg  48.467  unifie  158.474  starts    18
+  [145/172] noisy   N=12  seed=3030 LPSP 12.5612%  deg  48.554  unifie  151.574  starts    18
+  [146/172] noisy   N=12  seed=3031 LPSP 12.1051%  deg  48.619  unifie  147.897  starts    17
+  [147/172] noisy   N=12  seed=3032 LPSP 13.4000%  deg  48.424  unifie  158.323  starts    16
+  [148/172] noisy   N=12  seed=3033 LPSP 12.8417%  deg  48.509  unifie  153.829  starts    15
+  [149/172] noisy   N=12  seed=3034 LPSP 13.2812%  deg  48.438  unifie  157.363  starts    16
+  [150/172] noisy   N=12  seed=3035 LPSP 12.4073%  deg  48.573  unifie  150.330  starts    12
+  [151/172] noisy   N=12  seed=3036 LPSP 12.7103%  deg  48.544  unifie  152.786  starts    17
+  [152/172] noisy   N=12  seed=3037 LPSP 12.0515%  deg  48.633  unifie  147.473  starts     8
+  [153/172] noisy   N=12  seed=3038 LPSP 12.2714%  deg  48.613  unifie  149.257  starts    17
+  [154/172] noisy   N=12  seed=3039 LPSP 13.1569%  deg  48.478  unifie  156.384  starts    22
+  [155/172] noisy   N=12  seed=3040 LPSP 14.0921%  deg  48.286  unifie  163.862  starts    10
+  [156/172] noisy   N=12  seed=3041 LPSP 12.0522%  deg  48.635  unifie  147.480  starts    19
+  [157/172] noisy   N=12  seed=3042 LPSP 12.9278%  deg  48.492  unifie  154.519  starts    25
+  [158/172] noisy   N=12  seed=3043 LPSP 12.9741%  deg  48.474  unifie  154.880  starts    22
+  [159/172] noisy   N=12  seed=3044 LPSP 13.6349%  deg  48.345  unifie  160.171  starts    18
+  [160/172] noisy   N=12  seed=3045 LPSP 12.2231%  deg  48.611  unifie  148.857  starts    19
+  [161/172] noisy   N=12  seed=3046 LPSP 13.3650%  deg  48.416  unifie  158.028  starts    13
+  [162/172] noisy   N=12  seed=3047 LPSP 14.0009%  deg  48.290  unifie  163.117  starts    11
+  [163/172] noisy   N=12  seed=3048 LPSP 13.9926%  deg  48.354  unifie  163.113  starts    18
+  [164/172] noisy   N=12  seed=3049 LPSP 12.9287%  deg  48.472  unifie  154.506  starts    17
+  [165/172] noisy   N=12  seed=3050 LPSP 13.2945%  deg  48.441  unifie  157.474  starts    20
+  [166/172] noisy   N=12  seed=3051 LPSP 13.8620%  deg  48.343  unifie  162.031  starts    15
+  [167/172] noisy   N=12  seed=3052 LPSP 12.1643%  deg  48.617  unifie  148.381  starts    19
+  [168/172] noisy   N=12  seed=3053 LPSP 12.9642%  deg  48.473  unifie  154.798  starts    16
+  [169/172] noisy   N=12  seed=3054 LPSP 13.1354%  deg  48.476  unifie  156.205  starts    20
+  [170/172] noisy   N=12  seed=3055 LPSP 12.5020%  deg  48.551  unifie  151.086  starts    18
+  [171/172] noisy   N=12  seed=3056 LPSP 12.4893%  deg  48.564  unifie  150.994  starts    12
+  [172/172] noisy   N=12  seed=3057 LPSP 13.9209%  deg  48.358  unifie  162.530  starts    24
+  (236s)
+
+TEST NUL (omni N=0 == base) : ecart 0.000e+00 kEUR -> OK
+
+--- Diagnostic reversible/start-stop (run de base, re-simulation)...
+  ELY : total 8.10 % dont start-stop 7.17 (89 %) | irr 0.05 | rev RESIDUEL 0.000 (0.0 %) | idle 0.88 ; niveau rev moyen 0.0000 %, max 0.0007 %
+  FC  : total 44.76 % dont start-stop 22.56 (50 %) | irr 22.19 | rev RESIDUEL 0.013 (0.0 %) | idle 0.00 ; niveau rev moyen 0.0106 %, max 0.0513 %
+
+==============================================================================
+base : LPSP 2.9099%  deg 58.024  unifie 81.889  starts 9193
+minoff  N=2   : unifie   81.158  (d=-0.731)  starts  9067
+minoff  N=4   : unifie   81.046  (d=-0.844)  starts  8863
+minoff  N=6   : unifie   80.923  (d=-0.966)  starts  8683
+minoff  N=8   : unifie   80.803  (d=-1.086)  starts  8573
+minoff  N=12  : unifie   80.803  (d=-1.086)  starts  8573
+omni    N=2   : unifie   80.250  (d=-1.639)  starts  8626
+omni    N=4   : unifie   79.452  (d=-2.437)  starts  8083
+omni    N=6   : unifie   79.800  (d=-2.089)  starts  7486
+omni    N=8   : unifie  105.891  (d=+24.002)  starts  4664
+omni    N=12  : unifie  159.298  (d=+77.408)  starts     0
+noisy   N=2   : unifie   80.653 +/- 0.085  (d=-1.236)  starts  8725
+noisy   N=4   : unifie   79.987 +/- 0.102  (d=-1.902)  starts  8266
+noisy   N=6   : unifie   80.865 +/- 0.126  (d=-1.024)  starts  7702
+noisy   N=8   : unifie  105.669 +/- 0.419  (d=+23.780)  starts  4861
+noisy   N=12  : unifie  154.510 +/- 5.123  (d=+72.621)  starts    17
+==============================================================================
+Resultats : /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4/dwell_ely_25y.txt
+Figure    : /Work/Users/tlenoir/genial/Robustesse/Vieillissement9_4/dwell_ely_25y.pdf
+
+real	4m28.194s
+user	112m58.228s
+sys	0m12.067s
+fin=Sat Jul 11 09:41:05 CEST 2026

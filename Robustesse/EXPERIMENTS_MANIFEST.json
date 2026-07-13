@@ -1,0 +1,350 @@
+{
+  "schema_version": 1,
+  "canonical_engine": "Vieillissement9_4",
+  "canonical_engine_scope": "Nom de famille/dossier ; ne signifie pas que la revision candidate est deja validee scientifiquement.",
+  "validated_engine_revision": null,
+  "candidate_engine_revision": "v9_4_corrected_candidate_2026_07_11",
+  "governance": {
+    "published_strategy_is_immutable": true,
+    "new_parameters_require_new_variant_id": true,
+    "new_runs_require_content_fingerprint": true,
+    "legacy_outputs_without_fingerprint_are_never_automatic_caches": true,
+    "promotion_rule": "Une sortie de runs/ ne devient canonique qu'apres tests nuls, relecture scientifique et ajout explicite au manifeste."
+  },
+  "engine_revisions": [
+    {
+      "id": "v9_4_corrected_candidate_2026_07_11",
+      "status": "implemented_pending_25y_mesocentre_validation",
+      "corrections": [
+        "Intervalles de vie disjoints : le pas de franchissement EoL n'est plus rejoue sur l'unite neuve.",
+        "Cout de degradation issu d'un ledger unites retirees + unite courante.",
+        "Une FC/ELY hors service n'est plus creditee dans le bilan LOL apres saturation batterie.",
+        "L'inversion de puissance aux bornes du reservoir H2 utilise le meme modele rendement-puissance que la transition et reste faisable entre les noeuds des LUT.",
+        "Tests nuls P1/P3 fail-fast et caches bruts empreintes en pleine precision."
+      ],
+      "sources": [
+        {
+          "path": "Vieillissement9_4/Common/main_init_and_loop.py",
+          "sha256": "17eee6251ab55f3da3e374627b3861e9cbb86f5ff53de943e9e5ad372f98ad53"
+        },
+        {
+          "path": "Vieillissement9_4/Common/main_init_and_loop_maintenance.py",
+          "sha256": "f535547d47f9614542ebec27064ae59ae6e6bcc58647042b75dd55c2b854a050"
+        },
+        {
+          "path": "Vieillissement9_4/Common/cost_fcn_total2.py",
+          "sha256": "49cffbfd82921a495af8f458e58abd65491cddebf7e2d45d4a0183f70207747a"
+        },
+        {
+          "path": "Vieillissement9_4/Common/get_lol.py",
+          "sha256": "42c601d047fd878d055bb25704dedd8ad3ea1304309610c7750fae1c3f0435f0"
+        },
+        {
+          "path": "Vieillissement9_4/Common/replacement_ledger.py",
+          "sha256": "e8b1ebf48f99bedcf881bdaf82b9a7b82762294fb270e9c25df785032f5a5dd6"
+        },
+        {
+          "path": "Vieillissement9_4/check_cost_reset_invariance.py",
+          "sha256": "50aad0049ff213747db53d1e7bb3148cf6cf3061e62271361065f5ab9f7d94e5"
+        }
+      ],
+      "required_validation": "run_meso_invariance.slurm sur 25 ans, puis P1/P3 N=200 et post-traitement apparie."
+    }
+  ],
+  "strategy_variants": [
+    {
+      "id": "rb1_hist_020_060",
+      "folder": "Vieillissement8/RB1_hist_020_060",
+      "soc_low": 0.2,
+      "soc_high": 0.6,
+      "wrapper_sha256": "a3128b855a51865c22161295c6987a50e3ef0ef68d2a9dd0bfe23bcc0f47ad89",
+      "logic_path": "Vieillissement8/rb1_variants.py",
+      "logic_sha256": "95cb288298a0b529660cd0d01340864ee95993f7349b60ee821e652a82a23a03",
+      "immutable": true,
+      "role": "RB1 historique du chapitre 2 et reference du sweep defaillances"
+    },
+    {
+      "id": "rb1_failopt_040_075",
+      "folder": "Vieillissement8/RB1_failopt_040_075",
+      "soc_low": 0.4,
+      "soc_high": 0.75,
+      "wrapper_sha256": "4454afc8a85779816bfea0339c9f25b0880d06844ea6a476334aab7fb2099888",
+      "logic_path": "Vieillissement8/rb1_variants.py",
+      "logic_sha256": "95cb288298a0b529660cd0d01340864ee95993f7349b60ee821e652a82a23a03",
+      "immutable": true,
+      "role": "Optimum robustesse sous defaillance et socle de RB1(Pred)"
+    },
+    {
+      "id": "rb1_costopt_v8_020_035",
+      "folder": "Vieillissement8/RB1_costopt_v8_020_035",
+      "soc_low": 0.2,
+      "soc_high": 0.35,
+      "wrapper_sha256": "80d66281415d578d400b691c8d89b09f6ebfd5e176c2035c4e115c32bda2fff8",
+      "logic_path": "Vieillissement8/rb1_variants.py",
+      "logic_sha256": "95cb288298a0b529660cd0d01340864ee95993f7349b60ee821e652a82a23a03",
+      "immutable": true,
+      "role": "Optimum nominal en cout unifie obtenu avec le moteur V8"
+    }
+  ],
+  "experiments": [
+    {
+      "id": "rb1_failure_sweep_2026_07",
+      "status": "published_legacy_unfingerprinted",
+      "engine": "Vieillissement8",
+      "strategies": [
+        "rb1_hist_020_060",
+        "rb1_failopt_040_075"
+      ],
+      "parameters": {
+        "n_draws": 200,
+        "failure_duration_h": 168,
+        "evaluation_h": 672,
+        "score": "mean LPSP over FC_total, FC_50, ELY_total, ELY_50"
+      },
+      "artifacts": [
+        {
+          "path": "Defaillances/sweep_rb1.txt",
+          "sha256": "3dda64f3aad28ae2d84fc8d3577c2a11413d064b8d78f31923360dd717475594"
+        }
+      ],
+      "source_commit": null,
+      "limitations": [
+        "Le fichier ne contient pas d'empreinte des sources du run historique.",
+        "La variante 0.20/0.35 n'a pas encore ete evaluee sur cette metrique."
+      ]
+    },
+    {
+      "id": "rb1_prediction_failure_2026_07",
+      "status": "published_legacy_unfingerprinted",
+      "engine": "Vieillissement8",
+      "strategies": [
+        "rb1_failopt_040_075"
+      ],
+      "parameters": {
+        "n_draws": 200,
+        "evaluation_h": 672,
+        "base_thresholds": [
+          0.4,
+          0.75
+        ]
+      },
+      "artifacts": [
+        {
+          "path": "Defaillances/run_rb1_pred.txt",
+          "sha256": "e5119c21e6c4bad2ac28b0c2cb22b8c9906b19bb6145d327f48dd365d0346454"
+        },
+        {
+          "path": "Defaillances/mc_rb1_pred_ellipse.txt",
+          "sha256": "b4c6caed8c7b943ef225aee6a84a21669742e10c8e3fb6aaafa4515d4a906ac2"
+        }
+      ],
+      "source_commit": null
+    },
+    {
+      "id": "rb1_costopt_nominal_v8_25y",
+      "status": "published_legacy_unfingerprinted",
+      "engine": "Vieillissement8",
+      "strategies": [
+        "rb1_costopt_v8_020_035"
+      ],
+      "parameters": {
+        "horizon_years": 25,
+        "voll_eur_per_kwh": 3.0,
+        "best_total_keur": 85.2507
+      },
+      "artifacts": [
+        {
+          "path": "Vieillissement8/RB1/sweep_setpoints_rb1_unified.txt",
+          "sha256": "96a789bcb943fce7784ef73d86298cf0ce93acf6acf8ff56bbe363d1cb5e7c35"
+        }
+      ],
+      "source_commit": null,
+      "limitations": [
+        "Les copies identiques presentes dans les arbres V9_* ne constituent pas des recalculs V9.",
+        "La qualification de cette variante avec le moteur V9_4 reste a faire."
+      ]
+    },
+    {
+      "id": "p1_value_information_soh_25y_2026_07",
+      "status": "legacy_pre_correction_unfingerprinted",
+      "engine": "Vieillissement9_4_legacy_overlap",
+      "strategies": [
+        "RB2",
+        "RB2(Recale)",
+        "RB2(Sched)",
+        "RB2(SoH)"
+      ],
+      "parameters": {
+        "horizon_years": 25,
+        "n_worlds": 200,
+        "seed": 2026,
+        "multipliers_log_uniform": [
+          0.5,
+          2.0
+        ],
+        "voll_eur_per_kwh": 3.0,
+        "crn": true
+      },
+      "retired_artifacts": [
+        {
+          "path": "Vieillissement9_4/valeur_info_25y.txt",
+          "sha256": "f83932ea17c6613f05373a35df35ce0e419b5892867eba1d1da7e7eda75a8ff0"
+        }
+      ],
+      "source_commit": null,
+      "limitations": [
+        "Les couts par tirage sont arrondis a 0.001 kEUR.",
+        "Le concurrent Sched historique suit le temps global et non l'age de l'unite.",
+        "Le pas de franchissement EoL etait rejoue sur l'unite neuve et le cout full-trace ne respectait pas tous les resets.",
+        "Le TXT brut legacy a ete retire du working tree ; son SHA est conserve uniquement pour l'audit historique.",
+        "Les conclusions de cascade dependent de la VoLL ; les chiffres ne sont pas promus pour le manuscrit avant rerun corrige."
+      ]
+    },
+    {
+      "id": "p3_rul_maintenance_matrix_25y_2026_07",
+      "status": "legacy_pre_correction_unfingerprinted",
+      "engine": "Vieillissement9_4_legacy_overlap",
+      "strategies": [
+        "RB2(SoH)"
+      ],
+      "policies": [
+        "instant",
+        "corrective",
+        "calendar",
+        "rul"
+      ],
+      "parameters": {
+        "horizon_years": 25,
+        "n_worlds": 200,
+        "seed": 2026,
+        "visit_period_months": [
+          3.0,
+          6.0,
+          12.0
+        ],
+        "rul_margin": 1.0,
+        "preventive_scope": [
+          "fc",
+          "ely"
+        ],
+        "voll_eur_per_kwh": 3.0,
+        "crn": true
+      },
+      "retired_artifacts": [
+        {
+          "path": "Vieillissement9_4/maintenance_25y_T6m.txt",
+          "sha256": "51e646a09279e50f8c2401b1df67a4c733f34a11e675b5863c69245b397fd6a9"
+        },
+        {
+          "path": "Vieillissement9_4/maintenance_25y_T3m.txt",
+          "sha256": "53542287e6a1447418ab77b2b82d479c08ef633f1a0889c8015e3a7d80ce44fd"
+        },
+        {
+          "path": "Vieillissement9_4/maintenance_25y_T12m.txt",
+          "sha256": "2f13313112c1192442b8e1811fd6b2642f0c84432f1b84284090be037bb06651"
+        }
+      ],
+      "source_commit": null,
+      "limitations": [
+        "Le calendaire ne possede pas d'age ELY car aucune mort ELY n'apparait dans le nominal.",
+        "Les heures outfc+outely sont des heures-composant, pas une duree d'indisponibilite systeme.",
+        "Le pas de franchissement EoL etait rejoue et le cout full-trace ne respectait pas tous les resets.",
+        "Le LOL pouvait crediter la puissance d'une FC/ELY hors service lorsque la batterie saturait.",
+        "Les trois TXT bruts legacy ont ete retires du working tree ; leurs SHA sont conserves uniquement pour l'audit historique.",
+        "Les cellules de la carte sont des argmin ponctuels ; elles ne prouvent pas toutes une superiorite statistique."
+      ]
+    },
+    {
+      "id": "p4_dwell_ely_25y_2026_07",
+      "status": "legacy_pre_correction_unfingerprinted",
+      "engine": "Vieillissement9_4_legacy_overlap",
+      "strategies": [
+        "RB2(SoH)"
+      ],
+      "parameters": {
+        "horizon_years": 25,
+        "dwell_h": [
+          2,
+          4,
+          6,
+          8,
+          12
+        ],
+        "n_noise_seeds": 32,
+        "noise_seed0": 3026,
+        "voll_eur_per_kwh": 3.0
+      },
+      "artifacts": [
+        {
+          "path": "Vieillissement9_4/dwell_ely_25y.txt",
+          "sha256": "1860c236cd0eb85eed328b620047077bee18bf1118460b9fe4c0acb0c7d2874a"
+        },
+        {
+          "path": "Vieillissement9_4/SYNTHESE_dwell_25y.txt",
+          "sha256": "da68c6cd42c7fd69a0af310143f1f4ecd3560f08682eae67d0714999975ac775"
+        }
+      ],
+      "source_commit": null,
+      "limitations": [
+        "Sortie du job 214941 produite avant la comptabilite corrigee des remplacements.",
+        "Le bruit AR(1) historique etait reinitialise a chaque decision ; une meme graine ne definissait donc pas une trajectoire horaire CRN commune aux horizons N.",
+        "Le rerun 215065 est invalide : toutes les trajectoires atteintes ont echoue sur une transition H2 infaisable avant la correction de l'inversion de LUT.",
+        "Les optima et gains P4 historiques restent exploratoires jusqu'au rerun corrige et empreinte."
+      ]
+    },
+    {
+      "id": "p1_p3_paired_postprocess_legacy_2026_07_11",
+      "status": "diagnostic_legacy_fingerprinted",
+      "engine": "postprocess_only",
+      "parameters": {
+        "voll_eur_per_kwh": [
+          1.0,
+          3.0,
+          10.0
+        ],
+        "visit_cost_keur": [
+          0.5,
+          1.5,
+          3.0
+        ],
+        "bootstrap_resamples": 30000,
+        "paired_crn": true
+      },
+      "artifacts": [
+        {
+          "path": "Vieillissement9_4/STATISTIQUES_APPARIEES_P1_P3.txt",
+          "sha256": "7b0b7b26c5ed35eda1137edad3f849c1fb97941753d142afeeccd7cc1bfaad88"
+        },
+        {
+          "path": "Vieillissement9_4/STATISTIQUES_APPARIEES_P1_P3.tsv",
+          "sha256": "85d90c617958d411fa0bad855bedcb1de2542eae837b91585cf2c15bffa5c4c4"
+        },
+        {
+          "path": "Vieillissement9_4/STATISTIQUES_APPARIEES_P1_P3.txt.provenance.json",
+          "sha256": "0ba4038ac4575051bef3ab37c91f6e448b66846035fe6336124759d67361d529"
+        }
+      ],
+      "limitations": [
+        "Aucune nouvelle simulation : calcul descriptif des sorties legacy pre-correction.",
+        "La sensibilite VoLL reevalue les politiques fixes optimisees a VoLL=3, sans re-optimisation.",
+        "Les couts sources sont arrondis a 0.001 kEUR."
+      ]
+    },
+    {
+      "id": "soh_battery_fixed_vs_adaptive_25y_2026_07",
+      "status": "published_legacy_unfingerprinted",
+      "engine": "Fable",
+      "parameters": {
+        "horizon_years": 25,
+        "voll_eur_per_kwh": 3.0
+      },
+      "artifacts": [
+        {
+          "path": "Fable/bench_socwin_fixed.txt",
+          "sha256": "5b9188d6489b087d4b15e221b60c24407c446b9920cf4be33413a3f049565629"
+        }
+      ],
+      "source_commit": null
+    }
+  ]
+}

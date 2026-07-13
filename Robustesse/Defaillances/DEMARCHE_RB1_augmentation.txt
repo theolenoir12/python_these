@@ -1,4 +1,12 @@
 ================================================================================
+
+NOMENCLATURE IMMUTABLE -- AUDIT 2026-07-11
+  rb1_hist_020_060       = historique 0.20/0.60
+  rb1_failopt_040_075    = optimum du sweep de defaillances 0.40/0.75 ;
+                           socle exact de RB1(Pred)
+  rb1_costopt_v8_020_035 = minimum de la grille de cout unifie V8 0.20/0.35 ;
+                           non qualifie avec V9_4
+Le nom nu RB1 est ambigu et ne doit plus etre ecrit dans une nouvelle sortie.
 DEMARCHE : OPTIMISATION DE RB1 ET AUGMENTATION PAR PREVISION, SOUS DEFAILLANCE
 Dossier : Robustesse/Defaillances/          Maj : 2026-07-04
 Source 100% ASCII (volontaire, cf. robustesse_common.py) : evite tout mojibake.
@@ -25,7 +33,7 @@ PEMFC 50%, PEMWE totale, PEMWE 50%.
 
 1. STRUCTURE DE RB1 (ce qu'on optimise)
 --------------------------------------------------------------------------------
-RB1 (Vieillissement8/RB1/get_optimal_action_RB.py) est parametree implicitement
+RB1 (noyau Vieillissement8/rb1_variants.py) est parametree explicitement
 par DEUX seuils de SoC = les deux genoux d'une bande de melange lineaire bat/H2 :
   - SoC_low  : en dessous, la FC couvre TOUT le deficit (batterie protegee) ;
   - SoC_high : au-dessus, la batterie couvre TOUT le deficit (FC coupee), ET
@@ -63,11 +71,13 @@ nominal, donc pas de compromis cote LPSP.
 Le seul scenario ou RB1-opt cede un peu : PEMWE totale (1.29 -> 1.42), largement
 compense ailleurs.
 
-Application. Vieillissement8/RB1/get_optimal_action_RB.py a ete EDITE : constantes
-nommees SOC_LOW=0.40, SOC_HIGH=0.75 (ancien reglage documente en commentaire).
-=> ATTENTION : cela redefinit RB1 PARTOUT (plans de Pareto, autres etudes).
-   Reversible via git. results/robustesse_summary.txt a ete regenere avec RB1-opt
-   (run_robustesse.py) -> RB1 est desormais 1re dans les 4 scenarios.
+Application. Les resultats de cette etude ont ete produits avec le parametrage
+0.40/0.75, desormais fige sous l'identifiant rb1_failopt_040_075. Ils ne doivent
+pas etre reproduits en important le dossier nu Vieillissement8/RB1, qui a ensuite
+designe 0.20/0.35. RB1(Pred) doit appeler explicitement la variante failopt et
+son test nul doit verifier que levier OFF == rb1_failopt_040_075. Les sorties
+historiques sans empreinte sont conservees et gelees par leur hash dans
+EXPERIMENTS_MANIFEST.json.
 
 Sorties : sweep_rb1.txt, results/sweep_rb1_heatmap.pdf.
 
@@ -190,7 +200,7 @@ Entree previsionnelle = LA MEME que pour RB2(Pred) : l'ENERGIE NETTE (a consomme
     sweep_rb1.py ..................... sweep 2D (SoC_low, SoC_high)
     sweep_rb1.txt ................... tableau trie
     results/sweep_rb1_heatmap.pdf ... carte du score
-    (edition) Vieillissement8/RB1/get_optimal_action_RB.py -> (0.40, 0.75)
+    variante Vieillissement8/RB1_failopt_040_075 -> (0.40, 0.75)
     (regen)  run_robustesse.py -> results/robustesse_summary.txt + figures
 
   ETAPE 2

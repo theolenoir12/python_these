@@ -1,0 +1,112 @@
+AUGMENTATION DE RB2 DANS VIEILLISSEMENT10
+=========================================
+
+1. Invariant de structure
+-------------------------
+
+RB2 et toutes ses augmentations restent des regles a deux setpoints de
+puissance H2 : P_FC,set et P_ELY,set. Il n'existe aucun plafond de strategie.
+Les seules bornes appliquees apres ces consignes sont les contraintes physiques
+communes : H2 disponible/place restante, puissance instantanee des composants,
+defaillances et arbitrage get_lol.
+
+Le dispatch est mutualise dans Common/rb2_policy.py. Cela garantit que les
+differences entre RB2, RB2(SoH), RB2(RUL), RB2(Pred) et RB2(all) proviennent
+uniquement du calcul des deux setpoints.
+
+2. Couches
+----------
+
+SoH :
+  usure_i = clip((1 - SoH_i) / (1 - SoH_EoL,i), 0, 1)
+  P_i,set = c_i P_i,nom (1 - strength_i usure_i^shape_i)
+
+L'ancienne loi SoH^gamma est conservee uniquement pour reproduire les anciens
+calculs. Elle est mal conditionnee pour les composants H2 remplaces a
+SoH_EoL=0.90 : gamma=2 ne diminue le setpoint que de 19 % a l'EoL. La nouvelle
+loi fait de strength la baisse maximale explicite et de shape la repartition de
+cette baisse au cours de la vie.
+
+RUL :
+  P_i,set = c_i P_i,nom min(RUL_i/RUL_ref,i, 1)^gamma_RUL,i
+
+Avant que 20 pas soient disponibles apres la mise en service/remplacement, le
+RUL est inconnu (inf) et le facteur vaut exactement 1. Cela evite le derating
+initial artificiel produit auparavant par les valeurs par defaut 8000/3000 j.
+
+Prediction :
+  la somme du profil net futur charge-PV est calculee sur H_PRE. Si un deficit
+  est prevu et SoC < SoC_cible, P_ELY,set devient 0 afin de conserver le surplus
+  courant dans la batterie. Le bruit d'energie du backtest 18 h (biais -2.32
+  kWh, sigma 39.38 kWh), une hysteresis et un maintien minimal sont disponibles.
+
+Tout cumule :
+  facteurs SoH et RUL multiplies, puis inhibition previsionnelle eventuelle de
+  la consigne ELY. Tous les exposants nuls et prediction desactivee redonnent
+  exactement RB2.
+
+3. Optimisations
+----------------
+
+Script : optimize_rb2_augmentations.py
+
+  python optimize_rb2_augmentations.py --layer soh
+  python optimize_rb2_augmentations.py --layer soh_normalized
+  python analyze_rb2soh_tradeoff.py --lpsp-cap 1.10
+  python optimize_rb2_augmentations.py --layer rul
+  python optimize_rb2_augmentations.py --layer pred --seeds 5
+  python optimize_rb2_augmentations.py --layer all --seeds 5
+  python optimize_rb2_augmentations.py --layer suite --smoke
+
+Sur SLURM : sbatch run_optimize_rb2_augmentations.slurm
+
+La base est fixee aux setpoints RB2 V10 deja optimises : c_FC=0.59 et
+c_ELY=0.49. On optimise donc uniquement la valeur informationnelle de la couche.
+Chaque grille contient un cas nul RB2. Le critere est coherent avec le reste de
+V10 : cout unifie = degradation + 3 EUR/kWh * EENS, et la LPSP est rapportee a
+la charge totale. Les couches avec prediction sont moyennees sur plusieurs
+graines. Les sorties CSV/TXT vont dans Optimization_results/.
+
+4. Resultats du balayage V10, 25 ans
+-----------------------------------
+
+Reference RB2 : LPSP 0.77502 %, degradation 63.37461 kEUR, cout unifie
+75.55008 kEUR.
+
+RB2(SoH), grille d'usure normalisee : le minimum du cout unifie est le cas nul
+RB2. La couche SoH fait cependant apparaitre un front non domine net. Le point
+minimisant la degradation sous LPSP <= 1.10 % utilise strength_FC=strength_ELY
+=0.25 et shape_FC=shape_ELY=1 : LPSP 1.09760 %, degradation 62.20838 kEUR,
+cout unifie 79.45155 kEUR. Par rapport a RB2, la degradation baisse de 1.16623
+kEUR (-1.84 %) et la LPSP augmente de 0.32258 point.
+
+Le minimum de degradation de la grille atteint 58.89747 kEUR (-7.07 %) pour
+une LPSP de 2.27944 %. L'optimisation conjointe du setpoint ELY initial
+(0.49/0.55/0.65) et de la loi SoH ne bat pas non plus RB2 au cout unifie. A
+VoLL=3 EUR/kWh, la penalite d'EENS domine donc le gain de vieillissement ; ce
+n'est pas une absence de reponse physique de la loi de degradation.
+
+RB2(RUL) : l'optimum est le cas nul gamma_FC=gamma_ELY=0, identique a RB2.
+Toutes les modulations RUL de la grille augmentent le cout unifie. La couche est
+implementee et testable, mais l'optimisation V10 conclut qu'elle doit rester
+inactive avec l'estimateur et les fonctions de cout actuels.
+
+RB2(Pred), moyenne de trois graines : H=24 h, SoC_cible=0.99, hysteresis=1.5
+sigma, maintien=0 h ; LPSP 0.76540 %, degradation 63.36974 kEUR, cout unifie
+75.39405 kEUR, ecart-type du cout 0.06142 kEUR.
+
+RB2(SoH+RUL+Pred), moyenne de trois graines : gamma_SoH,FC=0.25,
+gamma_SoH,ELY=0 ; deux gammas RUL nuls ; prediction 24 h/0.99/1.5 sigma/0 h.
+LPSP 0.75599 %, degradation 63.40707 kEUR, cout unifie 75.28356 kEUR,
+ecart-type 0.05972 kEUR. Le cumul optimal retient donc SoH+Pred et rejette le
+derating RUL ; il reste formellement le cas tout cumule, avec une couche RUL
+dont le poids optimal est nul.
+
+Limite de validation : le modele d'erreur de prediction conserve le biais et le
+sigma mesures historiquement a 18 h, alors que l'horizon de commande optimal est
+24 h. Il faut refaire le backtest des profils a 24 h (et idealement augmenter le
+nombre de graines Monte-Carlo) avant de considerer les resultats Pred/cumules
+comme definitivement qualifies. Les optima SoH/RUL, deterministes, ne dependent
+pas de cette limite.
+
+Resultats complets : Optimization_results/optimization_{soh,rul,pred,all}.{csv,txt}

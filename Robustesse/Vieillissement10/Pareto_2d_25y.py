@@ -173,7 +173,7 @@ def build_figure(iso_cost):
                        color=color_of(label), weight='bold', path_effects=LABEL_STROKE,
                        horizontalalignment=ha, verticalalignment=va)
 
-    axins.set_xlim(1.0, 4.3)
+    axins.set_xlim(0.4, 3.5)
     axins.set_ylim(53, 84)          # abaisse pour inclure RB2(SoH) v2 a 54.9
     axins.grid(True, linestyle='--', alpha=0.5)
     axins.tick_params(labelsize=10)

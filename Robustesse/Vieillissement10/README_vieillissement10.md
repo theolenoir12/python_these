@@ -185,3 +185,40 @@ avec a la fois moins d'energie non fournie et moins de cout unifie que RB1.
 Les definitions, limites, sources et commandes reproductibles sont detaillees
 dans RB2/README_RB2_V10.md. Le classement complet est produit par
 rank_base_strategies.py.
+
+## Augmentations RB2 (15 juillet 2026)
+
+Les quatre variantes `RB2(SoH)`, `RB2(RUL)`, `RB2(Pred)` et
+`RB2(SoH+RUL+Pred)` utilisent maintenant le dispatch commun
+`Common/rb2_policy.py`. Elles restent strictement pilotees par deux setpoints H2
+dynamiques, sans plafond de strategie.
+
+Le balayage 25 ans (`optimize_rb2_augmentations.py`) conclut a :
+
+- SoH : la loi `SoH^gamma` a ete remplacee pour les nouveaux calculs par une
+  loi fondee sur l'usure normalisee entre SoH=1 et SoH_EoL. Le cout unifie
+  minimal reste RB2, mais un front LPSP/degradation apparait. Sous
+  `LPSP <= 1.10 %`, le point retenu (`strength_fc=strength_ely=0.25`, formes
+  lineaires) donne `LPSP=1.09760 %`, `degradation=62.20838 kEUR` et
+  `cout unifie=79.45155 kEUR`, contre respectivement `0.77502 %`,
+  `63.37461 kEUR` et `75.55008 kEUR` pour RB2 ;
+- RUL : cas nul optimal, donc strategie identique a RB2 (`75.5501 kEUR`) ;
+- Pred : `H=24 h`, cible SoC `0.99`, bande `1.5 sigma`, aucun maintien,
+  moyenne `75.3940 kEUR` sur trois graines ;
+- cumul : SoH + Pred ci-dessus et RUL nul, moyenne `75.2836 kEUR`, LPSP
+  charge totale `0.7560 %`.
+
+Les definitions, commandes et resultats complets sont dans
+`AUGMENTATION_RB2_V10.txt` et `Optimization_results/`.
+
+Le diagnostic detaille et le front sont produits par
+`analyze_rb2soh_tradeoff.py`. La baisse des setpoints reduit bien la degradation
+H2 (jusqu'a -7.07 % sur le cout total de degradation dans la grille), mais elle
+augmente aussi les heures de fonctionnement H2, laisse presque intact le cout
+des demarrages-arrets et reporte une partie de l'effort sur la batterie. Avec
+VoLL=3 EUR/kWh, l'EENS supplementaire rend ainsi les points SoH plus couteux au
+sens du critere unifie.
+
+Le bruit utilise encore les statistiques du backtest historique a 18 h alors
+que l'horizon optimal est 24 h. Un backtest 24 h et un Monte-Carlo plus large
+sont donc requis avant validation scientifique definitive de Pred et du cumul.

@@ -22,10 +22,12 @@ scenarios = [
     ("100-0", "100-0"),
     ("RB2",   "RB2"),
     ("RB2(SoH)",   "RB2(SoH)"),
+    ("RB2(RUL)",   "RB2(RUL)"),
+    ("RB2(Pred)",  "RB2(Pred)"),
+    ("RB2(SoH+RUL+Pred)", "RB2(all)"),
     ("RB1",    "RB1"),
     ("SoC1",   "SoC1"),
     ("SoC06",   "SoC06")
-    # ("RB2(RUL)",  "RB2(RUL)")
 ]
 
 STRATEGY_FILENAME = "get_optimal_action_RB" # Le nom du fichier .py SANS .py

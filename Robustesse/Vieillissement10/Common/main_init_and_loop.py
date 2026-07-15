@@ -1,3 +1,5 @@
+import inspect
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import brentq
@@ -28,6 +30,21 @@ def init_and_run_loop(get_optimal_action_RB, n_years=25,
     if replacement_accounting not in ("corrected", "legacy_overlap"):
         raise ValueError("replacement_accounting inconnu : %s" % replacement_accounting)
 
+    # Les politiques previsionnelles portent un petit etat (hysteresis/bruit).
+    # Chaque simulation doit repartir du meme etat, notamment dans les workers
+    # reutilises par les balayages d'optimisation.
+    reset_policy = getattr(get_optimal_action_RB, "reset", None)
+    if callable(reset_policy):
+        reset_policy()
+    policy_parameters = inspect.signature(get_optimal_action_RB).parameters
+    accepts_forecast = "P_tot_ref_future" in policy_parameters
+    forecast_horizon_steps = getattr(
+        get_optimal_action_RB, "forecast_horizon_steps", None
+    )
+    if accepts_forecast and forecast_horizon_steps is None:
+        forecast_horizon_steps = max(1, int(round(48 * 3600 / LOAD["Ts"])))
+    forecast_horizon_steps = int(forecast_horizon_steps or 0)
+
     # Initialisation des variables
     T = (SIM['Tend'] / 365)*365*n_years  # horizon de temps (defaut 25 ans)
     SoC_init  = 0.5  # état initial
@@ -57,6 +74,16 @@ def init_and_run_loop(get_optimal_action_RB, n_years=25,
     SoH_bat   = np.zeros(n+1); SoH_bat[0] = 1
     SoH_fc    = np.zeros(n+1); SoH_fc[0]  = 1
     SoH_ely   = np.zeros(n+1); SoH_ely[0] = 1
+    RUL_fc    = np.full(n, np.inf)
+    RUL_ely   = np.full(n, np.inf)
+
+    # Profil net reel mis a disposition des couches de prediction. La politique
+    # ne recoit qu'une fenetre future et ne peut donc pas agir sur une autre
+    # grandeur que ses deux consignes H2.
+    profile_net = (
+        np.asarray(LOAD["P_ref"][:n], dtype=float) / CONV["eta"]
+        - np.asarray(PV["P"][:n], dtype=float)
+    )
     
     deg_fc  = {'start-stop':np.zeros(n),'idling':np.zeros(n), 'reversible':np.zeros(n),
         'irreversible':np.zeros(n), 'total':np.zeros(n)}
@@ -149,6 +176,8 @@ def init_and_run_loop(get_optimal_action_RB, n_years=25,
         "SoH_bat": np.zeros(n+1),
         "SoH_fc": np.zeros(n+1),
         "SoH_ely": np.zeros(n+1),
+        "RUL_fc": np.full(n, np.inf),
+        "RUL_ely": np.full(n, np.inf),
         "deg_fc": {
             'start-stop': np.zeros(n), 'idling': np.zeros(n),
             'reversible': np.zeros(n), 'irreversible': np.zeros(n), 'total': np.zeros(n)
@@ -190,8 +219,8 @@ def init_and_run_loop(get_optimal_action_RB, n_years=25,
             if delta_soh > 1e-9: # Éviter division par zéro
                 # Projection linéaire : (Temps_écoulé * Delta_total) / Delta_actuel - Temps_écoulé
                 RUL_fc_t = (diff_j_fc * (SoH_fc[j_rul_fc] - FC['SoH_EoL']) / delta_soh - diff_j_fc) * LOAD['Ts'] / 3600 / 24
-            else: RUL_fc_t = 8000
-        else: RUL_fc_t = 8000
+            else: RUL_fc_t = np.inf
+        else: RUL_fc_t = np.inf
 
         # Électrolyseur (ancre j_rul_ely : SoH[j_rul_ely] = 1 par construction)
         diff_j_ely = j - j_rul_ely
@@ -199,10 +228,25 @@ def init_and_run_loop(get_optimal_action_RB, n_years=25,
             delta_soh_ely = SoH_ely[j_rul_ely] - SoH_ely[j]
             if delta_soh_ely > 1e-9:
                 RUL_ely_t = (diff_j_ely * (SoH_ely[j_rul_ely] - ELY['SoH_EoL']) / delta_soh_ely - diff_j_ely) * LOAD['Ts'] / 3600 / 24
-            else: RUL_ely_t = 3000
-        else: RUL_ely_t = 3000
-    
-        action, lol = get_optimal_action_RB(SoC_t,P_tot_ref_t,defaillances,lol_tab,alpha_fc_t,alpha_ely_t,SoH_bat_t,E_h2_t,E_h2_init,P_fc_max_t,P_ely_max_t,RUL_fc_t,RUL_ely_t,SoH_fc_t,SoH_ely_t)
+            else: RUL_ely_t = np.inf
+        else: RUL_ely_t = np.inf
+        RUL_fc[j] = RUL_fc_t
+        RUL_ely[j] = RUL_ely_t
+
+        policy_args = (
+            SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t,
+            alpha_ely_t, SoH_bat_t, E_h2_t, E_h2_init, P_fc_max_t,
+            P_ely_max_t, RUL_fc_t, RUL_ely_t, SoH_fc_t, SoH_ely_t,
+        )
+        if accepts_forecast:
+            if forecast_horizon_steps > 0:
+                end_forecast = min(j + forecast_horizon_steps, n)
+                future_net = profile_net[j:end_forecast]
+            else:
+                future_net = None
+            action, lol = get_optimal_action_RB(*policy_args, future_net)
+        else:
+            action, lol = get_optimal_action_RB(*policy_args)
               
         SoC_tp1, simOut = simulate_transition(SoC_t, action, P_tot_ref_t,plot,lol,alpha_fc_t,alpha_ely_t,SoH_bat_t, E_h2_t, E_h2_init,P_fc_max_t,P_ely_max_t)
 
@@ -367,6 +411,8 @@ def init_and_run_loop(get_optimal_action_RB, n_years=25,
     data["SoH_bat"] = SoH_bat
     data["SoH_fc"] = SoH_fc
     data["SoH_ely"] = SoH_ely
+    data["RUL_fc"] = RUL_fc
+    data["RUL_ely"] = RUL_ely
     data["deg_fc"] = deg_fc
     data["deg_ely"] = deg_ely
     data["replacement_accounting"] = replacement_accounting

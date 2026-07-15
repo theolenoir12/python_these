@@ -1,0 +1,470 @@
+[
+  {
+    "name": "SoH_opt_V10",
+    "parameters": {
+      "soh_gamma_fc": 0.25
+    },
+    "lpsp_pct": 0.7680009053807664,
+    "eens_kwh": 4021.7284915345454,
+    "degradation_keur": 63.41053487636892,
+    "unified_keur": 75.47572035097255,
+    "component_costs_keur": {
+      "bat": 43.09997239117495,
+      "fc": 5.0903938553956065,
+      "ely": 15.220168629798362
+    },
+    "replacements": {
+      "bat": 6,
+      "fc": 4,
+      "ely": 1
+    },
+    "fc_usage": {
+      "on_h": 119066.0,
+      "starts": 9610,
+      "energy_kwh": 135172.08740819176,
+      "mean_power_on_w": 1135.2702485024417,
+      "mean_j_on": 0.5555670227044558
+    },
+    "ely_usage": {
+      "on_h": 52473.0,
+      "starts": 9024,
+      "energy_kwh": 413749.70621067105,
+      "mean_power_on_w": 7884.911526353035,
+      "mean_j_on": 1.84664730434212
+    },
+    "fc_mechanisms_keur": {
+      "start-stop": 2.6437831879038525,
+      "idling": 0.0,
+      "reversible": 0.01976797309387818,
+      "irreversible": 2.4268426943978763
+    },
+    "ely_mechanisms_keur": {
+      "start-stop": 4.807543088802832,
+      "maintaining": 0.37087650840211184,
+      "reversible": 0.04468147471894241,
+      "irreversible": 9.997067557874473
+    }
+  },
+  {
+    "name": "RB2",
+    "parameters": {},
+    "lpsp_pct": 0.775020695029453,
+    "eens_kwh": 4058.4884586607627,
+    "degradation_keur": 63.37461308369009,
+    "unified_keur": 75.55007845967238,
+    "component_costs_keur": {
+      "bat": 42.91947959560356,
+      "fc": 5.161095495576612,
+      "ely": 15.294037992509919
+    },
+    "replacements": {
+      "bat": 6,
+      "fc": 4,
+      "ely": 1
+    },
+    "fc_usage": {
+      "on_h": 118805.0,
+      "starts": 9600,
+      "energy_kwh": 136509.78185763187,
+      "mean_power_on_w": 1149.0238782680178,
+      "mean_j_on": 0.5644998314513308
+    },
+    "ely_usage": {
+      "on_h": 52694.0,
+      "starts": 9024,
+      "energy_kwh": 418814.8272545173,
+      "mean_power_on_w": 7947.985298906653,
+      "mean_j_on": 1.8610783393177148
+    },
+    "fc_mechanisms_keur": {
+      "start-stop": 2.64103182648445,
+      "idling": 4.1270421291037344e-05,
+      "reversible": 0.019088798231385193,
+      "irreversible": 2.5009336004394855
+    },
+    "ely_mechanisms_keur": {
+      "start-stop": 4.807543088802832,
+      "maintaining": 0.3132301413502918,
+      "reversible": 0.05105923899284906,
+      "irreversible": 10.122205523363945
+    }
+  },
+  {
+    "name": "SoH_historique",
+    "parameters": {
+      "soh_gamma_fc": 0.5,
+      "soh_gamma_ely": 1.5
+    },
+    "lpsp_pct": 0.9232911742795944,
+    "eens_kwh": 4834.924536634049,
+    "degradation_keur": 62.85369402202014,
+    "unified_keur": 77.3584676319223,
+    "component_costs_keur": {
+      "bat": 43.23809338016082,
+      "fc": 4.991735293353815,
+      "ely": 14.623865348505511
+    },
+    "replacements": {
+      "bat": 6,
+      "fc": 4,
+      "ely": 1
+    },
+    "fc_usage": {
+      "on_h": 118354.0,
+      "starts": 9602,
+      "energy_kwh": 132610.86141558937,
+      "mean_power_on_w": 1120.459481011114,
+      "mean_j_on": 0.5462859567083758
+    },
+    "ely_usage": {
+      "on_h": 54244.0,
+      "starts": 9150,
+      "energy_kwh": 403184.88339982287,
+      "mean_power_on_w": 7432.735500153925,
+      "mean_j_on": 1.7670043344933444
+    },
+    "fc_mechanisms_keur": {
+      "start-stop": 2.6415820987683305,
+      "idling": 0.00012381126387311204,
+      "reversible": 0.016879254263290053,
+      "irreversible": 2.333150129058322
+    },
+    "ely_mechanisms_keur": {
+      "start-stop": 4.874669687782114,
+      "maintaining": 0.29772572746313175,
+      "reversible": 0.0383949356553822,
+      "irreversible": 9.413074997604884
+    }
+  },
+  {
+    "name": "SoH_Pareto_1p10",
+    "parameters": {
+      "soh_mode": "normalized_wear",
+      "soh_strength_fc": 0.25,
+      "soh_strength_ely": 0.25,
+      "soh_shape_fc": 1.0,
+      "soh_shape_ely": 1.0
+    },
+    "lpsp_pct": 1.0976014773271927,
+    "eens_kwh": 5747.721262813669,
+    "degradation_keur": 62.20838073422472,
+    "unified_keur": 79.45154452266573,
+    "component_costs_keur": {
+      "bat": 44.03003898673619,
+      "fc": 4.481093587197038,
+      "ely": 13.697248160291492
+    },
+    "replacements": {
+      "bat": 6,
+      "fc": 3,
+      "ely": 1
+    },
+    "fc_usage": {
+      "on_h": 119350.0,
+      "starts": 9684,
+      "energy_kwh": 120013.08114998511,
+      "mean_power_on_w": 1005.5557700040647,
+      "mean_j_on": 0.4769136404975255
+    },
+    "ely_usage": {
+      "on_h": 52121.0,
+      "starts": 9124,
+      "energy_kwh": 356675.08037364663,
+      "mean_power_on_w": 6843.0567734574415,
+      "mean_j_on": 1.6478753221910976
+    },
+    "fc_mechanisms_keur": {
+      "start-stop": 2.6641432624074306,
+      "idling": 8.254084258207469e-05,
+      "reversible": 0.010692250299025152,
+      "irreversible": 1.8061755336479994
+    },
+    "ely_mechanisms_keur": {
+      "start-stop": 4.8608181673578175,
+      "maintaining": 0.7401137836179159,
+      "reversible": 0.0288932282940628,
+      "irreversible": 8.067422981021698
+    }
+  },
+  {
+    "name": "ELY_g2",
+    "parameters": {
+      "soh_gamma_ely": 2.0
+    },
+    "lpsp_pct": 1.12931211579448,
+    "eens_kwh": 5913.777809511895,
+    "degradation_keur": 62.49080518362403,
+    "unified_keur": 80.23213861215972,
+    "component_costs_keur": {
+      "bat": 42.9677176262574,
+      "fc": 5.073535232881683,
+      "ely": 14.44955232448495
+    },
+    "replacements": {
+      "bat": 6,
+      "fc": 4,
+      "ely": 1
+    },
+    "fc_usage": {
+      "on_h": 116002.0,
+      "starts": 9516,
+      "energy_kwh": 132992.12753209381,
+      "mean_power_on_w": 1146.4640914130257,
+      "mean_j_on": 0.5631951943757704
+    },
+    "ely_usage": {
+      "on_h": 55192.0,
+      "starts": 9145,
+      "energy_kwh": 405618.49459710834,
+      "mean_power_on_w": 7349.189571898841,
+      "mean_j_on": 1.7547145194293021
+    },
+    "fc_mechanisms_keur": {
+      "start-stop": 2.617920390561469,
+      "idling": 0.0018158985368056434,
+      "reversible": 0.01942530672435771,
+      "irreversible": 2.4343736370590503
+    },
+    "ely_mechanisms_keur": {
+      "start-stop": 4.872005933854364,
+      "maintaining": 0.1743734301934791,
+      "reversible": 0.03014472306831846,
+      "irreversible": 9.373028237368786
+    }
+  },
+  {
+    "name": "FC_g5",
+    "parameters": {
+      "soh_gamma_fc": 5.0
+    },
+    "lpsp_pct": 1.1907665937658405,
+    "eens_kwh": 6235.591525170558,
+    "degradation_keur": 62.76180616840949,
+    "unified_keur": 81.46858074392117,
+    "component_costs_keur": {
+      "bat": 44.802895991865036,
+      "fc": 4.105496405808808,
+      "ely": 13.853413770735646
+    },
+    "replacements": {
+      "bat": 6,
+      "fc": 3,
+      "ely": 1
+    },
+    "fc_usage": {
+      "on_h": 120700.0,
+      "starts": 9715,
+      "energy_kwh": 108408.61989687945,
+      "mean_power_on_w": 898.1658649285787,
+      "mean_j_on": 0.4169285737131666
+    },
+    "ely_usage": {
+      "on_h": 42905.0,
+      "starts": 8949,
+      "energy_kwh": 317757.7309291548,
+      "mean_power_on_w": 7405.744809351729,
+      "mean_j_on": 1.7450824948992665
+    },
+    "fc_mechanisms_keur": {
+      "start-stop": 2.6726724828075783,
+      "idling": 0.0,
+      "reversible": 0.008176645173176272,
+      "irreversible": 1.4246472778280532
+    },
+    "ely_mechanisms_keur": {
+      "start-stop": 4.767586779886591,
+      "maintaining": 1.4647231533486718,
+      "reversible": 0.03192450712283593,
+      "irreversible": 7.589179330377544
+    }
+  },
+  {
+    "name": "FC5_ELY5",
+    "parameters": {
+      "soh_gamma_fc": 5.0,
+      "soh_gamma_ely": 5.0
+    },
+    "lpsp_pct": 1.4051341229296204,
+    "eens_kwh": 7358.152701410842,
+    "degradation_keur": 61.16872616849849,
+    "unified_keur": 83.24318427273101,
+    "component_costs_keur": {
+      "bat": 44.6981106632051,
+      "fc": 4.0661710683787975,
+      "ely": 12.404444436914588
+    },
+    "replacements": {
+      "bat": 6,
+      "fc": 3,
+      "ely": 1
+    },
+    "fc_usage": {
+      "on_h": 118967.0,
+      "starts": 9662,
+      "energy_kwh": 106616.73607394745,
+      "mean_power_on_w": 896.1874811834157,
+      "mean_j_on": 0.41591798222929205
+    },
+    "ely_usage": {
+      "on_h": 50874.0,
+      "starts": 9127,
+      "energy_kwh": 308403.7808900915,
+      "mean_power_on_w": 6061.919091584378,
+      "mean_j_on": 1.4938754927455749
+    },
+    "fc_mechanisms_keur": {
+      "start-stop": 2.658090267284745,
+      "idling": 0.0007841380045297096,
+      "reversible": 0.008560803122541,
+      "irreversible": 1.3987358599669812
+    },
+    "ely_mechanisms_keur": {
+      "start-stop": 4.862416419714346,
+      "maintaining": 0.9908481597402277,
+      "reversible": 0.01004296972568428,
+      "irreversible": 6.541136887734329
+    }
+  },
+  {
+    "name": "ELY_g5",
+    "parameters": {
+      "soh_gamma_ely": 5.0
+    },
+    "lpsp_pct": 1.769509776991126,
+    "eens_kwh": 9266.249344648722,
+    "degradation_keur": 61.09967616231209,
+    "unified_keur": 88.89842419625826,
+    "component_costs_keur": {
+      "bat": 43.31521292017976,
+      "fc": 4.802822616312745,
+      "ely": 12.981640625819585
+    },
+    "replacements": {
+      "bat": 6,
+      "fc": 4,
+      "ely": 1
+    },
+    "fc_usage": {
+      "on_h": 107919.0,
+      "starts": 9226,
+      "energy_kwh": 122767.89163640137,
+      "mean_power_on_w": 1137.5929320731416,
+      "mean_j_on": 0.5588991400896548
+    },
+    "ely_usage": {
+      "on_h": 57930.0,
+      "starts": 9159,
+      "energy_kwh": 371533.5785004086,
+      "mean_power_on_w": 6413.472394470984,
+      "mean_j_on": 1.5735738613663717
+    },
+    "fc_mechanisms_keur": {
+      "start-stop": 2.5381309093987965,
+      "idling": 0.005158802661379668,
+      "reversible": 0.01768201483706705,
+      "irreversible": 2.241850889415502
+    },
+    "ely_mechanisms_keur": {
+      "start-stop": 4.879464444851981,
+      "maintaining": 0.08831368791232608,
+      "reversible": 0.013378170051864051,
+      "irreversible": 8.000484323003414
+    }
+  },
+  {
+    "name": "SoH_min_deg",
+    "parameters": {
+      "soh_mode": "normalized_wear",
+      "soh_strength_fc": 0.5,
+      "soh_strength_ely": 0.75,
+      "soh_shape_fc": 1.0,
+      "soh_shape_ely": 1.0
+    },
+    "lpsp_pct": 2.279442850661171,
+    "eens_kwh": 11936.574804926444,
+    "degradation_keur": 58.89746856488982,
+    "unified_keur": 94.70719297966914,
+    "component_costs_keur": {
+      "bat": 44.90726645316051,
+      "fc": 3.7276522926014306,
+      "ely": 10.262549819127877
+    },
+    "replacements": {
+      "bat": 6,
+      "fc": 3,
+      "ely": 1
+    },
+    "fc_usage": {
+      "on_h": 107663.0,
+      "starts": 9424,
+      "energy_kwh": 90331.76698510165,
+      "mean_power_on_w": 839.0233133490768,
+      "mean_j_on": 0.38636559760650724
+    },
+    "ely_usage": {
+      "on_h": 58435.0,
+      "starts": 9286,
+      "energy_kwh": 256499.06516126182,
+      "mean_power_on_w": 4389.368595128121,
+      "mean_j_on": 1.133546958852048
+    },
+    "fc_mechanisms_keur": {
+      "start-stop": 2.592607865502966,
+      "idling": 0.006479456142692863,
+      "reversible": 0.0073971590665149,
+      "irreversible": 1.1211678118892565
+    },
+    "ely_mechanisms_keur": {
+      "start-stop": 4.947123794616535,
+      "maintaining": 0.657059302178327,
+      "reversible": 0.0,
+      "irreversible": 4.658366722333014
+    }
+  },
+  {
+    "name": "ELY_g10",
+    "parameters": {
+      "soh_gamma_ely": 10.0
+    },
+    "lpsp_pct": 2.6504508393902664,
+    "eens_kwh": 13879.402460994073,
+    "degradation_keur": 59.00322487880235,
+    "unified_keur": 100.64143226178456,
+    "component_costs_keur": {
+      "bat": 44.00360659778404,
+      "fc": 4.331085589622438,
+      "ely": 10.668532691395868
+    },
+    "replacements": {
+      "bat": 6,
+      "fc": 3,
+      "ely": 1
+    },
+    "fc_usage": {
+      "on_h": 90827.0,
+      "starts": 8979,
+      "energy_kwh": 101819.87480679012,
+      "mean_power_on_w": 1121.0309137898437,
+      "mean_j_on": 0.5492179949507472
+    },
+    "ely_usage": {
+      "on_h": 62794.0,
+      "starts": 9263,
+      "energy_kwh": 304037.97016971785,
+      "mean_power_on_w": 4841.823279175752,
+      "mean_j_on": 1.2410397418111785
+    },
+    "fc_mechanisms_keur": {
+      "start-stop": 2.470172282339555,
+      "idling": 0.00903822226273718,
+      "reversible": 0.011539194081975637,
+      "irreversible": 1.8403358909381693
+    },
+    "ely_mechanisms_keur": {
+      "start-stop": 4.93487052654892,
+      "maintaining": 0.04248346007847395,
+      "reversible": 0.0,
+      "irreversible": 5.691178704768472
+    }
+  }
+]

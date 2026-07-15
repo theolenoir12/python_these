@@ -144,7 +144,8 @@ def _lpsp_unserved(data):
     Pr = np.array([(a - b) * (1 - c) / 1000 for a, b, c in zip(P_dc_load, P_dc_pv, lol)])
     p, rr = np.clip(Pp, 0, None), np.clip(Pr, 0, None)
     unmet = np.clip(p - rr, 0, None)                                          # kW non servi
-    lpsp = (unmet.sum() / p.sum() * 100) if p.sum() > 0 else 0.0
+    load = np.clip(np.asarray(P_dc_load, dtype=float) / 1000.0, 0, None)
+    lpsp = (unmet.sum() / load.sum() * 100) if load.sum() > 0 else 0.0
     e_unserved = unmet.sum() * I.LOAD['Ts'] / 3600.0                         # kWh sur l'horizon
     return lpsp, e_unserved
 

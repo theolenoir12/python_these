@@ -119,7 +119,8 @@ def _metrics(data):
     Pp = np.array([(a-b)/1000 for a, b in zip(P_dc_load, P_dc_pv)])
     Pr = np.array([(a-b)*(1-c)/1000 for a, b, c in zip(P_dc_load, P_dc_pv, lol_tab)])
     p, r = np.clip(Pp, 0, None), np.clip(Pr, 0, None)
-    lpsp = (np.clip(p-r, 0, None).sum()/p.sum()*100) if p.sum() > 0 else 0.0
+    load = np.clip(np.asarray(P_dc_load, dtype=float) / 1000.0, 0, None)
+    lpsp = (np.clip(p-r, 0, None).sum()/load.sum()*100) if load.sum() > 0 else 0.0
     deg = get_cost_from_ledger(data) / 1000.0
     return float(lpsp), float(deg)
 

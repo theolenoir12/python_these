@@ -104,7 +104,8 @@ def metrics(data):
     P_planned = (P_dc_load - P_dc_pv) / 1000.0
     P_real    = (P_dc_load - P_dc_pv) * (1 - lol) / 1000.0
     p, r = np.clip(P_planned, 0, None), np.clip(P_real, 0, None)
-    lpsp = (np.clip(p - r, 0, None).sum() / p.sum() * 100) if p.sum() > 0 else 0.0
+    load = np.clip(np.asarray(P_dc_load, dtype=float) / 1000.0, 0, None)
+    lpsp = (np.clip(p - r, 0, None).sum() / load.sum() * 100) if load.sum() > 0 else 0.0
     cost = get_cost_total(alpha_fc, P_fc, alpha_ely, P_ely, P_bat, SoC,
                           I.LOAD, I.BAT, I.FC, I.ELY, SoH_bat) / 1000.0
     return float(lpsp), float(cost)
@@ -136,7 +137,8 @@ def metrics_components(data):
     P_planned = (P_dc_load - P_dc_pv) / 1000.0
     P_real    = (P_dc_load - P_dc_pv) * (1 - lol) / 1000.0
     p, r = np.clip(P_planned, 0, None), np.clip(P_real, 0, None)
-    lpsp = (np.clip(p - r, 0, None).sum() / p.sum() * 100) if p.sum() > 0 else 0.0
+    load = np.clip(np.asarray(P_dc_load, dtype=float) / 1000.0, 0, None)
+    lpsp = (np.clip(p - r, 0, None).sum() / load.sum() * 100) if load.sum() > 0 else 0.0
     cb = get_cost_bat(P_bat, SoC, SoH_bat) / 1000.0
     cf = get_cost_fc(alpha_fc, P_fc)[0] / 1000.0
     ce = get_cost_ely(alpha_ely, P_ely)[0] / 1000.0

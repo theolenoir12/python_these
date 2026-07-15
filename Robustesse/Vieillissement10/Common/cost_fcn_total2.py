@@ -81,27 +81,33 @@ def get_cost_bat(P_bat,SoC, SoH_bat):
 #     dV_irr/dt = a(i)                  [permanent]
 #     dV_rev/dt = b(i) - k(i) * V_rev   [se construit puis recupere]
 #     + s par demarrage (transition OFF -> ON)
-#  - a, b nuls sous 1 A/cm2 ; rampe lineaire entre 1 et 2 A/cm2
-#    (1->2 A/cm2) ; saturation au-dela de 2 A/cm2 (consigne utilisateur).
+#  - La part irreversible a(i) suit une loi quadratique jusqu'a 2 A/cm2,
+#    ancree sur la cible longue duree DOE 2022 (4.8 uV/h a 2 A/cm2).
+#  - La part reversible b(i), identifiee sur le test court de Rakousky, est
+#    nulle sous 1 A/cm2 puis augmente jusqu'a 2 A/cm2.
+#  - Au-dela de 2 A/cm2, a(i) accelere sans plafond. Cette zone de fort courant
+#    est un scenario de stress : le coefficient est explicite et testable.
 #  - Recuperation k(i) fortement decroissante : ~instantanee a i~0 (reset a
 #    l'arret), ~nulle a i=1 A/cm2 (pas de recup en operation, conforme cellule
 #    C qui degrade presque comme du constant). Le terme idle/maintaining
 #    (1.5 uV/h, Lu et al. Table 4) est conserve, applique a tres faible P.
 #
 #  Le modele est INVARIANT en Ts (integration temporelle, V_rev close-form) et
-#  O(n) (etat reporte) -> remplace l'ancien modele "classification par regime"
-#  qui dependait du pas de temps. Reproduit les 5 modes a ~1e-20 pres.
+#  O(n) (etat reporte). Il distingue volontairement la cible irreversible
+#  longue duree des transitoires reversibles observes pendant 1009 h.
 #
-#  Parametres /cellule (fit moindres carres) :
+#  Parametres /cellule :
 ELY_REC = {
-    'a2': 30.057,    # uV/h    generation irreversible a 2 A/cm2
+    'a2': 4.8,       # uV/h    irreversible a 2 A/cm2 (DOE 2022)
     'b2': 163.943,   # uV/h    generation reversible   a 2 A/cm2
-    'a_background': 3.5,  # uV/h ON, fond long terme (2.5--5 = 80--40 kh)
+    # a(3 A/cm2) = 104.8 uV/h : ordre de grandeur des essais acceleres
+    # a fort courant. Parametre de scenario, a soumettre a sensibilite.
+    'high_current_accel': 100.0,  # uV/h/(A/cm2)^2 au-dela de 2 A/cm2
     'k0': 213.206,   # 1/h     recuperation a i=0   (tau ~ 0.3 min)
     'k1': 0.0021,    # 1/h     recuperation a i=1   (~nulle, tau ~ 470 h)
     's' : 11.7,      # uV/cycle demarrage (OFF -> ON)
     'idle': 1.5,     # uV/h    maintien a tres faible puissance (Lu et al.)
-    'scale': 1.0,    # multiplicateur global a tuner ; 1.0 = calibration Rakousky
+    'scale': 1.0,
 }
 
 ELY_J1 = 1.0
@@ -248,24 +254,32 @@ def _fc_advance(V_irr, V_rev, P_curr, P_prev, P_max, Ts_h, alpha=0.0):
 
 
 def _ely_rates(j):
-    # Taux en fonction de j [A/cm2]. Le point Rakousky j=2 reste egal a
-    # a2+b2=194 uV/h. Sous j=1, un fond irreversible long terme evite
-    # d'extrapoler le taux net nul observe sur 1009 h a plusieurs decennies.
+    """Taux PEMWE (a irreversible, b reversible, k recuperation).
+
+    La branche j <= 2 A/cm2 est ancree sur une cible de durabilite longue
+    duree. La branche j > 2 A/cm2 represente explicitement l'acceleration
+    irreversible a fort courant ; elle n'est jamais plafonnee.
+    """
     p = ELY_REC
     j = max(float(j), 0.0)
     if j <= 0.0:
         return 0.0, 0.0, p['k0']
+
+    if j <= ELY_J2:
+        a = p['scale'] * p['a2'] * (j / ELY_J2) ** 2
+    else:
+        a = p['scale'] * (
+            p['a2'] + p['high_current_accel'] * (j - ELY_J2) ** 2
+        )
+
     if j <= ELY_J1:
-        a = p['scale'] * p['a_background']
         b = 0.0
         k = p['k0'] + (p['k1'] - p['k0']) * j / ELY_J1
     elif j <= ELY_J2:
         frac = (j - ELY_J1) / (ELY_J2 - ELY_J1)
-        a = p['scale'] * (p['a_background'] + (p['a2'] - p['a_background']) * frac)
         b = p['scale'] * p['b2'] * frac
         k = p['k1'] * (1.0 - frac)
     else:
-        a = p['scale'] * p['a2']
         b = p['scale'] * p['b2']
         k = 0.0
     return a, b, k

@@ -1,0 +1,175 @@
+VALIDATION DES GRANDEURS DE PREMIERE VIE - RB2 0,59/0,49
+=========================================================
+Date de l'analyse : 15 juillet 2026
+Horizon simule : 25 ans, pas de temps : 1 h
+
+1. PORTEE
+---------
+Cette note compare les premieres vies calculees pour RB2 aux cibles DOE et a
+des essais experimentaux publies. Elle distingue :
+- la coherence interne : heures, energie, EFPH et pertes de tension se ferment
+  correctement entre elles ;
+- la validation externe : les ordres de grandeur sont compares a une source
+  ayant une technologie et un profil d'usage suffisamment proches.
+
+Une concordance avec une cible DOE n'est pas une identification experimentale
+du modele. Les essais publies utilisent des cellules, temperatures, pressions,
+MEA et profils differents du systeme GENIAL.
+
+2. DEFINITIONS
+--------------
+- premiere vie : de l'unite neuve au premier reset de SoH ;
+- heure ON : |P| >= 0,0005 Pmax ;
+- EFPH H2 : somme(|P|/Pmax(SoH) * dt) ;
+- EFC batterie par decharge : energie dechargee / energie nominale ;
+- EFC batterie par throughput : energie chargee+dechargee / (2 E_nom) ;
+- fin de vie PEMFC/PEMWE : 10% de perte de tension (SoH=0,90) ;
+- fin de vie batterie : 30% de perte de capacite (SoH=0,70).
+
+3. PEMFC
+--------
+Resultats RB2, premiere vie :
+- duree calendaire : 50 123 h = 5,722 ans ;
+- temps ON : 27 263 h ; EFPH : 20 295,5 h ;
+- energie fournie : 31 325,8 kWh ;
+- 2 192 demarrages ; run moyen : 12,44 h ;
+- j moyen ON : 0,565 A/cm2 ; j95 : 0,581 A/cm2 ;
+- perte totale : 86,023 mV, soit 3,155 microV/h ON ;
+- taux permanent : 3,143 microV/h ON ;
+- taux irreversible seul : 1,535 microV/h ON.
+
+Comparaisons :
+- la cible DOE pour une PEMFC de secours 1-10 kWe est 10 000 h jusqu'a 10% de
+  perte de tension. Les 27 263 h ON de RB2 representent 2,73 fois cette cible ;
+- le test stationnaire continu de Liu et al. atteint 26 300 h a 0,8 A/cm2,
+  avec 110 mV perdus et 4,2 microV/h (plage annoncee 4-6 microV/h) ;
+- McCay et al. mesurent sur 1 500 h un taux irreversible moyen passant de
+  1,2 microV/h en charge statique a 4,8 microV/h sous profil dynamique.
+
+Verdict PEMFC : ordre de grandeur coherent. Le taux total du modele (3,155)
+est compris entre les regimes experimentaux statique et dynamique et reste
+inferieur au test continu a 0,8 A/cm2, ce qui est plausible avec j moyen=0,565.
+La duree ON est egalement compatible avec le test continu de 26 300 h. En
+revanche, 51% de la perte finale provient des demarrages (43,84 mV) : le cout
+de 20 microV/demarrage doit encore etre valide sur un protocole start-stop.
+
+Coherence energie/EFPH : 31 325,8/20 295,5 = 1,543 kW de puissance equivalente
+a Pmax. La puissance moyenne pendant les heures ON vaut 1,149 kW. Ces valeurs
+sont coherentes avec le dimensionnement du modele mais ne constituent pas une
+comparaison de rendement avec la litterature.
+
+4. PEMWE
+--------
+Resultats RB2, premiere vie :
+- duree calendaire : 134 023 h = 15,299 ans ;
+- temps ON : 32 235 h ; EFPH : 16 220,4 h ;
+- energie absorbee : 256 271,4 kWh ;
+- 5 528 demarrages ; run moyen : 5,83 h ;
+- j moyen ON : 1,855 A/cm2 ; j95 : 1,939 A/cm2 ;
+- aucune heure au-dessus de 2 A/cm2 ;
+- perte totale : 205,102 mV, soit 6,363 microV/h ON ;
+- taux permanent : 6,328 microV/h ON ;
+- taux irreversible seul : 4,192 microV/h ON.
+
+Decomposition de la perte finale :
+- irreversible : 135,140 mV = 65,9% ;
+- demarrages : 64,678 mV = 31,5% ;
+- maintien : 4,163 mV = 2,0% ;
+- reversible restant a l'EoL : 1,121 mV = 0,5%.
+
+Comparaisons :
+- la cible/statut DOE utilise 4,8 mV/1 000 h et en deduit environ 40 000 h
+  jusqu'a 10% de hausse de tension. RB2 atteint 32 235 h ON, soit 80,6% de
+  cette duree ; son taux total est 32,6% plus eleve que 4,8 microV/h ;
+- le taux irreversible seul du modele, 4,192 microV/h ON, est proche de la
+  cible DOE. L'ecart de vie vient principalement de la penalite de demarrage ;
+- Rakousky et al. observent des fonctionnements constants et intermittents
+  stables jusqu'a 2 A/cm2 sur des essais courts, alors qu'une degradation
+  supplementaire apparait a densite plus elevee. RB2 reste entierement dans la
+  zone <=2 A/cm2 : l'acceleration 100*(j-2)^2 est inactive sur sa premiere vie.
+
+Verdict PEMWE : le socle irreversible est coherent au premier ordre, mais la
+premiere vie totale est trop courte d'environ 19% par rapport aux 40 000 h DOE.
+Le parametre prioritaire a valider est donc la penalite de 11,7 microV par
+demarrage, responsable d'environ un tiers de la perte. Il ne faut pas recalibrer
+a(j) pour compenser cet ecart avant d'avoir valide les cycles OFF/ON.
+
+Coherence energie/EFPH : 256 271,4/16 220,4 = 15,800 kW de puissance equivalente
+a Pmax. La puissance moyenne pendant les heures ON vaut 7,950 kW. La fermeture
+est correcte pour le dimensionnement simule.
+
+5. BATTERIE
+-----------
+Resultat actuellement disponible :
+- premiere vie : 36 011 h = 4,111 ans ;
+- energie nominale du pack d'apres les parametres :
+  72 Ah * 12 V * 60 * 1 = 51,84 kWh ;
+- fin de vie declaree a SoH=0,70.
+
+Le code exporte maintenant les energies chargee/dechargee, le throughput, les
+EFC, le C-rate moyen/p95 et le SoC moyen/min/max. Ces grandeurs devront etre
+regenerees par une simulation RB2 pour terminer la comparaison quantitative.
+
+Ecarts bloquant une validation externe :
+- la chimie et la reference experimentale de
+  Common/Cumulative_degradation_bat.txt ne sont pas documentees ;
+- la courbe cumulee depend seulement des excursions de SoC, avec correction du
+  C-rate uniquement au-dessus de 1C ; temperature et SoC moyen n'interviennent
+  pas dans le cyclage ;
+- le vieillissement calendaire est desactive alors que les essais NMC montrent
+  une dependance au temps, a la temperature et au SoC de stockage ;
+- la litterature experimentale utilise tres souvent SoH=0,80 pour comparer les
+  vies, alors que le modele attend SoH=0,70. Une vie a 70% n'est donc pas
+  directement comparable a une valeur publiee a 80% ;
+- les cellules NMC commerciales d'Ecker et al. ont ete testees a 35 degC, 1C
+  et plusieurs profondeurs de cycle ; ces facteurs doivent etre reproduits ou
+  transposes explicitement. D'autres essais experimentaux rapportent des ordres
+  de grandeur superieurs a 2 000 EFC pour certaines NMC jusqu'a 80% de capacite,
+  avec une forte dependance a la fenetre SoC et au C-rate.
+
+Verdict batterie : non validee en l'etat. La duree de 4,111 ans ne doit pas etre
+presentee comme conforme a la litterature tant que la source de la LUT, la
+chimie, les EFC et le vieillissement calendaire ne sont pas etablis.
+
+6. CONSEQUENCES AVANT RB2(SoH)
+------------------------------
+Ordre de travail recommande :
+1. identifier la chimie et la source de Cumulative_degradation_bat.txt ;
+2. confirmer si le seuil batterie SoH=0,70 est volontaire ou passer a 0,80 ;
+3. regenerer les metriques batterie et comparer EFC/throughput/SoC/C-rate ;
+4. calibrer la penalite start-stop PEMWE, puis PEMFC, sur des essais adaptes ;
+5. balayer ces deux penalites et le vieillissement calendaire pour verifier que
+   le classement RB2/RB1 reste robuste ;
+6. seulement ensuite definir les leviers de RB2(SoH).
+
+7. REFERENCES PRIMAIRES ET CIBLES
+---------------------------------
+DOE, Technical Targets for Proton Exchange Membrane Electrolysis:
+https://www.energy.gov/cmei/fuels/technical-targets-proton-exchange-membrane-electrolysis
+
+DOE, Technical Targets for Fuel Cell Backup Power Systems:
+https://www.energy.gov/cmei/fuels/doe-technical-targets-fuel-cell-backup-power-systems
+
+Liu et al., A polymer electrolyte fuel cell life test: 3 years of continuous
+operation, Journal of Power Sources 158 (2006), 446-454:
+https://doi.org/10.1016/j.jpowsour.2005.09.062
+
+McCay et al., An analysis of the reversible and irreversible degradation of a
+PEM fuel cell short-stack operated under simulated maritime conditions:
+https://www.sintef.no/en/publications/publication/019be9f78f5f-98c8af7e-790e-4ddf-9ebf-273952324150/
+
+Rakousky et al., Polymer electrolyte membrane water electrolysis: Restraining
+degradation in the presence of fluctuating power:
+https://juser.fz-juelich.de/record/810841/
+
+Rakousky et al., The stability challenge on the pathway to high-current-density
+polymer electrolyte membrane water electrolyzers, Electrochimica Acta 278:
+https://doi.org/10.1016/j.electacta.2018.04.154
+
+Ecker et al., Calendar and cycle life study of Li(NiMnCo)O2-based 18650
+lithium-ion batteries, Journal of Power Sources 248 (2014), 839-851:
+https://doi.org/10.1016/j.jpowsour.2013.09.143
+
+Ohneseit et al., experimental aging study on commercial Li-ion batteries with
+different cathode materials, Batteries & Supercaps (2025):
+https://doi.org/10.1002/batt.202400713

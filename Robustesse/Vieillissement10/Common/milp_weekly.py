@@ -755,7 +755,7 @@ def compute_kpis(data):
     lol    = np.array(data['lol_tab'])
 
     pnet = np.maximum(P_load - P_pv, 0.0)
-    lpsp = (lol * pnet).sum() / max(pnet.sum(), 1.0) * 100.0
+    lpsp = (lol * pnet).sum() / max(np.maximum(P_load, 0.0).sum(), 1.0) * 100.0
 
     soh_clean = np.where(np.isnan(data['SoH_bat']), 1.0, data['SoH_bat'])
     cost_deg = get_cost_total(

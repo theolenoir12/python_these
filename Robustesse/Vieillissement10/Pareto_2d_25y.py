@@ -68,23 +68,38 @@ plt.rcParams.update({
     "pdf.fonttype": 42,
 })
 
-# Points (LPSP %, deg k€). RB2(SoH) = NOUVELLE version attribuable (cf entete).
-points = np.array([
-    [10.3855, 124.1937],  # 0-100
-    [20.2667, 110.7658],  # 25-75
-    [8.0744, 109.0235],   # 50-50
-    [3.8032, 59.6765],    # 75-25
-    [2.4851, 66.4122],    # 100-0
-    [2.5920, 58.8499],    # RB2  (setpoints qui MINIMISENT le cout : 0.440/0.310)
-    [2.9089, 54.9115],    # RB2(SoH) v2  (0.440*SoH_fc^1 / 0.310*SoH_ely^2)
-    [1.2597, 80.1562],    # RB1
-    [1.3389, 140.6745],   # SoC1
-    [29.4642, 109.2535],  # SoC06
-    [0.0000, 0.0000]      # Ideal
-])
+# Valeurs de secours si batch_pareto.py n'a pas encore ete execute.
 labels = ['0-100', '25-75', '50-50', '75-25', '100-0', 'RB2', 'RB2(SoH)',
           'RB1', 'SoC1', 'SoC06', 'Ideal']
+DEFAULT_POINTS = np.array([
+    [10.3855, 124.1937], [20.2667, 110.7658], [8.0744, 109.0235],
+    [3.8032, 59.6765], [2.4851, 66.4122], [2.5920, 58.8499],
+    [2.9089, 54.9115], [1.2597, 80.1562], [1.3389, 140.6745],
+    [29.4642, 109.2535], [0.0, 0.0],
+])
 
+
+def load_batch_points():
+    """Charge automatiquement la derniere sortie de batch_pareto.py."""
+    values = {label: DEFAULT_POINTS[i].copy() for i, label in enumerate(labels)}
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "batch_results_summary_25y.txt")
+    if not os.path.exists(path):
+        print("Batch absent, utilisation des points de secours :", path)
+        return DEFAULT_POINTS.copy()
+
+    with open(path, encoding="utf-8") as stream:
+        for line in stream:
+            parts = line.strip().split(";")
+            if len(parts) != 3 or parts[0] == "Label":
+                continue
+            if parts[0] in values:
+                values[parts[0]] = np.array([float(parts[1]), float(parts[2])])
+    print("Points charges depuis :", path)
+    return np.array([values[label] for label in labels])
+
+
+points = load_batch_points()
 STRAT_ORDER = ['0-100', '25-75', '50-50', '75-25', '100-0',
                'RB2', 'RB2(SoH)', 'RB1', 'SoC1', 'SoC06']
 COLORS = {s: c for s, c in zip(STRAT_ORDER, plt.cm.tab10(np.linspace(0, 1, 10)))}

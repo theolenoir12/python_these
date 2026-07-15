@@ -1,4 +1,4 @@
-﻿RESUME DE LA PREMIERE APPROCHE - VIEILLISSEMENT10
+RESUME DE LA PREMIERE APPROCHE - VIEILLISSEMENT10
 Date : 13 juillet 2026
 Perimetre : micro-reseau hydrogene, strategie RB2, premiere vie des composants PEMFC et PEMWE
 
@@ -188,65 +188,41 @@ La suite logique est un balayage du parametre PEMWE scale et une analyse des dis
 
 
 
-10. MISE A JOUR RB2 ET REGULARISATION LONG TERME - 13 JUILLET 2026
+10. RECALAGE FINAL RB2 ET FONCTIONS DE COUT - 13 JUILLET 2026
 
-Cette section remplace les conclusions numeriques des sections 4.3, 5, 6 et 9
-pour la regle RB2 active.
+Cette section remplace les conclusions numeriques precedentes pour la regle
+RB2 active.
 
-Le point Rakousky a 2 A/cm2 reste exactement conserve : a=30,057 microV/h et
-b=163,943 microV/h. Pour eviter d'extrapoler l'observation nette nulle de
-1 009 h en une absence de vieillissement pendant plusieurs dizaines de
-milliers d'heures, un fond irreversible a_background=3,5 microV/h ON est
-applique entre 0 et 1 A/cm2. Entre 1 et 2 A/cm2, a(j) interpole ce fond vers
-30,057 microV/h et b(j) augmente de 0 a 163,943 microV/h. La sensibilite
-2,5 / 3,5 / 5 microV/h a ete examinee ; 3,5 est retenu comme valeur centrale.
-Les sources et leurs limites restent celles listees en section 8, en
-particulier Rakousky et les cibles DOE PEM electrolysis.
+RB2 revient strictement a deux consignes de puissance H2 : FC=0,59 Pmax et
+ELY=0,49 Pmax. Les plafonds de secours, reserves SoC et variantes riches sont
+supprimes. Seules les limites physiques communes restent appliquees.
 
-La RB2 active utilise des consignes normales FC/ELY de 0,31/0,22 Pmax. Elle
-n'appelle la chaine H2 en secours que pour le reliquat que la batterie ne peut
-plus echanger aux bornes SoC 0,20/0,995, avec plafonds 0,90/0,225 Pmax. Cette
-regle n'utilise aucun SoH composant.
+Le PEMWE utilise une degradation irreversible quadratique jusqu'a 2 A/cm2,
+ancree a 4,8 microV/h, une contribution reversible issue de Rakousky, puis une
+acceleration irreversible de 100*(j-2)^2 microV/h au-dessus de 2 A/cm2.
+L'acceleration est un scenario explicite a inclure en sensibilite.
 
-Resultat final RB2 sur 25 ans :
-- LPSP : 1,7978 % ;
-- cout de degradation : 67,284 kEUR ;
-- cout unifie utilise par les balayages : 82,029 kEUR.
+Resultat RB2 sur 25 ans :
+- EENS : 4 058,49 kWh ;
+- LPSP charge totale : 0,7750 % ;
+- LPSP residuelle historique : 1,4846 % ;
+- degradation : 63,375 kEUR ;
+- cout unifie : 75,550 kEUR.
 
-Premiere vie PEMFC :
-- 8,199 ans ; 40 416 h ON ; 17 362 EFPH ;
-- 26 773 kWh fournis ; 3 149 demarrages ;
-- j moyen ON : 0,305 A/cm2.
+RB1 :
+- LPSP charge totale : 0,898 % ;
+- LPSP residuelle historique : 1,720 % ;
+- degradation : 68,340 kEUR ;
+- cout unifie : 82,449 kEUR.
 
-Premiere vie PEMWE :
-- les valeurs definitives sont exportees par le dernier run dans
-  RB2/Figures/218999h/first_life_metrics.txt ;
-- all_aging_2.pdf et all_aging_2.png placent ces metriques a cote des
-  diagrammes de repartition des degradations.
+RB2 est la meilleure des neuf strategies de base dans ce scenario. Le cout
+unifie est calcule directement avec EENS et reste donc invariant au
+denominateur choisi pour afficher la LPSP.
 
-Comparaison batch : RB1-costopt-V8 donne 1,7204 % de LPSP et 68,621 kEUR de
-degradation. RB2 est non dominee : degradation plus faible, LPSP legerement
-plus elevee. La couche SoH de RB2(SoH) est volontairement reportee.
+Premiere vie RB2 :
+- PEMFC : 5,722 ans, 27 263 h ON, j moyen 0,565 A/cm2 ;
+- PEMWE : 15,299 ans, 32 235 h ON, j moyen 1,855 A/cm2,
+  percentile 95 = 1,939 A/cm2, aucune heure au-dessus de 2 A/cm2.
 
-
-Correction au paragraphe PEMWE de la mise a jour :
-- 12,776 ans ; 34 160 h ON ; 7 259 EFPH ;
-- 114 614 kWh absorbes ; 4 747 demarrages ;
-- j moyen ON : 0,910 A/cm2.
-
-
-11. RAFRAICHISSEMENT DES METRIQUES DE PREMIERE VIE - 13 JUILLET 2026
-
-Les chiffres de premiere vie des sections 5, 6 et 10 ci-dessus ont ete
-realignes sur le code actuel (regeneration de
-RB2/Figures/218999h/first_life_metrics.txt). La SIMULATION est INCHANGEE :
-LPSP = 1,7978 %, degradation = 67,284 kEUR, cout unifie = 82,029 kEUR sont
-identiques ; seul le decompte de premiere vie (fenetre jusqu'au 1er
-remplacement) a ete recalcule. Valeurs de reference desormais :
-- PEMFC : 8,199 ans ; 40 416 h ON ; 17 362 EFPH ; 26 773 kWh ; 3 149 dem. ; j 0,305.
-- PEMWE : 12,776 ans ; 34 160 h ON ; 7 259 EFPH ; 114 614 kWh ; 4 747 dem. ; j 0,910.
-
-Classement transversal (25 ans, VoLL 3 EUR/kWh constante, meme estimateur) :
-RB2 = 82,03 kEUR est la MEILLEURE des 10 strategies EMS, devant RB1 (82,73)
-et 100-0 (83,62). RB2(SoH) tel que configure dans son dossier est domine
-(103,6 kEUR). Details : rank_ems_unified_25y.txt.
+Details et reproductibilite : RB2/README_RB2_V10.md,
+rank_base_strategies.py et rank_base_strategies_25y.txt.

@@ -25,19 +25,15 @@ MESO_DIR = os.path.join(HERE, "results_meso")     # entrees (.txt) ET sorties (.
 # 1) ENERGIE DE REFERENCE (denominateur de la LPSP)
 # -------------------------------------------------------------------------
 # La LPSP definie dans sens_common.metrics() vaut :
-#     LPSP% = 100 * sum(clip(P_planned - P_real, 0)) / sum(clip(P_planned, 0))
-# ou P_planned = (P_dc_load - P_dc_pv)/1000 [kW] (charge NETTE apres PV, au bus
-# DC). Le denominateur sum(clip(P_planned,0)) * Ts/3600 est donc l'ENERGIE NETTE
-# PLANIFIEE que le systeme (batterie + H2) doit fournir sur tout l'horizon. Cette
-# energie est IDENTIQUE pour toutes les strategies (c'est la demande, pas le
-# pilotage) -> une constante. On l'a calculee UNE fois en relancant une simu de
-# base (RB2(SoH), 25 ans, Ts=3600 s) ; cf. tmp/compute_eref.py :
+#     LPSP% = 100 * EENS / energie_totale_demandee.
+# Le denominateur est la charge DC totale avant soustraction de la production
+# PV. Cette convention unique est celle du manuscrit et de Vieillissement10.
 #
-#     n_steps = 218999  (= 25.000 ans)   E_REF = 273380.731 kWh = 273.381 MWh
+#     n_steps = 218999  (= 25.000 ans)   E_REF = 523661.947 kWh = 523.662 MWh
 #
 # energie_non_fournie [kWh] = (LPSP%/100) * E_REF_KWH est alors EXACTEMENT
 # l'energie de charge non servie reconstituee a partir de la LPSP.
-E_REF_KWH = 273380.731444          # kWh, energie nette planifiee sur 25 ans
+E_REF_KWH = 523661.946666          # kWh, energie totale demandee sur 25 ans
 HORIZON_Y = 25.0
 
 # =========================================================================

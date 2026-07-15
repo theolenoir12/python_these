@@ -141,7 +141,8 @@ def _compute_metrics(data):
     P_planned = np.array([(a - b) / 1000 for a, b in zip(P_dc_load, P_dc_pv)])
     P_real    = np.array([(a - b) * (1 - c) / 1000 for a, b, c in zip(P_dc_load, P_dc_pv, lol_tab)])
     p, r = np.clip(P_planned, 0, None), np.clip(P_real, 0, None)
-    lpsp = (np.clip(p - r, 0, None).sum() / p.sum() * 100) if p.sum() > 0 else 0.0
+    load = np.clip(np.asarray(P_dc_load, dtype=float) / 1000.0, 0, None)
+    lpsp = (np.clip(p - r, 0, None).sum() / load.sum() * 100) if load.sum() > 0 else 0.0
     cost_keur = get_cost_from_ledger(data) / 1000.0
     return float(lpsp), float(cost_keur)
 

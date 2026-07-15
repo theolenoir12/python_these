@@ -340,7 +340,8 @@ def metrics(data):
     P_real    = (data["P_dc_load"] - data["P_dc_pv"]) * (1 - lol) / 1000.0
     p = np.clip(P_planned, 0, None); r = np.clip(P_real, 0, None)
     e_unserved = np.clip(p - r, 0, None) * TS_H                  # kWh/pas
-    lpsp = (np.clip(p - r, 0, None).sum() / p.sum() * 100) if p.sum() > 0 else 0.0
+    load = np.clip(np.asarray(data["P_dc_load"], dtype=float) / 1000.0, 0, None)
+    lpsp = (np.clip(p - r, 0, None).sum() / load.sum() * 100) if load.sum() > 0 else 0.0
     deg_keur = get_cost_total(alpha_fc, P_fc, alpha_ely, P_ely, P_bat, SoC,
                               LOAD, BAT, FC, ELY, SoH_bat) / 1000.0
     lps_keur = VOLL * e_unserved.sum() / 1000.0

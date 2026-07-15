@@ -36,15 +36,16 @@ sys.path.insert(0, PARENT)
 from Common import Init_EMR_MG_v16_python as I
 from Common.main_init_and_loop import init_and_run_loop
 from Common.cost_fcn_total2 import get_cost_from_ledger
-from Common.get_lol import get_lol
+from Common.reliability_metrics import compute_reliability_metrics
+from rb2_policy import make_rb2_policy
 sys.path.insert(0, os.path.abspath(os.path.join(PARENT, "..", "Analyse_sensibilite")))
 import voll_common as V                                       # cout unifie (VoLL)
 
 # ======================= CONFIGURATION =======================
 N_YEARS   = 25
 # Grille de fractions de Pmax a balayer (elargir/raffiner selon le besoin).
-FC_FRACS  = np.round(np.arange(0.2, 0.4 + 1e-9, 0.02), 3)   # setpoint FC
-ELY_FRACS = np.round(np.arange(0.18, 0.30 + 1e-9, 0.02), 3)   # setpoint ELY
+FC_FRACS  = np.round(np.arange(0.57, 0.59 + 1e-9, 0.01), 3)   # setpoint FC
+ELY_FRACS = np.round(np.arange(0.45, 0.49 + 1e-9, 0.02), 3)   # setpoint ELY
 _N_AVAIL  = max(1, int(os.environ.get("SLURM_CPUS_PER_TASK", (os.cpu_count() or 2) - 1)))
 OUT_TXT   = os.path.join(HERE, "sweep_setpoints_rb2.txt")
 OUT_PDF   = os.path.join(HERE, "sweep_setpoints_rb2.pdf")
@@ -52,60 +53,11 @@ OUT_PNG   = os.path.join(HERE, "sweep_setpoints_rb2.png")
 # =============================================================
 
 
-def make_rb2_frac(fc_frac, ely_frac):
-    """Action RB2 identique a l'originale (plafonds H2 inclus), setpoints FIXES
-    donnes en fraction de Pmax (sans modulation SoH)."""
-    def get_optimal_action_RB(SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t,
-                              alpha_ely_t, SoH_bat_t, E_h2_t, E_h2_init, P_fc_max_t,
-                              P_ely_max_t, RUL_fc_t, RUL_ely_t, SoH_fc_t, SoH_ely_t):
-        P_fc_set  = fc_frac  * I.FC['P_fc_max']
-        P_ely_set = ely_frac * I.ELY['P_ely_max']
-        dt_h         = I.LOAD['Ts'] / 3600.0
-        P_fc_h2_max  = max(E_h2_t, 0.0)             / dt_h * I.FC['eff']  * I.CONV['eta'] * 1000
-        P_ely_h2_max = max(E_h2_init - E_h2_t, 0.0) / dt_h / (I.ELY['eff'] * I.CONV['eta']) * 1000
-        P_dc_fc_t = P_dc_ely_t = 0
-        if P_tot_ref_t > 0:
-            P_fc_avail = min(P_fc_set, P_fc_h2_max)
-            if P_tot_ref_t > P_fc_avail:
-                P_dc_fc_t  = P_fc_avail
-                P_dc_bat_t = P_tot_ref_t - P_fc_avail
-            else:
-                P_dc_bat_t = P_tot_ref_t
-        elif P_tot_ref_t < 0:
-            P_ely_avail = min(P_ely_set, P_ely_h2_max)
-            if P_tot_ref_t < -P_ely_avail:
-                P_dc_ely_t = -P_ely_avail
-                P_dc_bat_t = P_tot_ref_t + P_ely_avail
-            else:
-                P_dc_bat_t = P_tot_ref_t
-        else:
-            P_dc_bat_t = P_tot_ref_t
-        if 'FC' in defaillances and P_tot_ref_t > 0:
-            P_dc_bat_t = P_tot_ref_t
-        if 'ELY' in defaillances and P_tot_ref_t < 0:
-            P_dc_bat_t = P_tot_ref_t
-        action = P_dc_bat_t, P_dc_fc_t, P_dc_ely_t
-        action, lol = get_lol(SoC_t, action, P_tot_ref_t, defaillances, E_h2_t,
-                              E_h2_init, P_fc_max_t, P_ely_max_t, SoH_bat_t)
-        return action, lol
-    return get_optimal_action_RB
-
+make_rb2_frac = make_rb2_policy  # alias conserve pour les anciens scripts
 
 def _metrics(data):
-    """(LPSP %, deg k€) comme batch_pareto (interpolation NaN de SoH_bat)."""
-    P_bat = data["P_bat"]; P_fc = data["P_fc"]; P_ely = data["P_ely"]
-    P_dc_load = data["P_dc_load"]; P_dc_pv = data["P_dc_pv"]; lol_tab = data["lol_tab"]
-    SoC = data["SoC"]; af = data["alpha_fc"][:-1]; ae = data["alpha_ely"][:-1]
-    SoH_bat = data["SoH_bat"][:-1].copy()
-    for k in range(1, len(SoH_bat)):
-        if SoH_bat[k] == 1: SoH_bat[k-1] = np.nan
-    if np.isnan(SoH_bat).any():
-        SoH_bat[np.isnan(SoH_bat)] = np.interp(np.flatnonzero(np.isnan(SoH_bat)),
-            np.flatnonzero(~np.isnan(SoH_bat)), SoH_bat[~np.isnan(SoH_bat)])
-    Pp = np.array([(a-b)/1000 for a, b in zip(P_dc_load, P_dc_pv)])
-    Pr = np.array([(a-b)*(1-c)/1000 for a, b, c in zip(P_dc_load, P_dc_pv, lol_tab)])
-    p, r = np.clip(Pp, 0, None), np.clip(Pr, 0, None)
-    lpsp = (np.clip(p-r, 0, None).sum()/p.sum()*100) if p.sum() > 0 else 0.0
+    """(LPSP charge totale %, degradation kEUR)."""
+    lpsp = compute_reliability_metrics(data)["lpsp_pct"]
     deg = get_cost_from_ledger(data) / 1000.0
     return float(lpsp), float(deg)
 

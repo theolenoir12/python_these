@@ -1,4 +1,4 @@
-﻿# Vieillissement10
+# Vieillissement10
 
 Version expérimentale créée le 13 juillet 2026 pour tester des modèles de vieillissement PEMFC/PEMWE pilotés par la densité de courant et pour produire des métriques reproductibles de première vie.
 
@@ -153,32 +153,35 @@ Adaptés :
 
 
 
-## Mise a jour RB2 et fond PEMWE long terme (13 juillet 2026)
+## Recalage RB2 et vieillissement PEMWE (13 juillet 2026)
 
-Le modele PEMWE utilise desormais un fond irreversible
-`ELY_REC["a_background"] = 3.5` microV/h ON sous 1 A/cm2. Le point de
-Rakousky a 2 A/cm2 reste inchange et la rampe 1--2 A/cm2 part de ce fond.
-Cette hypothese evite d'assimiler une variation nette nulle sur 1 009 h a une
-absence de vieillissement sur plusieurs dizaines de milliers d'heures.
+Cette mise a jour remplace l'ancienne regularisation par fond constant ainsi
+que la RB2 avec plafonds de secours.
 
-La RB2 active a ete optimisee uniquement sur le cout unifie, sans contrainte
-LPSP et sans information SoH :
+La RB2 active est strictement une regle a deux consignes fixes :
+0.59 Pmax pour la PEMFC et 0.49 Pmax pour le PEMWE. Elle n'utilise ni SoH,
+ni reserve SoC, ni plafond conditionnel.
 
-- consignes normales FC/ELY : 0.31/0.22 Pmax ;
-- plafonds de secours FC/ELY : 0.90/0.225 Pmax ;
-- LPSP : 1.7978 % ;
-- degradation : 67.284 kEUR ;
-- cout unifie de balayage : 82.029 kEUR.
+Le vieillissement PEMWE separe une loi irreversible longue duree, ancree sur
+la cible DOE de 4.8 microV/h a 2 A/cm2, de la contribution reversible issue
+des essais courts de Rakousky. Au-dessus de 2 A/cm2, un terme de stress
+quadratique explicite (high_current_accel = 100) evite de plafonner
+artificiellement le vieillissement des strategies a fort courant. Ce
+coefficient definit un scenario de sensibilite et ne doit pas etre presente
+comme une constante universelle.
 
-Elle est non dominee face a RB1-costopt-V8 (1.7204 %, 68.621 kEUR).
-Les details et les grilles sont dans `RB2/README_RB2_V10.md`.
+Resultat RB2 25 ans :
 
-Metriques de premiere vie finales :
+- EENS : 4 058.49 kWh ;
+- LPSP sur charge totale : 0.7750 % ;
+- LPSP historique sur charge residuelle : 1.4846 % ;
+- degradation : 63.375 kEUR ;
+- cout unifie avec VoLL = 3 EUR/kWh : 75.550 kEUR.
 
-| Composant | Calendrier | Temps ON | EFPH | Energie | Demarrages | j moyen ON |
-|---|---:|---:|---:|---:|---:|---:|
-| PEMFC | 8.136 ans | 40 066 h | 17 671 h | 27 250 kWh | 3 119 | 0.314 A/cm2 |
-| PEMWE | 11.389 ans | 30 003 h | 6 649 h | 105 007 kWh | 4 229 | 0.944 A/cm2 |
+RB1 atteint 0.898 % de LPSP charge, 68.340 kEUR de degradation et
+82.449 kEUR de cout unifie. RB2 redevient donc la meilleure strategie de base,
+avec a la fois moins d'energie non fournie et moins de cout unifie que RB1.
 
-`all_aging_2.pdf` et `all_aging_2.png` presentent maintenant les metriques
-a cote de chaque diagramme circulaire.
+Les definitions, limites, sources et commandes reproductibles sont detaillees
+dans RB2/README_RB2_V10.md. Le classement complet est produit par
+rank_base_strategies.py.

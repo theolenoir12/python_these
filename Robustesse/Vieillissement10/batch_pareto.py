@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 from time import time as timer
 from concurrent.futures import ProcessPoolExecutor
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+RESULTS_FILE = os.path.join(HERE, "batch_results_summary_25y.txt")
+
 
 # --- CONFIGURATION ---
 # Liste des configurations : (Nom du dossier, Label pour le plot)
@@ -35,18 +38,13 @@ N_WORKERS = max(1, min(len(scenarios), (os.cpu_count() or 2) - 1))
 # On ajoute le chemin courant pour trouver Common
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from Common.main_init_and_loop import init_and_run_loop
+from Common.reliability_metrics import compute_reliability_metrics
 
 
 def _compute_metrics(data):
     """Reproduit EXACTEMENT le calcul (LPSP %, coût k€) de run_main_plot, sans aucun plot.
     -> Extrait des lignes 47-49 / 330-331 / 436-477 de Common/main_plot.py."""
-    P_dc_load = data["P_dc_load"]; P_dc_pv = data["P_dc_pv"]; lol_tab = data["lol_tab"]
-
-    # LPSP (lignes 330-331 + 436-439)
-    P_planned = np.array([(a - b) / 1000 for a, b in zip(P_dc_load, P_dc_pv)])
-    P_real    = np.array([(a - b) * (1 - c) / 1000 for a, b, c in zip(P_dc_load, P_dc_pv, lol_tab)])
-    p, r = np.clip(P_planned, 0, None), np.clip(P_real, 0, None)
-    lpsp = (np.clip(p - r, 0, None).sum() / p.sum() * 100) if p.sum() > 0 else 0.0
+    lpsp = compute_reliability_metrics(data)["lpsp_pct"]
 
     ledger = data.get("degradation_ledger")
     if ledger is None:
@@ -155,20 +153,19 @@ def plot_pareto(points, labels_list):
 
 if __name__ == "__main__":
     points, labels = run_batch()
-    print("\n--- Résultats Finaux ---")
+    print()
+    print("--- Resultats Finaux ---")
     print("Labels:", labels)
     print("Points (LPSP, Cost):", points)
 
     points = np.vstack([points, [0, 0]])
     labels.append("Ideal")
 
-    plot_pareto(points, labels)
-
-    # Sauvegarde des résultats
-    results_file = "batch_results_summary_25y.txt"
-    with open(results_file, "w", encoding="utf-8") as f:
-        f.write("Label;LPSP(%);Cost(kEUR)\n") # En-tête
+    # Ecriture avant affichage : Pareto_2d_25y.py relit ce fichier.
+    with open(RESULTS_FILE, "w", encoding="utf-8") as f:
+        f.write("Label;LPSP(%);Cost(kEUR)" + chr(10))
         for label, (lpsp, cost) in zip(labels, points):
-            f.write(f"{label};{lpsp:.4f};{cost:.4f}\n")
+            f.write(f"{label};{lpsp:.4f};{cost:.4f}" + chr(10))
 
-    print(f"Resultats sauvegardes dans : {results_file}")
+    print(f"Resultats sauvegardes dans : {RESULTS_FILE}")
+    plot_pareto(points, labels)

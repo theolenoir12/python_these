@@ -56,6 +56,7 @@ from dp_core import N_YEAR, TS_H
 from dp_aging import DPPolicy
 from sens_common import metrics as sens_metrics            # (LPSP %, deg kEUR), SANS VoLL
 from Common.main_init_and_loop import init_and_run_loop
+from Common.reliability_metrics import compute_reliability_metrics
 from get_optimal_action_RB import get_optimal_action_RB
 
 # ---------------------------------------------------------------------------
@@ -73,13 +74,9 @@ VOLL_REF = 3.0   # VoLL de reference these (pour la colonne UNIF@VoLL3 comparabl
 # ---------------------------------------------------------------------------
 def realized_metrics(data):
     """LPSP %, deg kEUR (officiels), EENS kWh, demande totale kWh -- depuis la traj."""
-    lpsp, deg = sens_metrics(data)                       # % et kEUR (sans VoLL)
-    lol  = data['lol_tab']; load = data['P_dc_load']; pv = data['P_dc_pv']
-    p = np.clip(load - pv, 0.0, None) / 1000.0           # demande nette [kW]
-    r = np.clip((load - pv) * (1.0 - lol), 0.0, None) / 1000.0   # servi [kW]
-    eens_kwh   = float(np.clip(p - r, 0.0, None).sum() * TS_H)
-    demand_kwh = float(p.sum() * TS_H)
-    return lpsp, deg, eens_kwh, demand_kwh
+    _, deg = sens_metrics(data)                          # kEUR (sans VoLL)
+    rel = compute_reliability_metrics(data)
+    return rel['lpsp_pct'], deg, rel['eens_kwh'], rel['load_energy_kwh']
 
 
 def n_repl(s):

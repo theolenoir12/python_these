@@ -4,6 +4,7 @@ from pathlib import Path
 import json
 import numpy as np
 
+from . import Init_EMR_MG_v16_python as I
 from .electrochemistry import (
     FC_VOLTAGE_REFERENCE, ELY_VOLTAGE_REFERENCE,
     fc_current_density, ely_current_density, fc_pmax, ely_pmax,
@@ -38,7 +39,7 @@ def _h2_metrics(data, component, ts_h):
     on_h = float(np.sum(on) * ts_h)
     calendar_h = float(end * ts_h)
     efph = float(np.sum(load_fraction) * ts_h)
-    starts = int(np.sum((~on[:-1]) & on[1:])) if len(on) > 1 else 0
+    starts = (int(on[0]) + int(np.sum((~on[:-1]) & on[1:]))) if len(on) else 0
     degradation = {
         key: float(values[end - 1])
         for key, values in data["deg_" + component].items()
@@ -77,21 +78,55 @@ def _h2_metrics(data, component, ts_h):
     }
 
 
+def _battery_metrics(data, ts_h):
+    end, eol = _first_life_end(data["SoH_bat"])
+    power = np.asarray(data["P_bat"][:end], dtype=float)
+    soc = np.asarray(data["SoC"][:end + 1], dtype=float)
+    nominal_energy_kwh = (
+        I.BAT["Q_bat"] * I.BAT["v_cell_nom"]
+        * I.BAT["series_num"] * I.BAT["parallel_num"] / 1000.0
+    )
+    discharge_kwh = float(np.clip(power, 0.0, None).sum() * ts_h / 1000.0)
+    charge_kwh = float(-np.clip(power, None, 0.0).sum() * ts_h / 1000.0)
+    throughput_kwh = discharge_kwh + charge_kwh
+    current_a = power / (I.BAT["v_cell_nom"] * I.BAT["series_num"])
+    c_rate = np.abs(current_a) / (I.BAT["Q_bat"] * I.BAT["parallel_num"])
+    return {
+        "eol_reached": eol,
+        "calendar_h": float(end * ts_h),
+        "calendar_years_8760": float(end * ts_h / 8760.0),
+        "nominal_energy_kwh": float(nominal_energy_kwh),
+        "discharge_energy_kwh": discharge_kwh,
+        "charge_energy_kwh": charge_kwh,
+        "throughput_energy_kwh": throughput_kwh,
+        "equivalent_full_cycles_discharge": (
+            discharge_kwh / nominal_energy_kwh if nominal_energy_kwh else None
+        ),
+        "equivalent_full_cycles_throughput": (
+            throughput_kwh / (2.0 * nominal_energy_kwh)
+            if nominal_energy_kwh else None
+        ),
+        "mean_abs_c_rate": float(np.mean(c_rate)) if len(c_rate) else None,
+        "p95_abs_c_rate": float(np.percentile(c_rate, 95)) if len(c_rate) else None,
+        "mean_soc": float(np.mean(soc)) if len(soc) else None,
+        "min_soc": float(np.min(soc)) if len(soc) else None,
+        "max_soc": float(np.max(soc)) if len(soc) else None,
+        "soh_eol_threshold": float(I.BAT["SoH_EoL"]),
+    }
+
+
 def compute_first_life_metrics(data, ts_seconds):
     ts_h = float(ts_seconds) / 3600.0
-    bat_end, bat_eol = _first_life_end(data["SoH_bat"])
     return {
         "conventions": {
             "year_h": 8760.0,
             "on_threshold_fraction_pmax": 0.0005,
             "efph_definition": "sum(abs(P)/Pmax(alpha)*dt_h)",
+            "battery_efc_discharge_definition": "sum(max(P_bat,0)*dt)/E_nom",
+            "battery_efc_throughput_definition": "sum(abs(P_bat)*dt)/(2*E_nom)",
             "life_interval": "from initial unit to first reset; censored if no reset",
         },
-        "battery": {
-            "eol_reached": bat_eol,
-            "calendar_h": float(bat_end * ts_h),
-            "calendar_years_8760": float(bat_end * ts_h / 8760.0),
-        },
+        "battery": _battery_metrics(data, ts_h),
         "fc": _h2_metrics(data, "fc", ts_h),
         "ely": _h2_metrics(data, "ely", ts_h),
     }
@@ -99,6 +134,23 @@ def compute_first_life_metrics(data, ts_seconds):
 
 def format_first_life_metrics(metrics):
     lines = ["METRIQUES DE PREMIERE VIE", ""]
+    battery = metrics["battery"]
+    lines.extend([
+        "BATTERIE",
+        "  EoL atteinte : %s" % battery["eol_reached"],
+        "  Duree calendaire : %.3f ans (%.0f h)" % (
+            battery["calendar_years_8760"], battery["calendar_h"]),
+        "  Energie dechargee / chargee : %.1f / %.1f kWh" % (
+            battery["discharge_energy_kwh"], battery["charge_energy_kwh"]),
+        "  Cycles equivalents (decharge / throughput) : %.1f / %.1f" % (
+            battery["equivalent_full_cycles_discharge"],
+            battery["equivalent_full_cycles_throughput"]),
+        "  C-rate absolu moyen / p95 : %.4f / %.4f C" % (
+            battery["mean_abs_c_rate"], battery["p95_abs_c_rate"]),
+        "  SoC moyen / min / max : %.4f / %.4f / %.4f" % (
+            battery["mean_soc"], battery["min_soc"], battery["max_soc"]),
+        "",
+    ])
     for key, label in (("fc", "PEMFC"), ("ely", "PEMWE")):
         item = metrics[key]
         lines.extend([

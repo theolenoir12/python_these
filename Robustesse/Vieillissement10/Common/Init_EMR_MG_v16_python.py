@@ -78,7 +78,7 @@ BAT = {
     'series_num': 60,           # Number of cells in series
     'parallel_num': 1,          # Number of branches in parallel
     'CAPEX':150,                # €/kWh
-    'SoH_EoL' : 0.7,            # SoH quand on déclare la fin de vie (40% de perte de capacité)
+    'SoH_EoL' : 0.7,            # SoH de fin de vie (30% de perte de capacite)
     'eff' : 0.95
 }
 
@@ -104,7 +104,7 @@ FC = {
     'E_0': 1.23,               # (V) 57.5/53 from Bressel et al.
     'CAPEX':2500,              # €/kW
     'CAPEX_stack': 0.3*2500,   #€/kW on prend 30% du CAPEX total (qui inclut BoP etc.)
-    'SoH_EoL' : 0.9,           # 20% de perte en tension
+    'SoH_EoL' : 0.9,           # 10% de perte en tension
     'lut': load_lut('FC_efficiency_LU_table_power.csv'),
     'j_0': 1e-3,               # [A/cm2] courant d'échange  
     'j_L': 1.2                 # [A/cm2] courant limite 
@@ -125,7 +125,7 @@ ELY = {
     'E_0': 1.23,
     'CAPEX':2500,            #€ / kW
     'CAPEX_stack': 563,      #€/kW
-    'SoH_EoL' : 0.9,         # 20% de perte de tension
+    'SoH_EoL' : 0.9,         # 10% de perte de tension
     'lut': load_lut('ELY_efficiency_LU_table_power.csv'),
     'j_0': 1e-4,
     'j_L': 10/3         # [A/cm2] cohérent avec le 1 A/cm2 = 30% Pmax

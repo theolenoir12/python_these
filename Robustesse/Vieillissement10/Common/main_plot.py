@@ -8,6 +8,7 @@ from .physics import *
 from .Init_EMR_MG_v16_python import *
 from .electrochemistry import (fc_pmax, ely_pmax, fc_i_max, ely_i_max, fc_current_from_power, ely_current_from_power)
 from .lifetime_metrics import export_first_life_metrics
+from .reliability_metrics import compute_reliability_metrics
 import matplotlib.gridspec as gs
 
 def run_main_plot(data, start_timer=0, strategy_name=None):
@@ -92,10 +93,12 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
         # Cas Local : Figures/8760h/
         savedir = os.path.join("Figures", f"{n}h")
 
-    if not os.path.exists(savedir):
-        os.makedirs(savedir, exist_ok=True)
-        if 'first_life_metrics' in data:
-            export_first_life_metrics(data['first_life_metrics'], os.path.join(savedir, 'first_life_metrics.txt'))
+    os.makedirs(savedir, exist_ok=True)
+    if 'first_life_metrics' in data:
+        export_first_life_metrics(
+            data['first_life_metrics'],
+            os.path.join(savedir, 'first_life_metrics.txt'),
+        )
     
     # --- Fonctions pour la création des graphiques ---
     def plot_and_save(x, y, filename, ylabel, title):
@@ -495,12 +498,8 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
     plt.show()
 
     # --- Calculs finaux ---
-    def get_LPSP(P_planned, P_real):
-        p, r = np.clip(P_planned, 0, None), np.clip(P_real, 0, None)
-        total_p = p.sum()
-        return (np.clip(p-r, 0, None).sum() / total_p * 100) if total_p > 0 else 0.0
-    
-    print("LPSP :",get_LPSP(P_planned,P_real),'(%)')
+    reliability = compute_reliability_metrics(data)
+    print("LPSP :", reliability["lpsp_pct"], "(%, denominateur = charge totale)")
     SoH_bat[np.isnan(SoH_bat)] = np.interp(
         np.flatnonzero(np.isnan(SoH_bat)), 
         np.flatnonzero(~np.isnan(SoH_bat)), 
@@ -521,15 +520,14 @@ def run_main_plot(data, start_timer=0, strategy_name=None):
           % (_bop, _r*100, _N, _AF, _AF * deg_eur))
     print("  NPC (coût total de possession) : %.0f EUR  =  %.1f k€" % (_npc, _npc / 1000))
     # --- Cout d'indisponibilite : VOLL (Value of Lost Load) x energie non fournie ---
-    _Pp = np.clip(np.array(P_planned), 0, None); _Pr = np.clip(np.array(P_real), 0, None)
-    _e_unserved = np.clip(_Pp - _Pr, 0, None).sum() * LOAD['Ts'] / 3600.0   # kWh sur l'horizon (P en kW)
-    _VOLL = 5.0                                                              # EUR/kWh (socio-eco insulaire, a ajuster)
+    _e_unserved = reliability["eens_kwh"]
+    _VOLL = 3.0  # EUR/kWh, meme hypothese que le classement des EMS
     _voll_cost = _AF * _VOLL * _e_unserved
     print("  Énergie non fournie : %.0f kWh  |  coût d'indisponibilité (VOLL=%.1f €/kWh, actualisé) : %.0f EUR"
           % (_e_unserved, _VOLL, _voll_cost))
     print("  COÛT TOTAL (NPC + indisponibilité) : %.0f EUR  =  %.1f k€" % (_npc + _voll_cost, (_npc + _voll_cost) / 1000))
 
-    lpsp_percent = get_LPSP(P_planned, P_real)
+    lpsp_percent = reliability["lpsp_pct"]
     # Correction temporaire NaN pour le coût
     SoH_clean = np.copy(SoH_bat)
     if np.isnan(SoH_clean).any():

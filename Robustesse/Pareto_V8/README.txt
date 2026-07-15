@@ -1,9 +1,16 @@
 ================================================================================
-DOSSIER Pareto/ -- plans de Pareto (LPSP <-> coût de dégradation), regroupés.
+DOSSIER Pareto_V8/ -- archive des plans de Pareto issus de Vieillissement8.
 Créé le 2026-07-06. Deux générateurs :
   generate_pareto.py    -> figures/           (plans de Pareto par stratégie)
   generate_ellipses.py  -> figures_ellipses/  (plans à ellipses de sensibilité)
 ================================================================================
+
+STATUT DE VERSION
+-----------------
+Ce dossier est désormais figé comme génération V8. Les chiffres, fronts PD,
+ellipses, résultats RUL et prévisions qu'il contient restent associés au modèle
+Vieillissement8. Les figures recalculées avec Vieillissement10 sont séparées dans
+../Pareto_V10/ afin d'éviter tout mélange de générations.
 
 BUT
 ---

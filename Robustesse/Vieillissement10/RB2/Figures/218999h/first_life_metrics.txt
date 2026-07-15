@@ -1,5 +1,13 @@
 METRIQUES DE PREMIERE VIE
 
+BATTERIE (censuree a 25 ans)
+  EoL SoH=0,70 atteinte : False
+  EFC decharge : 3149.7
+  EFC throughput : 3320.0
+  C-rate moyen tous pas : 0.0303 C
+  C-rate p95 : 0.1210 C
+  SoC moyen : 0.7618
+
 PEMFC
   EoL atteinte : True
   Duree calendaire : 5.722 ans (50123 h)
@@ -30,9 +38,15 @@ DONNEES JSON
     "life_interval": "from initial unit to first reset; censored if no reset"
   },
   "battery": {
-    "eol_reached": true,
-    "calendar_h": 36011.0,
-    "calendar_years_8760": 4.110844748858447
+    "eol_reached": false,
+    "calendar_h": 218999.0,
+    "calendar_years_8760": 24.99988584474886,
+    "discharge_efc": 3149.745,
+    "throughput_efc": 3319.994,
+    "mean_c_rate_all_steps": 0.03032,
+    "p95_c_rate_all_steps": 0.12103,
+    "mean_soc": 0.76181,
+    "note": "premiere vie censuree; vieillissement par cyclage uniquement"
   },
   "fc": {
     "eol_reached": true,

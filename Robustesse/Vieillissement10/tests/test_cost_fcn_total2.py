@@ -2,13 +2,15 @@ import inspect
 import os
 import sys
 
+import numpy as np
 import pytest
 
 V10 = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, V10)
 sys.path.insert(0, os.path.join(V10, "RB2"))
 
-from Common.cost_fcn_total2 import ELY_REC, _ely_rates
+from Common.cost_fcn_total2 import ELY_REC, _ely_rates, get_cost_bat
+from Common.Init_EMR_MG_v16_python import BAT
 from rb2_policy import make_rb2_policy
 
 
@@ -26,6 +28,30 @@ def test_ely_irreversible_rate_anchors_and_continuity():
 
 def test_high_current_irreversible_rate_is_not_capped():
     assert _ely_rates(3.0)[0] > _ely_rates(2.5)[0] > _ely_rates(2.0)[0]
+
+
+def test_battery_current_scaling_is_linear_below_one_c():
+    """A excursion SoC identique, 0.5C doit couter la moitie de 1C."""
+    voltage = BAT["v_cell_nom"] * BAT["series_num"]
+    current_1c = BAT["Q_bat"] * BAT["parallel_num"]
+    soc = np.array([0.40, 0.50])
+    cost_1c = get_cost_bat(np.array([voltage * current_1c]), soc, 1.0)
+    cost_half_c = get_cost_bat(
+        np.array([0.5 * voltage * current_1c]), soc, 1.0
+    )
+    assert cost_half_c == pytest.approx(0.5 * cost_1c)
+
+
+def test_battery_current_scaling_matches_source_anchors():
+    """La loi source impose psi(0C)=0, psi(1C)=1, psi(2C)=1.2956."""
+    voltage = BAT["v_cell_nom"] * BAT["series_num"]
+    current_1c = BAT["Q_bat"] * BAT["parallel_num"]
+    soc = np.array([0.40, 0.50])
+    base = get_cost_bat(np.array([voltage * current_1c]), soc, 1.0)
+    assert get_cost_bat(np.array([0.0]), soc, 1.0) == pytest.approx(0.0)
+    assert get_cost_bat(
+        np.array([2.0 * voltage * current_1c]), soc, 1.0
+    ) == pytest.approx(1.2956 * base)
 
 def test_rb2_policy_has_only_two_power_setpoints():
     assert list(inspect.signature(make_rb2_policy).parameters) == [

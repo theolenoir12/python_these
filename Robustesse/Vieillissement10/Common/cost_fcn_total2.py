@@ -14,6 +14,11 @@ deg_cumul = np.loadtxt(file_path, delimiter=',')
 deg_cumul1 = deg_cumul[:,0]/100
 deg_cumul2 = deg_cumul[:,1]
 
+# Maheshwari et al., Applied Energy 261 (2020) 114360,
+# doi:10.1016/j.apenergy.2019.114360. Cellule de reference Sony
+# US18650V3, NMC, Q=2.15 Ah, 20 degC ; vieillissement par cyclage seul.
+BAT_REFERENCE_CAPACITY_AH = 2.15
+
 # --- Vieillissement CALENDAIRE batterie (optionnel, OFF par defaut) ---
 # None ou 0 -> terme calendaire NUL -> comportement IDENTIQUE a l'original
 # (modele de base purement cyclage). Active par l'analyse de sensibilite
@@ -32,16 +37,23 @@ def get_cost_bat(P_bat,SoC, SoH_bat):
     deg_SoC = np.abs(np.diff(cu_deg_SoC))
 
     # Mise à l'échelle de la dégradation en fonction de la capacité de la batterie
-    deg_SoC = deg_SoC * (BAT['Q_bat'] * SoH_bat) * BAT['parallel_num'] / 2.15
+    deg_SoC = (
+        deg_SoC * (BAT['Q_bat'] * SoH_bat) * BAT['parallel_num']
+        / BAT_REFERENCE_CAPACITY_AH
+    )
 
 
     # Calcul des C-rates
     C_rates = np.abs(i_bat) / (BAT['Q_bat'] * SoH_bat * BAT['parallel_num'])
 
-    # Facteurs de redimensionnement en fonction des C-rates
-    #scaling_factors = np.where(C_rates > 1, 0.2956 * C_rates + (1 - 0.2956), 1)
-    scaling_factors = np.where(C_rates > 1, 0.2956 * C_rates + (1 - 0.2956), 
-                                np.where(C_rates >= 0, 1, 0))
+    # Facteur de courant de la source : psi(0C)=0, psi(1C)=1 et
+    # psi(2C)=1.2956, interpole lineairement. L'ancien psi=1 sur [0, 1C]
+    # surestimait l'usure dans le domaine de faible C-rate du micro-reseau.
+    scaling_factors = np.where(
+        C_rates <= 1.0,
+        C_rates,
+        1.0 + 0.2956 * (C_rates - 1.0),
+    )
 
     # Coût total en termes de dégradation (Ah)
     cost_tot = np.sum(deg_SoC * scaling_factors)

@@ -1,0 +1,28 @@
+# RB2(soh_isocost_asymmetric25), 25 ans, VoLL=3.0 EUR/kWh, LPSP charge totale
+# Cas nul RB2: LPSP=0.74008% deg=63.70159 kEUR unifie=75.32816 kEUR
+# Rang;LPSP[%];EENS[kWh];deg[kEUR];unifie[kEUR];sigma_unifie;parametres
+1;0.740081;3875.523;63.701592;75.328160;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.05, "soh_strength_fc": 0.05}
+2;0.761174;3985.979;63.584953;75.542889;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.075, "soh_strength_fc": 0.05}
+3;0.753071;3943.547;63.744238;75.574879;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.05, "soh_strength_fc": 0.075}
+4;0.763371;3997.485;63.650169;75.642626;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.075, "soh_strength_fc": 0.075}
+5;0.778639;4077.437;63.539572;75.771883;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.1, "soh_strength_fc": 0.075}
+6;0.777556;4071.764;63.655263;75.870554;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.075, "soh_strength_fc": 0.1}
+7;0.790528;4139.694;63.468698;75.887781;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.1, "soh_strength_fc": 0.05}
+8;0.772488;4045.227;63.753259;75.888942;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.05, "soh_strength_fc": 0.1}
+9;0.787459;4123.622;63.559799;75.930664;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.1, "soh_strength_fc": 0.1}
+10;0.806750;4224.643;63.434030;76.107958;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.125, "soh_strength_fc": 0.075}
+11;0.806001;4220.722;63.447734;76.109901;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.125, "soh_strength_fc": 0.1}
+12;0.805737;4219.341;63.596506;76.254528;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.075, "soh_strength_fc": 0.125}
+13;0.801179;4195.468;63.703069;76.289474;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.05, "soh_strength_fc": 0.125}
+14;0.813602;4260.525;63.518488;76.300064;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.1, "soh_strength_fc": 0.125}
+15;0.825064;4320.546;63.369060;76.330700;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.125, "soh_strength_fc": 0.05}
+16;0.828041;4336.138;63.418228;76.426643;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.125, "soh_strength_fc": 0.125}
+17;0.836120;4378.441;63.329641;76.464964;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.15, "soh_strength_fc": 0.1}
+18;0.850117;4451.741;63.300868;76.656091;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.15, "soh_strength_fc": 0.075}
+19;0.855112;4477.894;63.311815;76.745497;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.15, "soh_strength_fc": 0.125}
+20;0.839880;4398.129;63.554552;76.748940;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.075, "soh_strength_fc": 0.15}
+21;0.835295;4374.124;63.649368;76.771740;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.05, "soh_strength_fc": 0.15}
+22;0.846923;4435.015;63.471581;76.776626;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.1, "soh_strength_fc": 0.15}
+23;0.859097;4498.762;63.372585;76.868870;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.125, "soh_strength_fc": 0.15}
+24;0.875016;4582.126;63.233593;76.979970;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.15, "soh_strength_fc": 0.05}
+25;0.880338;4609.997;63.285275;77.115267;0.000000;{"ely_setpoint": 0.52, "fc_setpoint": 0.61, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.15, "soh_strength_fc": 0.15}

@@ -39,7 +39,9 @@ def _h2_metrics(data, component, ts_h):
     on_h = float(np.sum(on) * ts_h)
     calendar_h = float(end * ts_h)
     efph = float(np.sum(load_fraction) * ts_h)
-    starts = (int(on[0]) + int(np.sum((~on[:-1]) & on[1:]))) if len(on) else 0
+    # La loi de cout ne facture que les transitions OFF -> ON observees entre
+    # deux pas. Ne pas ajouter artificiellement le premier etat s'il est ON.
+    starts = int(np.sum((~on[:-1]) & on[1:])) if len(on) > 1 else 0
     degradation = {
         key: float(values[end - 1])
         for key, values in data["deg_" + component].items()
@@ -79,7 +81,8 @@ def _h2_metrics(data, component, ts_h):
 
 
 def _battery_metrics(data, ts_h):
-    end, eol = _first_life_end(data["SoH_bat"])
+    soh = np.asarray(data["SoH_bat"], dtype=float)
+    end, eol = _first_life_end(soh)
     power = np.asarray(data["P_bat"][:end], dtype=float)
     soc = np.asarray(data["SoC"][:end + 1], dtype=float)
     nominal_energy_kwh = (
@@ -91,6 +94,8 @@ def _battery_metrics(data, ts_h):
     throughput_kwh = discharge_kwh + charge_kwh
     current_a = power / (I.BAT["v_cell_nom"] * I.BAT["series_num"])
     c_rate = np.abs(current_a) / (I.BAT["Q_bat"] * I.BAT["parallel_num"])
+    active = c_rate > 1e-12
+    soh_end = float(soh[max(end - 1, 0)])
     return {
         "eol_reached": eol,
         "calendar_h": float(end * ts_h),
@@ -108,6 +113,14 @@ def _battery_metrics(data, ts_h):
         ),
         "mean_abs_c_rate": float(np.mean(c_rate)) if len(c_rate) else None,
         "p95_abs_c_rate": float(np.percentile(c_rate, 95)) if len(c_rate) else None,
+        "mean_abs_c_rate_active": (
+            float(np.mean(c_rate[active])) if np.any(active) else None
+        ),
+        "p95_abs_c_rate_active": (
+            float(np.percentile(c_rate[active], 95)) if np.any(active) else None
+        ),
+        "soh_end_or_before_reset": soh_end,
+        "capacity_loss_pct_end_or_before_reset": 100.0 * (1.0 - soh_end),
         "mean_soc": float(np.mean(soc)) if len(soc) else None,
         "min_soc": float(np.min(soc)) if len(soc) else None,
         "max_soc": float(np.max(soc)) if len(soc) else None,
@@ -147,6 +160,11 @@ def format_first_life_metrics(metrics):
             battery["equivalent_full_cycles_throughput"]),
         "  C-rate absolu moyen / p95 : %.4f / %.4f C" % (
             battery["mean_abs_c_rate"], battery["p95_abs_c_rate"]),
+        "  C-rate actif moyen / p95 : %.4f / %.4f C" % (
+            battery["mean_abs_c_rate_active"],
+            battery["p95_abs_c_rate_active"]),
+        "  SoH final (ou avant reset) : %.4f" % (
+            battery["soh_end_or_before_reset"]),
         "  SoC moyen / min / max : %.4f / %.4f / %.4f" % (
             battery["mean_soc"], battery["min_soc"], battery["max_soc"]),
         "",

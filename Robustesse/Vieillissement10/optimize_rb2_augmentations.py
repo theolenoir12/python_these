@@ -66,6 +66,26 @@ def build_grid(layer, smoke=False):
             for fc, ely in itertools.product(fc_values, ely_values)
         ]
 
+    if layer == "rb2_refined":
+        fc_values = [0.59, 0.62] if smoke else [
+            round(0.57 + 0.01 * i, 2) for i in range(9)
+        ]
+        ely_values = [0.49, 0.53] if smoke else [
+            round(0.47 + 0.01 * i, 2) for i in range(11)
+        ]
+        return [
+            {"fc_setpoint": fc, "ely_setpoint": ely}
+            for fc, ely in itertools.product(fc_values, ely_values)
+        ]
+
+    if layer == "rb2_validation25":
+        fc_values = [0.60, 0.62] if smoke else [0.59, 0.60, 0.61, 0.62, 0.63]
+        ely_values = [0.51, 0.53] if smoke else [0.50, 0.51, 0.52, 0.53, 0.54]
+        return [
+            {"fc_setpoint": fc, "ely_setpoint": ely}
+            for fc, ely in itertools.product(fc_values, ely_values)
+        ]
+
     if layer == "soh":
         values_fc = [0.0, 0.5] if smoke else [0.0, 0.25, 0.5, 1.0, 1.5]
         values_ely = [0.0, 1.5] if smoke else [0.0, 0.25, 0.5, 1.0, 1.5, 2.0]
@@ -121,6 +141,121 @@ def build_grid(layer, smoke=False):
                             soh_shape_ely=shape,
                         ))
         return _unique(configs)
+
+    if layer == "soh_isocost_stage5":
+        bases = [(0.61, 0.52), (0.61, 0.53), (0.60, 0.52)]
+        strengths = [0.05, 0.10] if smoke else [0.05, 0.10, 0.15, 0.20, 0.25]
+        shapes = [8.0] if smoke else [1.0, 8.0]
+        configs = []
+        for fc_setpoint, ely_setpoint in bases:
+            base = {
+                "fc_setpoint": fc_setpoint,
+                "ely_setpoint": ely_setpoint,
+                "soh_mode": "normalized_wear",
+            }
+            configs.append(dict(base))
+            for strength, shape in itertools.product(strengths, shapes):
+                configs.extend([
+                    dict(base, soh_strength_fc=strength, soh_shape_fc=shape),
+                    dict(base, soh_strength_ely=strength, soh_shape_ely=shape),
+                    dict(
+                        base,
+                        soh_strength_fc=strength,
+                        soh_strength_ely=strength,
+                        soh_shape_fc=shape,
+                        soh_shape_ely=shape,
+                    ),
+                ])
+        return _unique(configs)
+
+    if layer == "soh_isocost_validation25":
+        bases = [(0.61, 0.53), (0.61, 0.52), (0.60, 0.51), (0.59, 0.50)]
+        configs = []
+        for fc_setpoint, ely_setpoint in bases:
+            base = {
+                "fc_setpoint": fc_setpoint,
+                "ely_setpoint": ely_setpoint,
+                "soh_mode": "normalized_wear",
+            }
+            configs.append(dict(base))
+            for strength_ely in [0.05, 0.10, 0.15, 0.20]:
+                configs.append(dict(
+                    base,
+                    soh_strength_ely=strength_ely,
+                    soh_shape_ely=1.0,
+                ))
+            configs.append(dict(
+                base, soh_strength_fc=0.05, soh_shape_fc=1.0,
+            ))
+            for strength in [0.05, 0.10]:
+                configs.append(dict(
+                    base,
+                    soh_strength_fc=strength,
+                    soh_strength_ely=strength,
+                    soh_shape_fc=1.0,
+                    soh_shape_ely=1.0,
+                ))
+        return _unique(configs)
+
+    if layer == "soh_isocost_asymmetric25":
+        values = [0.05, 0.075, 0.10] if smoke else [
+            0.05, 0.075, 0.10, 0.125, 0.15
+        ]
+        return [
+            {
+                "fc_setpoint": 0.61,
+                "ely_setpoint": 0.52,
+                "soh_mode": "normalized_wear",
+                "soh_strength_fc": strength_fc,
+                "soh_strength_ely": strength_ely,
+                "soh_shape_fc": 1.0,
+                "soh_shape_ely": 1.0,
+            }
+            for strength_fc, strength_ely in itertools.product(values, values)
+        ]
+
+    if layer == "soh_validated25":
+        # Grille fine post-validation de la loi batterie. Le cas (0, 0)
+        # reproduit exactement RB2(0.59/0.49) ; les faibles modulations sont
+        # prioritaires car les grilles precedentes situaient l'iso-cout dans
+        # cette zone. RB2(SoH) reste exclusivement une modulation de setpoints
+        # H2, sans plafond de puissance ajoute.
+        values = [0.0, 0.075] if smoke else [
+            0.0, 0.025, 0.05, 0.075, 0.10, 0.15,
+        ]
+        return [
+            {
+                **BASE,
+                "soh_mode": "normalized_wear",
+                "soh_strength_fc": strength_fc,
+                "soh_strength_ely": strength_ely,
+                "soh_shape_fc": 1.0,
+                "soh_shape_ely": 1.0,
+            }
+            for strength_fc, strength_ely in itertools.product(values, values)
+        ]
+
+    if layer == "soh_validated_shapes25":
+        # Verification ciblee de la forme temporelle autour des meilleurs
+        # points lineaires ; pas de nouvelle exploration exhaustive.
+        pairs = [
+            (0.0, 0.0), (0.025, 0.0), (0.025, 0.025),
+            (0.05, 0.025), (0.05, 0.05),
+        ]
+        shapes = [2.0] if smoke else [1.0, 2.0, 4.0, 8.0]
+        configs = []
+        for strength_fc, strength_ely in pairs:
+            pair_shapes = [1.0] if strength_fc == strength_ely == 0.0 else shapes
+            for shape in pair_shapes:
+                configs.append({
+                    **BASE,
+                    "soh_mode": "normalized_wear",
+                    "soh_strength_fc": strength_fc,
+                    "soh_strength_ely": strength_ely,
+                    "soh_shape_fc": shape,
+                    "soh_shape_ely": shape,
+                })
+        return configs
 
     if layer == "rul":
         refs_fc = [3000.0] if smoke else [3000.0, 6000.0]
@@ -279,6 +414,8 @@ def _is_null(params):
     return (
         float(params.get("soh_gamma_fc", 0.0)) == 0.0
         and float(params.get("soh_gamma_ely", 0.0)) == 0.0
+        and float(params.get("soh_strength_fc", 0.0)) == 0.0
+        and float(params.get("soh_strength_ely", 0.0)) == 0.0
         and float(params.get("rul_gamma_fc", 0.0)) == 0.0
         and float(params.get("rul_gamma_ely", 0.0)) == 0.0
         and not bool(params.get("forecast_enabled", False))
@@ -315,7 +452,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--layer", choices=(
-            "rb2_extended", "soh", "soh_normalized", "soh_joint_targeted",
+            "rb2_extended", "rb2_refined", "rb2_validation25", "soh",
+            "soh_normalized", "soh_joint_targeted", "soh_isocost_stage5",
+            "soh_isocost_validation25", "soh_isocost_asymmetric25",
+            "soh_validated25", "soh_validated_shapes25",
             "rul", "pred", "all", "suite"
         ),
         default="suite",

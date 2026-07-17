@@ -1,0 +1,330 @@
+SYNTHÈSE — ROBUSTESSE DES AFFIRMATIONS « RB2 MEILLEURE » ET
+« EFFET DU SOH NÉGLIGEABLE »
+Date : 17 juillet 2026
+
+==============================================================================
+1. OBJET
+==============================================================================
+
+Les dossiers Vieillissement8 et suivants explorent plusieurs interprétations
+des fonctions de coût de dégradation des composants PEMFC et PEMWE.
+
+L'objectif n'est pas de sélectionner a posteriori la fonction donnant le
+classement recherché, mais de déterminer si les deux affirmations suivantes
+résistent à l'incertitude de modélisation :
+
+  A. RB2 est la meilleure des stratégies rule-based de base au sens de
+     J = C_deg + EENS * VoLL, avec VoLL = 3 EUR/kWh.
+
+  B. L'utilisation du SoH dans la même structure de règles que RB2 n'apporte
+     qu'un gain négligeable.
+
+On ne peut pas tester toutes les fonctions mathématiques possibles. La bonne
+méthode consiste à définir un ensemble de modèles admissibles, contraints par
+Rakousky, McCay, Colombo, les repères DOE et les premières vies simulées.
+
+==============================================================================
+2. VERDICT ACTUEL
+==============================================================================
+
+Affirmation A — « RB2 est la meilleure stratégie de base »
+
+  Verdict : NON ROBUSTE POUR L'INSTANT.
+
+  Le classement s'inverse lorsque l'on change uniquement la forme du dommage
+  permanent PEMWE au-delà du point d'ancrage à 2 A/cm2 :
+
+  - modèle quadratique p=2 :
+      RB1 optimale = 73 560,88 EUR
+      RB2 optimale = 75 721,37 EUR
+      RB1 devance RB2 de 2 160,49 EUR, soit 2,85 % du coût de RB2.
+
+  - modèle d'overload cubique p=3 :
+      RB2 optimale = 74 351,70 EUR
+      RB1 optimale = 76 197,57 EUR
+      RB2 devance RB1 de 1 845,87 EUR, soit 2,42 % du coût de RB1.
+
+  - modèle cubique avec coûts de démarrage et de quasi-idle fixés à zéro :
+      RB2 optimale = 66 502,86 EUR
+      RB1 optimale = 68 926,13 EUR
+      RB2 devance RB1 de 2 423,27 EUR, soit 3,52 %.
+
+  Dans le scénario cubique nominal, RB2 devance aussi la meilleure stratégie
+  à partage fixe de 6,91 %.
+
+  La littérature disponible ne permet pas d'identifier fermement l'exposant
+  de dommage au-delà de 2 A/cm2. Le résultat « RB2 meilleure » doit donc rester
+  conditionnel à une pénalisation suffisamment forte des surcharges PEMWE.
+
+
+Affirmation B — « l'effet du SoH est négligeable »
+
+  Verdict : DÉJÀ ASSEZ ROBUSTE, MAIS À CONFIRMER SUR L'ENSEMBLE ADMISSIBLE.
+
+  Dans le scénario cubique, RB2(SoH) est construite sur la RB2 statique
+  optimale exacte (FC=0,574 ; ELY=0,465). Le dispatch reste strictement celui
+  de RB2 ; seules les consignes peuvent dépendre du SoH. Lorsque les
+  coefficients SoH sont nuls, la politique reproduit exactement son parent.
+
+  Meilleure loi trouvée :
+
+      consigne_FC(t) = 0,574 - 0,0125 * usure_FC(t)^4
+      consigne_ELY(t) = 0,465
+
+  Résultats à 25 ans :
+
+      RB2 parent :
+        dégradation = 61 717,34 EUR
+        EENS         = 4 211,45 kWh
+        J            = 74 351,70 EUR
+
+      RB2(SoH) :
+        dégradation = 61 754,90 EUR
+        EENS         = 4 164,07 kWh
+        J            = 74 247,11 EUR
+
+      gain :
+        104,59 EUR, soit 0,1407 %.
+
+  La réduction de l'EENS vaut 47,38 kWh, soit 142,15 EUR, mais elle est
+  partiellement annulée par 37,56 EUR de dégradation supplémentaire.
+  Le nombre de remplacements ne change pas.
+
+  Sensibilité à l'horizon avec les réglages 25 ans transférés :
+
+      20 ans : gain SoH = 0,1363 %
+      25 ans : gain SoH = 0,1407 %
+      30 ans : gain SoH = 0,1435 %
+
+  Lorsque les termes de démarrage et de quasi-idle non identifiés sont annulés,
+  le gain SoH vaut encore seulement 0,1148 %.
+
+  Dans le modèle quadratique et les autres variantes déjà testées, les gains
+  SoH restent également de l'ordre de 0,06 à 0,15 %.
+
+  L'effet est donc numériquement reproductible, mais très inférieur aux
+  quelques pourcents initialement recherchés.
+
+==============================================================================
+3. INTERPRÉTATION DES DONNÉES DE VIEILLISSEMENT
+==============================================================================
+
+PEMWE — Rakousky
+
+  Les pertes nettes 0, 194, 65, 16 et 50 microV/h du tableau 2 sont observées
+  pendant 1009 h. Elles mélangent dommage permanent, conditionnement,
+  amélioration de contact et perte réversible.
+
+  La récupération de 54 mV pour la cellule B et de 15 mV pour la cellule C
+  montre que ces pertes ne peuvent pas être extrapolées comme des pentes
+  permanentes pendant 25 ans.
+
+  La différence entre les cycles 6 h/6 h et 10 min/10 min ne permet pas de
+  séparer un coût unitaire de démarrage de l'effet de la durée de récupération.
+  Le coefficient 11,7 microV/démarrage est donc une calibration hybride, pas
+  une valeur directement identifiée dans l'article.
+
+
+PEMFC — McCay
+
+  Après les 250 premières heures :
+
+      permanent : 1,2 microV/h en régime constant,
+                  4,8 microV/h en régime dynamique ;
+
+      réversible : 52 microV/h en régime constant,
+                   22 microV/h en régime dynamique.
+
+  Les pertes réversibles ne doivent pas être capitalisées. Le rodage initial
+  doit être traité comme un phénomène fini. McCay évite volontairement les
+  arrêts et ne permet pas d'identifier un coût par démarrage PEMFC.
+
+
+PEMFC — Colombo
+
+  Les pentes mesurées à différents courants correspondent à plusieurs points
+  de mesure de la même MEA vieillie sous un cycle automobile couplant courant,
+  humidité, température, pression et arrêts.
+
+  Elles décrivent la sensibilité de la performance d'une cellule vieillie,
+  mais ne constituent pas directement une loi causale instantanée du dommage
+  en fonction du courant.
+
+
+Repères DOE et premières vies
+
+  Le noyau permanent PEMWE est ancré sur 4,8 mV/kh à 2 A/cm2. Dans le scénario
+  cubique favorable à RB2 :
+
+      première vie PEMFC : 20 564 h ON, 37 854 h calendaires ;
+      première vie PEMWE : 43 821 h ON, 178 974 h calendaires.
+
+  Ces valeurs sont cohérentes en ordre de grandeur avec le repère PEMWE de
+  40 kh et la cible backup PEMFC de 10 kh, sans supposer que les technologies,
+  les duty cycles et les critères EOL sont identiques.
+
+==============================================================================
+4. FORMALISATION DE LA ROBUSTESSE
+==============================================================================
+
+Pour un modèle de dégradation theta, chaque EMS doit être réoptimisée
+indépendamment.
+
+Écart entre stratégies de base :
+
+    Delta_base(theta) = J*_RB1(theta) - J*_RB2(theta)
+
+RB2 est meilleure lorsque Delta_base est positif.
+
+Gain relatif du SoH :
+
+    G_SoH(theta) =
+      [J*_RB2(theta) - J*_RB2(SoH)(theta)] / J*_RB2(theta)
+
+Une affirmation véritablement robuste demanderait :
+
+    min_theta Delta_base(theta) > 0
+
+pour conclure que RB2 est toujours meilleure dans l'ensemble admissible, et :
+
+    max_theta G_SoH(theta) < epsilon
+
+pour conclure que l'effet du SoH est toujours négligeable.
+
+Il est recommandé de fixer epsilon avant les calculs :
+
+    epsilon = 0,5 % comme seuil d'équivalence pratique ;
+    epsilon = 1,0 % comme limite conservatrice.
+
+Le gain recherché de « quelques pourcents » correspondrait plutôt à 2 % ou
+plus. Les gains actuels d'environ 0,14 % sont donc plus d'un ordre de grandeur
+en dessous.
+
+==============================================================================
+5. ENSEMBLE DE MODÈLES À TESTER
+==============================================================================
+
+PEMWE :
+
+  - exposant de courant p entre 1 et 4 ;
+  - raffinement dense entre p=2 et p=3, où le classement bascule ;
+  - dommage éventuel non nul à 1 A/cm2 ;
+  - loi polynomiale, loi saturante et loi d'overload par morceaux ;
+  - plusieurs répartitions du résidu Rakousky entre conditionnement fini et
+    perte réversible ;
+  - interprétation par récupération dépendant de la durée des pauses ;
+  - interprétation alternative comportant un coût par démarrage ;
+  - coût de démarrage entre 0 et 11,7 microV ;
+  - coût de quasi-idle entre 0 et 1,5 microV/h ;
+  - contraintes de reproduction des cinq protocoles Rakousky et des premières
+    vies d'ordre de grandeur DOE.
+
+PEMFC :
+
+  - interpolation entre les régimes permanent stable et dynamique de McCay ;
+  - plusieurs constantes de mémoire ou de stabilité ;
+  - exposant de courant entre 0 et 2 comme sensibilité ;
+  - plusieurs cinétiques de récupération du terme réversible ;
+  - coûts de démarrage et de quasi-idle entre zéro et les valeurs hybrides ;
+  - contraintes sur les premières vies.
+
+Économie et conditions de simulation :
+
+  - coûts de remplacement des composants ;
+  - VoLL, ou conclusion explicitement limitée à VoLL=3 EUR/kWh ;
+  - crédit des stocks batterie et hydrogène terminaux ;
+  - horizons 10, 20, 25 et 30 ans ;
+  - plusieurs profils et plusieurs ordres de profils ;
+  - seuils EOL et proximité des discontinuités de remplacement.
+
+==============================================================================
+6. CONTRÔLES MÉTHODOLOGIQUES
+==============================================================================
+
+Pour chaque modèle testé :
+
+  1. Réoptimiser RB1 et RB2 séparément.
+  2. Construire RB2(SoH) sur la RB2 optimale exacte du même modèle.
+  3. Vérifier que les coefficients SoH nuls reproduisent exactement le parent.
+  4. Conserver le dispatch RB2 et ne modifier que les consignes par le SoH.
+  5. Employer les mêmes profils et réalisations de défaillances pour les
+     comparaisons appariées.
+  6. Rapporter le coût avec et sans crédit des stocks terminaux.
+  7. Rapporter les nombres de remplacements et les premières vies.
+  8. Séparer l'incertitude de modèle de la variabilité des profils.
+  9. Ne pas sélectionner uniquement le modèle donnant le classement souhaité.
+ 10. Présenter la frontière de changement de classement plutôt qu'un seul cas.
+
+Les simulations étant déterministes à profil fixé, la question principale
+n'est pas une erreur statistique classique, mais l'incertitude épistémique sur
+la structure du modèle, ses paramètres et la représentativité des profils.
+
+==============================================================================
+7. FORMULATIONS ACTUELLEMENT DÉFENDABLES
+==============================================================================
+
+Affirmation concernant RB2 :
+
+  « Le classement RB1/RB2 dépend de la représentation du dommage PEMWE à forte
+  densité de courant. RB2 devient supérieure lorsque les surcharges sont
+  suffisamment pénalisées, mais cette condition n'est pas directement
+  identifiable avec les essais disponibles. »
+
+Il n'est pas encore défendable d'écrire sans condition que RB2 est toujours la
+meilleure stratégie de base.
+
+
+Affirmation concernant le SoH :
+
+  « Dans toutes les formulations étudiées jusqu'ici, l'adaptation des seules
+  consignes RB2 au SoH apporte moins de 0,2 % de réduction du coût unifié.
+  L'effet est numériquement reproductible, mais non matériel. »
+
+Cette deuxième affirmation est actuellement nettement plus robuste que la
+première.
+
+==============================================================================
+8. PROCHAINE ANALYSE RECOMMANDÉE
+==============================================================================
+
+Construire une carte de robustesse comprenant :
+
+  - un balayage dense de la forme du dommage PEMWE, particulièrement entre
+    p=2 et p=3 ;
+  - plusieurs valeurs de VoLL ;
+  - une réoptimisation best-vs-best de RB1 et RB2 pour chaque point ;
+  - une optimisation de RB2(SoH) sur son parent exact ;
+  - une recherche du modèle admissible maximisant le gain SoH ;
+  - les nombres de remplacements et les coûts avec crédit terminal.
+
+Cette analyse doit répondre à deux questions :
+
+  1. Où se situe exactement la frontière à partir de laquelle RB2 devient
+     meilleure que RB1 ?
+
+  2. Existe-t-il une interprétation raisonnable et compatible avec les données
+     pour laquelle le gain SoH dépasse 0,5 %, voire 1 % ?
+
+Si aucune configuration admissible ne produit un gain SoH matériel, il sera
+possible de conclure solidement que le SoH seul n'améliore pas réellement la
+structure de règles RB2 et de passer à l'étude de la valeur des prévisions de
+puissance.
+
+==============================================================================
+9. FICHIERS ASSOCIÉS
+==============================================================================
+
+Synthèse numérique détaillée :
+  Robustesse/Vieillissement11/RESULTATS_CENTRAUX_V11.md
+
+Interprétation bibliographique :
+  Robustesse/Vieillissement11/LITERATURE_COST_MODEL_V11.md
+
+Modèle de dégradation :
+  Robustesse/Vieillissement11/Common/degradation_v11.py
+
+Politique RB2(SoH) à attribution stricte :
+  Robustesse/Vieillissement11/Common/rb2_soh_policy_v11.py
+
+Résultats consolidés :
+  Robustesse/Vieillissement11/study/FINAL_RESULTS_V11.csv

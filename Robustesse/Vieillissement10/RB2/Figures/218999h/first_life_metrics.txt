@@ -1,12 +1,14 @@
 METRIQUES DE PREMIERE VIE
 
-BATTERIE (censuree a 25 ans)
-  EoL SoH=0,70 atteinte : False
-  EFC decharge : 3149.7
-  EFC throughput : 3320.0
-  C-rate moyen tous pas : 0.0303 C
-  C-rate p95 : 0.1210 C
-  SoC moyen : 0.7618
+BATTERIE
+  EoL atteinte : True
+  Duree calendaire : 4.111 ans (36011 h)
+  Energie dechargee / chargee : 26595.2 / 29476.6 kWh
+  Cycles equivalents (decharge / throughput) : 513.0 / 540.8
+  C-rate absolu moyen / p95 : 0.0300 / 0.1197 C
+  C-rate actif moyen / p95 : 0.0392 / 0.1327 C
+  SoH final (ou avant reset) : 0.7000
+  SoC moyen / min / max : 0.7454 / 0.2000 / 0.9950
 
 PEMFC
   EoL atteinte : True
@@ -35,18 +37,30 @@ DONNEES JSON
     "year_h": 8760.0,
     "on_threshold_fraction_pmax": 0.0005,
     "efph_definition": "sum(abs(P)/Pmax(alpha)*dt_h)",
+    "battery_efc_discharge_definition": "sum(max(P_bat,0)*dt)/E_nom",
+    "battery_efc_throughput_definition": "sum(abs(P_bat)*dt)/(2*E_nom)",
     "life_interval": "from initial unit to first reset; censored if no reset"
   },
   "battery": {
-    "eol_reached": false,
-    "calendar_h": 218999.0,
-    "calendar_years_8760": 24.99988584474886,
-    "discharge_efc": 3149.745,
-    "throughput_efc": 3319.994,
-    "mean_c_rate_all_steps": 0.03032,
-    "p95_c_rate_all_steps": 0.12103,
-    "mean_soc": 0.76181,
-    "note": "premiere vie censuree; vieillissement par cyclage uniquement"
+    "eol_reached": true,
+    "calendar_h": 36011.0,
+    "calendar_years_8760": 4.110844748858447,
+    "nominal_energy_kwh": 51.84,
+    "discharge_energy_kwh": 26595.152039926485,
+    "charge_energy_kwh": 29476.62113088787,
+    "throughput_energy_kwh": 56071.773170814355,
+    "equivalent_full_cycles_discharge": 513.0237662022855,
+    "equivalent_full_cycles_throughput": 540.8157134530705,
+    "mean_abs_c_rate": 0.03003613970470526,
+    "p95_abs_c_rate": 0.11973885057412684,
+    "mean_abs_c_rate_active": 0.03922365197657895,
+    "p95_abs_c_rate_active": 0.13272496168523798,
+    "soh_end_or_before_reset": 0.7000014942100719,
+    "capacity_loss_pct_end_or_before_reset": 29.999850578992813,
+    "mean_soc": 0.7453916188962814,
+    "min_soc": 0.20000999999999997,
+    "max_soc": 0.9949997124625731,
+    "soh_eol_threshold": 0.7
   },
   "fc": {
     "eol_reached": true,

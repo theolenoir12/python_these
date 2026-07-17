@@ -1,0 +1,276 @@
+[
+  {
+    "label": "soh_local_null",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent"
+    }
+  },
+  {
+    "label": "soh_local_perm_fc_self_m100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.01
+    }
+  },
+  {
+    "label": "soh_local_perm_fc_self_m50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.005
+    }
+  },
+  {
+    "label": "soh_local_perm_fc_self_p50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": 0.005
+    }
+  },
+  {
+    "label": "soh_local_perm_fc_self_p100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": 0.01
+    }
+  },
+  {
+    "label": "soh_local_perm_ely_self_m100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": -0.01
+    }
+  },
+  {
+    "label": "soh_local_perm_ely_self_m50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": -0.005
+    }
+  },
+  {
+    "label": "soh_local_perm_ely_self_p50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": 0.005
+    }
+  },
+  {
+    "label": "soh_local_perm_ely_self_p100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": 0.01
+    }
+  },
+  {
+    "label": "soh_local_perm_fc_from_bat_m100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": -0.01
+    }
+  },
+  {
+    "label": "soh_local_perm_fc_from_bat_m50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": -0.005
+    }
+  },
+  {
+    "label": "soh_local_perm_fc_from_bat_p50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": 0.005
+    }
+  },
+  {
+    "label": "soh_local_perm_fc_from_bat_p100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": 0.01
+    }
+  },
+  {
+    "label": "soh_local_perm_ely_from_bat_m100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_from_bat": -0.01
+    }
+  },
+  {
+    "label": "soh_local_perm_ely_from_bat_m50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_from_bat": -0.005
+    }
+  },
+  {
+    "label": "soh_local_perm_ely_from_bat_p50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_from_bat": 0.005
+    }
+  },
+  {
+    "label": "soh_local_perm_ely_from_bat_p100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_from_bat": 0.01
+    }
+  },
+  {
+    "label": "soh_local_op_fc_self_m100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "operando",
+      "fc_self": -0.01
+    }
+  },
+  {
+    "label": "soh_local_op_fc_self_m50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "operando",
+      "fc_self": -0.005
+    }
+  },
+  {
+    "label": "soh_local_op_fc_self_p50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "operando",
+      "fc_self": 0.005
+    }
+  },
+  {
+    "label": "soh_local_op_fc_self_p100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "operando",
+      "fc_self": 0.01
+    }
+  },
+  {
+    "label": "soh_local_op_ely_self_m100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "operando",
+      "ely_self": -0.01
+    }
+  },
+  {
+    "label": "soh_local_op_ely_self_m50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "operando",
+      "ely_self": -0.005
+    }
+  },
+  {
+    "label": "soh_local_op_ely_self_p50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "operando",
+      "ely_self": 0.005
+    }
+  },
+  {
+    "label": "soh_local_op_ely_self_p100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "operando",
+      "ely_self": 0.01
+    }
+  }
+]

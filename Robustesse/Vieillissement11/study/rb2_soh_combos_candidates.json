@@ -1,0 +1,194 @@
+[
+  {
+    "label": "soh_combo_null",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent"
+    }
+  },
+  {
+    "label": "soh_combo_fc_self",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.025
+    }
+  },
+  {
+    "label": "soh_combo_ely_self",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": 0.025
+    }
+  },
+  {
+    "label": "soh_combo_fc_self_ely_self",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.025,
+      "ely_self": 0.025
+    }
+  },
+  {
+    "label": "soh_combo_fc_from_bat",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": -0.025
+    }
+  },
+  {
+    "label": "soh_combo_fc_self_fc_from_bat",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.025,
+      "fc_from_bat": -0.025
+    }
+  },
+  {
+    "label": "soh_combo_ely_self_fc_from_bat",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": 0.025,
+      "fc_from_bat": -0.025
+    }
+  },
+  {
+    "label": "soh_combo_fc_self_ely_self_fc_from_bat",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.025,
+      "ely_self": 0.025,
+      "fc_from_bat": -0.025
+    }
+  },
+  {
+    "label": "soh_combo_ely_from_bat",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_from_bat": 0.025
+    }
+  },
+  {
+    "label": "soh_combo_fc_self_ely_from_bat",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.025,
+      "ely_from_bat": 0.025
+    }
+  },
+  {
+    "label": "soh_combo_ely_self_ely_from_bat",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": 0.025,
+      "ely_from_bat": 0.025
+    }
+  },
+  {
+    "label": "soh_combo_fc_self_ely_self_ely_from_bat",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.025,
+      "ely_self": 0.025,
+      "ely_from_bat": 0.025
+    }
+  },
+  {
+    "label": "soh_combo_fc_from_bat_ely_from_bat",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": -0.025,
+      "ely_from_bat": 0.025
+    }
+  },
+  {
+    "label": "soh_combo_fc_self_fc_from_bat_ely_from_bat",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.025,
+      "fc_from_bat": -0.025,
+      "ely_from_bat": 0.025
+    }
+  },
+  {
+    "label": "soh_combo_ely_self_fc_from_bat_ely_from_bat",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": 0.025,
+      "fc_from_bat": -0.025,
+      "ely_from_bat": 0.025
+    }
+  },
+  {
+    "label": "soh_combo_fc_self_ely_self_fc_from_bat_ely_from_bat",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.025,
+      "ely_self": 0.025,
+      "fc_from_bat": -0.025,
+      "ely_from_bat": 0.025
+    }
+  }
+]

@@ -1,0 +1,228 @@
+RESUME DE LA PREMIERE APPROCHE - VIEILLISSEMENT10
+Date : 13 juillet 2026
+Perimetre : micro-reseau hydrogene, strategie RB2, premiere vie des composants PEMFC et PEMWE
+
+1. OBJECTIF
+
+Cette premiere approche vise a rendre les durees de vie interpretables au-dela du seul temps calendaire. Pour chaque composant, on suit desormais :
+- la duree calendaire jusqu'a la premiere fin de vie ;
+- le temps ON ;
+- les heures equivalentes pleine puissance (EFPH) ;
+- le nombre de demarrages et la duree moyenne d'une sequence ON ;
+- la densite de courant moyenne et le 95e percentile pendant le fonctionnement ;
+- la repartition du temps dans plusieurs plages de densite de courant ;
+- la decomposition de la perte de tension et un taux equivalent en microvolts par heure ON.
+
+La "premiere vie" va de l'etat initial du composant jusqu'au premier remplacement, detecte par la remise a 1 de son SoH. Si aucun remplacement n'arrive pendant l'horizon simule, la duree est marquee comme censuree.
+
+2. DEFINITIONS RETENUES
+
+Temps ON :
+  somme des pas de temps pour lesquels |P| >= 0,0005 Pmax(alpha).
+
+EFPH :
+  EFPH = somme_t [ |P(t)| / Pmax(alpha(t)) ] * Delta_t[h].
+
+Les EFPH representent donc le temps qu'aurait passe le composant a sa puissance maximale evolutive pour fournir la meme energie. Elles ne sont ni des heures calendaires, ni des heures ON. Par exemple, 10 000 h ON a 40 % de charge correspondent approximativement a 4 000 EFPH.
+
+Facteur d'utilisation :
+  temps ON / temps calendaire.
+
+Facteur de capacite equivalent :
+  EFPH / temps calendaire.
+
+Taux equivalent de degradation :
+  perte de tension cumulee a la premiere fin de vie / temps ON.
+
+Une annee est prise egale a 8 760 h. Le critere de fin de vie reste celui du code : environ -10 % de tension au point nominal pour la PEMFC et +10 % pour le PEMWE.
+
+3. DIAGNOSTIC DE VIEILLISSEMENT9_4
+
+Dans Vieillissement9_4, le modele PEMWE utilisait la fraction de puissance f = P/Pmax pour transposer les seuils de Rakousky :
+- f = 0,30 etait traite comme j = 1 A/cm2 ;
+- f = 0,60 etait traite comme j = 2 A/cm2.
+
+Cette equivalence n'est pas correcte avec la courbe de polarisation du projet, car la puissance est le produit U(j)*I et U varie avec j. A l'etat neuf :
+- j = 1 A/cm2 correspond a environ 0,197 Pmax ;
+- j = 2 A/cm2 correspond a environ 0,457 Pmax ;
+- une consigne proche de 0,26 Pmax correspond a environ 1,27 A/cm2.
+
+Le modele ancien classait donc une partie importante du fonctionnement du PEMWE sous le seuil de vieillissement, alors que la densite de courant depassait deja 1 A/cm2. La conversion microvolts vers pourcentage utilisait aussi 1,5 V, contre environ 2,051 V au point nominal du modele electrochimique.
+
+Sur la meme simulation RB2, les metriques reconstituees pour Vieillissement9_4 etaient :
+- PEMFC : 5,686 ans calendaires ; 27 430 h ON ; 13 795 EFPH ; 2 194 demarrages ; taux total equivalent 3,136 microV/h ON.
+- PEMWE : 30,824 ans calendaires ; 77 101 h ON ; 20 169 EFPH ; 11 405 demarrages ; taux total equivalent 1,946 microV/h ON.
+
+Pour le PEMWE, la fin de vie etait dominee par les demarrages (environ 8,90 points sur 10 %), ce qui signalait que la degradation en fonctionnement etait probablement sous-estimee.
+
+4. CHOIX DE VIEILLISSEMENT10
+
+4.1 Unification electrochimique
+
+Le fichier Common/electrochemistry.py devient la source commune pour :
+- les tensions de cellule PEMFC et PEMWE ;
+- les puissances ;
+- les courants maximaux et Pmax ;
+- l'inversion puissance vers courant ;
+- la densite de courant j.
+
+Les modeles de vieillissement rule-based utilisent donc directement j(t), calcule a partir de la puissance demandee et du SoH electrochimique alpha(t). Une table d'interpolation accelere l'inversion ; son erreur maximale mesuree face a la resolution exacte est d'environ 5,2e-6 A/cm2 pour la PEMFC et 6,0e-5 A/cm2 pour le PEMWE.
+
+4.2 PEMFC
+
+La forme reversible/irreversible est conservee, mais les vitesses dependent maintenant de j :
+- reference a j = 0,5 A/cm2 ;
+- composante irreversible de reference : 1,2 microV/h ;
+- composante reversible de reference : 22 microV/h ;
+- croissance quadratique de l'irreversible et lineaire du reversible, plafonnees au-dela de 1 A/cm2 ;
+- prise en compte separee des demarrages, de l'idling et de la recuperation.
+
+Les valeurs 1,2 et 22 microV/h proviennent de McCay et al. pour des segments respectivement irreversible et reversible. Colombo et al. est utilise pour justifier la forte sensibilite a la densite de courant et l'heterogeneite spatiale, pas comme calibration directe d'un fonctionnement stationnaire.
+
+4.3 PEMWE
+
+La structure de recuperation inspiree de Rakousky est conservee :
+  dV_irr/dt = a(j)
+  dV_rev/dt = b(j) - k(j)*V_rev
+
+Le modele est maintenant defini directement par :
+- a = b = 0 sous 1 A/cm2 ;
+- rampe lineaire entre 1 et 2 A/cm2 ;
+- a(2) = 30,057 microV/h et b(2) = 163,943 microV/h ;
+- saturation au-dessus de 2 A/cm2 ;
+- recuperation dependante de j ;
+- termes distincts de demarrage et de maintien a tres faible puissance.
+
+Un multiplicateur global ELY_REC["scale"] est ajoute. Sa valeur par defaut est 1,0, c'est-a-dire la calibration Rakousky non retouchee. Il multiplie les contributions de vieillissement, sans modifier la cinetique de recuperation k.
+
+Attention : le resultat nul mesure par Rakousky a 1 A/cm2 sur environ 1 009 h est une variation nette de tension dans les conditions de cet essai ; ce n'est pas la preuve d'une absence physique de vieillissement sur plusieurs dizaines de milliers d'heures. Le seuil reste donc une hypothese de modele a tester en sensibilite.
+
+5. PREMIER RESULTAT RB2 SUR 25 ANS - VIEILLISSEMENT10, scale PEMWE = 1,0
+
+PEMFC :
+- premiere fin de vie : 8,095 ans calendaires, soit 70 909 h ;
+- temps ON : 38 916 h ;
+- EFPH : 19 641 h ;
+- demarrages : 3 133 ;
+- duree moyenne d'une sequence ON : 12,42 h ;
+- fraction de charge moyenne pendant ON : 0,505 ;
+- densite de courant moyenne pendant ON : 0,352 A/cm2 ;
+- densite de courant au 95e percentile : 0,357 A/cm2 ;
+- taux total equivalent : 2,211 microV/h ON ;
+- taux irreversible seul : 0,596 microV/h ON ;
+- decomposition a la fin de vie : demarrages 7,285 %, idling 0,000 %, reversible 0,020 %, irreversible 2,696 %, total 10,001 %.
+
+PEMWE :
+- premiere fin de vie : 14,143 ans calendaires, soit 123 890 h ;
+- temps ON : 35 518 h ;
+- EFPH : 9 309 h ;
+- demarrages : 5 236 ;
+- duree moyenne d'une sequence ON : 6,78 h ;
+- fraction de charge moyenne pendant ON : 0,262 ;
+- densite de courant moyenne pendant ON : 1,089 A/cm2 ;
+- densite de courant au 95e percentile : 1,155 A/cm2 ;
+- taux total equivalent : 5,775 microV/h ON ;
+- taux irreversible seul : 3,878 microV/h ON ;
+- decomposition a la fin de vie : demarrages 2,987 %, maintien 0,293 %, reversible 0,004 %, irreversible 6,717 %, total 10,001 %.
+
+Interpretation immediate :
+- le PEMWE passe d'une duree apparemment tres longue dans V9_4 a une duree calendaire proche de l'ordre de grandeur 10-15 ans envisage ;
+- surtout, il atteint la fin de vie apres environ 35 500 h ON, valeur plus informative que les 14,1 ans calendaires ;
+- la cible DOE indique 40 000 h de fonctionnement pour l'etat 2022 et 80 000 h comme cible. Le resultat actuel est donc proche mais un peu sous la borne de 40 000 h ;
+- la PEMFC atteint environ 38 900 h ON. Les cibles DOE stationnaires sont de 60 000 h pour les petits systemes et 80 000 h pour les grands, mais leurs criteres portent sur la puissance nette du systeme et ne sont pas strictement identiques au critere de tension de cellule du code ;
+- les demarrages representent la majeure partie de la degradation PEMFC dans ce cas. Le nombre de demarrages doit donc etre analyse conjointement aux heures ON et aux EFPH.
+
+6. REGLAGE A ENVISAGER, SANS LE FIGER POUR L'INSTANT
+
+Pour viser grossierement 40 000 h ON au premier remplacement PEMWE, une premiere estimation lineaire donne :
+  scale approximatif = 35 518 / 40 000 = 0,89.
+
+Cette relation n'est qu'un point de depart : la recuperation, les demarrages et l'evolution du point de fonctionnement rendent la duree non strictement inversement proportionnelle a scale. Il faut donc faire un balayage de sensibilite, par exemple scale = 0,75 ; 0,90 ; 1,00 ; 1,25, puis comparer :
+- temps calendaire ;
+- temps ON ;
+- EFPH ;
+- demarrages ;
+- repartition des heures par plage de j ;
+- contributions irreversible, reversible, demarrage et maintien.
+
+Il ne faut pas tuner uniquement sur "10-15 ans" : une strategie peu utilisee peut naturellement durer longtemps en calendrier. Le reglage doit d'abord etre confronte aux heures ON et au profil de j.
+
+7. LIMITES ACTUELLES
+
+- La validation realisee ici concerne les boucles EMS a base de regles, notamment RB2.
+- Les dossiers DP et DP2 utilisent encore des approximations historiques en fraction de puissance. Ils ne doivent pas servir a une comparaison finale V10 avant migration vers j.
+- Le calcul de Pmax a ete unifie dans le chemin MILP, mais son modele de degradation reste partiellement historique et son import contient deja une incompatibilite j_0 presente dans V9_4. Le MILP n'est donc pas certifie V10 a ce stade.
+- Les essais de McCay, Colombo et Rakousky sont bien plus courts que les vies extrapolees. Les effets de seuil et l'extrapolation a plusieurs dizaines de milliers d'heures constituent une incertitude scientifique, pas seulement numerique.
+- Les criteres DOE sont des reperes de systemes ou de stacks et ne sont pas tous identiques au critere de plus ou moins 10 % de tension utilise ici.
+
+8. SOURCES UTILISEES
+
+[1] McCay, K. et al., "An analysis of the reversible and irreversible degradation of a PEM fuel cell short-stack operated under simulated maritime conditions", Journal of Power Sources 665 (2026) 239011.
+DOI : https://doi.org/10.1016/j.jpowsour.2025.239011
+PDF local : python_these/mccay.pdf
+Elements utilises : essai 1 500 h ; 1,2 et 4,8 microV/h irreversibles ; 52 et 22 microV/h reversibles selon les segments constant/dynamique.
+
+[2] Colombo, E. et al., "PEMFC decay during real-world automotive operation: evincing degradation mechanisms and heterogeneity of ageing", Journal of Power Sources 553 (2023) 232246.
+DOI : https://doi.org/10.1016/j.jpowsour.2022.232246
+PDF local : python_these/colombo.pdf
+Elements utilises : cycle realiste sur environ 1 000 h ; points de 0,095 a 1,748 A/cm2 ; forte variation de la perte de tension avec j et entre CCM.
+
+[3] Rakousky, C. et al., "Polymer electrolyte membrane water electrolysis: Restraining degradation in the presence of fluctuating power", Journal of Power Sources 342 (2017) 38-47.
+DOI : https://doi.org/10.1016/j.jpowsour.2016.11.118
+PDF local : python_these/rakousky.pdf
+Elements utilises : essais de 1 009 h ; 0 microV/h a 1 A/cm2 constant, 194 a 2 A/cm2 constant, 65 en cycle 2 vers 1 A/cm2, 16 en cycle 2 vers 0 toutes les 6 h et 50 en cycle 2 vers 0 toutes les 10 min.
+
+[4] U.S. Department of Energy, "Technical Targets for Proton Exchange Membrane Electrolysis".
+https://www.energy.gov/cmei/fuels/technical-targets-proton-exchange-membrane-electrolysis
+Elements utilises : statut 2022 de 40 000 h de fonctionnement, cible de 80 000 h, taux moyens 4,8 puis 2,3 mV/kh, fin de vie definie par +10 % de tension mesuree a meme densite de courant.
+
+[5] U.S. Department of Energy, "DOE Technical Targets for Fuel Cell Systems for Stationary (Combined Heat and Power) Applications".
+https://www.energy.gov/cmei/fuels/doe-technical-targets-fuel-cell-systems-stationary-combined-heat-and-power-applications
+Elements utilises : 60 000 h pour les systemes 1-25 kWe et 80 000 h pour les systemes 100 kW-3 MW ; criteres de fin de vie respectivement >20 % et >10 % de degradation de puissance nette.
+
+9. CONCLUSION PROVISOIRE
+
+Le passage de P/Pmax a j corrige une incoherence structurante du modele PEMWE. Avec la calibration Rakousky non retouchee, le premier resultat RB2 donne environ 35 500 h ON et 9 300 EFPH pour le PEMWE, et 38 900 h ON et 19 600 EFPH pour la PEMFC. Ces valeurs sont beaucoup plus exploitables qu'une duree calendaire seule.
+
+La suite logique est un balayage du parametre PEMWE scale et une analyse des distributions de j, puis une confrontation des compromis EMS sur les trois axes de la these : LPSP, robustesse aux defaillances et cout de degradation.
+
+
+
+10. RECALAGE FINAL RB2 ET FONCTIONS DE COUT - 13 JUILLET 2026
+
+Cette section remplace les conclusions numeriques precedentes pour la regle
+RB2 active.
+
+RB2 revient strictement a deux consignes de puissance H2 : FC=0,59 Pmax et
+ELY=0,49 Pmax. Les plafonds de secours, reserves SoC et variantes riches sont
+supprimes. Seules les limites physiques communes restent appliquees.
+
+Le PEMWE utilise une degradation irreversible quadratique jusqu'a 2 A/cm2,
+ancree a 4,8 microV/h, une contribution reversible issue de Rakousky, puis une
+acceleration irreversible de 100*(j-2)^2 microV/h au-dessus de 2 A/cm2.
+L'acceleration est un scenario explicite a inclure en sensibilite.
+
+Resultat RB2 sur 25 ans :
+- EENS : 4 058,49 kWh ;
+- LPSP charge totale : 0,7750 % ;
+- LPSP residuelle historique : 1,4846 % ;
+- degradation : 63,375 kEUR ;
+- cout unifie : 75,550 kEUR.
+
+RB1 :
+- LPSP charge totale : 0,898 % ;
+- LPSP residuelle historique : 1,720 % ;
+- degradation : 68,340 kEUR ;
+- cout unifie : 82,449 kEUR.
+
+RB2 est la meilleure des neuf strategies de base dans ce scenario. Le cout
+unifie est calcule directement avec EENS et reste donc invariant au
+denominateur choisi pour afficher la LPSP.
+
+Premiere vie RB2 :
+- PEMFC : 5,722 ans, 27 263 h ON, j moyen 0,565 A/cm2 ;
+- PEMWE : 15,299 ans, 32 235 h ON, j moyen 1,855 A/cm2,
+  percentile 95 = 1,939 A/cm2, aucune heure au-dessus de 2 A/cm2.
+
+Details et reproductibilite : RB2/README_RB2_V10.md,
+rank_base_strategies.py et rank_base_strategies_25y.txt.

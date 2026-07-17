@@ -1,0 +1,372 @@
+[
+  {
+    "label": "rb2_parent_direct_0574_0465",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465
+    }
+  },
+  {
+    "label": "rb2_soh_null_parent",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent"
+    }
+  },
+  {
+    "label": "soh_oat_fc_self_m100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.1
+    }
+  },
+  {
+    "label": "soh_oat_fc_self_m75",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.075
+    }
+  },
+  {
+    "label": "soh_oat_fc_self_m50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.05
+    }
+  },
+  {
+    "label": "soh_oat_fc_self_m25",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": -0.025
+    }
+  },
+  {
+    "label": "soh_oat_fc_self_p25",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": 0.025
+    }
+  },
+  {
+    "label": "soh_oat_fc_self_p50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": 0.05
+    }
+  },
+  {
+    "label": "soh_oat_fc_self_p75",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": 0.075
+    }
+  },
+  {
+    "label": "soh_oat_fc_self_p100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_self": 0.1
+    }
+  },
+  {
+    "label": "soh_oat_ely_self_m100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": -0.1
+    }
+  },
+  {
+    "label": "soh_oat_ely_self_m75",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": -0.075
+    }
+  },
+  {
+    "label": "soh_oat_ely_self_m50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": -0.05
+    }
+  },
+  {
+    "label": "soh_oat_ely_self_m25",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": -0.025
+    }
+  },
+  {
+    "label": "soh_oat_ely_self_p25",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": 0.025
+    }
+  },
+  {
+    "label": "soh_oat_ely_self_p50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": 0.05
+    }
+  },
+  {
+    "label": "soh_oat_ely_self_p75",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": 0.075
+    }
+  },
+  {
+    "label": "soh_oat_ely_self_p100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_self": 0.1
+    }
+  },
+  {
+    "label": "soh_oat_fc_from_bat_m100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": -0.1
+    }
+  },
+  {
+    "label": "soh_oat_fc_from_bat_m75",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": -0.075
+    }
+  },
+  {
+    "label": "soh_oat_fc_from_bat_m50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": -0.05
+    }
+  },
+  {
+    "label": "soh_oat_fc_from_bat_m25",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": -0.025
+    }
+  },
+  {
+    "label": "soh_oat_fc_from_bat_p25",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": 0.025
+    }
+  },
+  {
+    "label": "soh_oat_fc_from_bat_p50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": 0.05
+    }
+  },
+  {
+    "label": "soh_oat_fc_from_bat_p75",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": 0.075
+    }
+  },
+  {
+    "label": "soh_oat_fc_from_bat_p100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "fc_from_bat": 0.1
+    }
+  },
+  {
+    "label": "soh_oat_ely_from_bat_m100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_from_bat": -0.1
+    }
+  },
+  {
+    "label": "soh_oat_ely_from_bat_m75",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_from_bat": -0.075
+    }
+  },
+  {
+    "label": "soh_oat_ely_from_bat_m50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_from_bat": -0.05
+    }
+  },
+  {
+    "label": "soh_oat_ely_from_bat_m25",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_from_bat": -0.025
+    }
+  },
+  {
+    "label": "soh_oat_ely_from_bat_p25",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_from_bat": 0.025
+    }
+  },
+  {
+    "label": "soh_oat_ely_from_bat_p50",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_from_bat": 0.05
+    }
+  },
+  {
+    "label": "soh_oat_ely_from_bat_p75",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_from_bat": 0.075
+    }
+  },
+  {
+    "label": "soh_oat_ely_from_bat_p100",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "shape": 1,
+      "soh_source": "permanent",
+      "ely_from_bat": 0.1
+    }
+  }
+]

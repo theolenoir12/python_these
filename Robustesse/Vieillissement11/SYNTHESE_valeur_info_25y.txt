@@ -1,0 +1,141 @@
+================================================================================
+
+STATUT AU 2026-07-11 : ARCHIVE LEGACY PRÉ-CORRECTION
+--------------------------------------------------------------------------------
+Les chiffres ci-dessous sont conditionnels à VoLL=3 et à l'ancien moteur de
+remplacement. « Quasi certain » signifie uniquement : quasi certain dans les
+200 mondes U_log[0.5,2] de cette expérience et avec cette VoLL. Le delta ES90
+marginal de SoH-Sched vaut historiquement -0.930 kEUR, tandis que ES90 de
+l'écart SoH-Sched vaut seulement -0.085 kEUR. Le post-traitement VoLL=1/3/10
+est dans STATISTIQUES_APPARIEES_P1_P3.txt. Rerun corrigé requis avant citation.
+Le dossier d'archive actuel est Vieillissement9_4 ; le libellé V9_2 de la note
+initiale ne prouve pas le moteur effectivement chargé lors du calcul.
+--------------------------------------------------------------------------------
+SYNTHESE -- VALEUR INFORMATIONNELLE DU SoH SOUS INCERTITUDE DE VIEILLISSEMENT
+Dossier d'archive actuel : Robustesse/Vieillissement9_4/  Redige : 2026-07-09
+Donnees : valeur_info_25y.txt (job meso 214530 : 25 ans, N_MC=200, seed=2026,
+          multiplicateurs U_log[0.5, 2] sur FC(a_irr,b_rev,s)/ELY(a2,b2,s)/BAT,
+          VoLL=3, CRN). Banc : bench_valeur_info.py (cf. docstring).
+Contexte : proposition P1 de ../ANALYSE_CRITIQUE_integration_vieillissement.txt.
+================================================================================
+
+0. RESUME (l'essentiel pour le manuscrit)
+--------------------------------------------------------------------------------
+Au monde NOMINAL, la valeur du capteur SoH est EXACTEMENT NULLE : une loi
+programmee dans le temps (RB2(Sched), enregistree design-time) rejoue RB2(SoH)
+a l'identique (test nul, ecart 0.0). C'est la confirmation directe du
+diagnostic 1.c : dans le monde de conception, une horloge remplace le jumeau
+numerique.
+
+Sous INCERTITUDE de vieillissement (200 mondes perturbes x[0.5,2]), le capteur
+commence a payer : la boucle fermee bat la boucle ouverte programmee de
+0.71 kEUR en moyenne, sur 99 % des tirages, et sa part dans l'avantage total
+CROIT avec l'ecart du monde au modele (25 % -> 39 % du gain total entre mondes
+doux et severes). C'est la valeur de ROBUSTESSE du jumeau numerique attendue
+par l'AAPG 3.2, mesuree isolement pour la premiere fois dans la these.
+
+1. CHIFFRES (cout unifie = deg + VoLL*EENS, kEUR / 25 ans)
+--------------------------------------------------------------------------------
+                          moyenne    P95      CVaR90   LPSP moy  gagne (CRN)
+    RB2 statique             91.64    124.21    125.61    3.26 %      --
+    RB2(Recale) statique     90.68    123.99    125.45    2.67 %    (regret max 4.69)
+    RB2(Sched) open-loop     90.04    123.86    124.48    2.94 %   100 % vs RB2
+    RB2(SoH)   closed-loop   89.33    122.38    123.55    2.91 %    99 % vs Sched
+
+  CASCADE (v2, differences appariees CRN, negatif = gain) du total
+  RB2(SoH) - RB2 = -2.31 +/- 0.49 kEUR (gagne 100 %) :
+    re-calage (Recale - RB2)  : -0.97 +/- 1.28  PERD dans 18 % des mondes (max +2.41)
+    horloge   (Sched - Recale): -0.63 +/- 1.05  PERD dans 29 % des mondes (max +1.38)
+    capteur   (SoH - Sched)   : -0.71 +/- 0.42  perd dans  1 % des mondes (max +0.06)
+  LE RESULTAT DE STRUCTURE : les trois ingredients sont comparables en
+  MOYENNE, mais seul le CAPTEUR est quasi certain. Re-calage et horloge sont
+  des PARIS sur le modele de conception (queues perdantes a +2.4 / +1.4 kEUR) ;
+  la retroaction est le seul ingredient sans queue perdante. Regret vs le
+  meilleur des 4 par tirage : SoH 0.03 kEUR en moyenne (max 0.52) ; NB le
+  regret max de Recale (4.69) DEPASSE celui de RB2 nu (3.43) : re-caler
+  statiquement sur le nominal AUGMENTE l'exposition a l'erreur de modele.
+
+  MECANISME (correlations increment/facteurs) : le champ de bataille est le
+  GENOU ELY. corr(re-calage, m_ely_a) = +0.73 : pousser c_ely de 0.26 a 0.30
+  (sur le genou) perd quand le vrai taux irreversible ELY est haut. Et c'est
+  exactement la que l'horloge (corr -0.69) puis le capteur (corr -0.39 ;
+  m_ely_s -0.35) recuperent la perte : la modulation SoH^1.5 redescend le
+  setpoint sous le genou. La retroaction ASSURE le pari du re-calage.
+
+  Le capteur gagne sur les DEUX axes en moyenne : LPSP 2.915 vs 2.936 % ET
+  degradation 65.43 vs 65.97 kEUR (vs Sched).
+
+  NOMINAL (multiplicateurs = 1) :
+    RB2         LPSP 3.2499 %  deg 57.548  unifie 84.201
+    RB2(Recale) LPSP 2.6569 %  deg 61.472  unifie 83.262  (vie_ely 20.1 ans)
+    Sched=SoH   LPSP 2.9099 %  deg 58.024  unifie 81.889  (test nul : identiques)
+  Le gain nominal (-2.31) est porte par l'EENS (-930 kWh x 3 EUR), pas par la
+  degradation (+0.48) : les constantes re-calees (0.42/0.30 vs 0.40/0.26)
+  descendent la LPSP de 3.25 a 2.91 %. Recale seul echange de la degradation
+  ELY (61.5, setpoint gare PILE sur le genou) contre de la LPSP (2.66) ;
+  l'horloge recupere les deux (58.0 / 2.91).
+
+2. VALEUR DU CAPTEUR vs SEVERITE DU MONDE
+--------------------------------------------------------------------------------
+  sev = moyenne geometrique des 7 multiplicateurs (>1 = vieillissement plus
+  rapide que le modele de conception). corr(gain capteur, sev) = 0.23.
+
+    tercile     gain capteur   gain total   part du capteur
+    doux          0.65 kEUR      2.57 kEUR       25 %
+    moyen         0.68           2.32            30 %
+    severe        0.79           2.05            39 %
+
+  Lecture : quand le monde s'ecarte du modele, l'avantage TOTAL retrecit
+  (les setpoints re-cales sont moins bien adaptes) mais la part du CAPTEUR
+  grandit -- la boucle fermee s'auto-corrige la ou la boucle ouverte se trompe
+  avec son modele. Correlation moderee (0.23) : benefice CONSISTANT, un peu
+  plus grand dans les mauvais mondes ; pas une assurance spectaculaire.
+  La queue est amelioree : P95 -1.48, CVaR90 -0.93 vs open-loop.
+
+3. RESERVES (a enoncer dans le manuscrit)
+--------------------------------------------------------------------------------
+  (a) RB2(SoH) voit le SoH VRAI parfaitement -> 0.71 kEUR est une BORNE
+      SUPERIEURE de la valeur du capteur (~0.8 % du cout total). Le bruit
+      d'estimation (sens_soh_estimation.py) ne peut que l'eroder.
+  (b) [COMPLETE par le run v2, job 214863] La decomposition re-calage /
+      horloge / capteur figure en section 1 (cascade). L'ancienne lecture
+      "69 % open-loop" se separe en re-calage 42 % + horloge 27 % + capteur
+      31 % du total -- avec la nuance decisive de FIABILITE (seul le capteur
+      est quasi certain).
+  (c) Les multiplicateurs sont tires independamment par composant ; des
+      derives correlees (ex. un lot de cellules uniformement pire) ou des
+      changements de REGIME (rupture de pente, defaut naissant) ne sont pas
+      couverts -- c'est la ou une boucle fermee devrait creuser l'ecart
+      davantage (perspective : scenario "rupture" cible).
+
+4. RECIT MANUSCRIT PROPOSE
+--------------------------------------------------------------------------------
+  "La valeur de l'information d'etat de sante dans une regle de gestion se
+  decompose en trois ingredients : le RE-CALAGE des constantes, la
+  NON-STATIONNARITE de la politique (une horloge suffit), et la RETROACTION
+  du capteur. Au monde nominal, la retroaction vaut exactement zero : tout
+  gain rapporte sans cette decomposition est attribuable aux deux premiers
+  ingredients -- ce que la litterature distingue rarement. Sous incertitude
+  du modele de vieillissement (x[0.5,2] sur les taux), les trois ingredients
+  pesent chacun ~0.6-1.0 kEUR en moyenne, mais seuls leurs PROFILS DE RISQUE
+  les separent : le re-calage et l'horloge sont des paris sur le modele
+  (perdants dans 18 % et 29 % des mondes), la retroaction est quasi certaine
+  (0.71 kEUR, 99 % des tirages, pire cas +0.06), croit avec l'ecart du monde
+  au modele (25 -> 39 % de l'avantage total) et ameliore la queue (CVaR90
+  -0.93 kEUR). Mecanisme identifie : la retroaction asservit le setpoint ELY
+  au genou de zero-usure qui derive, la ou le re-calage statique parie sur sa
+  position nominale. Le jumeau numerique de la tache 3.1 est donc une
+  ASSURANCE contre l'erreur de modele de vieillissement, plus qu'un
+  optimiseur nominal."
+
+5. FICHIERS / REPRODUCTION
+--------------------------------------------------------------------------------
+  bench_valeur_info.py          banc v2 (4 competiteurs, cascade, severite,
+                                reutilisation des runs payes ; --fresh pour tout
+                                re-payer). Test nul integre.
+  run_meso_valeur_info.slurm    sbatch run_meso_valeur_info.slurm
+  valeur_info_25y.txt           donnees (v1 : 3 strategies ; enrichi en place
+                                par le re-run v2 avec RB2(Recale))
+  valeur_info_25y.pdf/.png      figure (v2 : nuages+ellipses | histogrammes
+                                horloge/capteur | gain capteur vs severite)
+================================================================================

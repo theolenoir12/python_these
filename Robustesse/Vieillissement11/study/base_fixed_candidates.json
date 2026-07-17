@@ -1,0 +1,51 @@
+[
+  {
+    "label": "base_0-100",
+    "kind": "file",
+    "params": {
+      "folder": "0-100"
+    }
+  },
+  {
+    "label": "base_25-75",
+    "kind": "file",
+    "params": {
+      "folder": "25-75"
+    }
+  },
+  {
+    "label": "base_50-50",
+    "kind": "file",
+    "params": {
+      "folder": "50-50"
+    }
+  },
+  {
+    "label": "base_75-25",
+    "kind": "file",
+    "params": {
+      "folder": "75-25"
+    }
+  },
+  {
+    "label": "base_100-0",
+    "kind": "file",
+    "params": {
+      "folder": "100-0"
+    }
+  },
+  {
+    "label": "base_SoC1",
+    "kind": "file",
+    "params": {
+      "folder": "SoC1"
+    }
+  },
+  {
+    "label": "base_SoC06",
+    "kind": "file",
+    "params": {
+      "folder": "SoC06"
+    }
+  }
+]

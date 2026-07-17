@@ -1,0 +1,474 @@
+import numpy as np
+import os
+from scipy.signal import argrelextrema
+from scipy.interpolate import interp1d
+from .Init_EMR_MG_v16_python import *
+from .electrochemistry import (
+    FC_VOLTAGE_REFERENCE, ELY_VOLTAGE_REFERENCE,
+    fc_current_density, ely_current_density, fc_pmax, ely_pmax,
+)
+
+current_dir = os.path.dirname(__file__)
+file_path = os.path.join(current_dir, 'Cumulative_degradation_bat.txt')
+deg_cumul = np.loadtxt(file_path, delimiter=',')
+deg_cumul1 = deg_cumul[:,0]/100
+deg_cumul2 = deg_cumul[:,1]
+
+# Maheshwari et al., Applied Energy 261 (2020) 114360,
+# doi:10.1016/j.apenergy.2019.114360. Cellule de reference Sony
+# US18650V3, NMC, Q=2.15 Ah, 20 degC ; vieillissement par cyclage seul.
+BAT_REFERENCE_CAPACITY_AH = 2.15
+
+# --- Vieillissement CALENDAIRE batterie (optionnel, OFF par defaut) ---
+# None ou 0 -> terme calendaire NUL -> comportement IDENTIQUE a l'original
+# (modele de base purement cyclage). Active par l'analyse de sensibilite
+# (R3-major3-ii). BAT_CAL_TCAL_Y = vie calendaire [ans] a SoC=100% constant pour
+# atteindre l'EoL ; forme lineaire g(SoC)=SoC (taux ~ temps de residence pondere
+# par le SoC, variable controlee par l'EMS).
+BAT_CAL_TCAL_Y = None
+
+def get_cost_bat(P_bat,SoC, SoH_bat):
+    
+    # Lecture des données de dégradation cumulative à partir d'un fichier CSV
+    i_bat = P_bat / (BAT['v_cell_nom']*BAT['series_num'])
+
+    # Interpolation pour trouver la dégradation cumulative asSoCiée aux SoC extrêmes
+    cu_deg_SoC = np.interp(SoC, deg_cumul1, deg_cumul2)
+    deg_SoC = np.abs(np.diff(cu_deg_SoC))
+
+    # Mise à l'échelle de la dégradation en fonction de la capacité de la batterie
+    deg_SoC = (
+        deg_SoC * (BAT['Q_bat'] * SoH_bat) * BAT['parallel_num']
+        / BAT_REFERENCE_CAPACITY_AH
+    )
+
+
+    # Calcul des C-rates
+    C_rates = np.abs(i_bat) / (BAT['Q_bat'] * SoH_bat * BAT['parallel_num'])
+
+    # Hypothese conservative retenue pour le micro-reseau : psi=1 sous 1C.
+    # Elle impose un plancher d'usure par excursion de SoC et evite que les
+    # faibles courants rendent le cyclage presque gratuit. Au-dessus de 1C,
+    # on conserve la pente identifiee par Maheshwari et al. entre 1C et 2C.
+    # Ce plancher est un choix de modele V10, distinct de la loi source et ne
+    # remplace pas un terme de vieillissement calendaire (toujours desactive).
+    scaling_factors = np.where(
+        C_rates <= 1.0,
+        1.0,
+        1.0 + 0.2956 * (C_rates - 1.0),
+    )
+
+    # Coût total en termes de dégradation (Ah)
+    cost_tot = np.sum(deg_SoC * scaling_factors)
+
+    # --- Terme CALENDAIRE optionnel (OFF si BAT_CAL_TCAL_Y est None/0) ---
+    # Perte de capacite calendaire = somme_t k_cal(SoC_t)*dt, ADDITIVE par pas ->
+    # compatible avec l'accumulation incrementale de la boucle (telescopage OK
+    # sur SoC[:-1] = SoC en debut de pas). cost_tot est en micro-Ah (x1e-6 -> Ah).
+    if BAT_CAL_TCAL_Y:
+        Ts_h = LOAD['Ts'] / 3600.0
+        soc_step = np.atleast_1d(SoC).astype(float)[:-1]   # SoC au debut de chaque pas
+        # k_cal(SoC=1) [Ah/h] : SoC=1 constant -> EoL (perte 1-SoH_EoL) en T_cal ans
+        k1 = ((1 - BAT['SoH_EoL']) * BAT['Q_bat'] * BAT['parallel_num']
+              / (BAT_CAL_TCAL_Y * 8760.0))
+        q_cal_Ah = float(np.sum(k1 * soc_step * Ts_h))      # g(SoC) = SoC (lineaire)
+        cost_tot = cost_tot + q_cal_Ah * 1e6                # remise en micro-Ah
+
+    # Calcul du coût de la batterie en pourcentage par rapport à la fin de vie
+    cost_bat = cost_tot * 1e-6 / ((1 - BAT['SoH_EoL']) * BAT['Q_bat'] * BAT['parallel_num'])
+
+    return cost_bat*BAT['cost']
+
+
+# ============================================================================
+#  MODELE DE DEGRADATION PEMWE (electrolyseur) : RECUPERATION reversible/irreversible
+# ----------------------------------------------------------------------------
+#  Calibre sur les 5 modes de durabilite de Rakousky et al. (J. Power Sources
+#  342, 2017), Table 2 : delta_chrono = hausse de tension sur le test de 1009 h
+#  divisee par 1009 h (PAS un regime asymptotique). Valeurs cibles (uV/h /cell) :
+#     A const 1 A/cm2 = 0 ; B const 2 = 194 ; C dyn 2<->1 6h = 65 ;
+#     D dyn 2<->0 6h = 16 ; E dyn 2<->0 10min = 50.
+#
+#  Physique (Rakousky 3.1) : la degradation PEMWE a une part IRREVERSIBLE
+#  (permanente : corrosion Ti-PTL, hausse resistance ohmique) et une part
+#  REVERSIBLE qui se construit en fonctionnement et se RECUPERE quand le
+#  courant est interrompu :
+#     dV_irr/dt = a(i)                  [permanent]
+#     dV_rev/dt = b(i) - k(i) * V_rev   [se construit puis recupere]
+#     + s par demarrage (transition OFF -> ON)
+#  - La part irreversible a(i) suit une loi quadratique jusqu'a 2 A/cm2,
+#    ancree sur la cible longue duree DOE 2022 (4.8 uV/h a 2 A/cm2).
+#  - La part reversible b(i), identifiee sur le test court de Rakousky, est
+#    nulle sous 1 A/cm2 puis augmente jusqu'a 2 A/cm2.
+#  - Au-dela de 2 A/cm2, a(i) accelere sans plafond. Cette zone de fort courant
+#    est un scenario de stress : le coefficient est explicite et testable.
+#  - Recuperation k(i) fortement decroissante : ~instantanee a i~0 (reset a
+#    l'arret), ~nulle a i=1 A/cm2 (pas de recup en operation, conforme cellule
+#    C qui degrade presque comme du constant). Le terme idle/maintaining
+#    (1.5 uV/h, Lu et al. Table 4) est conserve, applique a tres faible P.
+#
+#  Le modele est INVARIANT en Ts (integration temporelle, V_rev close-form) et
+#  O(n) (etat reporte). Il distingue volontairement la cible irreversible
+#  longue duree des transitoires reversibles observes pendant 1009 h.
+#
+#  Parametres /cellule :
+ELY_REC = {
+    'a2': 4.8,       # uV/h    irreversible a 2 A/cm2 (DOE 2022)
+    'b2': 163.943,   # uV/h    generation reversible   a 2 A/cm2
+    # a(3 A/cm2) = 104.8 uV/h : ordre de grandeur des essais acceleres
+    # a fort courant. Parametre de scenario, a soumettre a sensibilite.
+    'high_current_accel': 100.0,  # uV/h/(A/cm2)^2 au-dela de 2 A/cm2
+    'k0': 213.206,   # 1/h     recuperation a i=0   (tau ~ 0.3 min)
+    'k1': 0.0021,    # 1/h     recuperation a i=1   (~nulle, tau ~ 470 h)
+    's' : 11.7,      # uV/cycle demarrage (OFF -> ON)
+    'idle': 1.5,     # uV/h    maintien a tres faible puissance (Lu et al.)
+    'scale': 1.0,
+}
+
+ELY_J1 = 1.0
+ELY_J2 = 2.0
+# Compatibilite DP legacy uniquement ; les boucles V10 utilisent j directement.
+ELY_F30 = ELY_J1 / ELY['j_L']
+ELY_F60 = ELY_J2 / ELY['j_L']
+UV_TO_PCT = (1e-6 / ELY_VOLTAGE_REFERENCE) * 100
+
+# ============================================================================
+#  [LEGACY / Pei et al. 2008]  Ancien modele PEMFC "classification par regime"
+# ----------------------------------------------------------------------------
+#  CONSERVE uniquement pour compatibilite : les modules DP (DP/, DP2/) importent
+#  encore ces constantes et reimplementent le modele de Pei inline (vectorise).
+#  Le nouveau modele reversible/irreversible (ci-dessous, get_cost_fc) NE les
+#  utilise PLUS. Pour migrer le DP vers le nouveau modele il faudra reecrire les
+#  dp_core.py / dp_aging.py -> hors scope de cette version (focalisee rule-based).
+FC_FHIGH = 0.80                 # seuil haute puissance (R3 : "80%")
+FC_FLOW  = 0.01                 # seuil idling / basse puissance (R3 : "1%")
+FC_ALPHA_ON_OFF = 1.96e-3       # / cycle  (start-stop)
+FC_ALPHA_HIGH   = 1.47e-3       # / heure  (haute puissance)
+FC_ALPHA_LOW    = 1.26e-3       # / heure  (idling)
+FC_ALPHA_SHIFT  = 5.93e-5       # / cycle  (transient)
+
+
+# ============================================================================
+#  MODELE DE DEGRADATION PEMFC : REVERSIBLE / IRREVERSIBLE + dependance au courant
+# ----------------------------------------------------------------------------
+#  Remplace le modele de Pei (4 regimes a coefficients fixes) par un modele
+#  a etats, structurellement SYMETRIQUE de celui de l'electrolyseur (_ely_advance)
+#  et calibre sur deux etudes recentes :
+#
+#   [McCay et al., J. Power Sources 665 (2026) 239011]  short-stack 10 cellules,
+#     profils maritimes (charge lente, load-levelling) = cas d'usage le plus
+#     proche d'un micro-reseau stationnaire. Quantifie la SEPARATION reversible /
+#     irreversible a j_moyen = 0.5 A/cm2 (par cellule) :
+#        - reversible  : 52 uV/h (charge constante)  vs 22 uV/h (dynamique)
+#                        -> composante DOMINANTE, recuperable au repos/arret.
+#        - irreversible: 1.2 uV/h (statique) -> 4.8 uV/h (dynamique)
+#                        -> perte PERMANENTE = ~20% de perte d'ECSA cathode / 1500 h
+#                        (murissement d'Ostwald), croit avec la densite de courant.
+#
+#   [Colombo et al., J. Power Sources 553 (2023) 232246]  cellule segmentee,
+#     1000 h de cycle automobile realiste (ID-FAST) avec stops de recuperation.
+#     Table 4 : taux de perte de tension operando CROISSANT avec j (MEA CCM B,
+#     etat de l'art, la plus durable) [uV/h] :
+#        j = 0.095 -> 2.4 ; 0.589 -> 13.5 ; 1.273 -> 21.9 ; 1.748 -> 31.7
+#     -> donne la FORME de la dependance au courant (remplace les seuils 1%/80%).
+#     Reversible ~ "few to 20 mV", recupere aux long-stops (CV a bas potentiel).
+#
+#  Physique retenue (par cellule, etats en uV) avec f = |P_fc| / P_fc_max :
+#     dV_irr/dt = a(f)                    [permanent : Ostwald / ECSA, ~ f^2]
+#     dV_rev/dt = b(f) - k(f) * V_rev     [se construit en charge, RECUPERE au repos]
+#     V_ss  += s   a chaque demarrage (OFF -> ON)        [permanent, severe]
+#     V_idle+= idle * dt  a tres basse puissance (haut potentiel, dissolution Pt)
+#  Hypothese de modelisation (documentee) : la recuperation du reversible est
+#  activee quand la FC est A L'ARRET (f ~ 0) -- ce qui, dans un systeme bien gere,
+#  correspond a une sequence d'arret avec purge/etape reductrice (McCay, Colombo
+#  recuperent par excursion a bas potentiel). C'est le levier naturel d'un
+#  micro-reseau (les periodes OFF de la FC sont abondantes). La recuperation par
+#  excursion a FORT courant (mecanisme McCay constant>dynamique) n'est PAS
+#  modelisee dans cette version -> a activer via k(f) si besoin (cf. note README).
+#
+#  Modele INVARIANT en Ts (V_rev en forme close sur le pas) et O(n) (etat reporte)
+#  -> comme l'ELY, la BOUCLE utilise _fc_advance (stateful), pas le subtract-trick.
+#
+#  Coefficients /cellule (ajustables ; defauts calibres McCay + Colombo) :
+FC_REC = {
+    'a_irr': 1.2,
+    'b_rev': 22.0,
+    'j_ref': 0.5,
+    'j_cap': 1.0,
+    'scale': 1.0,
+    'k_rest': 2.0,
+    'k_op': 0.002,
+    's': 20.0,
+    'idle': 3.0,
+}
+FC_F_OFF  = 0.01   # f en dessous duquel la FC est consideree "a l'arret" (recup).
+FC_F_IDLE = 0.05   # f en dessous duquel s'applique la penalite idle/haut potentiel.
+
+# References BoL au point nominal : critere EoL +/-10% de tension.
+_V_cell_ref_fc = FC_VOLTAGE_REFERENCE
+_V_cell_ref_ely = ELY_VOLTAGE_REFERENCE
+UV_TO_PCT_FC = (1e-6 / _V_cell_ref_fc) * 100
+
+
+def cost_fc_state_eur(V_irr, V_rev, V_ss, V_idle):
+    """Valeur financiere de l'etat courant d'une unite PEMFC [EUR]."""
+    deg_pct = (V_irr + V_rev + V_ss + V_idle) * UV_TO_PCT_FC
+    return float(deg_pct / ((1 - FC['SoH_EoL']) * 100) * FC['cost'])
+
+
+def cost_ely_state_eur(V_irr, V_rev, V_ss, V_idle):
+    """Valeur financiere de l'etat courant d'une unite PEMWE [EUR]."""
+    deg_pct = (V_irr + V_rev + V_ss + V_idle) * UV_TO_PCT
+    return float(deg_pct / ((1 - ELY['SoH_EoL']) * 100) * ELY['cost'])
+
+
+def get_cost_from_ledger(data):
+    """Cout de degradation total [EUR] d'une simulation a remplacements."""
+    ledger = data.get("degradation_ledger")
+    if ledger is None:
+        raise RuntimeError("simulation sans degradation_ledger")
+    total = ledger.get("total_eur", {})
+    if set(total) != {"bat", "fc", "ely"}:
+        raise RuntimeError("ledger incomplet : %s" % sorted(total))
+    return float(sum(total.values()))
+
+
+def _fc_pmax(alpha_fc):
+    return fc_pmax(alpha_fc)
+
+
+def _ely_pmax(alpha_ely):
+    return ely_pmax(alpha_ely)
+
+
+def _fc_rates(j):
+    # Taux PEMFC en fonction de la densite de courant j [A/cm2].
+    p = FC_REC
+    ratio = min(max(float(j), 0.0), p['j_cap']) / p['j_ref']
+    a = p['scale'] * p['a_irr'] * ratio * ratio
+    b = p['scale'] * p['b_rev'] * ratio
+    k = p['k_rest'] if j <= 1e-9 else p['k_op']
+    return a, b, k
+
+
+def _fc_advance(V_irr, V_rev, P_curr, P_prev, P_max, Ts_h, alpha=0.0):
+    Pc, Pp = abs(P_curr), abs(P_prev)
+    j = fc_current_density(Pc, alpha)
+    a, b, k = _fc_rates(j)
+    V_irr += a * Ts_h
+    if k > 1e-12:
+        Veq = b / k
+        V_rev = Veq + (V_rev - Veq) * np.exp(-k * Ts_h)
+    else:
+        V_rev += b * Ts_h
+    th_start = 0.0005 * P_max
+    d_ss = FC_REC['scale'] * FC_REC['s'] if (Pp < th_start and Pc >= th_start) else 0.0
+    th_idle, th_off = FC_F_IDLE * P_max, FC_F_OFF * P_max
+    d_idle = FC_REC['scale'] * FC_REC['idle'] * Ts_h if (th_off < Pc <= th_idle) else 0.0
+    return V_irr, V_rev, d_ss, d_idle
+
+
+def _ely_rates(j):
+    """Taux PEMWE (a irreversible, b reversible, k recuperation).
+
+    La branche j <= 2 A/cm2 est ancree sur une cible de durabilite longue
+    duree. La branche j > 2 A/cm2 represente explicitement l'acceleration
+    irreversible a fort courant ; elle n'est jamais plafonnee.
+    """
+    p = ELY_REC
+    j = max(float(j), 0.0)
+    if j <= 0.0:
+        return 0.0, 0.0, p['k0']
+
+    if j <= ELY_J2:
+        a = p['scale'] * p['a2'] * (j / ELY_J2) ** 2
+    else:
+        a = p['scale'] * (
+            p['a2'] + p['high_current_accel'] * (j - ELY_J2) ** 2
+        )
+
+    if j <= ELY_J1:
+        b = 0.0
+        k = p['k0'] + (p['k1'] - p['k0']) * j / ELY_J1
+    elif j <= ELY_J2:
+        frac = (j - ELY_J1) / (ELY_J2 - ELY_J1)
+        b = p['scale'] * p['b2'] * frac
+        k = p['k1'] * (1.0 - frac)
+    else:
+        b = p['scale'] * p['b2']
+        k = 0.0
+    return a, b, k
+
+
+def _ely_advance(V_irr, V_rev, P_curr, P_prev, P_max, Ts_h, alpha=0.0):
+    Pc, Pp = abs(P_curr), abs(P_prev)
+    j = ely_current_density(Pc, alpha)
+    a, b, k = _ely_rates(j)
+    V_irr += a * Ts_h
+    if k > 1e-12:
+        Veq = b / k
+        V_rev = Veq + (V_rev - Veq) * np.exp(-k * Ts_h)
+    else:
+        V_rev += b * Ts_h
+    th_start = 0.0005 * P_max
+    d_ss = ELY_REC['scale'] * ELY_REC['s'] if (Pp < th_start and Pc >= th_start) else 0.0
+    th_idle = 0.01 * P_max
+    d_idle = ELY_REC['scale'] * ELY_REC['idle'] * Ts_h if (0.0 < Pc <= th_idle) else 0.0
+    return V_irr, V_rev, d_ss, d_idle
+
+
+def get_cost_ely(alpha_ely, P_ely):
+    """Cout de degradation PEMWE (modele recuperation reversible/irreversible).
+
+    Integre l'etat (V_irr, V_rev) depuis 0 sur le tableau fourni. Utilise tel
+    quel sur tableau complet par get_cost_total ; la BOUCLE n'appelle pas cette
+    fonction (etat reporte via _ely_advance) car le modele est stateful.
+
+    Retourne : (cost_financial_EUR, deg_startstop_%, deg_maintaining_%,
+                deg_reversible_%, deg_irreversible_%).
+    """
+    P_ely = np.atleast_1d(np.abs(P_ely)).astype(float)
+    alpha_ely = np.atleast_1d(alpha_ely).astype(float)
+    n = len(P_ely)
+    if n == 0:
+        return 0, 0, 0, 0, 0
+    Ts_h = LOAD['Ts'] / 3600.0
+    Pmax = _ely_pmax(alpha_ely)
+    Pmax = np.full(n, Pmax) if np.ndim(Pmax) == 0 else np.asarray(Pmax)
+    if len(Pmax) != n:
+        Pmax = np.full(n, Pmax.flat[0])
+
+    V_irr = 0.0
+    V_rev = 0.0
+    V_ss = 0.0
+    V_idle = 0.0
+    P_prev = P_ely[0]
+    for idx in range(n):
+        V_irr, V_rev, d_ss, d_idle = _ely_advance(V_irr, V_rev, P_ely[idx], P_prev, Pmax[idx], Ts_h, alpha_ely[idx])
+        V_ss += d_ss
+        V_idle += d_idle
+        P_prev = P_ely[idx]
+
+    deg_irr  = V_irr  * UV_TO_PCT
+    deg_rev  = V_rev  * UV_TO_PCT
+    deg_ss   = V_ss   * UV_TO_PCT
+    deg_idle = V_idle * UV_TO_PCT
+    deg_pct  = deg_irr + deg_rev + deg_ss + deg_idle
+
+    cost_financial = deg_pct / ((1 - ELY['SoH_EoL']) * 100) * ELY['cost']
+    return cost_financial, deg_ss, deg_idle, deg_rev, deg_irr
+
+
+def get_cost_fc(alpha_fc, P_fc):
+    """Cout de degradation PEMFC (modele reversible/irreversible, cf. en-tete).
+
+    Integre l'etat (V_irr, V_rev) depuis 0 sur le tableau fourni -- utilise tel
+    quel par get_cost_total et les scripts batch. La BOUCLE n'appelle PAS cette
+    fonction (etat reporte via _fc_advance) car le modele est stateful, comme
+    l'ELY.
+
+    Retourne : (cost_financial_EUR, deg_startstop_%, deg_idle_%,
+                deg_reversible_%, deg_irreversible_%).
+    Positions symetriques de get_cost_ely (le 4e/5e element = reversible/irrev).
+    """
+    P_fc = np.atleast_1d(np.abs(P_fc)).astype(float)
+    alpha_fc = np.atleast_1d(alpha_fc).astype(float)
+    n = len(P_fc)
+    if n == 0:
+        return 0, 0, 0, 0, 0
+    Ts_h = LOAD['Ts'] / 3600.0
+    Pmax = _fc_pmax(alpha_fc)
+    Pmax = np.full(n, Pmax) if np.ndim(Pmax) == 0 else np.asarray(Pmax)
+    if len(Pmax) != n:
+        Pmax = np.full(n, Pmax.flat[0])
+
+    V_irr = 0.0
+    V_rev = 0.0
+    V_ss = 0.0
+    V_idle = 0.0
+    P_prev = P_fc[0]
+    for idx in range(n):
+        V_irr, V_rev, d_ss, d_idle = _fc_advance(V_irr, V_rev, P_fc[idx], P_prev, Pmax[idx], Ts_h, alpha_fc[idx])
+        V_ss += d_ss
+        V_idle += d_idle
+        P_prev = P_fc[idx]
+
+    deg_irr  = V_irr  * UV_TO_PCT_FC
+    deg_rev  = V_rev  * UV_TO_PCT_FC
+    deg_ss   = V_ss   * UV_TO_PCT_FC
+    deg_idle = V_idle * UV_TO_PCT_FC
+    deg_pct  = deg_irr + deg_rev + deg_ss + deg_idle
+
+    cost_financial = deg_pct / ((1 - FC['SoH_EoL']) * 100) * FC['cost']
+    return cost_financial, deg_ss, deg_idle, deg_rev, deg_irr
+
+def get_cost_total(alpha_fc, P_fc, alpha_ely, P_ely, P_bat, SoC, LOAD, BAT, FC, ELY, SoH_bat):
+    cost_bat = get_cost_bat(P_bat, SoC, SoH_bat)
+    cost_fc  = get_cost_fc(alpha_fc, P_fc)[0]
+    cost_ely = get_cost_ely(alpha_ely, P_ely)[0] 
+    
+    return cost_bat + cost_fc + cost_ely
+
+
+# ---------------------------------------------------------------------------
+# Surcharge V11 des deux fonctions publiques. Les definitions V10 ci-dessus
+# restent lisibles pour la comparaison historique, mais tout appel public en
+# V11 utilise le meme noyau hybride que la boucle et ne monetise que le
+# permanent. La perte reversible est tout de meme renvoyee pour diagnostic.
+from .degradation_v11 import (
+    advance_ely_power as _v11_advance_ely_power,
+    advance_fc_power as _v11_advance_fc_power,
+    new_ely_state as _v11_new_ely_state,
+    new_fc_state as _v11_new_fc_state,
+    state_cost_eur as _v11_state_cost_eur,
+)
+
+
+def _v11_alpha_array(alpha, n):
+    values = np.atleast_1d(alpha).astype(float)
+    if values.size == 1:
+        return np.full(n, values[0])
+    if values.size != n:
+        raise ValueError("alpha et puissance doivent avoir la meme longueur")
+    return values
+
+
+def get_cost_ely(alpha_ely, P_ely):
+    powers = np.atleast_1d(np.abs(P_ely)).astype(float)
+    if powers.size == 0:
+        return 0.0, 0.0, 0.0, 0.0, 0.0
+    alphas = _v11_alpha_array(alpha_ely, powers.size)
+    state = _v11_new_ely_state()
+    previous = powers[0]
+    for power, alpha in zip(powers, alphas):
+        state = _v11_advance_ely_power(
+            state, power, previous, alpha, LOAD["Ts"] / 3600.0
+        )
+        previous = power
+    irreversible = state["irreversible_uv"] * UV_TO_PCT
+    reversible = (
+        state["reversible_uv"] + state["breakin_uv"]
+    ) * UV_TO_PCT
+    starts = state["start_uv"] * UV_TO_PCT
+    idle = state["idle_uv"] * UV_TO_PCT
+    return _v11_state_cost_eur("ely", state), starts, idle, reversible, irreversible
+
+
+def get_cost_fc(alpha_fc, P_fc):
+    powers = np.atleast_1d(np.abs(P_fc)).astype(float)
+    if powers.size == 0:
+        return 0.0, 0.0, 0.0, 0.0, 0.0
+    alphas = _v11_alpha_array(alpha_fc, powers.size)
+    state = _v11_new_fc_state()
+    previous = powers[0]
+    for power, alpha in zip(powers, alphas):
+        state = _v11_advance_fc_power(
+            state, power, previous, alpha, LOAD["Ts"] / 3600.0
+        )
+        previous = power
+    irreversible = state["irreversible_uv"] * UV_TO_PCT_FC
+    reversible = state["reversible_uv"] * UV_TO_PCT_FC
+    starts = state["start_uv"] * UV_TO_PCT_FC
+    idle = state["idle_uv"] * UV_TO_PCT_FC
+    return _v11_state_cost_eur("fc", state), starts, idle, reversible, irreversible
+

@@ -1,0 +1,250 @@
+[
+  {
+    "label": "rb1_low50_high250",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.05,
+      "soc_high": 0.25
+    }
+  },
+  {
+    "label": "rb1_low50_high300",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.05,
+      "soc_high": 0.3
+    }
+  },
+  {
+    "label": "rb1_low50_high350",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.05,
+      "soc_high": 0.35
+    }
+  },
+  {
+    "label": "rb1_low50_high400",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.05,
+      "soc_high": 0.4
+    }
+  },
+  {
+    "label": "rb1_low50_high450",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.05,
+      "soc_high": 0.45
+    }
+  },
+  {
+    "label": "rb1_low50_high500",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.05,
+      "soc_high": 0.5
+    }
+  },
+  {
+    "label": "rb1_low100_high250",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.1,
+      "soc_high": 0.25
+    }
+  },
+  {
+    "label": "rb1_low100_high300",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.1,
+      "soc_high": 0.3
+    }
+  },
+  {
+    "label": "rb1_low100_high350",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.1,
+      "soc_high": 0.35
+    }
+  },
+  {
+    "label": "rb1_low100_high400",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.1,
+      "soc_high": 0.4
+    }
+  },
+  {
+    "label": "rb1_low100_high450",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.1,
+      "soc_high": 0.45
+    }
+  },
+  {
+    "label": "rb1_low100_high500",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.1,
+      "soc_high": 0.5
+    }
+  },
+  {
+    "label": "rb1_low150_high250",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.15,
+      "soc_high": 0.25
+    }
+  },
+  {
+    "label": "rb1_low150_high300",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.15,
+      "soc_high": 0.3
+    }
+  },
+  {
+    "label": "rb1_low150_high350",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.15,
+      "soc_high": 0.35
+    }
+  },
+  {
+    "label": "rb1_low150_high400",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.15,
+      "soc_high": 0.4
+    }
+  },
+  {
+    "label": "rb1_low150_high450",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.15,
+      "soc_high": 0.45
+    }
+  },
+  {
+    "label": "rb1_low150_high500",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.15,
+      "soc_high": 0.5
+    }
+  },
+  {
+    "label": "rb1_low200_high300",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.2,
+      "soc_high": 0.3
+    }
+  },
+  {
+    "label": "rb1_low200_high350",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.2,
+      "soc_high": 0.35
+    }
+  },
+  {
+    "label": "rb1_low200_high400",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.2,
+      "soc_high": 0.4
+    }
+  },
+  {
+    "label": "rb1_low200_high450",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.2,
+      "soc_high": 0.45
+    }
+  },
+  {
+    "label": "rb1_low200_high500",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.2,
+      "soc_high": 0.5
+    }
+  },
+  {
+    "label": "rb1_low250_high350",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.25,
+      "soc_high": 0.35
+    }
+  },
+  {
+    "label": "rb1_low250_high400",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.25,
+      "soc_high": 0.4
+    }
+  },
+  {
+    "label": "rb1_low250_high450",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.25,
+      "soc_high": 0.45
+    }
+  },
+  {
+    "label": "rb1_low250_high500",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.25,
+      "soc_high": 0.5
+    }
+  },
+  {
+    "label": "rb1_low300_high400",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.3,
+      "soc_high": 0.4
+    }
+  },
+  {
+    "label": "rb1_low300_high450",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.3,
+      "soc_high": 0.45
+    }
+  },
+  {
+    "label": "rb1_low300_high500",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.3,
+      "soc_high": 0.5
+    }
+  },
+  {
+    "label": "rb1_legacy_default_040_075",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.4,
+      "soc_high": 0.75
+    }
+  }
+]

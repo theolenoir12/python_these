@@ -1,0 +1,122 @@
+[
+  {
+    "label": "rb2_micro_fc5675_ely4600",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5675,
+      "ely_setpoint": 0.46
+    }
+  },
+  {
+    "label": "rb2_micro_fc5675_ely4625",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5675,
+      "ely_setpoint": 0.4625
+    }
+  },
+  {
+    "label": "rb2_micro_fc5675_ely4650",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5675,
+      "ely_setpoint": 0.465
+    }
+  },
+  {
+    "label": "rb2_micro_fc5675_ely4675",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5675,
+      "ely_setpoint": 0.4675
+    }
+  },
+  {
+    "label": "rb2_micro_fc5675_ely4700",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5675,
+      "ely_setpoint": 0.47
+    }
+  },
+  {
+    "label": "rb2_micro_fc5700_ely4600",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.46
+    }
+  },
+  {
+    "label": "rb2_micro_fc5700_ely4625",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.4625
+    }
+  },
+  {
+    "label": "rb2_micro_fc5700_ely4650",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.465
+    }
+  },
+  {
+    "label": "rb2_micro_fc5700_ely4675",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.4675
+    }
+  },
+  {
+    "label": "rb2_micro_fc5700_ely4700",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.47
+    }
+  },
+  {
+    "label": "rb2_micro_fc5725_ely4600",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5725,
+      "ely_setpoint": 0.46
+    }
+  },
+  {
+    "label": "rb2_micro_fc5725_ely4625",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5725,
+      "ely_setpoint": 0.4625
+    }
+  },
+  {
+    "label": "rb2_micro_fc5725_ely4650",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5725,
+      "ely_setpoint": 0.465
+    }
+  },
+  {
+    "label": "rb2_micro_fc5725_ely4675",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5725,
+      "ely_setpoint": 0.4675
+    }
+  },
+  {
+    "label": "rb2_micro_fc5725_ely4700",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5725,
+      "ely_setpoint": 0.47
+    }
+  }
+]

@@ -1,0 +1,218 @@
+[
+  {
+    "label": "rb2_fc40_ely30",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.4,
+      "ely_setpoint": 0.3
+    }
+  },
+  {
+    "label": "rb2_fc40_ely40",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.4,
+      "ely_setpoint": 0.4
+    }
+  },
+  {
+    "label": "rb2_fc40_ely50",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.4,
+      "ely_setpoint": 0.5
+    }
+  },
+  {
+    "label": "rb2_fc40_ely60",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.4,
+      "ely_setpoint": 0.6
+    }
+  },
+  {
+    "label": "rb2_fc40_ely70",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.4,
+      "ely_setpoint": 0.7
+    }
+  },
+  {
+    "label": "rb2_fc50_ely30",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5,
+      "ely_setpoint": 0.3
+    }
+  },
+  {
+    "label": "rb2_fc50_ely40",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5,
+      "ely_setpoint": 0.4
+    }
+  },
+  {
+    "label": "rb2_fc50_ely50",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5,
+      "ely_setpoint": 0.5
+    }
+  },
+  {
+    "label": "rb2_fc50_ely60",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5,
+      "ely_setpoint": 0.6
+    }
+  },
+  {
+    "label": "rb2_fc50_ely70",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5,
+      "ely_setpoint": 0.7
+    }
+  },
+  {
+    "label": "rb2_fc60_ely30",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.6,
+      "ely_setpoint": 0.3
+    }
+  },
+  {
+    "label": "rb2_fc60_ely40",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.6,
+      "ely_setpoint": 0.4
+    }
+  },
+  {
+    "label": "rb2_fc60_ely50",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.6,
+      "ely_setpoint": 0.5
+    }
+  },
+  {
+    "label": "rb2_fc60_ely60",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.6,
+      "ely_setpoint": 0.6
+    }
+  },
+  {
+    "label": "rb2_fc60_ely70",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.6,
+      "ely_setpoint": 0.7
+    }
+  },
+  {
+    "label": "rb2_fc70_ely30",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.7,
+      "ely_setpoint": 0.3
+    }
+  },
+  {
+    "label": "rb2_fc70_ely40",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.7,
+      "ely_setpoint": 0.4
+    }
+  },
+  {
+    "label": "rb2_fc70_ely50",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.7,
+      "ely_setpoint": 0.5
+    }
+  },
+  {
+    "label": "rb2_fc70_ely60",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.7,
+      "ely_setpoint": 0.6
+    }
+  },
+  {
+    "label": "rb2_fc70_ely70",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.7,
+      "ely_setpoint": 0.7
+    }
+  },
+  {
+    "label": "rb2_fc80_ely30",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.8,
+      "ely_setpoint": 0.3
+    }
+  },
+  {
+    "label": "rb2_fc80_ely40",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.8,
+      "ely_setpoint": 0.4
+    }
+  },
+  {
+    "label": "rb2_fc80_ely50",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.8,
+      "ely_setpoint": 0.5
+    }
+  },
+  {
+    "label": "rb2_fc80_ely60",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.8,
+      "ely_setpoint": 0.6
+    }
+  },
+  {
+    "label": "rb2_fc80_ely70",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.8,
+      "ely_setpoint": 0.7
+    }
+  },
+  {
+    "label": "rb2_original_059_049",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.59,
+      "ely_setpoint": 0.49
+    }
+  },
+  {
+    "label": "rb2_old_retune_057_045",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.45
+    }
+  }
+]

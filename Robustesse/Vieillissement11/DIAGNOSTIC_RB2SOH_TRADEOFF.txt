@@ -1,0 +1,31 @@
+DIAGNOSTIC RB2(SoH) : TRADE-OFF LPSP / DEGRADATION
+===================================================
+
+Loi retenue : facteur = 1 - strength * usure_normalisee^shape
+usure_normalisee = (1 - SoH) / (1 - SoH_EoL)
+
+Reference RB2 :
+  LPSP = 0.775021 % ; degradation = 63.374613 kEUR ; unifie = 75.550078 kEUR
+
+Point Pareto retenu sous LPSP <= 1.10 % :
+  LPSP = 1.097601 % ; degradation = 62.208381 kEUR ; unifie = 79.451545 kEUR
+  delta LPSP = +0.322581 point ; delta degradation = -1.166232 kEUR (-1.84 %)
+  VoLL seuil de rentabilite = 0.690 EUR/kWh
+  parametres = {"ely_setpoint": 0.49, "fc_setpoint": 0.59, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.25, "soh_strength_fc": 0.25}
+
+Decomposition mecaniste RB2 -> point Pareto :
+  bat : 42.919480 -> 44.030039 kEUR (delta +1.110559)
+  fc : 5.161095 -> 4.481094 kEUR (delta -0.680002)
+  ely : 15.294038 -> 13.697248 kEUR (delta -1.596790)
+  densite moyenne FC active : 0.5645 -> 0.4769 A/cm2
+  densite moyenne ELY active : 1.8611 -> 1.6479 A/cm2
+  demarrages FC : 9600 -> 9684 ; ELY : 9024 -> 9124
+
+Minimum de degradation de la grille :
+  LPSP = 2.279443 % ; degradation = 58.897469 kEUR (-7.06 %)
+  parametres = {"ely_setpoint": 0.49, "fc_setpoint": 0.59, "soh_mode": "normalized_wear", "soh_shape_ely": 1.0, "soh_shape_fc": 1.0, "soh_strength_ely": 0.75, "soh_strength_fc": 0.5}
+
+Conclusion : le front contient 23 points non domines. Avec VoLL=3 EUR/kWh,
+le minimum du cout unifie reste RB2 ; la couche SoH n'est donc pas
+economiquement rentable sous la ponderation actuelle, bien qu'elle reduise
+effectivement la degradation.

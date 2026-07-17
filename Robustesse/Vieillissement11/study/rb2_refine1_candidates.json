@@ -1,0 +1,202 @@
+[
+  {
+    "label": "rb2_ref_fc550_ely450",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.55,
+      "ely_setpoint": 0.45
+    }
+  },
+  {
+    "label": "rb2_ref_fc550_ely470",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.55,
+      "ely_setpoint": 0.47
+    }
+  },
+  {
+    "label": "rb2_ref_fc550_ely490",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.55,
+      "ely_setpoint": 0.49
+    }
+  },
+  {
+    "label": "rb2_ref_fc550_ely510",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.55,
+      "ely_setpoint": 0.51
+    }
+  },
+  {
+    "label": "rb2_ref_fc550_ely530",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.55,
+      "ely_setpoint": 0.53
+    }
+  },
+  {
+    "label": "rb2_ref_fc570_ely450",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.45
+    }
+  },
+  {
+    "label": "rb2_ref_fc570_ely470",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.47
+    }
+  },
+  {
+    "label": "rb2_ref_fc570_ely490",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.49
+    }
+  },
+  {
+    "label": "rb2_ref_fc570_ely510",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.51
+    }
+  },
+  {
+    "label": "rb2_ref_fc570_ely530",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.53
+    }
+  },
+  {
+    "label": "rb2_ref_fc590_ely450",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.59,
+      "ely_setpoint": 0.45
+    }
+  },
+  {
+    "label": "rb2_ref_fc590_ely470",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.59,
+      "ely_setpoint": 0.47
+    }
+  },
+  {
+    "label": "rb2_ref_fc590_ely490",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.59,
+      "ely_setpoint": 0.49
+    }
+  },
+  {
+    "label": "rb2_ref_fc590_ely510",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.59,
+      "ely_setpoint": 0.51
+    }
+  },
+  {
+    "label": "rb2_ref_fc590_ely530",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.59,
+      "ely_setpoint": 0.53
+    }
+  },
+  {
+    "label": "rb2_ref_fc610_ely450",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.61,
+      "ely_setpoint": 0.45
+    }
+  },
+  {
+    "label": "rb2_ref_fc610_ely470",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.61,
+      "ely_setpoint": 0.47
+    }
+  },
+  {
+    "label": "rb2_ref_fc610_ely490",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.61,
+      "ely_setpoint": 0.49
+    }
+  },
+  {
+    "label": "rb2_ref_fc610_ely510",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.61,
+      "ely_setpoint": 0.51
+    }
+  },
+  {
+    "label": "rb2_ref_fc610_ely530",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.61,
+      "ely_setpoint": 0.53
+    }
+  },
+  {
+    "label": "rb2_ref_fc630_ely450",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.63,
+      "ely_setpoint": 0.45
+    }
+  },
+  {
+    "label": "rb2_ref_fc630_ely470",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.63,
+      "ely_setpoint": 0.47
+    }
+  },
+  {
+    "label": "rb2_ref_fc630_ely490",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.63,
+      "ely_setpoint": 0.49
+    }
+  },
+  {
+    "label": "rb2_ref_fc630_ely510",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.63,
+      "ely_setpoint": 0.51
+    }
+  },
+  {
+    "label": "rb2_ref_fc630_ely530",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.63,
+      "ely_setpoint": 0.53
+    }
+  }
+]

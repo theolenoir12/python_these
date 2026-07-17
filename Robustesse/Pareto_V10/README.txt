@@ -17,16 +17,17 @@ leur analyse n'a pas été refaite avec Vieillissement10.
 SOURCES
 -------
   ../Vieillissement10/rank_base_strategies_25y.txt
-  ../Vieillissement10/Optimization_results_validated/optimization_soh_validated25.csv
-  ../Vieillissement10/Optimization_results_validated/optimization_soh_validated_shapes25.csv
+  ../Vieillissement10/Optimization_results_psi1/optimization_soh_validated25.csv
+  ../Vieillissement10/Optimization_results_psi1/optimization_soh_validated_shapes25.csv
 
 Le script relit ces résultats, reconstruit le front non dominé, sélectionne
 RB2(SoH) sous la contrainte d'iso-coût unifié et recalcule la pente des
-iso-coûts pour VoLL=3 EUR/kWh. Avec les lois validées, le point tracé comme
-compromis est (strength_fc, strength_ely, shape)=(0.05, 0.05, 1) : il réduit
-la dégradation de 1.23 %, augmente la LPSP de 0.016 point et diminue le coût
-unifié de 0.13 %. Le meilleur coût unifié observé reste un autre point du
-front, (0.025, 0, 2), avec un gain limité à 0.79 %.
+iso-couts pour VoLL=3 EUR/kWh. Le cas nominal utilise le plancher batterie
+psi=1 sous 1C. Le point trace comme compromis est
+(strength_fc, strength_ely, shape)=(0.025, 0.025, 1) : la degradation ne baisse
+que de 0.029 % sous l'iso-cout. Le meilleur cout unifie observe est le point
+(0.025, 0, 4), avec un gain limite a 0.30 %. Une baisse de degradation proche
+de 1 % demande environ +4.6 % de cout unifie.
 
 UTILISATION
 -----------

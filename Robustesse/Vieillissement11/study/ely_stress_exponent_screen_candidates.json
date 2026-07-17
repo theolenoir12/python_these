@@ -1,0 +1,12 @@
+[
+  {"label":"ely_stress_exp1_rb2","kind":"rb2","params":{"fc_setpoint":0.574,"ely_setpoint":0.465},"model":{"ely":{"stress_exponent":1.0}}},
+  {"label":"ely_stress_exp1_rb1","kind":"rb1","params":{"soc_low":0.2,"soc_high":0.4},"model":{"ely":{"stress_exponent":1.0}}},
+  {"label":"ely_stress_exp2_rb2","kind":"rb2","params":{"fc_setpoint":0.574,"ely_setpoint":0.465},"model":{"ely":{"stress_exponent":2.0}}},
+  {"label":"ely_stress_exp2_rb1","kind":"rb1","params":{"soc_low":0.2,"soc_high":0.4},"model":{"ely":{"stress_exponent":2.0}}},
+  {"label":"ely_stress_exp3_rb2","kind":"rb2","params":{"fc_setpoint":0.574,"ely_setpoint":0.465},"model":{"ely":{"stress_exponent":3.0}}},
+  {"label":"ely_stress_exp3_rb1","kind":"rb1","params":{"soc_low":0.2,"soc_high":0.4},"model":{"ely":{"stress_exponent":3.0}}},
+  {"label":"ely_stress_exp4_rb2","kind":"rb2","params":{"fc_setpoint":0.574,"ely_setpoint":0.465},"model":{"ely":{"stress_exponent":4.0}}},
+  {"label":"ely_stress_exp4_rb1","kind":"rb1","params":{"soc_low":0.2,"soc_high":0.4},"model":{"ely":{"stress_exponent":4.0}}},
+  {"label":"ely_stress_exp6_rb2","kind":"rb2","params":{"fc_setpoint":0.574,"ely_setpoint":0.465},"model":{"ely":{"stress_exponent":6.0}}},
+  {"label":"ely_stress_exp6_rb1","kind":"rb1","params":{"soc_low":0.2,"soc_high":0.4},"model":{"ely":{"stress_exponent":6.0}}}
+]

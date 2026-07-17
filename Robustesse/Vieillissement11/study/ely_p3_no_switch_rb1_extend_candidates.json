@@ -1,0 +1,287 @@
+[
+  {
+    "label": "elyp3_ns_r1b_l19_h41",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.19,
+      "soc_high": 0.41
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l19_h43",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.19,
+      "soc_high": 0.43
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l19_h45",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.19,
+      "soc_high": 0.45
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l19_h47",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.19,
+      "soc_high": 0.47
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l19_h49",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.19,
+      "soc_high": 0.49
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l20_h41",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.2,
+      "soc_high": 0.41
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l20_h43",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.2,
+      "soc_high": 0.43
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l20_h45",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.2,
+      "soc_high": 0.45
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l20_h47",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.2,
+      "soc_high": 0.47
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l20_h49",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.2,
+      "soc_high": 0.49
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l21_h41",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.21,
+      "soc_high": 0.41
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l21_h43",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.21,
+      "soc_high": 0.43
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l21_h45",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.21,
+      "soc_high": 0.45
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l21_h47",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.21,
+      "soc_high": 0.47
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  },
+  {
+    "label": "elyp3_ns_r1b_l21_h49",
+    "kind": "rb1",
+    "params": {
+      "soc_low": 0.21,
+      "soc_high": 0.49
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3,
+        "start_uv": 0,
+        "idle_uvph": 0
+      },
+      "fc": {
+        "start_uv": 0,
+        "idle_uvph": 0
+      }
+    }
+  }
+]

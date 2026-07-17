@@ -25,8 +25,8 @@ HERE = Path(__file__).resolve().parent
 V10 = HERE.parent / "Vieillissement10"
 BASE_RESULTS = V10 / "rank_base_strategies_25y.txt"
 SOH_RESULTS = (
-    V10 / "Optimization_results_validated" / "optimization_soh_validated25.csv",
-    V10 / "Optimization_results_validated" / "optimization_soh_validated_shapes25.csv",
+    V10 / "Optimization_results_psi1" / "optimization_soh_validated25.csv",
+    V10 / "Optimization_results_psi1" / "optimization_soh_validated_shapes25.csv",
 )
 FIG_DIR = HERE / "figures"
 VOLL_EUR_PER_KWH = 3.0
@@ -218,12 +218,12 @@ def build_figure(family, iso_cost, points, front, slope):
             path_effects=LABEL_STROKE, zorder=6,
         )
 
-    inset_xlim = (0.55, 2.05)
-    inset_ylim = (18.0, 27.5)
+    inset_xlim = (0.60, 2.40)
+    inset_ylim = (56.5, 71.5)
     if iso_cost:
-        draw_isocost(ax, slope, range(20, 241, 20), ax.get_xlim(), ax.get_ylim())
+        draw_isocost(ax, slope, range(60, 301, 20), ax.get_xlim(), ax.get_ylim())
         draw_isocost(
-            axins, slope, [30, 35, 40, 45, 50, 55, 60], inset_xlim, inset_ylim
+            axins, slope, [70, 75, 80, 85, 90, 95, 100], inset_xlim, inset_ylim
         )
     else:
         axins.set_xlim(inset_xlim)

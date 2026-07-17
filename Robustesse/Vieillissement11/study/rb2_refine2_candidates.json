@@ -1,0 +1,202 @@
+[
+  {
+    "label": "rb2_final_fc560_ely460",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.56,
+      "ely_setpoint": 0.46
+    }
+  },
+  {
+    "label": "rb2_final_fc560_ely465",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.56,
+      "ely_setpoint": 0.465
+    }
+  },
+  {
+    "label": "rb2_final_fc560_ely470",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.56,
+      "ely_setpoint": 0.47
+    }
+  },
+  {
+    "label": "rb2_final_fc560_ely475",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.56,
+      "ely_setpoint": 0.475
+    }
+  },
+  {
+    "label": "rb2_final_fc560_ely480",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.56,
+      "ely_setpoint": 0.48
+    }
+  },
+  {
+    "label": "rb2_final_fc565_ely460",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.565,
+      "ely_setpoint": 0.46
+    }
+  },
+  {
+    "label": "rb2_final_fc565_ely465",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.565,
+      "ely_setpoint": 0.465
+    }
+  },
+  {
+    "label": "rb2_final_fc565_ely470",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.565,
+      "ely_setpoint": 0.47
+    }
+  },
+  {
+    "label": "rb2_final_fc565_ely475",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.565,
+      "ely_setpoint": 0.475
+    }
+  },
+  {
+    "label": "rb2_final_fc565_ely480",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.565,
+      "ely_setpoint": 0.48
+    }
+  },
+  {
+    "label": "rb2_final_fc570_ely460",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.46
+    }
+  },
+  {
+    "label": "rb2_final_fc570_ely465",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.465
+    }
+  },
+  {
+    "label": "rb2_final_fc570_ely470",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.47
+    }
+  },
+  {
+    "label": "rb2_final_fc570_ely475",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.475
+    }
+  },
+  {
+    "label": "rb2_final_fc570_ely480",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57,
+      "ely_setpoint": 0.48
+    }
+  },
+  {
+    "label": "rb2_final_fc575_ely460",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.575,
+      "ely_setpoint": 0.46
+    }
+  },
+  {
+    "label": "rb2_final_fc575_ely465",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.575,
+      "ely_setpoint": 0.465
+    }
+  },
+  {
+    "label": "rb2_final_fc575_ely470",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.575,
+      "ely_setpoint": 0.47
+    }
+  },
+  {
+    "label": "rb2_final_fc575_ely475",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.575,
+      "ely_setpoint": 0.475
+    }
+  },
+  {
+    "label": "rb2_final_fc575_ely480",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.575,
+      "ely_setpoint": 0.48
+    }
+  },
+  {
+    "label": "rb2_final_fc580_ely460",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.58,
+      "ely_setpoint": 0.46
+    }
+  },
+  {
+    "label": "rb2_final_fc580_ely465",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.58,
+      "ely_setpoint": 0.465
+    }
+  },
+  {
+    "label": "rb2_final_fc580_ely470",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.58,
+      "ely_setpoint": 0.47
+    }
+  },
+  {
+    "label": "rb2_final_fc580_ely475",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.58,
+      "ely_setpoint": 0.475
+    }
+  },
+  {
+    "label": "rb2_final_fc580_ely480",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.58,
+      "ely_setpoint": 0.48
+    }
+  }
+]

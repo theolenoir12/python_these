@@ -1,0 +1,758 @@
+[
+  {
+    "label": "elyp3_soh_fc_self_m0050_s2",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.005,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 2,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0050_s4",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.005,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 4,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0050_s6",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.005,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 6,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0050_s8",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.005,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 8,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0075_s2",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0075,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 2,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0075_s4",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0075,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 4,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0075_s6",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0075,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 6,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0075_s8",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0075,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 8,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0100_s2",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.01,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 2,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0100_s4",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.01,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 4,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0100_s6",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.01,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 6,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0100_s8",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.01,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 8,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0125_s2",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0125,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 2,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0125_s4",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0125,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 4,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0125_s6",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0125,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 6,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0125_s8",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0125,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 8,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0150_s2",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.015,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 2,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0150_s4",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.015,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 4,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0150_s6",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.015,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 6,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0150_s8",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.015,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 8,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0175_s2",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0175,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 2,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0175_s4",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0175,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 4,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0175_s6",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0175,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 6,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0175_s8",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0175,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 8,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0200_s2",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.02,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 2,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0200_s4",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.02,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 4,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0200_s6",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.02,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 6,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0200_s8",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.02,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 8,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0225_s2",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0225,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 2,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0225_s4",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0225,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 4,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0225_s6",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0225,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 6,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0225_s8",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.0225,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 8,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0250_s2",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.025,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 2,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0250_s4",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.025,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 4,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0250_s6",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.025,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 6,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  },
+  {
+    "label": "elyp3_soh_fc_self_m0250_s8",
+    "kind": "rb2_soh",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465,
+      "fc_self": -0.025,
+      "fc_from_bat": 0,
+      "fc_from_ely": 0,
+      "ely_self": 0,
+      "ely_from_bat": 0,
+      "ely_from_fc": 0,
+      "shape": 8,
+      "soh_source": "permanent"
+    },
+    "model": {
+      "ely": {
+        "stress_exponent": 3
+      }
+    }
+  }
+]

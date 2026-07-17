@@ -1,0 +1,20 @@
+[
+  {"label":"noswrb1_l180_h450","kind":"rb1","params":{"soc_low":0.18,"soc_high":0.45},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l180_h480","kind":"rb1","params":{"soc_low":0.18,"soc_high":0.48},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l180_h510","kind":"rb1","params":{"soc_low":0.18,"soc_high":0.51},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l180_h540","kind":"rb1","params":{"soc_low":0.18,"soc_high":0.54},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l180_h570","kind":"rb1","params":{"soc_low":0.18,"soc_high":0.57},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l180_h600","kind":"rb1","params":{"soc_low":0.18,"soc_high":0.60},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l200_h450","kind":"rb1","params":{"soc_low":0.20,"soc_high":0.45},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l200_h480","kind":"rb1","params":{"soc_low":0.20,"soc_high":0.48},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l200_h510","kind":"rb1","params":{"soc_low":0.20,"soc_high":0.51},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l200_h540","kind":"rb1","params":{"soc_low":0.20,"soc_high":0.54},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l200_h570","kind":"rb1","params":{"soc_low":0.20,"soc_high":0.57},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l200_h600","kind":"rb1","params":{"soc_low":0.20,"soc_high":0.60},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l220_h450","kind":"rb1","params":{"soc_low":0.22,"soc_high":0.45},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l220_h480","kind":"rb1","params":{"soc_low":0.22,"soc_high":0.48},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l220_h510","kind":"rb1","params":{"soc_low":0.22,"soc_high":0.51},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l220_h540","kind":"rb1","params":{"soc_low":0.22,"soc_high":0.54},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l220_h570","kind":"rb1","params":{"soc_low":0.22,"soc_high":0.57},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}},
+  {"label":"noswrb1_l220_h600","kind":"rb1","params":{"soc_low":0.22,"soc_high":0.60},"model":{"fc":{"start_uv":0.0,"idle_uvph":0.0},"ely":{"start_uv":0.0,"idle_uvph":0.0}}}
+]

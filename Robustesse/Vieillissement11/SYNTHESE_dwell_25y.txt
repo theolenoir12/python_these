@@ -1,0 +1,161 @@
+================================================================================
+
+STATUT AU 2026-07-11 : ARCHIVE LEGACY PRE-CORRECTION (audit du 2026-07-11)
+--------------------------------------------------------------------------------
+Le job 214941 a tourne sur le moteur PRE-CORRECTION (rejeu du pas de
+remplacement sur l'unite neuve ; metrique de cout sur trace complete sans
+tous les resets). Pertinence pour CE banc :
+  - le fix get_lol (LOL creditant une FC/ELY hors service) est SANS EFFET
+    attendu ici : P4 n'utilise pas le mecanisme `defaillances` ;
+  - le rejeu du pas de remplacement et la metrique trace-complete sont
+    COMMUNS aux quatre familles comparees (meme moteur, meme metrique) :
+    biais de mode commun sur les ECARTS, niveaux a regenerer ;
+  - le diagnostic (ii) (parts ss/idle/rev/irr) reste en trace complete par
+    construction (parts relatives, information ordinale).
+  - reserve additionnelle : le bruit AR(1) etait reinitialise a chaque decision.
+    Une graine ne definissait donc pas une trajectoire horaire commune aux N ;
+    les comparaisons d'horizons ne beneficiaient pas de CRN stricts.
+RERUN 215065 INVALIDE : toutes les trajectoires atteintes ont echoue au
+plancher H2 sur une inversion de LUT legerement incoherente avec la transition.
+Le banc courant corrige ce point, pre-genere une trajectoire AR(1) persistante
+commune aux N, echoue avec un code non nul si un worker manque et ecrit dans
+runs/p4_dwell_<empreinte>. Un smoke 1 an passe, mais le 25 ans doit etre
+resoumis apres l'invariance ; aucun chiffre corrige n'est encore acquis.
+CONDITIONNALITE VoLL : contrairement aux increments P1/P3 (qui changent de
+signe avec la VoLL, cf. STATISTIQUES_APPARIEES_P1_P3.txt), le point dwell
+N=4 DOMINE la base (LPSP ET degradation meilleures) : le SIGNE de son gain
+est VoLL-invariant ; seule l'amplitude change (arithmetique de dominance sur
+les sorties legacy : ~-0.97 / -1.90 / -5.2 kEUR a VoLL = 1 / 3 / 10).
+L'OPTIMUM N* et la position de la falaise restent a re-verifier par VoLL.
+--------------------------------------------------------------------------------
+SYNTHESE -- P4 : FILTRE PREVISIONNEL DE DEMARRAGE ELY (+ diagnostic reversible)
+Dossier : Robustesse/Vieillissement9_4/     Redige : 2026-07-11
+Donnees : dwell_ely_25y.txt (job meso 214941 : 25 ans, monde nominal, base
+          RB2(SoH), N = {2,4,6,8,12} h, 32 graines de bruit/N, AR(1) rho=0.8
+          calibre backtest LSTM 18 h, VoLL=3). Banc : bench_dwell_ely.py.
+Contexte : proposition P4 de ../ANALYSE_CRITIQUE_integration_vieillissement.txt.
+          P5 (reserve H2 saisonniere) ecartee : contexte equatorial, pas de
+          cycle annuel du stock H2 a exploiter.
+================================================================================
+
+0. RESUME (chiffres legacy, a confirmer au rerun corrige)
+--------------------------------------------------------------------------------
+La regle "ne demarrer l'electrolyseur que si le surplus prevu depasse le
+setpoint pendant au moins N heures" est le meilleur levier previsionnel
+mesure dans la these : a N = 4 h, -2.44 kEUR avec prevision parfaite et
+-1.90 +/- 0.10 kEUR sous bruit realiste (~78 % du gain omniscient conserve),
+en GAGNANT SUR LES DEUX AXES (LPSP 2.91 -> 2.74 % ET degradation 58.02 ->
+57.52 kEUR : le point DOMINE la base -- d'ou la VoLL-invariance du signe,
+cf. statut). A comparer aux -0.38 kEUR de la pre-charge RB2(Pred) : ~x5, et
+l'information exploitee est plus robuste au bruit (persistance des GROS
+surplus de mi-journee, signal >> sigma, contre le signe d'une energie nette
+marginale). Le levier a une FALAISE nette a N >= 8 h (le filtre tue la
+chaine H2) : la borne de faisabilite est fixee par la distribution des
+durees de surplus, une propriete du gisement solaire local.
+
+1. DIAGNOSTIC (ii) -- LE START-STOP EST LE GISEMENT, PAS LE REVERSIBLE
+--------------------------------------------------------------------------------
+Sur le run de base (25 ans, decomposition standalone trace complete -- parts
+relatives) :
+  ELY : degradation totale 8.10 % dont START-STOP 7.17 (89 %!), idle 0.88,
+        irreversible 0.05 (setpoint sous le genou -> usure operatoire ~nulle),
+        reversible RESIDUEL 0.000 (niveau moyen 0.0000 %, max 0.0007 %).
+  FC  : total 44.76 % dont start-stop 22.56 (50 %), irr 22.19,
+        reversible residuel 0.013 (0.0 %).
+Deux conclusions :
+  (a) les REPOS NATURELS recuperent deja tout le reversible (constantes de
+      recuperation rapides : tau ~ 0.3 min ELY, ~0.5 h FC + nuits/arrets
+      abondants) -> le levier "repos programmes pilotes par V_rev" n'a AUCUN
+      gisement. Resultat negatif acquis sans banc dedie.
+  (b) l'usure ELY est a 89 % du start-stop (9 193 demarrages sur 25 ans,
+      1.01/jour) : le SEUL levier de degradation ELY restant etait bien la
+      reduction des demarrages -- d'ou ce banc.
+
+2. RESULTATS DU FILTRE (32 graines/N pour le bruite ; base : 81.889 kEUR)
+--------------------------------------------------------------------------------
+    famille    N   unifie [kEUR]      d vs base   starts   LPSP %
+    minoff     2   81.158             -0.73        9 067    2.830
+    minoff     4   81.046             -0.84        8 863    2.838
+    minoff     8   80.803             -1.09        8 573    2.838   <- plafond
+    minoff    12   80.803             -1.09        8 573    (sature : demarrages
+                                                             diurnes, 1/jour)
+    omni       2   80.250             -1.64        8 626    2.737
+    omni       4   79.452             -2.44        8 083    2.684   <- OPTIMUM
+    omni       6   79.800             -2.09        7 486    2.795
+    omni       8  105.891            +24.00        4 664    6.324   <- FALAISE
+    omni      12  159.298            +77.41            0   13.527
+    noisy      2   80.653 +/- 0.09    -1.24        8 725    2.789
+    noisy      4   79.987 +/- 0.10    -1.90        8 266    2.739   <- OPTIMUM
+    noisy      6   80.865 +/- 0.13    -1.02        7 702    2.913
+    noisy      8  105.669 +/- 0.42   +23.78        4 861    6.287
+    noisy     12  154.510 +/- 5.12   +72.62           17   12.926
+
+LECTURES :
+  (i)   ATTRIBUTION (best-vs-best) : anti-cyclage SANS information (minoff*)
+        = -1.09 ; prevision bruitee (noisy* a N=4) = -1.90. La prevision
+        apporte -0.81 kEUR AU-DELA du meilleur anti-cyclage aveugle (+74 %).
+        Environ la moitie du gain est de l'anti-cyclage, l'autre moitie est
+        proprement previsionnelle. NB : l'increment noisy(4) vs minoff(8) est
+        a degradation quasi EGALE (57.52 vs 57.52) et LPSP meilleure (2.739
+        vs 2.838) -> increment purement EENS, signe VoLL-invariant lui aussi,
+        amplitude proportionnelle a la VoLL.
+  (ii)  ROBUSTESSE AU BRUIT remarquable : 78 % du gain omniscient conserve a
+        N=4 (contre ~37 % pour la pre-charge RB2(Pred)). Cause : la decision
+        porte sur la PERSISTANCE de surplus LARGES (mi-journee, signal >>
+        sigma), pas sur le signe d'une energie nette marginale. Enonce : la
+        valeur d'une prevision depend moins de sa precision que du RAPPORT
+        SIGNAL/BRUIT de la grandeur decidee.
+  (iii) GAGNANT-GAGNANT : aux petits N le filtre AMELIORE aussi la LPSP.
+        Mecanisme : les demarrages bloques sont ceux des surplus courts, qui
+        stockaient peu d'H2 ; le surplus est alors absorbe par la batterie
+        (rendement aller-retour ~x3 celui de la chaine H2) et ressort le soir
+        meme -> moins de passages au plancher. Le filtre aligne degradation
+        ET efficacite energetique.
+  (iv)  LA FALAISE a N >= 8 h : exiger 8 h de surplus continu au-dessus du
+        setpoint bloque presque tous les demarrages (durees de surplus
+        tropicales : nuages) -> la chaine H2 meurt, LPSP 6-14 %. La borne de
+        faisabilite du levier est la DISTRIBUTION DES DUREES DE SURPLUS du
+        site -- a verifier avant transfert a un autre gisement solaire. Le
+        bruit ADOUCIT legerement la falaise (17 demarrages vs 0 a N=12 : des
+        faux positifs laissent passer quelques demarrages).
+  (v)   Le plafond minoff a N >= 8 (8 573 starts, identique a N=12) confirme
+        la structure DIURNE des demarrages (1.01/jour) : l'anti-cyclage
+        temporel ne mord que sur les re-demarrages intra-journee.
+
+3. POSITION DANS LA THESE (chiffres legacy VoLL=3, ordres de grandeur)
+--------------------------------------------------------------------------------
+    levier                              gain realiste      nature
+    pre-charge RB2(Pred) (hysteresis)     -0.38 kEUR       prevision (signe)
+    capteur SoH (P1, boucle fermee)       -0.71 kEUR       robustesse modele
+    pronostic RUL maintenance (P3)        -0.5 a -2.5      timing discret
+    FILTRE DE DEMARRAGE ELY (P4, N=4)     -1.90 kEUR       prevision (duree)
+Le filtre de demarrage est le meilleur usage de la prevision identifie dans
+la these, et il est CUMULABLE en principe avec la pre-charge (leviers
+disjoints : l'un bloque les demarrages courts, l'autre reroute le surplus
+avant un deficit) et avec les leviers SoH/RUL. Verification du cumul = suite
+naturelle (RB2(SoH+Dwell+Pred), attention aux interactions via le stock H2).
+
+4. RESERVES
+--------------------------------------------------------------------------------
+  (a) Chiffres du moteur LEGACY (cf. statut en tete) : a regenerer au rerun
+      corrige avant citation ; l'ordre des familles et la dominance du point
+      N=4 sont attendus stables (biais de mode commun), a verifier.
+  (b) Monde de vieillissement NOMINAL (les axes d'incertitude des taux sont
+      couverts par P1/P3). Le gain start-stop est proportionnel au
+      coefficient s de l'ELY : sous incertitude x[0.5,2] il reste positif.
+  (c) Setpoint duplique dans le wrapper (c_ely=0.300, gamma=1.5) : a
+      maintenir aligne avec RB2(SoH) si re-calage.
+  (d) Optimum N*=4 h dependant du profil local (durees de surplus), du
+      dimensionnement batterie (qui absorbe les surplus bloques) et de la
+      VoLL ; la falaise impose de calibrer N par le bas.
+  (e) Le compteur de demarrages (seuil 0.0005*Pmax neuf) est un indicateur de
+      reporting ; la comptabilite de cout utilise le modele exact.
+
+5. FICHIERS / REPRODUCTION
+--------------------------------------------------------------------------------
+  bench_dwell_ely.py            banc (familles base/minoff/omni/noisy, test
+                                nul omni(0)==base OK, diagnostic integre ;
+                                compatible moteur corrige sans modification)
+  run_meso_dwell.slurm          sbatch run_meso_dwell.slurm  (~170 runs, ~10')
+  dwell_ely_25y.txt/.pdf/.png   resultats LEGACY (job 214941)
+================================================================================

@@ -46,12 +46,15 @@ def get_cost_bat(P_bat,SoC, SoH_bat):
     # Calcul des C-rates
     C_rates = np.abs(i_bat) / (BAT['Q_bat'] * SoH_bat * BAT['parallel_num'])
 
-    # Facteur de courant de la source : psi(0C)=0, psi(1C)=1 et
-    # psi(2C)=1.2956, interpole lineairement. L'ancien psi=1 sur [0, 1C]
-    # surestimait l'usure dans le domaine de faible C-rate du micro-reseau.
+    # Hypothese conservative retenue pour le micro-reseau : psi=1 sous 1C.
+    # Elle impose un plancher d'usure par excursion de SoC et evite que les
+    # faibles courants rendent le cyclage presque gratuit. Au-dessus de 1C,
+    # on conserve la pente identifiee par Maheshwari et al. entre 1C et 2C.
+    # Ce plancher est un choix de modele V10, distinct de la loi source et ne
+    # remplace pas un terme de vieillissement calendaire (toujours desactive).
     scaling_factors = np.where(
         C_rates <= 1.0,
-        C_rates,
+        1.0,
         1.0 + 0.2956 * (C_rates - 1.0),
     )
 

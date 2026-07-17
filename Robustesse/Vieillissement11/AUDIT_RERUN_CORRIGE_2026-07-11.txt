@@ -1,0 +1,265 @@
+================================================================================
+AUDIT DES RERUNS CORRIGES V9_4 -- JOBS 215088 A 215091 (2026-07-11)
+================================================================================
+
+VERDICT
+-------
+
+Les quatre lots sont complets et valides pour le profil et les hypotheses
+enregistres dans leur provenance :
+
+- invariance 215088 ;
+- P1, valeur informationnelle du SoH, 215089 ;
+- P3, matrice de maintenance RUL, 215090 (cinq taches) ;
+- P4, filtre de persistance ELY, 215091.
+
+Il ne faut pas les resoumettre a protocole identique. Les sorties legacy
+anterieures restent pre-correction ou invalides et sont remplacees par celles-ci.
+
+La validation comprend l'invariance 25 ans, les tests nuls, la completude des
+caches, les CRN, les fermetures numeriques, les SHA des artefacts et des inputs,
+ainsi que 34 tests unitaires locaux passes. Le post-traitement des six caches
+P1/P3 a accepte toutes les verifications :
+
+  runs/p1_p3_stats_dc427b9da2f4/report.txt
+  empreinte dc427b9da2f433dabd4fd1f81b5d1536845f98c3419c49e52056c0ca5115b380
+
+Les IC et tests restent exploratoires et non ajustes pour multiplicite. Les
+VoLL=1/3/10 sont des post-traitements des memes politiques, sans re-optimisation.
+
+
+1. INVARIANCE ET COMPTABILITE
+-----------------------------
+
+Source : runs/invariance_10b390bb2f56/report.txt
+
+  status                                      OK
+  evenements de remplacement                  10
+  ecart maximal base vs instant               0
+  ledger batterie vs segments                 egalite a ~2,3e-10 EUR
+  ledger FC et ELY vs segments                egalites exactes
+  cout de degradation corrige                 58,0414336 kEUR
+  diagnostic sur trace complete               58,0249896 kEUR
+  trace complete - ledger                    -0,0164441 kEUR
+
+Le diagnostic correctif exerce quatre gels FC, soit 16 335 heures-composant.
+L'invariant ne passe donc pas seulement dans un cas sans remplacement ou panne.
+Le mesocentre n'avait pas les tests complets stages ; les 34 tests locaux et
+l'invariance autonome executee avant P1/P3/P4 compensent cette lacune.
+
+
+2. P1 -- VALEUR INFORMATIONNELLE DU SoH
+---------------------------------------
+
+Source : runs/p1_value_info_248b9c6a69b3/results_raw.tsv
+
+Le cache contient quatre points nominaux et 4 x 200 mondes complets. Les sept
+multiplicateurs sont strictement communs entre strategies. Le test nul nominal
+Sched=SoH est bit-a-bit exact, trace comprise.
+
+A VoLL=3 EUR/kWh, difference A-B negative = gain de A :
+
+  etape                 moyenne [IC95] kEUR          gains/egalites/pertes
+  Recale - RB2          -0,941 [-1,117 ; -0,761]      165 / 0 / 35
+  Sched - Recale        -0,648 [-0,794 ; -0,503]      143 / 0 / 57
+  SoH - Sched           -0,716 [-0,775 ; -0,658]      198 / 0 / 2
+  SoH - RB2             -2,305 [-2,372 ; -2,239]      200 / 0 / 0
+
+ES90 de la difference appariee, moyenne du pire decile de A-B :
+
+  Recale - RB2          +1,832 kEUR
+  Sched - Recale        +0,921 kEUR
+  SoH - Sched           -0,093 kEUR
+  SoH - RB2             -1,633 kEUR
+
+A VoLL=3, le capteur est donc la seule etape de la cascade dont le gain reste
+negatif jusque dans le pire decile des differences. "Quasi certain" signifie
+ici 198/200 mondes, pas une probabilite terrain.
+
+Decomposition moyenne a VoLL=3 :
+
+- SoH-Sched : degradation -0,540 kEUR et EENS -58,6 kWh ;
+- SoH-RB2   : degradation +0,522 kEUR mais EENS -942,4 kWh.
+
+Le gain total SoH-RB2 est surtout un gain de fiabilite valorise par la VoLL,
+pas une economie globale d'usure.
+
+Sensibilite VoLL, sans re-optimisation :
+
+  VoLL  SoH-RB2          Recale-RB2    Sched-Recale   SoH-Sched
+   1    -0,420            +2,290        -2,111         -0,599 (198/200)
+   3    -2,305            -0,941        -0,648         -0,716 (198/200)
+  10    -8,902           -12,249        +4,473         -1,126 (152/200)
+
+Les correlations ELY et la hausse du gain capteur avec la severite sont
+compatibles avec le mecanisme du genou ELY, sans en constituer une preuve
+causale suffisante.
+
+Limites P1 :
+
+- SoH exact, sans bruit, biais ni retard : borne haute du capteur ;
+- distribution U_log[0,5;2] independante, pas loi terrain ;
+- un profil annuel repete et seulement 200 mondes ;
+- Sched est une horloge globale, pas une horloge par age d'unite recalee aux
+  remplacements ;
+- invariants ledger testes en nominal, pas sauvegardes monde par monde.
+
+
+3. P3 -- VALEUR DE LA RUL POUR LA MAINTENANCE
+---------------------------------------------
+
+Sources : les cinq runs p3_maintenance_* du job matrice 215090.
+
+Chaque cache contient 4 points nominaux et 4 x 200 mondes. Les CRN sont exacts
+entre politiques, entre caches et avec P1. Les politiques non-RUL sont bit-a-bit
+independantes de la marge. Le test nul instant=base est exact.
+
+Scenario central : VoLL=3, C_intervention=1,5 kEUR, marge RUL=1.
+
+  periode visites   RUL - correctif [IC95] kEUR      gains/egalites/pertes
+   3 mois            -0,993 [-1,316 ; -0,675]         143 / 2 / 55
+   6 mois            -2,625 [-3,038 ; -2,214]         178 / 5 / 17
+  12 mois            -6,646 [-7,390 ; -5,905]         172 / 7 / 21
+
+A T=6 mois et C=1,5 kEUR :
+
+  VoLL=1   RUL-correctif  -0,008 [-0,407 ; +0,387] kEUR
+  VoLL=3   RUL-correctif  -2,625 [-3,038 ; -2,214] kEUR
+  VoLL=10  RUL-correctif -11,785 [-12,987 ; -10,643] kEUR
+
+La valeur est donc nulle au scenario central VoLL=1, nette a VoLL=3 et tres
+forte a VoLL=10. Elle augmente lorsque les visites s'espacent, car une panne
+dure non anticipee reste indisponible plus longtemps.
+
+A VoLL=3, C=1,5 et T=6 mois :
+
+  politique      cout kEUR   ES90 kEUR   LPSP %   h-composant hors service
+  instant          106,775     148,848    2,9136              0
+  correctif        107,545     147,636    3,4647         10 095
+  calendaire       107,555     148,500    3,3206          7 224
+  RUL              104,919     143,798    2,9860            142
+
+RUL-calendaire vaut -2,636 kEUR [IC95 -3,079 ; -2,193]. Calendaire-correctif
+vaut +0,011 [-0,241 ; +0,256] : ils sont indistinguables en moyenne.
+
+Nuance de risque : RUL ameliore l'ES90 marginal de 3,839 kEUR face au correctif,
+mais l'ES90 de la difference appariee vaut +2,122 kEUR. RUL gagne en moyenne et
+sur les queues marginales, tout en conservant un decile de regrets positifs.
+
+La marge 1 est la meilleure economiquement parmi 1/1,5/2 dans le scenario
+central. Marge 1,5 - marge 1 vaut +0,936 kEUR ; marge 2 - marge 1 +1,362.
+Les marges hautes suppriment cependant les dernieres heures-composant de panne
+(142 -> 0) : c'est un compromis continuite-cout.
+
+La correction change le resultat legacy (-0,533 kEUR). Elle augmente surtout
+le cout du correctif, qui ne peut plus crediter une FC/ELY hors service ; le
+cout RUL change peu. RUL T12m - correctif T3m donne maintenant un delta LPSP
+de -0,11446 point, IC95 [-0,14468 ; -0,08437].
+
+Limites P3 :
+
+- RUL extrapolee depuis le SoH vrai, sans erreur propre de pronostic : borne
+  structurelle, pas performance realiste d'un algorithme RUL ;
+- multiplicateur de vieillissement constant pour les unites successives ;
+- aucune vie ELY nominale observee en 25 ans : le calendaire ne peut prevenir
+  certaines pannes ELY severes, ce qui favorise structurellement RUL ;
+- C_intervention facture les visites avec remplacement, pas toutes les visites
+  periodiques ;
+- `outfc+outely` est une somme d'heures-composant, pas l'indisponibilite site ;
+- choix de marge et carte d'argmin exploratoires, sans preuve uniforme.
+
+
+4. P4 -- FILTRE DE PERSISTANCE ELY
+----------------------------------
+
+Source : runs/p4_dwell_db5f2e82eff7/results_raw.tsv
+
+Le cache contient 172/172 trajectoires sans echec. Le bruit AR(1) est
+persistant, les graines 3026-3057 sont communes entre N et le test nul N=0 est
+exact, trace comprise.
+
+A VoLL=3 :
+
+  variante           cout kEUR   delta/base   LPSP %   degradation   starts
+  base                  81,893       --         2,9083     58,041      9 193
+  meilleur minoff N=8   80,810      -1,084      2,8370     57,543      8 573
+  omni N=4              79,432      -2,462      2,6792     57,458      8 083
+  noisy N=2             80,798      -1,095      2,8221     57,653      8 636
+  noisy N=4             80,423      -1,470      2,8274     57,235      8 065
+  noisy N=6             82,422      +0,529      3,1490     56,596      7 411
+
+Incertitude appariee sur 32 graines :
+
+  noisy N=4 - base              -1,470 [-1,515 ; -1,426], 32/32 gains
+  noisy N=4 - minoff N=8        -0,387 [-0,431 ; -0,343], 32/32 gains
+  noisy N=4 - noisy N=2         -0,375 [-0,416 ; -0,331], 32/32 gains
+  noisy N=4 - noisy N=6         -1,999 [-2,054 ; -1,943], 32/32 gains
+
+Noisy N=4 domine la base en LPSP et degradation dans les 32 graines. Il
+conserve 59,7 % du gain omniscient N=4. Sa valeur propre au-dela du meilleur
+minoff vaut 0,387 kEUR, environ 28 % du potentiel additionnel omniscient.
+
+Le domaine utile est etroit : N=2-4 est favorable, N=6 deja defavorable et
+N>=8 provoque une falaise de LPSP. Les chiffres legacy (-1,90 kEUR, 78 %,
+valeur propre -0,81 kEUR) ne doivent plus etre cites.
+
+Limites P4 : 32 erreurs de prevision seulement, vieillissement nominal, aucune
+variabilite meteorologique interannuelle, selection exploratoire de N=4 et pas
+de hash explicite de chaque trajectoire de bruit dans le cache.
+
+
+5. IDENTITE DU PROFIL SIDLEC RESOLUE
+------------------------------------
+
+Tous les nouveaux jobs utilisent le meme fichier :
+
+  /Work/Users/tlenoir/genial_data/sidelec_roche_plate_csv.csv
+  taille 76 271 octets
+  SHA-256 e18721aa1b72bfa568a2771a1225d9140fa1e0480f2c8962df3d4ed9a7891284
+
+Ce fichier est exactement reconstructible depuis la copie locale :
+
+  /home/theo/Documents/Doctorat/GENIAL/Data/sidelec_roche_plate_csv.csv
+
+La copie locale contient `date;PV;consommation` avec des fins de ligne CRLF.
+La suppression de la colonne date et la conversion CRLF vers LF produisent
+exactement 8 761 lignes, 76 271 octets et le SHA e18721aa...91284. Il n'existe
+donc aucune ambiguite sur les series physiques utilisees, et aucun fichier ne
+doit etre recupere du mesocentre.
+
+Une autre copie locale a deux colonnes contient seulement les 8 760 premieres
+lignes. Elle ne doit pas etre substituee silencieusement au profil 8 761 lignes
+des jobs valides. Pour un futur run, produire explicitement la vue deux colonnes
+depuis la source datee ou rendre le chargeur compatible avec les trois colonnes.
+
+Le mesocentre n'ayant pas Git, les provenance.json n'ont pas de commit. Les SHA
+compensent partiellement cette faiblesse : 135 controles d'inputs versionnes et
+37 controles d'artefacts passent sur les fichiers rapatries.
+
+
+6. CONSEQUENCES ET PROCHAINS PROTOCOLES
+--------------------------------------
+
+Resultats retenables sous leurs hypotheses :
+
+1. A VoLL=3 et sous U_log[0,5;2], SoH-Sched vaut -0,716 kEUR et gagne dans
+   198/200 mondes : valeur de robustesse au modele, surtout via la fiabilite.
+2. A VoLL=3, C=1,5 et T=6 mois, la RUL parfaite vaut -2,625 kEUR face au
+   correctif ; sa valeur augmente avec VoLL et l'espacement des visites.
+3. Avec l'erreur AR(1) retenue, noisy N=4 vaut -1,470 kEUR face a RB2(SoH),
+   dont -0,387 kEUR au-dela du meilleur minoff sans prevision.
+
+Ne pas melanger directement ces niveaux avec Fable : moteurs, incertitudes et
+perimetres ne sont pas identiques.
+
+Extensions prioritaires avant revendication finale :
+
+- P1 : horloge par age d'unite recalee aux remplacements, puis bruit/biais/
+  retard du SoH ;
+- P3 : erreur de RUL calibree et, si possible, variabilite inter-unites ;
+- P4 : tirages joints vieillissement + erreur de prevision et plusieurs profils
+  meteorologiques.
+
+Ce sont de nouveaux protocoles scientifiques, pas des resoumissions des jobs
+215088-215091.
+================================================================================

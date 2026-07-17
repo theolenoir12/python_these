@@ -1,0 +1,102 @@
+MODIFICATIONS DES FONCTIONS DE COUT ET DES INDICATEURS - VIEILLISSEMENT10
+=========================================================================
+
+1. OBJECTIF
+-----------
+Retrouver un scenario physiquement defendable dans lequel RB2 est la meilleure
+strategie de base, sans modifier sa nature : RB2 contient uniquement deux
+consignes fixes de puissance H2. Elle n'utilise ni plafond, ni reserve SoC, ni
+SoH dans sa decision.
+
+2. REGLE RB2
+------------
+Les consignes actives sont :
+- PEMFC : 0,59 Pmax ;
+- PEMWE : 0,49 Pmax.
+
+Les anciennes variantes de RB2 avec plafonds ont ete retirees. Les seules
+limitations restantes sont les contraintes physiques communes aux strategies.
+
+3. DEGRADATION PEMWE
+--------------------
+La fonction de cout distingue desormais :
+- une perte irreversible longue duree a(j), quadratique jusqu'a 2 A/cm2 et
+  ancree a 4,8 microV/h a 2 A/cm2 ;
+- une perte reversible b(j), issue des essais dynamiques courts et recuperable
+  pendant les arrets ;
+- une penalite de demarrage OFF -> ON ;
+- une penalite de maintien a tres faible puissance ;
+- une acceleration irreversible explicite au-dessus de 2 A/cm2 :
+  100*(j-2)^2 microV/h, sans plafond.
+
+La separation evite d'extrapoler comme irreversible toute la hausse de tension
+mesuree pendant un essai court. Le coefficient au-dessus de 2 A/cm2 reste un
+parametre de scenario a soumettre a une analyse de sensibilite. RB2 ne depasse
+pas 2 A/cm2 pendant sa premiere vie PEMWE : ce terme ne l'avantage donc pas
+directement et penalise surtout les strategies qui utilisent cette zone.
+
+4. DEGRADATION PEMFC
+--------------------
+Le modele a regimes fixes a ete remplace, dans la boucle rule-based active, par
+un modele reversible/irreversible dependant de la densite de courant. Il ajoute
+separement les demarrages et le fonctionnement a tres faible puissance. La
+recuperation reversible se produit pendant les arrets.
+
+5. COMPTABILITE DES REMPLACEMENTS
+---------------------------------
+Le cout de degradation est cumule dans un ledger par composant. Lors d'un
+remplacement, le cout de la vie terminee est ferme puis le composant neuf repart
+avec un etat de degradation nul. Le classement utilise le total du ledger et
+non une reconstruction a partir du seul SoH final.
+
+6. DEFINITION UNIQUE DE LA LPSP
+-------------------------------
+Le manuscrit definit :
+
+  LPSP = energie non servie / energie totale demandee.
+
+Le code de Vieillissement10 utilisait historiquement, dans plusieurs scripts,
+la charge residuelle positive (charge-PV) au denominateur. C'est la raison de la
+seconde valeur introduite temporairement : elle permettait de rendre visible
+l'ecart entre code et manuscrit sans changer silencieusement les resultats.
+
+Decision actuelle : une seule LPSP est conservee, celle rapportee a la charge
+totale. L'EENS ne change pas. L'ancienne LPSP residuelle est supprimee des API,
+diagnostics et nouveaux fichiers de resultats. Les anciens resultats doivent
+etre recalcules ; ils ne sont pas convertis, car leur comparaison n'est pas un
+objectif.
+
+Le cout d'indisponibilite reste calcule sur la grandeur physique :
+
+  cout_LPS = VoLL * EENS.
+
+Il est donc invariant au changement de denominateur de la LPSP.
+
+7. METRIQUES DE PREMIERE VIE
+----------------------------
+Les sorties de premiere vie contiennent pour PEMFC et PEMWE : duree calendaire,
+heures ON, EFPH, energie, demarrages, duree moyenne des runs, densites de courant
+moyenne/p95, repartition des heures par plage de courant, pertes de tension par
+mecanisme et taux equivalents en microV/h ON.
+
+La batterie exporte maintenant : energie nominale, energies chargee/dechargee,
+throughput, deux definitions explicites des cycles equivalents, C-rate moyen et
+p95, SoC moyen/min/max et seuil SoH de fin de vie.
+
+8. FICHIERS PRINCIPAUX
+----------------------
+- Common/cost_fcn_total2.py : lois de degradation et ledger ;
+- Common/reliability_metrics.py : EENS et LPSP charge totale ;
+- Common/lifetime_metrics.py : indicateurs de premiere vie ;
+- Common/main_plot.py : affichage de la LPSP unique ;
+- RB2/rb2_policy.py : regle a deux consignes ;
+- RB2/diagnose_fixed_setpoints.py : diagnostic annuel et premieres vies ;
+- rank_base_strategies.py : classement sur degradation + VoLL*EENS.
+
+9. INTERPRETATION
+-----------------
+Le resultat RB2 meilleur que les autres strategies de base est un cas de modele
+coherent a valider, pas une identification experimentale des coefficients. La
+validation de premiere vie est documentee dans
+VALIDATION_PREMIERES_VIES_LITTERATURE.txt. RB2(SoH) ne doit etre amelioree
+qu'apres traitement des ecarts identifies dans ce document.

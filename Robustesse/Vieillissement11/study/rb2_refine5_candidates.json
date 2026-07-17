@@ -1,0 +1,34 @@
+[
+  {
+    "label": "rb2_edge_fc57400_ely46500",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.574,
+      "ely_setpoint": 0.465
+    }
+  },
+  {
+    "label": "rb2_edge_fc57425_ely46500",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57425,
+      "ely_setpoint": 0.465
+    }
+  },
+  {
+    "label": "rb2_edge_fc57450_ely46500",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.5745,
+      "ely_setpoint": 0.465
+    }
+  },
+  {
+    "label": "rb2_edge_fc57475_ely46500",
+    "kind": "rb2",
+    "params": {
+      "fc_setpoint": 0.57475,
+      "ely_setpoint": 0.465
+    }
+  }
+]

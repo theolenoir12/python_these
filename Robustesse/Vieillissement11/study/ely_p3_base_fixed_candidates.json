@@ -1,0 +1,9 @@
+[
+  {"label":"elyp3_base_0-100","kind":"file","params":{"folder":"0-100"},"model":{"ely":{"stress_exponent":3.0}}},
+  {"label":"elyp3_base_25-75","kind":"file","params":{"folder":"25-75"},"model":{"ely":{"stress_exponent":3.0}}},
+  {"label":"elyp3_base_50-50","kind":"file","params":{"folder":"50-50"},"model":{"ely":{"stress_exponent":3.0}}},
+  {"label":"elyp3_base_75-25","kind":"file","params":{"folder":"75-25"},"model":{"ely":{"stress_exponent":3.0}}},
+  {"label":"elyp3_base_100-0","kind":"file","params":{"folder":"100-0"},"model":{"ely":{"stress_exponent":3.0}}},
+  {"label":"elyp3_base_SoC1","kind":"file","params":{"folder":"SoC1"},"model":{"ely":{"stress_exponent":3.0}}},
+  {"label":"elyp3_base_SoC06","kind":"file","params":{"folder":"SoC06"},"model":{"ely":{"stress_exponent":3.0}}}
+]

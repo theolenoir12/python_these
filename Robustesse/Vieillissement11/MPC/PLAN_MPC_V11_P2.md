@@ -2,8 +2,10 @@
 
 Date : 19 juillet 2026.
 
-Statut : prochaine étape active. Le balayage multi-epsilon de la chaîne PD V2
-est terminé et validé dans `../DP/AUDIT_PARETO_V11_P2_2026-07-19.md`.
+Statut : noyau déterministe implémenté et smoke d'une semaine validé. Le
+prochain calcul est le screening d'un an décrit dans `README_MPC_V11_P2.md`.
+Le balayage PD de référence est validé dans
+`../DP/AUDIT_PARETO_V11_P2_2026-07-19.md`.
 
 ## Statut et objectif
 
@@ -36,28 +38,31 @@ reproduire exactement `mpc_v11_p2_no_soh`.
   non comme une politique online. La bande de référence à VoLL=3 est
   `epsilon=10--50` ; elle reste à moins de 0,211 % du minimum réalisé.
 
-Avant le premier banc MPC, corriger ou borner explicitement le petit défaut
-d'équilibrage diagnostiqué dans `get_lol.py`, ajouter un test de conservation
-de puissance, puis rejouer toutes les références concernées avec la même
-version du moteur. Il ne faut pas mélanger silencieusement les résultats PD
-actuels et des EMS évalués sur une physique modifiée.
+Le moteur commun n'a pas été modifié, afin de conserver la même physique que le
+front PD. Le MPC contient un délestage explicite et chaque banc contrôle le
+résidu de puissance, `lol>1` et l'énergie au-delà du clipping. Le smoke ne
+présente aucun dépassement ni résidu de bilan. Si ce contrôle échoue sur un
+horizon plus long, le point sera invalidé avant toute comparaison ; une
+correction commune imposerait alors le rejeu de toutes les références.
 
 ## Formulation initiale proposée
 
-Commencer par un MPC déterministe à horizon glissant : le problème est résolu
-à chaque heure et seule la première action est appliquée. La boucle V11 sait
-déjà transmettre `P_tot_ref_future` et `aging_context` aux politiques.
+Le premier noyau est un MPC déterministe mixte linéaire à horizon glissant : le
+problème est résolu à chaque heure et seule la première action est appliquée.
+La boucle V11 transmet `P_tot_ref_future` et `aging_context` à la politique.
 
 Le problème interne doit rester suffisamment rapide pour être online :
 
 - dynamique linéaire de batterie et réservoir H2, avec bornes physiques
   calculées à partir de l'état réel pour les deux variantes ;
 - délestage explicite, payé par une VoLL interne réglable ;
-- dommage batterie représenté par une approximation affine par morceaux ;
-- surcharge PEMWE quadratique V11 approchée par une épigraphe convexe affine
-  par morceaux en densité de courant, avec nœuds imposés à `j=1` et `j=2` ;
+- dommage batterie représenté par la pente moyenne V11 en throughput, avec
+  pénalité convexe optionnelle de résidence à haut SoC ;
+- surcharge PEMWE quadratique V11 représentée par des segments affines convexes
+  en densité de courant, avec nœuds imposés à `j=1` et `j=2` ;
+- états binaires exclusifs FC/ELY et charge/décharge, démarrages explicites ;
 - dommage PEMFC et coûts de transition construits à partir du contexte V11,
-  sans reprendre les anciennes charnières de puissance de `MPC3` ;
+  sans reprendre les anciennes charnières Pei de `MPC3` ;
 - valeurs terminales batterie/H2 communes et test anti-arbitrage.
 
 La fonction objectif interne est un surrogate de décision. Tous les résultats
@@ -80,8 +85,9 @@ borne PD : elle ne connaît que la fenêtre disponible à l'heure courante.
 
 ## Protocole de calcul progressif
 
-1. tests unitaires du bilan, des bornes et du test nul sur quelques pas ;
-2. smoke d'une semaine, horizons 6 h et 24 h ;
+1. tests unitaires du bilan, des bornes et du test nul sur quelques pas — terminé ;
+2. smoke d'une semaine, horizons 6 h et 24 h — terminé, cache
+   `runs/smoke_7d_f209c53dbce2/` ;
 3. banc d'un an pour éliminer les formulations dominées et vérifier le temps
    de calcul ;
 4. réglage apparié à budget identique des deux variantes ;

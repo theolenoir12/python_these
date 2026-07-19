@@ -7,7 +7,7 @@
 #
 #     sbatch run_dp.slurm dp_gridcheck.py     ## controle de robustesse en grille
 #
-# A soumettre DEPUIS  $WORK/genial/Robustesse/Vieillissement8/DP
+# A soumettre DEPUIS  $WORK/genial/Robustesse/Vieillissement11/DP
 # (fins de ligne Unix : si edite sous Windows, passer dos2unix dessus).
 # ============================================================================
 
@@ -49,6 +49,7 @@ python -c "import numpy,scipy,sympy;print('numpy',numpy.__version__,'scipy',scip
 
 # --- Execution --------------------------------------------------------------
 cd "$SLURM_SUBMIT_DIR" || exit 1
+python check_dp_v11.py || exit 2
 time python "$SCRIPT"
 
 echo "fin=$(date)"

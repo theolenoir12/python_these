@@ -1,0 +1,162 @@
+Job 216233  noeud=node4-11  script=dp_aging.py full
+cpus-per-task=4  debut=ven. juil. 17 22:56:52 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+OK -- PD V11 p=2 -- v11-doe-rakousky-mccay-colombo-2026-07-16
+======================================================================
+ PD VIEILLISSEMENT -- horizon 25 ans  grille 51x51  (FULL)
+======================================================================
+
+--- RB1(0.20,0.40) ---
+  pas=218999  (~25.0 ans)
+  SoH final : bat=0.797  fc=0.950  ely=0.906
+  remplacements : bat=6  fc=4  ely=0
+  SoH min   : bat=0.700  fc=0.900  ely=0.906
+  LPSP 0.8102%   EENS 4242.6 kWh  deg 60.833 kEUR   UNIFIE 73.561 kEUR
+  (RB1(0.20,0.40) loop : 52s)
+
+--- RB2(0.574,0.465) ---
+  pas=218999  (~25.0 ans)
+  SoH final : bat=0.945  fc=0.921  ely=0.961
+  remplacements : bat=6  fc=5  ely=1
+  SoH min   : bat=0.700  fc=0.900  ely=0.900
+  LPSP 0.8040%   EENS 4210.0 kWh  deg 63.091 kEUR   UNIFIE 75.721 kEUR
+  (RB2(0.574,0.465) loop : 52s)
+   [DP rebuild #1] an 0  pas 0  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (200s)
+   [DP rebuild #2] an 1  pas 8760  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (200s)
+   [DP rebuild #3] an 2  pas 17520  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (200s)
+   [DP rebuild #4] an 3  pas 26280  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+   [DP rebuild #5] an 4  pas 35040  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (200s)
+   [DP rebuild #6] an 5  pas 43800  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (200s)
+   [DP rebuild #7] an 6  pas 52560  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (200s)
+   [DP rebuild #8] an 7  pas 61320  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (200s)
+   [DP rebuild #9] an 8  pas 70080  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (200s)
+   [DP rebuild #10] an 9  pas 78840  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (201s)
+   [DP rebuild #11] an 10  pas 87600  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (200s)
+   [DP rebuild #12] an 11  pas 96360  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (200s)
+   [DP rebuild #13] an 12  pas 105120  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (201s)
+   [DP rebuild #14] an 13  pas 113880  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (201s)
+   [DP rebuild #15] an 14  pas 122640  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+   [DP rebuild #16] an 15  pas 131400  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+   [DP rebuild #17] an 16  pas 140160  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+   [DP rebuild #18] an 17  pas 148920  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+   [DP rebuild #19] an 18  pas 157680  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+   [DP rebuild #20] an 19  pas 166440  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+   [DP rebuild #21] an 20  pas 175200  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+   [DP rebuild #22] an 21  pas 183960  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+   [DP rebuild #23] an 22  pas 192720  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+   [DP rebuild #24] an 23  pas 201480  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+   [DP rebuild #25] an 24  pas 210240  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+
+--- PD BoL-figee ---
+  pas=218999  (~25.0 ans)
+  SoH final : bat=0.861  fc=0.924  ely=0.974
+  remplacements : bat=3  fc=5  ely=1
+  SoH min   : bat=0.700  fc=0.900  ely=0.900
+  LPSP 1.8762%   EENS 9825.1 kWh  deg 42.810 kEUR   UNIFIE 72.285 kEUR
+  (PD-BoL : 5060s, 25 rebuild)
+   [DP rebuild #1] an 0  pas 0  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+   [DP rebuild #2] an 1  pas 8760  SoH_bat=0.957  Pfc=1648W  Pely=18163W  alpha=(0.063,0.014)  (199s)
+   [DP rebuild #3] an 2  pas 17520  SoH_bat=0.912  Pfc=1559W  Pely=17892W  alpha=(0.118,0.029)  (199s)
+   [DP rebuild #4] an 3  pas 26280  SoH_bat=0.866  Pfc=1484W  Pely=17617W  alpha=(0.165,0.043)  (199s)
+   [DP rebuild #5] an 4  pas 35040  SoH_bat=0.818  Pfc=1424W  Pely=17349W  alpha=(0.204,0.057)  (199s)
+   [DP rebuild #6] an 4  pas 39822  SoH_bat=0.792  Pfc=1753W  Pely=17217W  alpha=(0.000,0.064)  (200s)
+   [DP rebuild #7] an 5  pas 43800  SoH_bat=0.770  Pfc=1700W  Pely=17093W  alpha=(0.031,0.071)  (199s)
+   [DP rebuild #8] an 6  pas 52560  SoH_bat=0.727  Pfc=1593W  Pely=16825W  alpha=(0.097,0.085)  (198s)
+   [DP rebuild #9] an 6  pas 57985  SoH_bat=1.000  Pfc=1535W  Pely=16667W  alpha=(0.133,0.093)  (198s)
+   [DP rebuild #10] an 7  pas 61320  SoH_bat=0.980  Pfc=1509W  Pely=16580W  alpha=(0.149,0.097)  (198s)
+   [DP rebuild #11] an 8  pas 70080  SoH_bat=0.936  Pfc=1443W  Pely=16298W  alpha=(0.191,0.112)  (198s)
+   [DP rebuild #12] an 8  pas 78237  SoH_bat=0.893  Pfc=1753W  Pely=16043W  alpha=(0.000,0.125)  (198s)
+   [DP rebuild #13] an 9  pas 78840  SoH_bat=0.890  Pfc=1745W  Pely=16024W  alpha=(0.005,0.126)  (198s)
+   [DP rebuild #14] an 10  pas 87600  SoH_bat=0.851  Pfc=1633W  Pely=15752W  alpha=(0.072,0.139)  (198s)
+   [DP rebuild #15] an 11  pas 96360  SoH_bat=0.809  Pfc=1541W  Pely=15497W  alpha=(0.129,0.152)  (198s)
+   [DP rebuild #16] an 12  pas 105120  SoH_bat=0.766  Pfc=1465W  Pely=15259W  alpha=(0.177,0.164)  (198s)
+   [DP rebuild #17] an 13  pas 113880  SoH_bat=0.719  Pfc=1404W  Pely=15063W  alpha=(0.216,0.174)  (199s)
+   [DP rebuild #18] an 13  pas 115547  SoH_bat=0.712  Pfc=1753W  Pely=15028W  alpha=(0.000,0.176)  (200s)
+   [DP rebuild #19] an 13  pas 118233  SoH_bat=1.000  Pfc=1712W  Pely=14958W  alpha=(0.024,0.179)  (200s)
+   [DP rebuild #20] an 14  pas 122640  SoH_bat=0.977  Pfc=1661W  Pely=14861W  alpha=(0.055,0.184)  (198s)
+   [DP rebuild #21] an 15  pas 131400  SoH_bat=0.937  Pfc=1567W  Pely=14665W  alpha=(0.113,0.194)  (200s)
+   [DP rebuild #22] an 16  pas 140160  SoH_bat=0.896  Pfc=1489W  Pely=14483W  alpha=(0.162,0.203)  (198s)
+   [DP rebuild #23] an 17  pas 148920  SoH_bat=0.853  Pfc=1426W  Pely=14320W  alpha=(0.202,0.211)  (199s)
+   [DP rebuild #24] an 17  pas 153975  SoH_bat=0.830  Pfc=1753W  Pely=14232W  alpha=(0.000,0.216)  (200s)
+   [DP rebuild #25] an 18  pas 157680  SoH_bat=0.810  Pfc=1706W  Pely=14180W  alpha=(0.028,0.218)  (200s)
+   [DP rebuild #26] an 19  pas 166440  SoH_bat=0.770  Pfc=1598W  Pely=14059W  alpha=(0.094,0.224)  (199s)
+   [DP rebuild #27] an 19  pas 169877  SoH_bat=0.757  Pfc=1560W  Pely=18430W  alpha=(0.117,0.000)  (198s)
+   [DP rebuild #28] an 20  pas 175200  SoH_bat=0.724  Pfc=1510W  Pely=18282W  alpha=(0.148,0.008)  (198s)
+   [DP rebuild #29] an 20  pas 179935  SoH_bat=1.000  Pfc=1469W  Pely=18147W  alpha=(0.175,0.015)  (198s)
+   [DP rebuild #30] an 21  pas 183960  SoH_bat=0.974  Pfc=1444W  Pely=18034W  alpha=(0.191,0.021)  (198s)
+   [DP rebuild #31] an 21  pas 192592  SoH_bat=0.925  Pfc=1753W  Pely=17768W  alpha=(0.000,0.035)  (198s)
+   [DP rebuild #32] an 22  pas 192720  SoH_bat=0.925  Pfc=1751W  Pely=17761W  alpha=(0.001,0.036)  (198s)
+   [DP rebuild #33] an 23  pas 201480  SoH_bat=0.883  Pfc=1643W  Pely=17482W  alpha=(0.066,0.050)  (198s)
+   [DP rebuild #34] an 24  pas 210240  SoH_bat=0.839  Pfc=1551W  Pely=17200W  alpha=(0.123,0.065)  (198s)
+
+--- PD sequentielle ---
+  pas=218999  (~25.0 ans)
+  SoH final : bat=0.793  fc=0.931  ely=0.972
+  remplacements : bat=3  fc=5  ely=1
+  SoH min   : bat=0.700  fc=0.900  ely=0.900
+  LPSP 0.5034%   EENS 2635.9 kWh  deg 44.470 kEUR   UNIFIE 52.377 kEUR
+  (PD-seq : 6828s, 34 rebuild)
+   [DP rebuild #1] an 0  pas 0  SoH_bat=1.000  Pfc=1753W  Pely=18430W  alpha=(0.000,0.000)  (199s)
+   [DP rebuild #2] an 1  pas 8760  SoH_bat=0.953  Pfc=1659W  Pely=18172W  alpha=(0.056,0.014)  (199s)
+   [DP rebuild #3] an 2  pas 17520  SoH_bat=0.905  Pfc=1578W  Pely=17909W  alpha=(0.106,0.028)  (198s)
+   [DP rebuild #4] an 3  pas 26280  SoH_bat=0.855  Pfc=1507W  Pely=17652W  alpha=(0.150,0.041)  (199s)
+   [DP rebuild #5] an 4  pas 35040  SoH_bat=0.802  Pfc=1448W  Pely=17421W  alpha=(0.188,0.054)  (199s)
+   [DP rebuild #6] an 5  pas 43800  SoH_bat=0.749  Pfc=1398W  Pely=17202W  alpha=(0.220,0.065)  (199s)
+   [DP rebuild #7] an 5  pas 44434  SoH_bat=0.747  Pfc=1753W  Pely=17182W  alpha=(0.000,0.066)  (198s)
+   [DP rebuild #8] an 6  pas 52560  SoH_bat=0.702  Pfc=1658W  Pely=16958W  alpha=(0.057,0.078)  (198s)
+   [DP rebuild #9] an 6  pas 53224  SoH_bat=1.000  Pfc=1650W  Pely=16937W  alpha=(0.061,0.079)  (198s)
+   [DP rebuild #10] an 7  pas 61320  SoH_bat=0.956  Pfc=1576W  Pely=16693W  alpha=(0.107,0.091)  (200s)
+   [DP rebuild #11] an 8  pas 70080  SoH_bat=0.907  Pfc=1507W  Pely=16437W  alpha=(0.150,0.105)  (200s)
+   [DP rebuild #12] an 9  pas 78840  SoH_bat=0.859  Pfc=1448W  Pely=16179W  alpha=(0.188,0.118)  (198s)
+   [DP rebuild #13] an 10  pas 87600  SoH_bat=0.808  Pfc=1399W  Pely=15949W  alpha=(0.219,0.129)  (198s)
+   [DP rebuild #14] an 10  pas 88544  SoH_bat=0.804  Pfc=1753W  Pely=15926W  alpha=(0.000,0.131)  (198s)
+   [DP rebuild #15] an 11  pas 96360  SoH_bat=0.763  Pfc=1662W  Pely=15700W  alpha=(0.055,0.142)  (199s)
+   [DP rebuild #16] an 12  pas 105120  SoH_bat=0.718  Pfc=1572W  Pely=15480W  alpha=(0.110,0.153)  (198s)
+   [DP rebuild #17] an 12  pas 108855  SoH_bat=1.000  Pfc=1538W  Pely=15391W  alpha=(0.131,0.158)  (198s)
+   [DP rebuild #18] an 13  pas 113880  SoH_bat=0.970  Pfc=1501W  Pely=15256W  alpha=(0.154,0.164)  (198s)
+   [DP rebuild #19] an 14  pas 122640  SoH_bat=0.924  Pfc=1443W  Pely=15028W  alpha=(0.191,0.176)  (198s)
+   [DP rebuild #20] an 15  pas 131400  SoH_bat=0.877  Pfc=1396W  Pely=14820W  alpha=(0.221,0.186)  (198s)
+   [DP rebuild #21] an 15  pas 131718  SoH_bat=0.875  Pfc=1753W  Pely=14816W  alpha=(0.000,0.187)  (198s)
+   [DP rebuild #22] an 16  pas 140160  SoH_bat=0.834  Pfc=1658W  Pely=14631W  alpha=(0.057,0.196)  (199s)
+   [DP rebuild #23] an 17  pas 148920  SoH_bat=0.790  Pfc=1571W  Pely=14463W  alpha=(0.110,0.204)  (198s)
+   [DP rebuild #24] an 18  pas 157680  SoH_bat=0.744  Pfc=1496W  Pely=14316W  alpha=(0.157,0.211)  (198s)
+   [DP rebuild #25] an 18  pas 165605  SoH_bat=1.000  Pfc=1440W  Pely=14212W  alpha=(0.193,0.217)  (199s)
+   [DP rebuild #26] an 19  pas 166440  SoH_bat=0.995  Pfc=1435W  Pely=14202W  alpha=(0.196,0.217)  (198s)
+   [DP rebuild #27] an 19  pas 174305  SoH_bat=0.952  Pfc=1753W  Pely=14094W  alpha=(0.000,0.223)  (198s)
+   [DP rebuild #28] an 20  pas 175200  SoH_bat=0.947  Pfc=1743W  Pely=14085W  alpha=(0.006,0.223)  (199s)
+   [DP rebuild #29] an 20  pas 180443  SoH_bat=0.924  Pfc=1685W  Pely=18430W  alpha=(0.041,0.000)  (198s)
+   [DP rebuild #30] an 21  pas 183960  SoH_bat=0.902  Pfc=1650W  Pely=18333W  alpha=(0.061,0.005)  (199s)
+   [DP rebuild #31] an 22  pas 192720  SoH_bat=0.853  Pfc=1569W  Pely=18075W  alpha=(0.111,0.019)  (198s)
+   [DP rebuild #32] an 23  pas 201480  SoH_bat=0.803  Pfc=1498W  Pely=17826W  alpha=(0.156,0.032)  (199s)
+   [DP rebuild #33] an 24  pas 210240  SoH_bat=0.750  Pfc=1439W  Pely=17605W  alpha=(0.194,0.044)  (198s)
+   [DP rebuild #34] an 24  pas 217884  SoH_bat=0.704  Pfc=1753W  Pely=17419W  alpha=(0.000,0.054)  (198s)
+   [DP rebuild #35] an 24  pas 218626  SoH_bat=1.000  Pfc=1744W  Pely=17396W  alpha=(0.005,0.055)  (198s)
+
+--- PD seq proj+rollout ---
+  pas=218999  (~25.0 ans)
+  SoH final : bat=0.998  fc=0.997  ely=0.981
+  remplacements : bat=4  fc=5  ely=1
+  SoH min   : bat=0.700  fc=0.900  ely=0.900
+  LPSP 0.2354%   EENS 1232.7 kWh  deg 45.111 kEUR   UNIFIE 48.809 kEUR
+  (PD-seq-v2 : 8689s, 35 rebuild)
+
+======================================================================
+ COMPARATIF UNIFIE V11 p=2 (25 ans, VoLL=3)
+======================================================================
+ strategie             LPSP%    deg_kE   UNIF_kE    gain%
+ RB1(0.20,0.40)       0.8102    60.833    73.561    +0.00
+ RB2(0.574,0.465)     0.8040    63.091    75.721    -2.94
+ PD BoL-figee         1.8762    42.810    72.285    +1.73
+ PD sequentielle      0.5034    44.470    52.377   +28.80
+ PD seq proj+rollout   0.2354    45.111    48.809   +33.65
+----------------------------------------------------------------------
+ reference nominale = RB1(0.20,0.40) ; p_ELY=2 ; ledger corrige
+ La PD-seq est une politique realisable; aucune optimalite 25 ans n'est revendiquee.
+ grille 51x51  n_fc=10 n_ely=50  rebuilds PD-seq=34
+
+ Resultats -> /Work/Users/tlenoir/genial/Robustesse/Vieillissement11/DP/runs/dp_aging_v11_p2_25y_51x51.txt (+ .npz, + _ledgers.json)
+
+real	344m46,671s
+user	343m36,009s
+sys	0m2,702s
+fin=sam. juil. 18 04:41:40 CEST 2026

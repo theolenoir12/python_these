@@ -74,14 +74,18 @@ cellule BoL au courant nominal (~0,86 V), robuste aux paramètres.
 4. Écart d'échelle McCay vs Colombo (McCay ~2× Colombo CCM B) : magnitude calée
    sur **McCay** (cas d'usage le plus proche), forme sur **Colombo**.
 
-## Portée / limites
+## Portée / limites historiques de Vieillissement9
 
 - Vaut pour les stratégies **rule-based** (via `get_cost_total` et
   `init_and_run_loop`) et le **MILP** (`milp_weekly.py`, clés mises à jour).
-- Le **DP** (`DP/`, `DP2/`) réimplémente encore le modèle de Pei *inline*
+- Le **DP** historique (`DP/`, `DP2/`) réimplémentait encore le modèle de Pei *inline*
   (vectorisé) et importe les constantes legacy `FC_FHIGH/FC_FLOW/FC_ALPHA_*`
   (conservées). Migrer le DP vers le nouveau modèle nécessiterait de réécrire
   `dp_core.py` / `dp_aging.py` — **hors périmètre de cette version**.
+
+Cette note ne s'applique plus à la PD active de Vieillissement11 : la chaîne V2
+de `Pareto_V8` y a été portée dans `Vieillissement11/DP/` avec les fonctions de
+coût V11. `Vieillissement11/DP2/` a été supprimé.
 
 ## Décomposition `deg_fc`
 

@@ -127,7 +127,7 @@ ELY_REC = {
 
 ELY_J1 = 1.0
 ELY_J2 = 2.0
-# Compatibilite DP legacy uniquement ; les boucles V10 utilisent j directement.
+# Compatibilite avec les versions historiques archivees ; V11 utilise j directement.
 ELY_F30 = ELY_J1 / ELY['j_L']
 ELY_F60 = ELY_J2 / ELY['j_L']
 UV_TO_PCT = (1e-6 / ELY_VOLTAGE_REFERENCE) * 100
@@ -135,11 +135,10 @@ UV_TO_PCT = (1e-6 / ELY_VOLTAGE_REFERENCE) * 100
 # ============================================================================
 #  [LEGACY / Pei et al. 2008]  Ancien modele PEMFC "classification par regime"
 # ----------------------------------------------------------------------------
-#  CONSERVE uniquement pour compatibilite : les modules DP (DP/, DP2/) importent
-#  encore ces constantes et reimplementent le modele de Pei inline (vectorise).
-#  Le nouveau modele reversible/irreversible (ci-dessous, get_cost_fc) NE les
-#  utilise PLUS. Pour migrer le DP vers le nouveau modele il faudra reecrire les
-#  dp_core.py / dp_aging.py -> hors scope de cette version (focalisee rule-based).
+#  CONSERVE uniquement pour compatibilite avec les versions historiques archivees.
+#  La PD active de Vieillissement11 dans ../DP utilise degradation_v11 et son
+#  ledger ; elle n'importe plus ces constantes. Le nouveau modele
+#  reversible/irreversible (ci-dessous, get_cost_fc) NE les utilise PLUS.
 FC_FHIGH = 0.80                 # seuil haute puissance (R3 : "80%")
 FC_FLOW  = 0.01                 # seuil idling / basse puissance (R3 : "1%")
 FC_ALPHA_ON_OFF = 1.96e-3       # / cycle  (start-stop)
@@ -471,4 +470,3 @@ def get_cost_fc(alpha_fc, P_fc):
     starts = state["start_uv"] * UV_TO_PCT_FC
     idle = state["idle_uv"] * UV_TO_PCT_FC
     return _v11_state_cost_eur("fc", state), starts, idle, reversible, irreversible
-

@@ -1,27 +1,11 @@
-"""
-=============================================================================
-NOYAU PD (programmation dynamique) -- EMS optimal global  [PROTOTYPE 1 AN, BoL]
-=============================================================================
+"""Noyau de programmation dynamique de Vieillissement11 (nominal ``p=2``).
 
-But de ce prototype
--------------------
-Valider la machinerie sur 1 an a l'etat NEUF (SoH=1, alpha=0 fige), et verifier
-que le cout unifie (degradation + VoLL*EENS) de la politique PD est <= RB2 sur
-le MEME profil. Pas encore de vieillissement ni de sweep Pareto.
-
-Architecture (cf. discussion)
------------------------------
-  - Etat PD          : (SoC, E_h2, fc_on, ely_on)   -- start-stop EXACT
-  - Controle (1 DOF) : P_dc_h2  (>0 = FC, <0 = ELY ; la batterie prend le reste)
-  - Cout interne PD  : vectorise, APPROCHE (V_rev reversible ELY et shift FC
-                       ignores -> recalcules EXACTS en forward, comme convenu)
-  - Reporting        : get_cost_total / get_lol / simulate_transition (EXACTS),
-                       metrique LPSP/VoLL identique a sens_common.metrics.
-  - Horizon          : 1 an (8760 h), periodicite annuelle par iteration de
-                       valeur (V_T <- V_0) -> politique cyclique, non myope.
-
-Lance : python dp_core.py
-=============================================================================
+L'etat discret est ``(SoC, E_h2, fc_on, ely_on)`` et le controle unique est la
+puissance H2 au bus DC (positive pour la PEMFC, negative pour la PEMWE). Le
+backward price uniquement le dommage *permanent* V11. Pour la PEMFC, l'etat de
+stabilite n'est pas ajoute a la grille : le backward emploie une approximation
+locale explicitement documentee, puis le rollout et la boucle physique utilisent
+l'etat de stabilite courant. Les couts realises restent ceux du ledger V11.
 """
 import os
 import sys
@@ -33,17 +17,24 @@ sys.path.insert(0, os.path.abspath(os.path.join(_THIS, '..')))   # -> Vieillisse
 os.environ.setdefault('GENIAL_DATA_DIR',
                        '/home/theo/Documents/Doctorat/Data')
 
-from Common.Init_EMR_MG_v16_python import LOAD, PV, FC, ELY, BAT, CONV
+from Common.Init_EMR_MG_v16_python import LOAD, PV, FC, ELY, BAT, CONV, S
 from Common.cost_fcn_total2 import (
     deg_cumul1, deg_cumul2,
-    FC_FHIGH, FC_FLOW, FC_ALPHA_ON_OFF, FC_ALPHA_HIGH, FC_ALPHA_LOW,
-    ELY_REC, ELY_F30, ELY_F60, UV_TO_PCT,
-    get_cost_bat, get_cost_total,
+    get_cost_bat,
+)
+from Common.degradation_v11 import (
+    MODEL_ID, ELY_V11, FC_V11,
+    advance_ely_power, advance_fc_power,
+    new_ely_state, new_fc_state, state_cost_eur, voltage_reference,
+)
+from Common.electrochemistry import (
+    ely_current_density, ely_power, fc_current_density,
 )
 from Common.get_lol import get_lol
+from Common.reliability_metrics import compute_reliability_metrics
+from Common.rb1_policy_v11 import make_rb1_policy_v11
+from Common.rb2_policy import make_rb2_policy
 from Common.simulate_transition import simulate_transition
-sys.path.insert(0, os.path.abspath(os.path.join(_THIS, '..', 'RB2')))   # -> RB2/
-from get_optimal_action_RB import get_optimal_action_RB
 
 # ---------------------------------------------------------------------------
 # Constantes derivees
@@ -64,6 +55,16 @@ FC_LUT  = FC['lut']
 ELY_LUT = ELY['lut']
 
 N_YEAR = 8760                  # pas horaires sur 1 an
+
+NOMINAL_ELY_STRESS_EXPONENT = 2.0
+if not np.isclose(ELY_V11["stress_exponent"], NOMINAL_ELY_STRESS_EXPONENT):
+    raise RuntimeError(
+        "La PD V11 est attribuee au nominal p=2, mais degradation_v11 expose p=%r"
+        % ELY_V11["stress_exponent"]
+    )
+
+RB1_REFERENCE_PARAMS = (0.20, 0.40)
+RB2_REFERENCE_PARAMS = (0.574, 0.465)
 
 
 # ---------------------------------------------------------------------------
@@ -92,10 +93,8 @@ def net_reference_window(start, n=N_YEAR):
 # Grille de controle P_dc_h2  (>0 FC ; <0 ELY)
 #   contrainte FC  : P_dc_fc / eta  <= P_fc_max   -> u <= P_fc_max*eta
 #   contrainte ELY : |P_dc_ely|*eta <= P_ely_max  -> |u| <= P_ely_max/eta
-#   extra_u : niveaux additionnels (memes conventions, W cote DC). Utilise par
-#   dp_aging pour inserer des niveaux "ride" juste SOUS les seuils de
-#   degradation projetes (0.8*Pmax_fc vieilli, genou 30% ELY vieilli) : la
-#   grille reguliere ne tombe jamais pile sous un seuil qui derive.
+#   extra_u : niveaux additionnels (memes conventions, W cote DC), notamment
+#   les ancres PEMWE j=1 et j=2 du modele V11.
 # ---------------------------------------------------------------------------
 def control_grid(n_fc=10, n_ely=50, p_fc_max=P_FC_MAX, p_ely_max=P_ELY_MAX,
                  extra_u=()):
@@ -106,8 +105,30 @@ def control_grid(n_fc=10, n_ely=50, p_fc_max=P_FC_MAX, p_ely_max=P_ELY_MAX,
     return np.unique(u)
 
 
+def v11_control_anchors(alpha_ely=0.0, p_ely_max=P_ELY_MAX):
+    """Puissances DC correspondant aux ancres PEMWE ``j=1`` et ``j=2``.
+
+    Le coude de dommage est en densite de courant, pas en fraction de Pmax. Ces
+    niveaux doivent donc etre recalcules lorsque ``alpha_ely`` evolue.
+    """
+    densities = np.array([1.0, 2.0])
+    currents = densities * S * ELY['n_parallel']
+    stack_powers = np.asarray(ely_power(currents, alpha_ely), dtype=float)
+    dc_controls = -stack_powers / ETA
+    return tuple(float(value) for value in dc_controls
+                 if value >= -p_ely_max / ETA - 1e-9)
+
+
+def permanent_uv_to_eur(component, permanent_uv):
+    """Convertit un increment de perte permanente V11 [uV] en euros."""
+    config = FC if component == "fc" else ELY
+    return (np.asarray(permanent_uv, dtype=float) * 1e-6
+            / voltage_reference(component)
+            / (1.0 - config['SoH_EoL']) * config['cost'])
+
+
 # ---------------------------------------------------------------------------
-# Pre-calculs dependant UNIQUEMENT du controle u (et de alpha=0, SoH=1)
+# Pre-calculs dependant du controle u et de l'etat electrochimique au rebuild
 #   - P_h2[u]          : kW vers le reservoir (>0 stockage, <0 destockage)
 #   - cur_fc_on[u]     : la FC est-elle active ?
 #   - cur_ely_on[u]    : l'ELY est-il actif ?
@@ -115,25 +136,16 @@ def control_grid(n_fc=10, n_ely=50, p_fc_max=P_FC_MAX, p_ely_max=P_ELY_MAX,
 #   - cost_ely[u, prev]: cout financier ELY du pas (EUR)  (V_irr+idle+startstop)
 # ---------------------------------------------------------------------------
 def precompute_controls(u, p_fc_max=P_FC_MAX, p_ely_max=P_ELY_MAX,
-                        thr_fc_max=None, thr_ely_max=None):
-    """Pre-calculs dependant du controle u, au niveau de vieillissement donne par
-    (p_fc_max, p_ely_max).  Par defaut = etat neuf (BoL).  L'effet du
-    vieillissement transite UNIQUEMENT par les puissances max (les LUT de
-    rendement et les seuils de degradation sont en fractions de Pmax) ; le reste
-    (V_rev ELY, shift FC, et le cout EXACT) est recalcule en forward.
+                        alpha_fc=0.0, alpha_ely=0.0):
+    """Precalcule dynamique H2 et cout permanent V11 de chaque controle.
 
-    thr_fc_max / thr_ely_max : Pmax utilises UNIQUEMENT pour placer les SEUILS
-    de degradation (P_high/P_low FC ; rampe F30-F60, idle et start ELY).
-    Motivation : entre deux rebuilds annuels, Pmax derive (FC ~-4%/an) -> un
-    niveau plan "pile a 0.8*Pmax_rebuild" (gratuit au backward) passe AU-DESSUS
-    du seuil reel des les premieres semaines et paie FC_ALPHA_HIGH en silence
-    (~10 kEUR/25 ans constates sur le run meso eps=3). En passant ici le Pmax
-    PROJETE en fin d'annee, le backward price ces heures de facon conservative.
-    Defaut None = Pmax courant (comportement historique inchange)."""
-    if thr_fc_max is None:
-        thr_fc_max = p_fc_max
-    if thr_ely_max is None:
-        thr_ely_max = p_ely_max
+    L'etat PD ne contient que les indicateurs marche/arret. Pour la PEMFC, le
+    backward suppose donc ``steadiness=1`` et, si elle etait deja allumee,
+    ``previous_j=current_j``. Un demarrage depuis l'arret emploie au contraire
+    ``previous_j=0`` et la mise a jour V11 exacte. Le rollout corrige ensuite
+    cette approximation avec la stabilite et le courant precedents realises.
+    """
+    u = np.asarray(u, dtype=float)
     P_dc_fc  = np.maximum(u, 0.0)
     P_dc_ely = np.minimum(u, 0.0)
 
@@ -144,39 +156,41 @@ def precompute_controls(u, p_fc_max=P_FC_MAX, p_ely_max=P_ELY_MAX,
         term_fc = np.where(P_dc_fc > 0, (P_dc_fc / ETA) / eff_fc, 0.0)
     P_h2 = (np.abs(P_dc_ely * ETA) * eff_ely - term_fc) / 1000.0   # kW
 
-    # ----- FC : puissances et seuils -----
+    # ----- PEMFC V11 : dommage permanent, stabilite locale approximee -----
     P_fc = P_dc_fc / ETA                       # cote stack
-    P_high = FC_FHIGH * thr_fc_max
-    P_low  = FC_FLOW  * thr_fc_max
-    cur_fc_on = P_fc >= 1.0
-    # cout en "% tension" -> EUR : /((1-SoH_EoL)*100) * FC['cost']
-    deg_fc_pct_base = (P_fc > P_high) * FC_ALPHA_HIGH * TS_H \
-                    + ((P_fc < P_low) & (P_fc > 1.0)) * FC_ALPHA_LOW * TS_H
-    fc_to_eur = FC['cost'] / ((1 - FC['SoH_EoL']) * 100.0)
+    j_fc = np.asarray(fc_current_density(P_fc, alpha_fc), dtype=float)
+    cur_fc_on = j_fc > 1e-9
     cost_fc = np.zeros((len(u), 2))
     for prev in (0, 1):
-        start = (~np.bool_(prev)) & cur_fc_on            # off -> on
-        deg = deg_fc_pct_base + start * 0.5 * FC_ALPHA_ON_OFF
-        cost_fc[:, prev] = deg * fc_to_eur
+        previous_j = j_fc if prev else np.zeros_like(j_fc)
+        after_change = np.exp(
+            -np.abs(j_fc - previous_j) / FC_V11['change_scale_a_cm2'])
+        steadiness = 1.0 - (1.0 - after_change) * np.exp(
+            -TS_H / FC_V11['steadiness_tau_h'])
+        rate = (FC_V11['irr_dynamic_uvph']
+                + steadiness * (FC_V11['irr_steady_uvph']
+                                - FC_V11['irr_dynamic_uvph']))
+        if FC_V11['current_exponent'] != 0.0:
+            rate *= np.where(
+                cur_fc_on,
+                (j_fc / FC_V11['j_ref']) ** FC_V11['current_exponent'], 0.0)
+        uv = np.where(cur_fc_on, rate * TS_H, 0.0)
+        uv += ((prev == 0) & cur_fc_on) * FC_V11['start_uv']
+        uv += ((j_fc > 0.0) & (j_fc <= 0.05)) * FC_V11['idle_uvph'] * TS_H
+        cost_fc[:, prev] = permanent_uv_to_eur('fc', uv)
 
-    # ----- ELY : V_irr (irreversible) + idle + start-stop -----
+    # ----- PEMWE V11 p=2 : irreversible + quasi-idle + demarrage -----
     P_ely = np.abs(P_dc_ely * ETA)
-    f = np.where(thr_ely_max > 0, P_ely / thr_ely_max, 0.0)
-    # a(f) [uV/h] : 0 sous F30, rampe lineaire F30->F60, sature a a2
-    a = np.where(f <= ELY_F30, 0.0,
-         np.where(f <= ELY_F60, ELY_REC['a2'] * (f - ELY_F30) / (ELY_F60 - ELY_F30),
-                  ELY_REC['a2']))
-    th_idle  = 0.01   * thr_ely_max
-    th_start = 0.0005 * thr_ely_max
-    cur_ely_on = P_ely >= th_start
-    deg_irr_pct  = a * TS_H * UV_TO_PCT
-    deg_idle_pct = ((P_ely > 0) & (P_ely <= th_idle)) * ELY_REC['idle'] * TS_H * UV_TO_PCT
-    ely_to_eur = ELY['cost'] / ((1 - ELY['SoH_EoL']) * 100.0)
+    j_ely = np.asarray(ely_current_density(P_ely, alpha_ely), dtype=float)
+    cur_ely_on = j_ely > 1e-9
+    irr_rate = (ELY_V11['steady_2_uvph']
+                * np.maximum(j_ely - 1.0, 0.0) ** NOMINAL_ELY_STRESS_EXPONENT)
     cost_ely = np.zeros((len(u), 2))
     for prev in (0, 1):
-        start = (~np.bool_(prev)) & cur_ely_on
-        deg = deg_irr_pct + deg_idle_pct + start * (ELY_REC['s'] * UV_TO_PCT)
-        cost_ely[:, prev] = deg * ely_to_eur
+        uv = irr_rate * TS_H
+        uv += ((j_ely > 0.0) & (j_ely <= 0.01)) * ELY_V11['idle_uvph'] * TS_H
+        uv += ((prev == 0) & cur_ely_on) * ELY_V11['start_uv']
+        cost_ely[:, prev] = permanent_uv_to_eur('ely', uv)
 
     return P_h2, cur_fc_on.astype(np.int64), cur_ely_on.astype(np.int64), cost_fc, cost_ely
 
@@ -326,7 +340,7 @@ def solve_cyclic(soc_grid, h2_grid, u, pre, P_ref, n_iter=3, verbose=True,
 # ---------------------------------------------------------------------------
 # Forward sim EXACT (reutilise get_lol + simulate_transition)
 #   policy_fn(SoC, E_h2, fc_on, ely_on, t) -> action (P_dc_bat, P_dc_fc, P_dc_ely)
-#   retourne un dict 'data' compatible avec la metrique sens_common
+#   retourne un dict minimal pour le reporting V11 du prototype
 # ---------------------------------------------------------------------------
 def forward_sim(policy_fn, n=N_YEAR, soc0=0.5, e_h2_0=E_H2_INIT):
     P_ref_net, P_dc_load, P_dc_pv = net_reference(n)
@@ -337,9 +351,16 @@ def forward_sim(policy_fn, n=N_YEAR, soc0=0.5, e_h2_0=E_H2_INIT):
     fc_on, ely_on = 0, 0
     for t in range(n):
         Ptot = P_ref_net[t]
-        action = policy_fn(SoC[t], E_h2[t], fc_on, ely_on, t, Ptot)
-        action, lol = get_lol(SoC[t], action, Ptot, [], E_h2[t], E_H2_INIT,
-                              P_FC_MAX, P_ELY_MAX, 1.0)
+        proposed = policy_fn(SoC[t], E_h2[t], fc_on, ely_on, t, Ptot)
+        # Les references RB1/RB2 renvoient deja (action, lol). Recalculer lol a
+        # partir de leur action deja clampee effacerait artificiellement l'EENS.
+        if (isinstance(proposed, tuple) and len(proposed) == 2
+                and hasattr(proposed[0], '__len__') and len(proposed[0]) == 3):
+            action, lol = proposed
+        else:
+            action, lol = get_lol(
+                SoC[t], proposed, Ptot, [], E_h2[t], E_H2_INIT,
+                P_FC_MAX, P_ELY_MAX, 1.0)
         SoC_tp1, simOut = simulate_transition(SoC[t], action, Ptot, 0, lol,
                                               0.0, 0.0, 1.0, E_h2[t], E_H2_INIT,
                                               P_FC_MAX, P_ELY_MAX)
@@ -364,23 +385,32 @@ def forward_sim(policy_fn, n=N_YEAR, soc0=0.5, e_h2_0=E_H2_INIT):
 
 
 # ---------------------------------------------------------------------------
-# Metrique unifiee (== sens_common.metrics + VoLL constant 3 EUR/kWh)
+# Metrique exacte V11 du prototype 1 an (sans remplacement)
 # ---------------------------------------------------------------------------
 def metrics(data):
-    P_bat = data["P_bat"]; P_fc = data["P_fc"]; P_ely = data["P_ely"]
-    SoC = data["SoC"]; lol = data["lol_tab"]
-    alpha_fc = data["alpha_fc"][:-1]; alpha_ely = data["alpha_ely"][:-1]
-    SoH_bat = data["SoH_bat"][:-1]
-    P_planned = (data["P_dc_load"] - data["P_dc_pv"]) / 1000.0
-    P_real    = (data["P_dc_load"] - data["P_dc_pv"]) * (1 - lol) / 1000.0
-    p = np.clip(P_planned, 0, None); r = np.clip(P_real, 0, None)
-    e_unserved = np.clip(p - r, 0, None) * TS_H                  # kWh/pas
-    load = np.clip(np.asarray(data["P_dc_load"], dtype=float) / 1000.0, 0, None)
-    lpsp = (np.clip(p - r, 0, None).sum() / load.sum() * 100) if load.sum() > 0 else 0.0
-    deg_keur = get_cost_total(alpha_fc, P_fc, alpha_ely, P_ely, P_bat, SoC,
-                              LOAD, BAT, FC, ELY, SoH_bat) / 1000.0
-    lps_keur = VOLL * e_unserved.sum() / 1000.0
-    return dict(lpsp=lpsp, deg_keur=deg_keur, lps_keur=lps_keur,
+    P_bat = np.asarray(data["P_bat"])
+    P_fc = np.asarray(data["P_fc"])
+    P_ely = np.asarray(data["P_ely"])
+    SoC = np.asarray(data["SoC"])
+    alpha_fc = np.asarray(data["alpha_fc"][:-1])
+    alpha_ely = np.asarray(data["alpha_ely"][:-1])
+
+    fc_state, ely_state = new_fc_state(), new_ely_state()
+    previous_fc = previous_ely = 0.0
+    for k in range(len(P_fc)):
+        fc_state = advance_fc_power(
+            fc_state, P_fc[k], previous_fc, alpha_fc[k], TS_H)
+        ely_state = advance_ely_power(
+            ely_state, P_ely[k], previous_ely, alpha_ely[k], TS_H)
+        previous_fc, previous_ely = P_fc[k], P_ely[k]
+    bat_eur = get_cost_bat(P_bat, SoC, np.ones(len(P_bat)))
+    deg_keur = (
+        bat_eur + state_cost_eur('fc', fc_state) + state_cost_eur('ely', ely_state)
+    ) / 1000.0
+    rel = compute_reliability_metrics(data)
+    lps_keur = VOLL * rel['eens_kwh'] / 1000.0
+    return dict(lpsp=rel['lpsp_pct'], eens_kwh=rel['eens_kwh'],
+                deg_keur=deg_keur, lps_keur=lps_keur,
                 unified_keur=deg_keur + lps_keur)
 
 
@@ -403,11 +433,19 @@ def make_dp_policy(soc_grid, h2_grid, u, policy):
     return pol
 
 
-def rb2_policy(SoC, E_h2, fc_on, ely_on, t, Ptot):
-    action, _ = get_optimal_action_RB(SoC, Ptot, [], None, 0.0, 0.0, 1.0,
-                                      E_h2, E_H2_INIT, P_FC_MAX, P_ELY_MAX,
-                                      8000, 3000, 1.0, 1.0)
-    return action
+def _reference_adapter(reference_policy):
+    def policy(SoC, E_h2, fc_on, ely_on, t, Ptot):
+        del fc_on, ely_on, t
+        return reference_policy(
+            SoC, Ptot, [], None, 0.0, 0.0, 1.0,
+            E_h2, E_H2_INIT, P_FC_MAX, P_ELY_MAX,
+            8000, 3000, 1.0, 1.0,
+        )
+    return policy
+
+
+rb1_policy = _reference_adapter(make_rb1_policy_v11(*RB1_REFERENCE_PARAMS))
+rb2_policy = _reference_adapter(make_rb2_policy(*RB2_REFERENCE_PARAMS))
 
 
 # ---------------------------------------------------------------------------
@@ -415,12 +453,12 @@ def rb2_policy(SoC, E_h2, fc_on, ely_on, t, Ptot):
 # ---------------------------------------------------------------------------
 def main():
     print("=" * 70)
-    print(" PROTOTYPE PD -- 1 an, etat neuf (SoH=1)")
+    print(" PROTOTYPE PD V11 p=2 -- 1 an, etat neuf (SoH=1)")
     print("=" * 70)
     Ns = Nh = 51
     soc_grid = np.linspace(SOC_LO, SOC_HI, Ns)
     h2_grid  = np.linspace(0.0, E_H2_INIT, Nh)
-    u = control_grid(n_fc=10, n_ely=50)
+    u = control_grid(n_fc=10, n_ely=50, extra_u=v11_control_anchors())
     pre = precompute_controls(u)
     P_ref_net, _, _ = net_reference(N_YEAR)
     print(f" grille SoC={Ns}  E_h2={Nh}  controles={len(u)}  pas={N_YEAR}")
@@ -428,13 +466,18 @@ def main():
     # --- sanity check cout batterie vectorise vs get_cost_bat ---
     _check_battery_cost(soc_grid, u, P_ref_net)
 
-    # --- RB2 baseline ---
-    t0 = time.time()
-    data_rb = forward_sim(rb2_policy)
-    m_rb = metrics(data_rb)
-    print(f"\n RB2   : LPSP {m_rb['lpsp']:.4f}%   deg {m_rb['deg_keur']:.3f} kEUR   "
-          f"LPS {m_rb['lps_keur']:.3f} kEUR   UNIFIE {m_rb['unified_keur']:.3f} kEUR "
-          f"({time.time()-t0:.1f}s)")
+    # --- references best-vs-best V11 p=2 ---
+    references = {}
+    for label, reference in (
+        ("RB1(0.20,0.40)", rb1_policy),
+        ("RB2(0.574,0.465)", rb2_policy),
+    ):
+        t0 = time.time()
+        result = metrics(forward_sim(reference))
+        references[label] = result
+        print(f"\n {label:<18}: LPSP {result['lpsp']:.4f}%   "
+              f"deg {result['deg_keur']:.3f} kEUR   LPS {result['lps_keur']:.3f} kEUR   "
+              f"UNIFIE {result['unified_keur']:.3f} kEUR ({time.time()-t0:.1f}s)")
 
     # --- PD ---
     print("\n Resolution PD (periodicite annuelle) :")
@@ -448,11 +491,14 @@ def main():
 
     # --- verdict ---
     print("\n" + "-" * 70)
-    gain = (m_rb['unified_keur'] - m_dp['unified_keur'])
-    rel = gain / m_rb['unified_keur'] * 100 if m_rb['unified_keur'] else 0
-    print(f" Cout unifie : RB2 {m_rb['unified_keur']:.3f}  ->  PD {m_dp['unified_keur']:.3f} kEUR")
+    best_label, best_ref = min(
+        references.items(), key=lambda item: item[1]['unified_keur'])
+    gain = best_ref['unified_keur'] - m_dp['unified_keur']
+    rel = gain / best_ref['unified_keur'] * 100 if best_ref['unified_keur'] else 0
+    print(f" Cout unifie : {best_label} {best_ref['unified_keur']:.3f}  "
+          f"->  PD {m_dp['unified_keur']:.3f} kEUR")
     print(f" Gain PD     : {gain:.3f} kEUR  ({rel:+.1f}%)   "
-          f"{'OK (PD <= RB2)' if m_dp['unified_keur'] <= m_rb['unified_keur'] + 1e-6 else 'ANOMALIE (PD > RB2)'}")
+          f"{'OK' if m_dp['unified_keur'] <= best_ref['unified_keur'] + 1e-6 else 'A INVESTIGUER'}")
     print("-" * 70)
 
 

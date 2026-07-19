@@ -1,16 +1,15 @@
 #!/usr/bin/bash -l
 # ============================================================================
-# run_dp_pareto.slurm -- FRONTIERE DE PARETO deg <-> EENS (EMS optimal PD) Helios
+# run_dp_pareto.slurm -- frontiere PD V11 p=2 degradation <-> EENS, Helios
 # ----------------------------------------------------------------------------
 # Lance dp_pareto.py 'full' : balaye 19 valeurs de epsilon (= poids fiabilite
 # dans la resolution PD) et evalue pour chacune la PD sequentielle 25 ans sur
 # la vraie boucle de vieillissement. Trace la frontiere (deg_kEUR, EENS_kWh).
 #
-# VARIANTE V2 (defaut) : projection du vieillissement + rollout exact
-# (cf. note_dp_front_v2.txt). Corrige les ~10 kEUR de degradation FC "high"
-# NON pricee du v1 (derive intra-annuelle du seuil 0.8*Pmax vieilli), qui
-# laissait RB2(SoH_all)/RB2(SoH_all+Pred) passer sous le front. Sortie taggee
-# *_v2 -> N'ECRASE PAS le front v1. Pour rejouer le v1 : DP_PARETO_V2=0.
+# Reprise exacte de la methode V2 ayant produit Pareto_V8 (job 213210), portee
+# sur les couts V11-p=2 et le ledger corrige. Provenance : PROVENANCE_PARETO_V8.md.
+# Variante par defaut : projection de capacite batterie et rollout au cout
+# permanent V11 courant. DP_PARETO_V2=0 reste un diagnostic, pas le front retenu.
 #
 # PARALLELISME : chaque resolution PD est MONO-THREAD -> on lance les epsilon en
 # PARALLELE, 1 par coeur (ProcessPoolExecutor, max_workers = SLURM_CPUS_PER_TASK).
@@ -18,10 +17,10 @@
 #
 #     sbatch run_dp_pareto.slurm
 #
-# A soumettre DEPUIS  $WORK/genial/Robustesse/Vieillissement8/DP
+# A soumettre DEPUIS  $WORK/genial/Robustesse/Vieillissement11/DP
 # (fins de ligne Unix : si edite sous Windows, passer dos2unix dessus).
 #
-# Sorties : results/dp_pareto_25y_51x51_v2.txt (+ .npz + _traj.npz) et
+# Sorties : runs/dp_pareto_v11_p2_25y_51x51_rollout.* et
 #           dp_pareto.<JOBID>.out
 # Budget  : v1 mesurait ~6.7 h MONO-THREAD/eps ; v2 ~+30% (rollout) -> ~9 h.
 #           19 eps sur 19 coeurs en parallele -> ~9 h de wall (walltime 14 h,
@@ -53,8 +52,7 @@ mkdir -p "$MPLCONFIGDIR"
 # Dossier des donnees d'entree (profils PV/conso). Lu par Init via GENIAL_DATA_DIR.
 export GENIAL_DATA_DIR="$WORK/genial_data"
 
-# Variante DP : V2 (projection vieillissement + rollout) par defaut.
-# Mettre 0 pour rejouer exactement le v1 (front legacy, sortie sans suffixe _v2).
+# Variante PD online : projection de capacite + rollout V11 par defaut.
 export DP_PARETO_V2=1
 
 module purge
@@ -68,6 +66,7 @@ python -c "import numpy,scipy,sympy;print('numpy',numpy.__version__,'scipy',scip
 
 # --- Execution --------------------------------------------------------------
 cd "$SLURM_SUBMIT_DIR" || exit 1
+python check_dp_v11.py || exit 2
 time python dp_pareto.py full
 
 echo "fin=$(date)"

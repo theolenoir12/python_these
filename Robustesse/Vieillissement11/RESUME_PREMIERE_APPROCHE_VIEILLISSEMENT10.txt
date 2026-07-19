@@ -150,7 +150,7 @@ Il ne faut pas tuner uniquement sur "10-15 ans" : une strategie peu utilisee peu
 7. LIMITES ACTUELLES
 
 - La validation realisee ici concerne les boucles EMS a base de regles, notamment RB2.
-- Les dossiers DP et DP2 utilisent encore des approximations historiques en fraction de puissance. Ils ne doivent pas servir a une comparaison finale V10 avant migration vers j.
+- Au stade historique V10 documente ici, les dossiers DP et DP2 utilisaient encore des approximations en fraction de puissance. Cette limite est levee pour la PD active de Vieillissement11 : la chaine V2 de Pareto_V8 a ete portee vers les couts V11 dans l'unique dossier Vieillissement11/DP, et Vieillissement11/DP2 a ete supprime.
 - Le calcul de Pmax a ete unifie dans le chemin MILP, mais son modele de degradation reste partiellement historique et son import contient deja une incompatibilite j_0 presente dans V9_4. Le MILP n'est donc pas certifie V10 a ce stade.
 - Les essais de McCay, Colombo et Rakousky sont bien plus courts que les vies extrapolees. Les effets de seuil et l'extrapolation a plusieurs dizaines de milliers d'heures constituent une incertitude scientifique, pas seulement numerique.
 - Les criteres DOE sont des reperes de systemes ou de stacks et ne sont pas tous identiques au critere de plus ou moins 10 % de tension utilise ici.

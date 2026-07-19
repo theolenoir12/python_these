@@ -1,21 +1,21 @@
 #!/usr/bin/bash -l
 # ============================================================================
-# run_dp_aging.slurm -- PD avec VIEILLISSEMENT 25 ans (EMS optimal) sur Helios
+# run_dp_aging.slurm -- PD V11 p=2 avec vieillissement, 25 ans, sur Helios
 # ----------------------------------------------------------------------------
 # Lance dp_aging.py en mode 'full' (horizon 25 ans, grille 51x51) : compare
-# RB2 / PD BoL-figee / PD sequentielle sur le cout unifie (deg + VoLL*EENS).
+# RB1/RB2 optimisees / PD BoL-figee / PD sequentielle sur le meme ledger V11.
 # PROCESSUS UNIQUE (la PD sequentielle est intrinsequement sequentielle : chaque
 # annee depend du vieillissement de la precedente) -> pas de ProcessPool ici.
 #
 #     sbatch run_dp_aging.slurm
 #
-# A soumettre DEPUIS  $WORK/genial/Robustesse/Vieillissement8/DP
+# A soumettre DEPUIS  $WORK/genial/Robustesse/Vieillissement11/DP
 # (fins de ligne Unix : si edite sous Windows, passer dos2unix dessus).
 #
-# Sorties : results/dp_aging_25y_51x51.txt (+ .npz) et dp_aging.<JOBID>.out
+# Sorties : runs/dp_aging_v11_p2_25y_51x51.txt (+ .npz) et log Slurm
 # ============================================================================
 
-#SBATCH --job-name=dp_aging
+#SBATCH --job-name=dp_v11p2
 #SBATCH --output=%x.%J.out        ## %x=nom du job, %J=id du job
 #SBATCH --error=%x.%J.out
 #SBATCH --time=08:00:00           ## walltime (run ~2-3 h, marge large)
@@ -49,6 +49,7 @@ python -c "import numpy,scipy,sympy;print('numpy',numpy.__version__,'scipy',scip
 
 # --- Execution --------------------------------------------------------------
 cd "$SLURM_SUBMIT_DIR" || exit 1
+python check_dp_v11.py || exit 2
 time python dp_aging.py full
 
 echo "fin=$(date)"

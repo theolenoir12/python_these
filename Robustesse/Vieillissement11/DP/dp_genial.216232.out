@@ -1,0 +1,29 @@
+Job 216232  noeud=node4-9  script=dp_gridcheck.py
+cpus-per-task=8  debut=ven. juil. 17 22:56:43 CEST 2026
+numpy 1.21.5 scipy 1.9.1
+OK -- PD V11 p=2 -- v11-doe-rakousky-mccay-colombo-2026-07-16
+==============================================================================
+ CONTROLE DE GRILLE -- PD vs RB1/RB2 V11 p=2 (1 an, etat neuf)
+==============================================================================
+ RB1 : LPSP 0.5538%  deg 2.541  UNIFIE 2.889 kEUR
+ RB2 : LPSP 0.5435%  deg 2.717  UNIFIE 3.058 kEUR
+ Lancement de 5 configs sur 5 workers...
+
+
+    SoCxH2   Nu    LPSP%    deg_kE   LPS_kE   UNIF_kE   gain%     sec
+---------------------------------------------------------------------
+       RB1    -   0.5538     2.541    0.348     2.889       -       -
+       RB2    -   0.5435     2.717    0.342     3.058       -       -
+     21x21   28   0.1238     1.774    0.078     1.851    35.9      24
+     31x31   40   0.0926     1.757    0.058     1.815    37.2      57
+     41x41   51   0.1033     1.738    0.065     1.803    37.6     121
+     51x51   63   0.1282     1.731    0.081     1.812    37.3     217
+     71x71   75   0.0889     1.726    0.056     1.782    38.3     465
+reference de gain: RB1; p_ELY=2
+
+ Resultats -> /Work/Users/tlenoir/genial/Robustesse/Vieillissement11/DP/runs/dp_gridcheck_v11_p2.txt
+
+real	7m47,339s
+user	14m35,339s
+sys	0m6,810s
+fin=ven. juil. 17 23:04:32 CEST 2026

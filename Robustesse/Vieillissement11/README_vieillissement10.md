@@ -124,13 +124,15 @@ Validé pour cette première étape :
 - simulation RB2 sur 25 ans et détection des premières vies ;
 - cohérence du ledger de remplacements.
 
-Non certifié dans Vieillissement10 :
+Non certifié dans Vieillissement10 au moment de cette étape historique :
 
-- `DP/` et `DP2/` réimplémentent encore le vieillissement historique en fraction de puissance ;
+- les anciens `DP/` et `DP2/` réimplémentaient encore le vieillissement historique en fraction de puissance ;
 - le calcul de `Pmax` du chemin MILP est unifié, mais sa dégradation n'est pas entièrement migrée vers `j` ;
 - `Common/milp_weekly.py` contient un import historique de `j_0` absent au niveau module de `Init_EMR_MG_v16_python.py`, défaut également présent dans la base V9_4.
 
-Jusqu'à migration, les comparaisons scientifiques V10 doivent donc utiliser les stratégies rule-based.
+Cette limite ne décrit plus la PD active de Vieillissement11 : la méthode V2 de
+`Pareto_V8` a été portée dans l'unique dossier `Vieillissement11/DP/`, avec les
+coûts et le ledger V11. Le doublon `Vieillissement11/DP2/` a été supprimé.
 
 ## Fichiers principaux ajoutés ou modifiés
 

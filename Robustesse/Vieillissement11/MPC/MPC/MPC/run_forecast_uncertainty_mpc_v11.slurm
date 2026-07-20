@@ -4,9 +4,9 @@
 #SBATCH --job-name=mpc_v11_pred
 #SBATCH --output=%x.%J.out
 #SBATCH --error=%x.%J.out
-#SBATCH --time=06:00:00
+#SBATCH --time=04:00:00
 #SBATCH --partition=smp
-#SBATCH --cpus-per-task=10
+#SBATCH --cpus-per-task=20
 #SBATCH --mem=40G
 
 export OMP_NUM_THREADS=1

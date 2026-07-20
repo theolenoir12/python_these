@@ -1,0 +1,39 @@
+scipy 1.9.1 milp OK
+test_ely_piecewise_is_convex_and_contains_j_anchors (test_mpc_v11.TestMPCV11) ... ok
+test_first_executed_action_is_balanced (test_mpc_v11.TestMPCV11) ... /Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:445: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+ok
+test_milp_balance_modes_and_constraints (test_mpc_v11.TestMPCV11) ... ok
+test_model_is_nominal_p2 (test_mpc_v11.TestMPCV11) ... ok
+test_no_soh_null_is_exact (test_mpc_v11.TestMPCV11) ... ok
+test_soh_weights_only_change_objective_weights (test_mpc_v11.TestMPCV11) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.233s
+
+OK
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:445: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:445: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:445: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:445: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:445: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:445: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+[rb1_v11_p2_020_040] LPSP=0.6007% deg=2.511 kEUR J3=2.889 kEUR wall=3s
+[rb2_v11_p2_0574_0465] LPSP=0.6168% deg=2.677 kEUR J3=3.064 kEUR wall=4s
+[mpc_soh_both1_h6] LPSP=0.6740% deg=2.256 kEUR J3=2.680 kEUR wall=131s
+[mpc_no_soh_h6] LPSP=0.6758% deg=2.257 kEUR J3=2.681 kEUR wall=132s
+[mpc_soh_ely1_h6] LPSP=0.6734% deg=2.257 kEUR J3=2.681 kEUR wall=132s
+[mpc_soh_fc1_h6] LPSP=0.6761% deg=2.257 kEUR J3=2.682 kEUR wall=132s
+[mpc_no_soh_h24] LPSP=0.2630% deg=2.376 kEUR J3=2.541 kEUR wall=1859s
+[mpc_soh_both1_h24] LPSP=0.2622% deg=2.378 kEUR J3=2.543 kEUR wall=1871s
+OK -- screening complet -> /Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/runs/screen_1y_d840744e29c7
+
+real	31m15.006s
+user	90m18.716s
+sys	17m1.084s

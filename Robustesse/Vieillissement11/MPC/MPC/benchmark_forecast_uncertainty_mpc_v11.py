@@ -38,6 +38,7 @@ def _configs(seeds: list[int], scales: list[float]) -> list[dict[str, Any]]:
             "kind": "mpc", "horizon_steps": 24,
             "health_mode": "no_soh" if health_label == "no_soh" else "soh",
             "beta_fc": beta_fc, "beta_ely": beta_ely,
+            "time_limit_s": 30.0, "mip_rel_gap": 1e-4,
         }
         for mode in ("perfect", "persistence"):
             configs.append({
@@ -147,16 +148,26 @@ def main() -> None:
     _write_outputs(output, configs, results)
 
     workers = max(1, min(args.workers, len(pending) or 1))
+    failures: dict[str, str] = {}
     with ProcessPoolExecutor(max_workers=workers, mp_context=mp.get_context("spawn")) as pool:
         futures = {pool.submit(_run_one, job): job[0]["label"] for job in pending}
         for future in as_completed(futures):
-            label, result = future.result()
+            label = futures[future]
+            try:
+                _, result = future.result()
+            except Exception as exc:
+                failures[label] = repr(exc)
+                print(f"[ECHEC] {label}: {exc}", flush=True)
+                continue
             results[label] = result
             _write_outputs(output, configs, results)
             print(f"[{label}] LPSP={result['lpsp_pct']:.4f}% "
                   f"deg={result['degradation_keur']:.3f} kEUR", flush=True)
-    if len(results) != len(configs):
-        raise RuntimeError("banc d'incertitude incomplet")
+    (output / "failures.json").write_text(json.dumps(failures, indent=2) + "\n")
+    if failures or len(results) != len(configs):
+        raise RuntimeError(
+            f"banc d'incertitude incomplet : {len(failures)} echec(s), "
+            f"{len(results)}/{len(configs)} point(s) termines")
     print(f"OK -> {output}")
 
 

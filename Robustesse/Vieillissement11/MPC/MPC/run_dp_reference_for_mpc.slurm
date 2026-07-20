@@ -24,4 +24,4 @@ module load anaconda3@2022.10/gcc-12.1.0
 
 cd "$SLURM_SUBMIT_DIR" || exit 1
 time python run_dp_reference_for_mpc.py \
-  --years 1 --n-iter 3 --workers "$SLURM_CPUS_PER_TASK"
+  --years 1 --workers "$SLURM_CPUS_PER_TASK"

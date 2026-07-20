@@ -33,7 +33,7 @@ def _scalar_summary(result: dict) -> dict:
 
 
 def _write(output: Path, results: list[dict], years: float,
-           ns: int, nh: int, n_fc: int, n_ely: int, n_iter: int) -> Path:
+           ns: int, nh: int, n_fc: int, n_ely: int) -> Path:
     ordered = sorted(results, key=lambda item: item["eps"])
     (output / "summary.json").write_text(json.dumps(ordered, indent=2) + "\n")
     rows = [
@@ -54,8 +54,7 @@ def _write(output: Path, results: list[dict], years: float,
         np.savez_compressed(
             artifact,
             model_id=np.array(MODEL_ID), years=np.array(years),
-            ns=np.array(ns), nh=np.array(nh), n_fc=np.array(n_fc),
-            n_ely=np.array(n_ely), n_iter=np.array(n_iter),
+            ns=np.array(ns), nh=np.array(nh), n_fc=np.array(n_fc), n_ely=np.array(n_ely),
             eps=col("eps"), lpsp=col("lpsp"), deg_keur=col("deg"),
             eens_kwh=col("eens_kwh"), unif3_keur=col("unif3"),
             soh_bat=col("soh_bat"), soh_fc=col("soh_fc"), soh_ely=col("soh_ely"),
@@ -74,17 +73,13 @@ def main() -> None:
     parser.add_argument("--nh", type=int, default=51)
     parser.add_argument("--n-fc", type=int, default=10)
     parser.add_argument("--n-ely", type=int, default=50)
-    parser.add_argument("--n-iter", type=int, default=3)
     args = parser.parse_args()
-    if (args.years <= 0
-            or min(args.ns, args.nh, args.n_fc, args.n_ely) <= 1
-            or args.n_iter < 1):
-        raise SystemExit("horizon, tailles de grille et n_iter invalides")
+    if args.years <= 0 or min(args.ns, args.nh, args.n_fc, args.n_ely) <= 1:
+        raise SystemExit("horizon et tailles de grille invalides")
 
     protocol = {
         "model_id": MODEL_ID, "years": args.years, "eps": args.eps,
         "ns": args.ns, "nh": args.nh, "n_fc": args.n_fc, "n_ely": args.n_ely,
-        "n_iter": args.n_iter,
         "dp_v2": bool(dp.DP_V2), "recompute": "yearly",
         "information": "profil annuel reel connu dans chaque reconstruction",
     }
@@ -102,12 +97,9 @@ def main() -> None:
         if cached.exists():
             results.append(json.loads(cached.read_text()))
         else:
-            jobs.append((
-                eps, args.ns, args.nh, args.n_fc, args.n_ely,
-                args.years, args.n_iter))
+            jobs.append((eps, args.ns, args.nh, args.n_fc, args.n_ely, args.years))
     artifact = _write(
-        output, results, args.years, args.ns, args.nh, args.n_fc, args.n_ely,
-        args.n_iter)
+        output, results, args.years, args.ns, args.nh, args.n_fc, args.n_ely)
 
     workers = max(1, min(args.workers, len(jobs) or 1))
     with ProcessPoolExecutor(max_workers=workers, mp_context=mp.get_context("spawn")) as pool:
@@ -120,8 +112,7 @@ def main() -> None:
                 json.dumps(result, indent=2) + "\n")
             results.append(result)
             artifact = _write(
-                output, results, args.years, args.ns, args.nh, args.n_fc,
-                args.n_ely, args.n_iter)
+                output, results, args.years, args.ns, args.nh, args.n_fc, args.n_ely)
             print(f"[eps={result['eps']}] LPSP={result['lpsp']:.4f}% "
                   f"deg={result['deg']:.3f} kEUR", flush=True)
     if len(results) != len(args.eps):

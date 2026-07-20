@@ -595,12 +595,21 @@ class MPCPolicyV11:
         if len(forecast) < 2:
             forecast = np.r_[forecast, float(P_tot_ref_t)]
 
-        solution = self.solve_horizon(
-            forecast, float(SoC_t), float(E_h2_t), float(E_h2_init),
-            float(SoH_bat_t), float(SoH_fc_t), float(SoH_ely_t),
-            float(alpha_fc_t), float(alpha_ely_t),
-            float(P_fc_max_t), float(P_ely_max_t), aging_context,
-        )
+        try:
+            solution = self.solve_horizon(
+                forecast, float(SoC_t), float(E_h2_t), float(E_h2_init),
+                float(SoH_bat_t), float(SoH_fc_t), float(SoH_ely_t),
+                float(alpha_fc_t), float(alpha_ely_t),
+                float(P_fc_max_t), float(P_ely_max_t), aging_context,
+            )
+        except RuntimeError as exc:
+            raise RuntimeError(
+                f"{exc}; call={self.calls}; P_ref={float(P_tot_ref_t):.12g}; "
+                f"SoC={float(SoC_t):.12g}; E_h2={float(E_h2_t):.12g}; "
+                f"SoH=({float(SoH_bat_t):.12g},{float(SoH_fc_t):.12g},"
+                f"{float(SoH_ely_t):.12g}); "
+                f"alpha=({float(alpha_fc_t):.12g},{float(alpha_ely_t):.12g})"
+            ) from exc
         if not solution["success"]:
             raise RuntimeError(solution["message"])
 

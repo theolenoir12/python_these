@@ -1,11 +1,11 @@
 # Plan canonique du MPC online V11-p=2
 
-Date : 19 juillet 2026.
+Date : 20 juillet 2026.
 
-Statut : noyau déterministe implémenté et smoke d'une semaine validé. Le
-prochain calcul est le screening d'un an décrit dans `README_MPC_V11_P2.md`.
-Le balayage PD de référence est validé dans
-`../DP/AUDIT_PARETO_V11_P2_2026-07-19.md`.
+Statut : noyau, smoke et screening annuel validés. H24 sans SoH est retenu ; la
+pondération SoH à beta=1 reste sous le seuil de matérialité. Le banc de
+prévision est à 33/34 et doit être clos avant le tuning. Voir
+`analysis/AUDIT_MPC_V11_P2_2026-07-20.md`.
 
 ## Statut et objectif
 
@@ -38,12 +38,13 @@ reproduire exactement `mpc_v11_p2_no_soh`.
   non comme une politique online. La bande de référence à VoLL=3 est
   `epsilon=10--50` ; elle reste à moins de 0,211 % du minimum réalisé.
 
-Le moteur commun n'a pas été modifié, afin de conserver la même physique que le
-front PD. Le MPC contient un délestage explicite et chaque banc contrôle le
-résidu de puissance, `lol>1` et l'énergie au-delà du clipping. Le smoke ne
-présente aucun dépassement ni résidu de bilan. Si ce contrôle échoue sur un
-horizon plus long, le point sera invalidé avant toute comparaison ; une
-correction commune imposerait alors le rejeu de toutes les références.
+Le moteur commun conserve la même physique que le front PD. Le 20 juillet, une
+garde de reporting a été ajoutée à `get_lol.py` : `lol=0` lorsque le profil net
+est en surplus et clipping dans `[0,1]` en déficit. La LOL n'entre pas dans la
+transition d'état et la métrique de fiabilité la clippait déjà ; cette correction
+ne modifie donc ni les actions, ni les états, ni EENS/LPSP des caches existants.
+Le MPC contient un délestage explicite et chaque banc contrôle séparément le
+déficit après LOL et l'écrêtage implicite.
 
 ## Formulation initiale proposée
 
@@ -89,10 +90,11 @@ borne PD : elle ne connaît que la fenêtre disponible à l'heure courante.
 2. smoke d'une semaine, horizons 6 h et 24 h — terminé, cache
    `runs/smoke_7d_f209c53dbce2/` ;
 3. banc d'un an pour éliminer les formulations dominées et vérifier le temps
-   de calcul ;
-4. réglage apparié à budget identique des deux variantes ;
-5. rejeu 25 ans uniquement pour les finalistes ;
-6. robustesse au bruit/biais du SoH, aux erreurs de prévision et aux profils
+   de calcul — terminé, H24 sans SoH retenu ;
+4. clôture du banc d'incertitude — 33/34, un point à reprendre ;
+5. réglage apparié à budget identique des deux variantes ;
+6. rejeu 25 ans uniquement pour les finalistes ;
+7. robustesse au bruit/biais du SoH, aux erreurs de prévision et aux profils
    hors réglage.
 
 Les nouveaux caches doivent être pleine précision et empreintés dans

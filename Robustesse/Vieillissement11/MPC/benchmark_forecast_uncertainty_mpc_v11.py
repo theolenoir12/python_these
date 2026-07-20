@@ -114,12 +114,13 @@ def main() -> None:
         raise SystemExit("years doit etre positif et les echelles non negatives")
 
     configs = _configs(args.seeds, args.scales)
+    selected = None
     if args.only:
         wanted = set(args.only)
-        configs = [config for config in configs if config["label"] in wanted]
-        missing = wanted - {config["label"] for config in configs}
-        if missing:
-            raise SystemExit("labels inconnus : " + ", ".join(sorted(missing)))
+        unknown = wanted - {config["label"] for config in configs}
+        if unknown:
+            raise SystemExit("labels inconnus : " + ", ".join(sorted(unknown)))
+        selected = wanted
     protocol = {
         "model_id": MODEL_ID, "years": args.years, "horizon_steps": 24,
         "present_measurement": "exact",
@@ -143,7 +144,7 @@ def main() -> None:
         ledger = output / f"{config['label']}_ledger.json"
         if cached.exists() and trajectory.exists() and ledger.exists():
             results[config["label"]] = json.loads(cached.read_text())
-        else:
+        elif selected is None or config["label"] in selected:
             pending.append((config, args.years, str(output)))
     _write_outputs(output, configs, results)
 
@@ -164,10 +165,36 @@ def main() -> None:
             print(f"[{label}] LPSP={result['lpsp_pct']:.4f}% "
                   f"deg={result['degradation_keur']:.3f} kEUR", flush=True)
     (output / "failures.json").write_text(json.dumps(failures, indent=2) + "\n")
+    invalid = {
+        label: "deficit non ferme apres LOL"
+        for label, result in results.items()
+        if result.get("max_deficit_shortage_after_lol_w", 0.0) > 1e-4
+    }
+    invalid.update({
+        label: "lol>1"
+        for label, result in results.items()
+        if (result.get("lol_above_one_steps", 0)
+            and result.get("excess_beyond_clip_kwh", 0.0) > 1e-9)
+    })
+    legacy_warnings = {
+        label: "lol>1 uniquement en surplus dans un cache anterieur"
+        for label, result in results.items()
+        if (result.get("lol_above_one_steps", 0)
+            and result.get("excess_beyond_clip_kwh", 0.0) <= 1e-9)
+    }
+    if legacy_warnings:
+        (output / "warnings.json").write_text(
+            json.dumps(legacy_warnings, indent=2) + "\n")
+    if invalid:
+        (output / "invalid.json").write_text(json.dumps(invalid, indent=2) + "\n")
     if failures or len(results) != len(configs):
         raise RuntimeError(
             f"banc d'incertitude incomplet : {len(failures)} echec(s), "
             f"{len(results)}/{len(configs)} point(s) termines")
+    if invalid:
+        raise RuntimeError(
+            "banc d'incertitude invalide : "
+            + ", ".join(f"{label} ({reason})" for label, reason in invalid.items()))
     print(f"OK -> {output}")
 
 

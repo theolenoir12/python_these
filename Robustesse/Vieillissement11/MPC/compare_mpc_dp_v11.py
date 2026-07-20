@@ -12,6 +12,22 @@ import numpy as np
 
 
 HERE = Path(__file__).resolve().parent
+DISPLAY = {
+    "mpc_no_soh_h6": "H6 sans SoH",
+    "mpc_no_soh_h24": "H24 sans SoH",
+    "mpc_soh_fc1_h6": "H6 SoH-FC",
+    "mpc_soh_ely1_h6": "H6 SoH-ELY",
+    "mpc_soh_both1_h6": "H6 SoH-FC+ELY",
+    "mpc_soh_both1_h24": "H24 SoH-FC+ELY",
+}
+ANNOTATION_OFFSETS = {
+    "mpc_no_soh_h24": (10, -16),
+    "mpc_soh_both1_h24": (10, 12),
+    "mpc_soh_both1_h6": (10, -38),
+    "mpc_soh_ely1_h6": (10, -13),
+    "mpc_soh_fc1_h6": (10, 13),
+    "mpc_no_soh_h6": (10, 38),
+}
 
 
 def _years_from_npz(path: Path, data: np.lib.npyio.NpzFile) -> float | None:
@@ -138,12 +154,18 @@ def main() -> None:
             point["lpsp_pct"], point["degradation_keur"], s=52,
             color=colors.get(point["forecast_mode"], "#2A9D8F"),
             edgecolor="white", linewidth=0.6, zorder=3)
-        ax.annotate(point["label"], (point["lpsp_pct"], point["degradation_keur"]),
-                    xytext=(4, 4), textcoords="offset points", fontsize=7)
-    ax.set_xlabel("LPSP (%) ? minimiser")
-    ax.set_ylabel("Cout de degradation (kEUR) ? minimiser")
-    ax.set_title(f"Front DP et points MPC V11 ? horizon commun {mpc_years:g} an(s)")
+        label = point["label"]
+        ax.annotate(
+            DISPLAY.get(label, label),
+            (point["lpsp_pct"], point["degradation_keur"]),
+            xytext=ANNOTATION_OFFSETS.get(label, (5, 5)),
+            textcoords="offset points", fontsize=7,
+            arrowprops={"arrowstyle": "-", "color": "#777777", "lw": 0.6})
+    ax.set_xlabel("LPSP (%) — à minimiser")
+    ax.set_ylabel("Coût de dégradation (kEUR) — à minimiser")
+    ax.set_title(f"Front DP et points MPC V11 — horizon commun {mpc_years:g} an(s)")
     ax.grid(alpha=0.25)
+    ax.margins(x=0.04, y=0.12)
     ax.legend()
     fig.tight_layout()
     fig.savefig(args.output / f"dp_mpc_pareto_{tag}.png", dpi=180)

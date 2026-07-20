@@ -14,12 +14,20 @@ HERE = Path(__file__).resolve().parent
 DISPLAY = {
     "rb1_v11_p2_020_040": "RB1",
     "rb2_v11_p2_0574_0465": "RB2",
-    "mpc_no_soh_h6": "MPC H6 sans SoH",
-    "mpc_no_soh_h24": "MPC H24 sans SoH",
-    "mpc_soh_fc1_h6": "MPC H6 SoH-FC",
-    "mpc_soh_ely1_h6": "MPC H6 SoH-ELY",
-    "mpc_soh_both1_h6": "MPC H6 SoH-FC+ELY",
-    "mpc_soh_both1_h24": "MPC H24 SoH-FC+ELY",
+    "mpc_no_soh_h6": "H6 sans SoH",
+    "mpc_no_soh_h24": "H24 sans SoH",
+    "mpc_soh_fc1_h6": "H6 SoH-FC",
+    "mpc_soh_ely1_h6": "H6 SoH-ELY",
+    "mpc_soh_both1_h6": "H6 SoH-FC+ELY",
+    "mpc_soh_both1_h24": "H24 SoH-FC+ELY",
+}
+ANNOTATION_OFFSETS = {
+    "mpc_no_soh_h24": (10, -16),
+    "mpc_soh_both1_h24": (10, 12),
+    "mpc_soh_both1_h6": (10, -38),
+    "mpc_soh_ely1_h6": (10, -13),
+    "mpc_soh_fc1_h6": (10, 13),
+    "mpc_no_soh_h6": (10, 38),
 }
 
 
@@ -107,11 +115,18 @@ def main() -> None:
         ax.annotate(
             point["display"],
             (point["lpsp_pct"], point["degradation_keur"]),
-            xytext=(4, 4), textcoords="offset points", fontsize=7)
-    ax.set_xlabel("LPSP (%) ? minimiser")
-    ax.set_ylabel("Cout de degradation (kEUR) ? minimiser")
-    ax.set_title("Screening MPC V11-p=2 ? un an, prevision parfaite")
+            xytext=ANNOTATION_OFFSETS.get(point["label"], (5, 5)),
+            textcoords="offset points", fontsize=7,
+            arrowprops=(
+                {"arrowstyle": "-", "color": "#777777", "lw": 0.6}
+                if point["label"] in ANNOTATION_OFFSETS else None
+            ))
+    ax.set_xlabel("LPSP (%) — à minimiser")
+    ax.set_ylabel("Coût de dégradation (kEUR) — à minimiser")
+    ax.set_title("Screening MPC V11-p=2 — un an, prévision parfaite")
     ax.grid(alpha=0.25)
+    ax.margins(x=0.08, y=0.18)
+    ax.legend(loc="upper left")
     fig.tight_layout()
     fig.savefig(args.output / "screen_1y_pareto.png", dpi=180)
     fig.savefig(args.output / "screen_1y_pareto.pdf")

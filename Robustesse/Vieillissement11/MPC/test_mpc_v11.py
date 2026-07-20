@@ -18,6 +18,7 @@ from Common.degradation_v11 import (  # noqa: E402
     ELY_V11, MODEL_ID, aging_snapshot, new_ely_state, new_fc_state,
 )
 from Common.electrochemistry import ely_pmax, ely_power  # noqa: E402
+from Common.get_lol import get_lol  # noqa: E402
 from MPC.mpc_v11 import ETA, MPCConfig, MPCPolicyV11  # noqa: E402
 
 
@@ -141,6 +142,13 @@ class TestMPCV11(unittest.TestCase):
         diagnostics = policy.diagnostics()
         self.assertEqual(diagnostics["failures"], 0)
         self.assertEqual(diagnostics["calls"], 1)
+
+    def test_lol_is_zero_during_net_surplus(self):
+        _, lol = get_lol(
+            0.99, (-5000.0, 1000.0, 0.0), -100.0, [], 100.0, 200.0,
+            I.FC["P_fc_max"], I.ELY["P_ely_max"], 1.0,
+        )
+        self.assertEqual(lol, 0.0)
 
 
 if __name__ == "__main__":

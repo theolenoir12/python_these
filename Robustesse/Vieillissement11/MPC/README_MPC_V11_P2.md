@@ -2,9 +2,10 @@
 
 ## Statut
 
-Le premier noyau déterministe est implémenté et validé sur un smoke de sept
-jours. Il s'agit d'un MPC mixte linéaire résolu à chaque heure par HiGHS via
-`scipy.optimize.milp`. Seule la première action est appliquée par la boucle V11.
+Le noyau déterministe et le screening annuel sont terminés. Il s'agit d'un MPC
+mixte linéaire résolu à chaque heure par HiGHS via `scipy.optimize.milp`. Seule
+la première action est appliquée par la boucle V11. L'audit canonique est
+`analysis/AUDIT_MPC_V11_P2_2026-07-20.md`.
 
 Les anciens résultats de `Python/Robustesse/MPC3/` ne sont pas réutilisés comme
 résultats : ils reposent sur les anciennes fonctions de coût. Leur architecture
@@ -47,9 +48,9 @@ Commande unitaire :
 python -m unittest -v test_mpc_v11.py
 ```
 
-Les six tests vérifient : `p=2`, convexité du surrogate PEMWE, présence des
+Les neuf tests vérifient : `p=2`, convexité du surrogate PEMWE, présence des
 ancres `j=1/j=2`, bilan et modes du MILP, action exécutée équilibrée, pondération
-SoH et test nul exact.
+SoH, test nul exact, prévisions bruitées appariées et `lol=0` en surplus.
 
 Smoke canonique :
 
@@ -63,37 +64,59 @@ sont :
 - H=6 : 42,9 ms en moyenne, 68,0 ms au maximum ;
 - H=24 : 546 ms en moyenne, 2,15 s au maximum.
 
-Les deux formulations sont donc online au pas horaire. H=24 est environ treize
-fois plus coûteux et doit encore justifier ce surcoût sur un profil annuel.
+Les deux formulations sont donc online au pas horaire.
 
-Le moteur commun n'a pas été modifié : le front PD reste attribuable à la même
-physique. Le défaut historique de `lol_tab` est borné explicitement dans les
-nouveaux bancs par le résidu de bilan, le nombre de `lol>1` et l'énergie au-delà
-du clipping. Toute valeur non négligeable invalidera le point concerné.
+## Résultats annuels audités
 
-## Prochaine expérience
-
-Le screening d'un an compare en parallèle :
+Le screening `runs/screen_1y_d840744e29c7/` compare :
 
 - RB1 `(0.20,0.40)` et RB2 `(0.574,0.465)` ;
 - MPC sans SoH, H=6 et H=24 ;
 - à H=6, `beta_fc=1`, `beta_ely=1` et leur combinaison ;
 - à H=24, la combinaison `beta_fc=beta_ely=1`.
 
-Ce plan factoriel sert à sélectionner horizon et canal de santé. Il ne constitue
-pas encore un tuning final et ne permettra pas seul de conclure à la valeur du
-SoH.
+Les 8/8 points utilisent le même profil annuel, le ledger V11-p=2 et une
+prévision parfaite. Les métriques et ledgers sont reproductibles, les bilans de
+déficit sont fermés et aucun solveur n'échoue. Le MPC H24 sans SoH atteint
+0,262979 % de LPSP, 2,375768 kEUR de dégradation et 2,541018 kEUR pour J3. Il
+réduit J3 de 5,231 % face à H6 et de 12,034 % face à RB1, qu'il domine avec RB2
+sur les deux axes. Son temps de résolution vaut 201,6 ms en moyenne et 3,74 s
+au maximum : H24 est retenu comme base online.
 
-Lancement mésocentre :
+La référence DP annuelle exacte contient 19 points. Tous les points MPC/RB du
+screening sont dominés par au moins un point DP. À la LPSP du MPC H24, son
+surcoût de dégradation interpolé au front vaut 0,632001 kEUR (+36,24 %) ; son
+J3 est 37,71 % au-dessus du meilleur J3 DP échantillonné. Le DP connaît toute
+l'année, tandis que le MPC ne connaît que sa fenêtre de 24 h.
 
-```bash
-sbatch run_screen_mpc_v11.slurm
-```
+À H24, la pondération SoH `beta_fc=beta_ely=1` change J3 de +0,062 % sous
+prévision parfaite. Dans le banc d'incertitude apparié, les variations moyennes
+sont +0,074 % (bruit x0,5), -0,200 % (x1), -0,311 % (x1,5) et -1,585 % sous
+persistance. Aucun cas n'atteint le seuil pratique de quelques pourcents : cette
+injection simple du SoH n'est pas retenue.
 
-Le banc écrit chaque point immédiatement dans
-`runs/screen_1y_<empreinte>/`. Une relance identique réutilise les points déjà
-terminés. Après ce screening seulement, le budget de tuning sera figé et
-appliqué symétriquement aux finalistes avec/sans SoH.
+Le banc d'incertitude `runs/forecast_uncertainty_1y_d0a7f75d0466/` reste
+préliminaire : 33/34 points sont terminés et
+`mpc_no_soh_h24_noisy_s1p0_r202604` a échoué. Les comparaisons à x1 utilisent
+donc seulement quatre graines communes. Les trajectoires terminées ne laissent
+aucun déficit après LOL ; elles présentent 4,353 à 15,177 kWh/an d'écrêtage
+implicite, désormais mesuré séparément. Trois anciens `lol>1` surviennent
+uniquement en surplus et n'affectent pas EENS/LPSP. `Common/get_lol.py` borne
+maintenant la LOL à zéro en surplus, sans modifier les états physiques.
+Face à la prévision parfaite sans SoH, J3 augmente en moyenne de 4,84 % au
+bruit x0,5, 10,36 % à x1 (quatre graines seulement), 14,32 % à x1,5 et 50,03 %
+sous persistance. La qualité de prévision est donc un levier matériel, même si
+le modèle à origines indépendantes constitue une perturbation conservatrice.
+
+## Prochaine expérience
+
+Réimporter le dossier canonique unique `MPC/` et `Common/get_lol.py`, puis
+relancer `run_forecast_uncertainty_mpc_v11.slurm`. Les 33 caches complets sont
+réutilisés automatiquement ; seul le point manquant est recalculé, avec le
+contexte d'état ajouté au message d'erreur s'il échoue encore. Après clôture de
+ce point, le tuning symétrique portera sur les coûts terminaux et poids d'usure
+du MPC H24. La variante SoH ne sera conservée que si elle franchit le seuil de
+quelques pourcents.
 
 
 ## Information future, reference DP et incertitude

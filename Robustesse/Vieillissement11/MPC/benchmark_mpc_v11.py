@@ -31,7 +31,7 @@ from Common.main_init_and_loop import init_and_run_loop  # noqa: E402
 from Common.rb1_policy_v11 import make_rb1_policy_v11  # noqa: E402
 from Common.rb2_policy import make_rb2_policy  # noqa: E402
 from Common.reliability_metrics import compute_reliability_metrics  # noqa: E402
-from MPC.mpc_v11 import MPCConfig, MPCPolicyV11  # noqa: E402
+from MPC.mpc_v11 import DT_H, MPCConfig, MPCPolicyV11  # noqa: E402
 
 
 VOLL_REPORTING = 3.0
@@ -77,6 +77,9 @@ def _summary(data: dict, wall_seconds: float, diagnostics: dict | None) -> dict:
     )
     residual_kw = np.clip(p_ref / 1000.0, 0.0, None)
     excess_kwh = float((residual_kw * np.clip(lol - 1.0, 0.0, None)).sum())
+    deficit_balance = balance[deficit]
+    shortage_after_lol = np.clip(-deficit_balance, 0.0, None)
+    implicit_curtailment = np.clip(deficit_balance, 0.0, None)
     return {
         "n_steps": int(data["n"]),
         "wall_seconds": float(wall_seconds),
@@ -87,6 +90,14 @@ def _summary(data: dict, wall_seconds: float, diagnostics: dict | None) -> dict:
         "j_voll3_keur": degradation_eur / 1000.0
         + VOLL_REPORTING * reliability["eens_kwh"] / 1000.0,
         "max_deficit_balance_residual_w": float(np.max(np.abs(balance), initial=0.0)),
+        "max_deficit_shortage_after_lol_w": float(
+            np.max(shortage_after_lol, initial=0.0)),
+        "max_implicit_curtailment_w": float(
+            np.max(implicit_curtailment, initial=0.0)),
+        "implicit_curtailment_kwh": float(
+            np.sum(implicit_curtailment) / 1000.0 * DT_H),
+        "implicit_curtailment_steps": int(
+            np.count_nonzero(implicit_curtailment > 1e-4)),
         "max_lol": float(np.max(lol, initial=0.0)),
         "lol_above_one_steps": int(np.count_nonzero(lol > 1.0 + 1e-9)),
         "excess_beyond_clip_kwh": excess_kwh,
@@ -234,8 +245,15 @@ def main() -> None:
         diagnostics = result.get("diagnostics") or {}
         if diagnostics.get("failures", 0):
             raise RuntimeError(f"{label}: echecs solveur")
-        if result["max_deficit_balance_residual_w"] > 1e-4:
-            raise RuntimeError(f"{label}: bilan deficit non ferme")
+        shortage_residual = result.get(
+            "max_deficit_shortage_after_lol_w",
+            result.get("max_deficit_balance_residual_w", 0.0),
+        )
+        if shortage_residual > 1e-4:
+            raise RuntimeError(f"{label}: deficit non ferme apres LOL")
+        if (result["lol_above_one_steps"]
+                and result.get("excess_beyond_clip_kwh", 0.0) > 1e-9):
+            raise RuntimeError(f"{label}: lol>1")
     print(f"OK -- screening complet -> {output}")
 
 

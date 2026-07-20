@@ -1,0 +1,137 @@
+{
+  "years": 1.0,
+  "dp_file": "../DP/results/mpc_reference_1y_1b54f384caa8/dp_reference_1y_51x51_v2.npz",
+  "dp_front_points": 17,
+  "mpc_points": [
+    {
+      "label": "mpc_soh_both1_h6",
+      "lpsp_pct": 0.6740361068859522,
+      "degradation_keur": 2.256181550020145,
+      "forecast_mode": "perfect",
+      "dominated_by_dp": true,
+      "dominating_dp_eps": [
+        50.0,
+        6.0,
+        4.0,
+        3.0,
+        2.0,
+        1.5,
+        1.0,
+        0.75,
+        0.5,
+        0.35,
+        0.3,
+        0.25
+      ],
+      "n_dp_front_points_dominated": 0,
+      "dominates_entire_dp_front": false
+    },
+    {
+      "label": "mpc_no_soh_h6",
+      "lpsp_pct": 0.6758171659793603,
+      "degradation_keur": 2.2566115111017564,
+      "forecast_mode": "perfect",
+      "dominated_by_dp": true,
+      "dominating_dp_eps": [
+        50.0,
+        6.0,
+        4.0,
+        3.0,
+        2.0,
+        1.5,
+        1.0,
+        0.75,
+        0.5,
+        0.35,
+        0.3,
+        0.25
+      ],
+      "n_dp_front_points_dominated": 0,
+      "dominates_entire_dp_front": false
+    },
+    {
+      "label": "mpc_soh_ely1_h6",
+      "lpsp_pct": 0.6733703386367113,
+      "degradation_keur": 2.2574848520087767,
+      "forecast_mode": "perfect",
+      "dominated_by_dp": true,
+      "dominating_dp_eps": [
+        50.0,
+        6.0,
+        4.0,
+        3.0,
+        2.0,
+        1.5,
+        1.0,
+        0.75,
+        0.5,
+        0.35,
+        0.3,
+        0.25
+      ],
+      "n_dp_front_points_dominated": 0,
+      "dominates_entire_dp_front": false
+    },
+    {
+      "label": "mpc_soh_fc1_h6",
+      "lpsp_pct": 0.6760603423531814,
+      "degradation_keur": 2.2570444430040357,
+      "forecast_mode": "perfect",
+      "dominated_by_dp": true,
+      "dominating_dp_eps": [
+        50.0,
+        6.0,
+        4.0,
+        3.0,
+        2.0,
+        1.5,
+        1.0,
+        0.75,
+        0.5,
+        0.35,
+        0.3,
+        0.25
+      ],
+      "n_dp_front_points_dominated": 0,
+      "dominates_entire_dp_front": false
+    },
+    {
+      "label": "mpc_no_soh_h24",
+      "lpsp_pct": 0.26297888876585135,
+      "degradation_keur": 2.375767809676605,
+      "forecast_mode": "perfect",
+      "dominated_by_dp": true,
+      "dominating_dp_eps": [
+        50.0,
+        6.0,
+        4.0,
+        3.0,
+        2.0,
+        1.5,
+        1.0,
+        0.75
+      ],
+      "n_dp_front_points_dominated": 0,
+      "dominates_entire_dp_front": false
+    },
+    {
+      "label": "mpc_soh_both1_h24",
+      "lpsp_pct": 0.26221318640823954,
+      "degradation_keur": 2.3778330329542228,
+      "forecast_mode": "perfect",
+      "dominated_by_dp": true,
+      "dominating_dp_eps": [
+        50.0,
+        6.0,
+        4.0,
+        3.0,
+        2.0,
+        1.5,
+        1.0,
+        0.75
+      ],
+      "n_dp_front_points_dominated": 0,
+      "dominates_entire_dp_front": false
+    }
+  ]
+}

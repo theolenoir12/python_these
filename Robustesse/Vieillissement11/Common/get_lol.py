@@ -149,7 +149,18 @@ def get_lol(SoC_t,action,P_tot_ref_t,defaillances,E_h2_t,E_h2_init,P_fc_max_t,P_
                 0.0, 1 - (P_dc_bat_t + P_dc_fc_t + P_dc_ely_t) / P_tot_ref_t
             )
 
-        lol = max(lol_pmax, lol_storage, lol_soc, lol_balance)
+        # La LOL est une fraction de demande non servie. Elle n'a donc aucun
+        # sens lorsque le profil net est en surplus ; les anciens rapports
+        # pouvaient alors produire artificiellement lol>1 en divisant un
+        # ecretage par une puissance nette negative. En deficit, la borne
+        # [0, 1] protege egalement le ledger de fiabilite des arrondis et des
+        # combinaisons de saturations.
+        if P_tot_ref_t <= 0:
+            lol = 0.0
+        else:
+            lol = float(np.clip(
+                max(lol_pmax, lol_storage, lol_soc, lol_balance), 0.0, 1.0
+            ))
         
         action = (P_dc_bat_t, P_dc_fc_t, P_dc_ely_t)
         

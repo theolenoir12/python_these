@@ -25,6 +25,7 @@ DEFAULT_DP = (
     / "dp_reference_1y_51x51_v2.npz"
 )
 MODEL_ID = "v11-doe-rakousky-mccay-colombo-2026-07-16"
+MPC_FORMULATION_ID = "mpc-v11-p2-milp-v2-delta-capacity-fade-2026-07-20"
 
 
 def _load_json(path: Path) -> Any:
@@ -67,6 +68,10 @@ def _audit_run(run: Path) -> dict[str, Any]:
         with np.load(trajectory, allow_pickle=False) as data:
             model_id = str(np.asarray(data["model_id"]).item())
             exponent = float(np.asarray(data["ely_stress_exponent"]).item())
+            formulation_id = (
+                str(np.asarray(data["mpc_formulation_id"]).item())
+                if "mpc_formulation_id" in data.files else None
+            )
             saved_config = json.loads(str(np.asarray(data["config_json"]).item()))
             p_load = np.asarray(data["P_dc_load"], dtype=float)
             p_pv = np.asarray(data["P_dc_pv"], dtype=float)
@@ -119,6 +124,12 @@ def _audit_run(run: Path) -> dict[str, Any]:
                     f"{name} recalcule={actual:.12g}, rapporte={reported:.12g}")
         if model_id != MODEL_ID or protocol.get("model_id") != MODEL_ID:
             point_errors.append(f"model_id inattendu: {model_id}")
+        if configs.get(label, {}).get("kind") == "mpc":
+            if protocol.get("mpc_formulation_id") != MPC_FORMULATION_ID:
+                point_errors.append("protocole MPC anterieur a la formulation v2")
+            if formulation_id != MPC_FORMULATION_ID:
+                point_errors.append(
+                    f"formulation MPC inattendue: {formulation_id}")
         if not np.isclose(exponent, 2.0):
             point_errors.append(f"p inattendu: {exponent}")
         if label in configs and saved_config != configs[label]:
@@ -338,6 +349,46 @@ def _write_report(output: Path, screen: dict[str, Any], forecast: dict[str, Any]
     )
     persistence_penalty = 100.0 * (persistence_j / no_soh_perfect_j - 1.0)
 
+    if screen["errors"]:
+        screening_verdict = (
+            "Le screening charge n'est pas conforme a la formulation MPC v2 : "
+            f"{len(screen['errors'])} erreur(s) de provenance ont ete detectees. "
+            "Les chiffres sont conserves uniquement comme diagnostic legacy."
+        )
+        result_heading = "## Resultats historiques, non acquis"
+        decision = (
+            "Le screening et le banc d'incertitude doivent etre rejoues "
+            "integralement avec la formulation v2 avant tout tuning ou choix "
+            "definitif entre H6, H24 et l'injection du SoH."
+        )
+    else:
+        screening_verdict = (
+            "Le screening annuel a prevision parfaite est complet et valide : "
+            "8/8 points, ledgers et metriques recalcules a l'identique, aucun "
+            "echec solveur et aucun deficit de bilan apres application de la LOL."
+        )
+        result_heading = "## Resultats acquis sur un an"
+        decision = (
+            "Le choix de la base MPC et le passage au tuning dependent de la "
+            "completude du banc d'incertitude v2 et du critere de materialite "
+            "de quelques pourcents pour la variante SoH."
+        )
+    if forecast["errors"]:
+        forecast_verdict = (
+            "Le banc de prevision charge est lui aussi anterieur a la "
+            f"formulation v2 ({len(forecast['errors'])} erreur(s) de "
+            "provenance) et n'est exploitable que comme diagnostic legacy."
+        )
+    else:
+        forecast_verdict = (
+            "Le banc de prevision est conforme a la formulation v2 ; sa "
+            "completude est detaillee ci-dessous."
+        )
+    missing_detail = (
+        f"Le ou les points manquants sont `{', '.join(forecast['missing'])}`."
+        if forecast["missing"] else "Aucun point ne manque."
+    )
+
     paired_lines = []
     for row in paired:
         mode = row["forecast_mode"]
@@ -351,14 +402,11 @@ def _write_report(output: Path, screen: dict[str, Any], forecast: dict[str, Any]
 
 ## Verdict
 
-Le screening annuel a prevision parfaite est complet et valide : 8/8 points,
-ledgers et metriques recalcules a l'identique, aucun echec solveur, aucun
-deficit de bilan apres application de la LOL et aucune valeur `lol>1`.
+{screening_verdict}
 
-Le banc de prevision est exploitable comme resultat preliminaire, mais pas
-encore clos : {forecast['completed_count']}/{forecast['expected_count']} points
-sont termines. Le point manquant est
-`{', '.join(forecast['missing'])}`. Toutes les trajectoires terminees ferment
+{forecast_verdict} Il contient
+{forecast['completed_count']}/{forecast['expected_count']} points
+termines. {missing_detail} Toutes les trajectoires terminees ferment
 les deficits apres LOL (residu maximal {forecast_max_shortage:.3g} W). Les
 residus positifs precedemment signales sont exclusivement de la puissance
 excedentaire : ils correspondent a un ecretage implicite de
@@ -369,7 +417,7 @@ de surplus repartis dans {surplus_lol_trajectories} trajectoire(s) ; ces pas ne
 contribuent ni a l'EENS ni a la LPSP. La borne `lol=0` en surplus est maintenant
 ajoutee au code pour les prochaines simulations.
 
-## Resultats acquis sur un an
+{result_heading}
 
 - MPC H24 sans SoH : LPSP {h24['lpsp_pct']:.6f} %, degradation
   {h24['degradation_keur']:.6f} kEUR, J3 {h24['j_voll3_keur']:.6f} kEUR.
@@ -416,12 +464,7 @@ SoH, pas l'usage du SoH dans toute architecture MPC.
 
 ## Decision et suite
 
-La base a retenir est MPC H24 sans SoH, avec `p=2`. Avant le tuning MPC, il
-reste deux corrections courtes : enregistrer l'ecretage execute dans le bilan
-et relancer uniquement le point manquant avec un diagnostic d'infaisabilite.
-Ensuite, le tuning doit porter symetriquement sur les couts terminaux et les
-poids d'usure ; une variante SoH ne sera conservee que si elle depasse le seuil
-de quelques pourcents sur des paires communes.
+{decision}
 """
     output.write_text(report)
 
@@ -457,8 +500,16 @@ def main() -> None:
         "\n".join(paired_tsv) + "\n")
     _write_report(args.output, screen, forecast, dp, paired)
 
-    if screen["errors"]:
-        raise RuntimeError(f"screening invalide: {len(screen['errors'])} erreur(s)")
+    if screen["errors"] or forecast["errors"]:
+        raise RuntimeError(
+            "caches incompatibles avec la formulation v2: "
+            f"screen={len(screen['errors'])}, forecast={len(forecast['errors'])}")
+    if screen["missing"] or forecast["missing"] or forecast["failures"]:
+        raise RuntimeError(
+            "audit incomplet: "
+            f"screen_missing={len(screen['missing'])}, "
+            f"forecast_missing={len(forecast['missing'])}, "
+            f"forecast_failures={len(forecast['failures'])}")
     print(
         f"OK screening {screen['completed_count']}/{screen['expected_count']} ; "
         f"prevision {forecast['completed_count']}/{forecast['expected_count']} "

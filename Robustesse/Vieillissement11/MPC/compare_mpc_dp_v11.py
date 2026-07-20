@@ -12,6 +12,7 @@ import numpy as np
 
 
 HERE = Path(__file__).resolve().parent
+MPC_FORMULATION_ID = "mpc-v11-p2-milp-v2-delta-capacity-fade-2026-07-20"
 DISPLAY = {
     "mpc_no_soh_h6": "H6 sans SoH",
     "mpc_no_soh_h24": "H24 sans SoH",
@@ -69,6 +70,9 @@ def main() -> None:
     args = parser.parse_args()
 
     protocol = json.loads((args.mpc_run / "protocol.json").read_text())
+    if protocol.get("mpc_formulation_id") != MPC_FORMULATION_ID:
+        raise SystemExit(
+            "Comparaison refusee : cache anterieur a la formulation MPC v2.")
     summaries = json.loads((args.mpc_run / "summary.json").read_text())
     mpc_years = float(protocol["years"])
 

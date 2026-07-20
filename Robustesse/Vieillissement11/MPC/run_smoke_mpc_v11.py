@@ -27,7 +27,7 @@ from Common.main_init_and_loop import init_and_run_loop  # noqa: E402
 from Common.rb1_policy_v11 import make_rb1_policy_v11  # noqa: E402
 from Common.rb2_policy import make_rb2_policy  # noqa: E402
 from Common.reliability_metrics import compute_reliability_metrics  # noqa: E402
-from MPC.mpc_v11 import MPCConfig, MPCPolicyV11  # noqa: E402
+from MPC.mpc_v11 import MPC_FORMULATION_ID, MPCConfig, MPCPolicyV11  # noqa: E402
 
 
 VOLL_REPORTING = 3.0
@@ -72,6 +72,7 @@ def save_run(output: Path, label: str, data: dict) -> None:
         output / f"{label}.npz",
         model_id=np.array(MODEL_ID),
         ely_stress_exponent=np.array(2.0),
+        mpc_formulation_id=np.array(MPC_FORMULATION_ID),
         **{key: np.asarray(data[key]) for key in ARRAY_KEYS},
     )
     (output / f"{label}_ledger.json").write_text(
@@ -96,6 +97,7 @@ def main() -> None:
 
     protocol = {
         "model_id": MODEL_ID,
+        "mpc_formulation_id": MPC_FORMULATION_ID,
         "ely_stress_exponent": 2.0,
         "days": float(args.days),
         "horizons": list(dict.fromkeys(args.horizons)),

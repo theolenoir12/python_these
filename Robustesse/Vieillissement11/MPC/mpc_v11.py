@@ -41,6 +41,7 @@ from Common.get_lol import get_lol
 
 
 NOMINAL_ELY_STRESS_EXPONENT = 2.0
+MPC_FORMULATION_ID = "mpc-v11-p2-milp-v2-delta-capacity-fade-2026-07-20"
 if not np.isclose(ELY_V11["stress_exponent"], NOMINAL_ELY_STRESS_EXPONENT):
     raise RuntimeError(
         "MPC V11 attribue au nominal p=2, mais degradation_v11 expose p=%r"
@@ -176,7 +177,7 @@ class MPCPolicyV11:
         self.config = config or MPCConfig()
         self.forecast_horizon_steps = self.config.horizon_steps
         self.policy_id = (
-            f"mpc_v11_p2_{self.config.health_mode}_h{self.config.horizon_steps}_"
+            f"mpc_v11_p2_v2_{self.config.health_mode}_h{self.config.horizon_steps}_"
             f"{self.config.forecast_mode}_{self.config.fingerprint}"
         )
         self.reset()
@@ -361,6 +362,13 @@ class MPCPolicyV11:
         upper[e] = ecap
         upper[df] = fcap
         upper[de] = ecap
+        # Au premier pas, la puissance executee a l'heure precedente peut etre
+        # infinitesimalement superieure a la nouvelle capacite, qui diminue avec
+        # le vieillissement. La variable de variation doit alors pouvoir couvrir
+        # l'arret complet. La borner a la seule capacite courante rendait le MILP
+        # artificiellement infaisable lorsque le stock H2 imposait cet arret.
+        upper[df[0]] = max(fcap, float(self.previous_fc_w))
+        upper[de[0]] = max(ecap, float(self.previous_ely_w))
         upper[soc_high] = 1.0
         for k in range(horizon):
             upper[ely_segment[k]] = segment_widths
@@ -558,6 +566,7 @@ class MPCPolicyV11:
         return {
             "policy_id": self.policy_id,
             "model_id": MODEL_ID,
+            "mpc_formulation_id": MPC_FORMULATION_ID,
             "ely_stress_exponent": NOMINAL_ELY_STRESS_EXPONENT,
             "config": asdict(self.config),
             "config_fingerprint": self.config.fingerprint,
@@ -609,6 +618,8 @@ class MPCPolicyV11:
                 f"SoH=({float(SoH_bat_t):.12g},{float(SoH_fc_t):.12g},"
                 f"{float(SoH_ely_t):.12g}); "
                 f"alpha=({float(alpha_fc_t):.12g},{float(alpha_ely_t):.12g})"
+                f"; previous_dc=({self.previous_fc_w:.12g},"
+                f"{-self.previous_ely_w:.12g})"
             ) from exc
         if not solution["success"]:
             raise RuntimeError(solution["message"])

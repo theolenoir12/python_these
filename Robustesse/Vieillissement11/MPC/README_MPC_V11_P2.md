@@ -2,10 +2,12 @@
 
 ## Statut
 
-Le noyau déterministe et le screening annuel sont terminés. Il s'agit d'un MPC
-mixte linéaire résolu à chaque heure par HiGHS via `scipy.optimize.milp`. Seule
-la première action est appliquée par la boucle V11. L'audit canonique est
-`analysis/AUDIT_MPC_V11_P2_2026-07-20.md`.
+Le noyau déterministe est corrigé et le screening annuel doit être rejoué. Il
+s'agit d'un MPC mixte linéaire résolu à chaque heure par HiGHS via
+`scipy.optimize.milp`. Seule la première action est appliquée par la boucle V11.
+La formulation courante est identifiée par
+`mpc-v11-p2-milp-v2-delta-capacity-fade-2026-07-20`. Le diagnostic qui invalide
+les caches MPC v1 est `analysis/DIAGNOSTIC_MPC_DELTA_BOUND_2026-07-20.md`.
 
 Les anciens résultats de `Python/Robustesse/MPC3/` ne sont pas réutilisés comme
 résultats : ils reposent sur les anciennes fonctions de coût. Leur architecture
@@ -23,6 +25,12 @@ Le problème interne contient explicitement :
 - approximation affine convexe du dommage PEMWE quadratique V11, avec les
   ancres obligatoires `j=1` et `j=2` ;
 - coûts terminaux communs pour la batterie et H2.
+
+La borne de variation au premier pas couvre la puissance réellement exécutée
+à l'heure précédente, même si la puissance maximale vient de diminuer avec le
+vieillissement. Sans cette précaution, l'arrêt complet d'un convertisseur
+précédemment à sa puissance maximale pouvait devenir artificiellement
+infaisable.
 
 Le surrogate sert uniquement à choisir l'action. Le coût rapporté reste celui
 du ledger V11 exact après exécution dans `Common/main_init_and_loop.py`.
@@ -48,11 +56,12 @@ Commande unitaire :
 python -m unittest -v test_mpc_v11.py
 ```
 
-Les neuf tests vérifient : `p=2`, convexité du surrogate PEMWE, présence des
+Les dix tests vérifient : `p=2`, convexité du surrogate PEMWE, présence des
 ancres `j=1/j=2`, bilan et modes du MILP, action exécutée équilibrée, pondération
-SoH, test nul exact, prévisions bruitées appariées et `lol=0` en surplus.
+SoH, test nul exact, prévisions bruitées appariées, `lol=0` en surplus et arrêt
+possible après une décroissance de capacité.
 
-Smoke canonique :
+Le smoke v1 historique est :
 
 `runs/smoke_7d_f209c53dbce2/`
 
@@ -64,9 +73,13 @@ sont :
 - H=6 : 42,9 ms en moyenne, 68,0 ms au maximum ;
 - H=24 : 546 ms en moyenne, 2,15 s au maximum.
 
-Les deux formulations sont donc online au pas horaire.
+Ces temps v1 indiquent que les horizons sont compatibles avec le pas horaire.
+Le smoke v2 `runs/smoke_1d_9a11b7e02867/` passe ensuite sur 23 décisions pour
+H6 et H24, sans échec, `lol>1` ni résidu de bilan ; son test nul est exact. Un
+mini-screening séparé confirme que l'identifiant v2 est enregistré dans le
+protocole et la trajectoire.
 
-## Résultats annuels audités
+## Résultats annuels v1, conservés uniquement comme diagnostic
 
 Le screening `runs/screen_1y_d840744e29c7/` compare :
 
@@ -76,12 +89,14 @@ Le screening `runs/screen_1y_d840744e29c7/` compare :
 - à H=24, la combinaison `beta_fc=beta_ely=1`.
 
 Les 8/8 points utilisent le même profil annuel, le ledger V11-p=2 et une
-prévision parfaite. Les métriques et ledgers sont reproductibles, les bilans de
-déficit sont fermés et aucun solveur n'échoue. Le MPC H24 sans SoH atteint
+prévision parfaite. Leurs métriques sont reproductibles, mais ils ont été
+produits avec l'ancienne borne de variation. Ils ne constituent donc plus des
+résultats acquis. À titre de trace, le MPC H24 sans SoH atteignait
 0,262979 % de LPSP, 2,375768 kEUR de dégradation et 2,541018 kEUR pour J3. Il
 réduit J3 de 5,231 % face à H6 et de 12,034 % face à RB1, qu'il domine avec RB2
 sur les deux axes. Son temps de résolution vaut 201,6 ms en moyenne et 3,74 s
-au maximum : H24 est retenu comme base online.
+au maximum. H24 reste l'hypothèse de travail à retester, pas encore une base
+définitivement retenue.
 
 La référence DP annuelle exacte contient 19 points. Tous les points MPC/RB du
 screening sont dominés par au moins un point DP. À la LPSP du MPC H24, son
@@ -89,14 +104,15 @@ surcoût de dégradation interpolé au front vaut 0,632001 kEUR (+36,24 %) ; son
 J3 est 37,71 % au-dessus du meilleur J3 DP échantillonné. Le DP connaît toute
 l'année, tandis que le MPC ne connaît que sa fenêtre de 24 h.
 
-À H24, la pondération SoH `beta_fc=beta_ely=1` change J3 de +0,062 % sous
+Dans les caches v1, à H24, la pondération SoH `beta_fc=beta_ely=1` change J3 de +0,062 % sous
 prévision parfaite. Dans le banc d'incertitude apparié, les variations moyennes
 sont +0,074 % (bruit x0,5), -0,200 % (x1), -0,311 % (x1,5) et -1,585 % sous
 persistance. Aucun cas n'atteint le seuil pratique de quelques pourcents : cette
-injection simple du SoH n'est pas retenue.
+injection simple du SoH semblait non matérielle. Cette conclusion doit être
+confirmée sur la formulation v2.
 
-Le banc d'incertitude `runs/forecast_uncertainty_1y_d0a7f75d0466/` reste
-préliminaire : 33/34 points sont terminés et
+Le banc d'incertitude v1 `runs/forecast_uncertainty_1y_d0a7f75d0466/` reste
+un diagnostic legacy : 33/34 points sont terminés et
 `mpc_no_soh_h24_noisy_s1p0_r202604` a échoué. Les comparaisons à x1 utilisent
 donc seulement quatre graines communes. Les trajectoires terminées ne laissent
 aucun déficit après LOL ; elles présentent 4,353 à 15,177 kWh/an d'écrêtage
@@ -105,17 +121,17 @@ uniquement en surplus et n'affectent pas EENS/LPSP. `Common/get_lol.py` borne
 maintenant la LOL à zéro en surplus, sans modifier les états physiques.
 Face à la prévision parfaite sans SoH, J3 augmente en moyenne de 4,84 % au
 bruit x0,5, 10,36 % à x1 (quatre graines seulement), 14,32 % à x1,5 et 50,03 %
-sous persistance. La qualité de prévision est donc un levier matériel, même si
-le modèle à origines indépendantes constitue une perturbation conservatrice.
+sous persistance. Ces écarts suggèrent que la qualité de prévision est un levier
+matériel, mais ils doivent être recalculés avec la formulation v2.
 
 ## Prochaine expérience
 
-Réimporter le dossier canonique unique `MPC/` et `Common/get_lol.py`, puis
-relancer `run_forecast_uncertainty_mpc_v11.slurm`. Les 33 caches complets sont
-réutilisés automatiquement ; seul le point manquant est recalculé, avec le
-contexte d'état ajouté au message d'erreur s'il échoue encore. Après clôture de
-ce point, le tuning symétrique portera sur les coûts terminaux et poids d'usure
-du MPC H24. La variante SoH ne sera conservée que si elle franchit le seuil de
+Réimporter les contenus des dossiers canoniques `Common/` et `MPC/`, puis
+relancer successivement `run_screen_mpc_v11.slurm` et
+`run_forecast_uncertainty_mpc_v11.slurm`. L'identifiant de formulation entre
+dans les empreintes : de nouveaux dossiers sont créés et aucun cache MPC v1
+n'est réutilisé. Le tuning ne commencera qu'après audit complet de ces deux
+runs. La variante SoH ne sera conservée que si elle franchit le seuil de
 quelques pourcents.
 
 

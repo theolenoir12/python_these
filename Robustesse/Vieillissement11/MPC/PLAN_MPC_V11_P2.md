@@ -2,10 +2,10 @@
 
 Date : 20 juillet 2026.
 
-Statut : noyau, smoke et screening annuel validés. H24 sans SoH est retenu ; la
-pondération SoH à beta=1 reste sous le seuil de matérialité. Le banc de
-prévision est à 33/34 et doit être clos avant le tuning. Voir
-`analysis/AUDIT_MPC_V11_P2_2026-07-20.md`.
+Statut : formulation v2 corrigée et testée localement ; screening et banc de
+prévision v2 à rejouer intégralement avant toute conclusion MPC. Les anciens
+caches restent des diagnostics v1. Voir
+`analysis/DIAGNOSTIC_MPC_DELTA_BOUND_2026-07-20.md`.
 
 ## Statut et objectif
 
@@ -86,12 +86,13 @@ borne PD : elle ne connaît que la fenêtre disponible à l'heure courante.
 
 ## Protocole de calcul progressif
 
-1. tests unitaires du bilan, des bornes et du test nul sur quelques pas — terminé ;
-2. smoke d'une semaine, horizons 6 h et 24 h — terminé, cache
-   `runs/smoke_7d_f209c53dbce2/` ;
-3. banc d'un an pour éliminer les formulations dominées et vérifier le temps
-   de calcul — terminé, H24 sans SoH retenu ;
-4. clôture du banc d'incertitude — 33/34, un point à reprendre ;
+1. tests unitaires du bilan, des bornes et du test nul sur quelques pas — dix
+   tests v2 terminés ;
+2. smoke court v2, horizons 6 h et 24 h — terminé, cache
+   `runs/smoke_1d_9a11b7e02867/` ;
+3. banc d'un an v2 pour éliminer les formulations dominées et vérifier le temps
+   de calcul — à rejouer entièrement ; H24 est seulement l'hypothèse issue de v1 ;
+4. banc d'incertitude v2 — à rejouer entièrement avec les graines communes ;
 5. réglage apparié à budget identique des deux variantes ;
 6. rejeu 25 ans uniquement pour les finalistes ;
 7. robustesse au bruit/biais du SoH, aux erreurs de prévision et aux profils
@@ -99,7 +100,8 @@ borne PD : elle ne connaît que la fenêtre disponible à l'heure courante.
 
 Les nouveaux caches doivent être pleine précision et empreintés dans
 `runs/<id>_<empreinte>/`. Aucun calcul long ne doit être lancé avant validation
-des smokes et réutilisation des caches existants.
+des smokes. Les caches MPC v1 ne doivent pas être mélangés avec la formulation
+v2 ; les références RB1/RB2 et PD restent, elles, valides et réutilisables.
 
 ## Critère de passage à la méthode suivante
 

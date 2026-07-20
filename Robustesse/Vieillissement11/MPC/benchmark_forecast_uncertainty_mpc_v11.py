@@ -19,7 +19,7 @@ from typing import Any
 
 import numpy as np
 
-from benchmark_mpc_v11 import MODEL_ID, _run_one
+from benchmark_mpc_v11 import MODEL_ID, MPC_FORMULATION_ID, _run_one
 
 
 HERE = Path(__file__).resolve().parent
@@ -122,7 +122,8 @@ def main() -> None:
             raise SystemExit("labels inconnus : " + ", ".join(sorted(unknown)))
         selected = wanted
     protocol = {
-        "model_id": MODEL_ID, "years": args.years, "horizon_steps": 24,
+        "model_id": MODEL_ID, "mpc_formulation_id": MPC_FORMULATION_ID,
+        "years": args.years, "horizon_steps": 24,
         "present_measurement": "exact",
         "error_model": "lead_sqrt_AR1_independent_origins",
         "sigma_energy_kwh_18h": SIGMA_18H_KWH,

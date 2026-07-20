@@ -11,6 +11,7 @@ import numpy as np
 
 
 HERE = Path(__file__).resolve().parent
+MPC_FORMULATION_ID = "mpc-v11-p2-milp-v2-delta-capacity-fade-2026-07-20"
 DISPLAY = {
     "rb1_v11_p2_020_040": "RB1",
     "rb2_v11_p2_0574_0465": "RB2",
@@ -66,6 +67,9 @@ def main() -> None:
     args = parser.parse_args()
     run = args.run or _latest_run()
     protocol = json.loads((run / "protocol.json").read_text())
+    if protocol.get("mpc_formulation_id") != MPC_FORMULATION_ID:
+        raise SystemExit(
+            "Screening refuse : cache anterieur a la formulation MPC v2.")
     summaries = json.loads((run / "summary.json").read_text())
     order = [config["label"] for config in protocol["configs"]]
     points = [

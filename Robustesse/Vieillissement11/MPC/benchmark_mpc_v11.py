@@ -31,7 +31,9 @@ from Common.main_init_and_loop import init_and_run_loop  # noqa: E402
 from Common.rb1_policy_v11 import make_rb1_policy_v11  # noqa: E402
 from Common.rb2_policy import make_rb2_policy  # noqa: E402
 from Common.reliability_metrics import compute_reliability_metrics  # noqa: E402
-from MPC.mpc_v11 import DT_H, MPCConfig, MPCPolicyV11  # noqa: E402
+from MPC.mpc_v11 import (  # noqa: E402
+    DT_H, MPC_FORMULATION_ID, MPCConfig, MPCPolicyV11,
+)
 
 
 VOLL_REPORTING = 3.0
@@ -111,6 +113,8 @@ def _save(output: Path, label: str, data: dict, summary: dict,
     np.savez_compressed(
         output / f"{label}.npz",
         model_id=np.array(MODEL_ID), ely_stress_exponent=np.array(2.0),
+        mpc_formulation_id=np.array(
+            MPC_FORMULATION_ID if config["kind"] == "mpc" else "not-applicable"),
         label=np.array(label), config_json=np.array(json.dumps(config, sort_keys=True)),
         **{key: np.asarray(data[key]) for key in ARRAY_KEYS},
     )
@@ -198,6 +202,7 @@ def main() -> None:
             raise SystemExit("labels inconnus : " + ", ".join(sorted(missing)))
     protocol = {
         "model_id": MODEL_ID,
+        "mpc_formulation_id": MPC_FORMULATION_ID,
         "ely_stress_exponent": 2.0,
         "years": args.years,
         "forecast_mode": "perfect",

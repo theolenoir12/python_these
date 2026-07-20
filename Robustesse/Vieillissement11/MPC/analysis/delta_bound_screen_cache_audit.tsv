@@ -1,0 +1,7 @@
+label	fc_previous_above_new_cap_steps	ely_previous_above_new_cap_steps	max_fc_excess_w	max_ely_excess_w
+mpc_no_soh_h24	748	17	0.130656983064	0.760666371862
+mpc_no_soh_h6	243	69	0.129739658529	0.76782492187
+mpc_soh_both1_h24	851	18	0.130656983064	0.76067281593
+mpc_soh_both1_h6	244	69	0.129744532853	0.76782492187
+mpc_soh_ely1_h6	246	65	0.129753742428	0.76782492187
+mpc_soh_fc1_h6	243	67	0.129753278479	0.76782492187

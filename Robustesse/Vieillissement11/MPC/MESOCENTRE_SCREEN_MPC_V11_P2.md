@@ -14,41 +14,40 @@ remote `MPC/`, ou supprimer d'abord l'ancienne copie remote. Ne pas déposer le
 dossier `MPC` dans un dossier `MPC` déjà ouvert, sinon on recrée le doublon
 `MPC/MPC` observé au rapatriement du 20 juillet.
 
-## Reprise prioritaire du banc d'incertitude
+## Relance v2 obligatoire
 
-Le cache canonique local
-`runs/forecast_uncertainty_1y_d0a7f75d0466/` contient 33/34 trajectoires. Il
-doit être présent au même chemin sur le mésocentre. Depuis `Vieillissement11/MPC` :
-
-```bash
-dos2unix run_forecast_uncertainty_mpc_v11.slurm  # seulement si nécessaire
-sbatch run_forecast_uncertainty_mpc_v11.slurm
-```
-
-Le script relit les 33 caches et ne recalcule que
-`mpc_no_soh_h24_noisy_s1p0_r202604`. Si ce MILP échoue encore, le nouveau log
-contiendra le pas, le SoC, le stock H2, les SoH et les paramètres de polarisation
-à l'origine de l'infaisabilité.
-
-## Relance éventuelle du screening parfait
-
-Depuis `Vieillissement11/MPC` :
+L'ancienne borne de variation pouvait interdire artificiellement l'arrêt de la
+FC ou de l'électrolyseur après une légère décroissance de leur puissance
+maximale. Les caches `screen_1y_d840744e29c7` et
+`forecast_uncertainty_1y_d0a7f75d0466` sont v1 et ne doivent pas être repris.
+L'identifiant v2 est inclus dans les empreintes, donc les scripts créent de
+nouveaux dossiers. Depuis `Vieillissement11/MPC`, lancer d'abord :
 
 ```bash
 dos2unix run_screen_mpc_v11.slurm  # seulement si nécessaire
 sbatch run_screen_mpc_v11.slurm
 ```
 
-Le script vérifie la présence de `scipy.optimize.milp`, exécute les tests
-unitaires, puis lance huit trajectoires d'un an en parallèle. Le budget demandé
-est de 8 cœurs, 16 Go et 3 heures.
+Après succès des 8/8 points, lancer :
+
+```bash
+dos2unix run_forecast_uncertainty_mpc_v11.slurm  # seulement si nécessaire
+sbatch run_forecast_uncertainty_mpc_v11.slurm
+```
+
+Le screening vérifie `scipy.optimize.milp`, exécute les dix tests, puis lance
+huit trajectoires d'un an. Le banc d'incertitude lance 34 trajectoires avec les
+graines communes. Si un job est interrompu, seuls les caches v2 complets du
+nouveau dossier empreinté sont repris.
 
 ## Sorties à rapatrier
 
 Rapatrier :
 
 - `mpc_v11_screen.<JOBID>.out` ;
+- `mpc_v11_pred.<JOBID>.out` ;
 - le dossier complet `runs/screen_1y_<empreinte>/`.
+- le dossier complet `runs/forecast_uncertainty_1y_<empreinte>/`.
 
 Chaque point possède un cache `.npz`, un ledger JSON et un résumé JSON. Le
 fichier `summary.txt` est réécrit après chaque point terminé. Si le job est

@@ -17,7 +17,7 @@ from Common import Init_EMR_MG_v16_python as I  # noqa: E402
 from Common.degradation_v11 import (  # noqa: E402
     ELY_V11, MODEL_ID, aging_snapshot, new_ely_state, new_fc_state,
 )
-from Common.electrochemistry import ely_pmax, ely_power  # noqa: E402
+from Common.electrochemistry import ely_pmax, ely_power, fc_pmax  # noqa: E402
 from Common.get_lol import get_lol  # noqa: E402
 from MPC.mpc_v11 import ETA, MPCConfig, MPCPolicyV11  # noqa: E402
 
@@ -149,6 +149,26 @@ class TestMPCV11(unittest.TestCase):
             I.FC["P_fc_max"], I.ELY["P_ely_max"], 1.0,
         )
         self.assertEqual(lol, 0.0)
+
+    def test_capacity_fade_does_not_prevent_fc_shutdown(self):
+        alpha_fc = 0.0651027772307
+        current_cap = 0.999 * ETA * float(fc_pmax(alpha_fc))
+        policy = MPCPolicyV11(MPCConfig(horizon_steps=6))
+        policy.previous_fc_w = current_cap + 1e-3
+        policy.previous_fc_on = 1
+        solution = policy.solve_horizon(
+            np.full(6, 1494.44444444), soc=0.20001,
+            h2_kwh=0.178819895668, h2_capacity_kwh=200.0,
+            soh_bat=0.931046010648, soh_fc=0.977213796658,
+            soh_ely=0.995734240325, alpha_fc=alpha_fc,
+            alpha_ely=0.0124887915519,
+            p_fc_max_w=float(fc_pmax(alpha_fc)),
+            p_ely_max_w=float(ely_pmax(0.0124887915519)),
+            aging_context=self.aging,
+        )
+        self.assertTrue(solution["success"])
+        self.assertAlmostEqual(float(solution["fc_w"][0]), 0.0, places=8)
+        self.assertGreater(float(solution["shed_w"][0]), 0.0)
 
 
 if __name__ == "__main__":

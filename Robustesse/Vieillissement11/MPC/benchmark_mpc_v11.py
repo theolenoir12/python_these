@@ -120,10 +120,19 @@ def _run_one(job: tuple[dict[str, Any], float, str]) -> tuple[str, dict]:
         policy = make_rb2_policy(0.574, 0.465)
         diagnostics = None
     else:
+        forecast_keys = (
+            "forecast_mode", "forecast_seed",
+            "forecast_sigma_energy_kwh_18h", "forecast_bias_energy_kwh_18h",
+            "forecast_error_rho", "forecast_sigma_scale",
+        )
+        forecast_args = {
+            key: config[key] for key in forecast_keys if key in config
+        }
         mpc_config = MPCConfig(
-            horizon_steps=int(config["horizon_steps"]), forecast_mode="perfect",
+            horizon_steps=int(config["horizon_steps"]),
             health_mode=str(config["health_mode"]),
             beta_fc=float(config["beta_fc"]), beta_ely=float(config["beta_ely"]),
+            **forecast_args,
         )
         policy = MPCPolicyV11(mpc_config)
 

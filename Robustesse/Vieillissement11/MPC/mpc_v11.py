@@ -87,7 +87,12 @@ class MPCConfig:
     """Configuration immuable d'un controleur MPC V11."""
 
     horizon_steps: int = 6
-    forecast_mode: str = "perfect"  # perfect | persistence
+    forecast_mode: str = "perfect"  # perfect | persistence | noisy
+    forecast_seed: int = 2026
+    forecast_sigma_energy_kwh_18h: float = 39.38
+    forecast_bias_energy_kwh_18h: float = -2.32
+    forecast_error_rho: float = 0.80
+    forecast_sigma_scale: float = 1.0
     voll_eur_per_kwh: float = 3.0
     health_mode: str = "no_soh"     # no_soh | soh
     beta_fc: float = 0.0
@@ -108,8 +113,14 @@ class MPCConfig:
     def __post_init__(self) -> None:
         if self.horizon_steps < 2:
             raise ValueError("horizon_steps doit etre >= 2")
-        if self.forecast_mode not in {"perfect", "persistence"}:
-            raise ValueError("forecast_mode doit valoir perfect ou persistence")
+        if self.forecast_mode not in {"perfect", "persistence", "noisy"}:
+            raise ValueError("forecast_mode doit valoir perfect, persistence ou noisy")
+        if self.forecast_sigma_energy_kwh_18h < 0.0:
+            raise ValueError("forecast_sigma_energy_kwh_18h doit etre non negatif")
+        if self.forecast_sigma_scale < 0.0:
+            raise ValueError("forecast_sigma_scale doit etre non negatif")
+        if not 0.0 <= self.forecast_error_rho < 1.0:
+            raise ValueError("forecast_error_rho doit appartenir a [0,1[")
         if self.health_mode not in {"no_soh", "soh"}:
             raise ValueError("health_mode doit valoir no_soh ou soh")
         if min(self.beta_fc, self.beta_ely) < 0.0:
@@ -176,6 +187,7 @@ class MPCPolicyV11:
         self.previous_fc_on = 0
         self.previous_ely_on = 0
         self.calls = 0
+        self.forecast_origins = 0
         self.failures = 0
         self.solve_seconds = 0.0
         self.max_solve_seconds = 0.0
@@ -185,6 +197,56 @@ class MPCPolicyV11:
         self.planned_shed_kwh = 0.0
         self.planned_curtail_kwh = 0.0
         self.last_solution: dict[str, Any] | None = None
+
+    def _forecast_error_w(self, n_future: int) -> np.ndarray:
+        """Erreur additive de prevision [W] pour les echeances futures.
+
+        Calibration : biais=-2.32 kWh et sigma=39.38 kWh sur l'energie nette
+        cumulee a 18 h (backtest historique du projet). L'erreur croit avec la
+        racine de l'echeance et suit un AR(1) le long des leads. Le pas courant
+        reste toujours mesure exactement.
+
+        SeedSequence(seed, origine) apparie les realisations entre politiques
+        SoH/non-SoH et horizons. Les origines successives sont independantes,
+        choix conservatif pour constituer une borne haute d'incertitude.
+        """
+        n = int(n_future)
+        if n <= 0:
+            return np.empty(0, dtype=float)
+        rho = float(self.config.forecast_error_rho)
+        calibration_h = 18
+        leads = np.arange(1, n + 1, dtype=float)
+        weights = np.sqrt(np.minimum(leads, calibration_h) / calibration_h)
+        weights18 = np.sqrt(
+            np.arange(1, calibration_h + 1, dtype=float) / calibration_h)
+        indices = np.arange(calibration_h)
+        correlation = rho ** np.abs(indices[:, None] - indices[None, :])
+        energy_norm = DT_H / 1000.0 * float(
+            np.sqrt(weights18 @ correlation @ weights18))
+        sigma_w = (
+            float(self.config.forecast_sigma_scale)
+            * float(self.config.forecast_sigma_energy_kwh_18h)
+            / energy_norm
+        ) if energy_norm > 0.0 else 0.0
+        sequence = np.random.SeedSequence([
+            int(self.config.forecast_seed) & 0xFFFFFFFF,
+            int(self.forecast_origins) & 0xFFFFFFFF,
+        ])
+        innovations = np.random.default_rng(sequence).standard_normal(n)
+        standardized = np.empty(n, dtype=float)
+        standardized[0] = innovations[0]
+        innovation_scale = np.sqrt(max(0.0, 1.0 - rho * rho))
+        for index in range(1, n):
+            standardized[index] = (
+                rho * standardized[index - 1]
+                + innovation_scale * innovations[index]
+            )
+        bias_w = (
+            float(self.config.forecast_bias_energy_kwh_18h)
+            / calibration_h / DT_H * 1000.0
+        )
+        self.forecast_origins += 1
+        return bias_w + sigma_w * weights * standardized
 
     @staticmethod
     def _health_margin(soh: float, eol: float, floor: float) -> float:
@@ -500,6 +562,7 @@ class MPCPolicyV11:
             "config": asdict(self.config),
             "config_fingerprint": self.config.fingerprint,
             "calls": self.calls,
+            "forecast_origins": self.forecast_origins,
             "failures": self.failures,
             "solve_seconds": self.solve_seconds,
             "mean_solve_seconds": self.solve_seconds / self.calls if self.calls else 0.0,
@@ -526,7 +589,9 @@ class MPCPolicyV11:
             else:
                 forecast = np.asarray(P_tot_ref_future, dtype=float)
                 forecast = forecast[:self.config.horizon_steps].copy()
-                forecast[0] = float(P_tot_ref_t)
+            forecast[0] = float(P_tot_ref_t)
+            if self.config.forecast_mode == "noisy":
+                forecast[1:] += self._forecast_error_w(len(forecast) - 1)
         if len(forecast) < 2:
             forecast = np.r_[forecast, float(P_tot_ref_t)]
 

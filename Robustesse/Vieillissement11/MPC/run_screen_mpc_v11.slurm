@@ -25,4 +25,5 @@ module load anaconda3@2022.10/gcc-12.1.0
 cd "$SLURM_SUBMIT_DIR" || exit 1
 python -c "import scipy; from scipy.optimize import milp; print('scipy', scipy.__version__, 'milp OK')" || exit 2
 python -m unittest -v test_mpc_v11.py || exit 3
-time python benchmark_mpc_v11.py --years 1 --workers "$SLURM_CPUS_PER_TASK"
+time python benchmark_mpc_v11.py --years 1 --workers "$SLURM_CPUS_PER_TASK" || exit 4
+python analyze_screen_mpc_v11.py || exit 5

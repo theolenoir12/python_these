@@ -94,3 +94,41 @@ Le banc écrit chaque point immédiatement dans
 `runs/screen_1y_<empreinte>/`. Une relance identique réutilise les points déjà
 terminés. Après ce screening seulement, le budget de tuning sera figé et
 appliqué symétriquement aux finalistes avec/sans SoH.
+
+
+## Information future, reference DP et incertitude
+
+Les runs H=6/H=24 sont omniscients sur leur horizon fini : a chaque heure, le
+controleur recoit les valeurs realisees du profil net des 6 ou 24 prochains pas.
+Le pas courant est une mesure exacte. Le DP V11 est lui aussi clairvoyant, mais
+sur une fenetre annuelle reelle reconstruite chaque annee. Il reste discretise
+(51x51 et grille de commandes) : c'est la reference de performance du projet,
+sans etre une preuve mathematique d'optimalite globale dans l'espace continu du
+MPC.
+
+Une comparaison numerique n'est valide que sur le meme horizon d'evaluation.
+Le front DP comparable au screening se lance par :
+
+~~~bash
+sbatch run_dp_reference_for_mpc.slurm
+~~~
+
+Puis la comparaison, qui refuse automatiquement tout melange 1 an/25 ans, est :
+
+~~~bash
+python compare_mpc_dp_v11.py \\
+  --mpc-run runs/screen_1y_<empreinte> \\
+  --dp ../DP/results/mpc_reference_1y_<empreinte>/dp_reference_1y_51x51_v2.npz
+~~~
+
+Le mode `forecast_mode=noisy` remplace l'omniscience par un profil horaire
+bruite. Sa calibration reprend le backtest du projet a 18 h : biais cumule
+-2.32 kWh et ecart-type 39.38 kWh. L'erreur augmente comme la racine de
+l'echeance, est correlee AR(1) avec rho=0.8, et le pas courant reste exact. Les
+origines de prevision successives sont independantes, choix volontairement
+conservatif qui sert de borne haute. Les facteurs 0.5, 1 et 1.5 et cinq graines
+communes aux variantes SoH/non-SoH se lancent avec :
+
+~~~bash
+sbatch run_forecast_uncertainty_mpc_v11.slurm
+~~~

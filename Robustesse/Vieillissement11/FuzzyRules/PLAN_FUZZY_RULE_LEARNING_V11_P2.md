@@ -2,7 +2,10 @@
 
 Date : 21 juillet 2026.
 
-Statut : protocole de développement. Aucun résultat de performance n'est acquis.
+Statut : protocole de développement. La baseline FLC experte I0 est réglée et
+auditée sur 25 ans. Sa première extension SoH a été testée avec un nul exact,
+mais aucune variante active n'est retenue. Les couches prévision, règles
+apprises et ANFIS restent à construire.
 Le dossier `Vieillissement11/MPC/` est hors périmètre de ce chantier.
 
 ## 1. Question scientifique
@@ -296,3 +299,27 @@ pas par transfert les performances sur le micro-réseau GENIAL.
 Avant insertion dans le manuscrit, les entrées BibTeX absentes devront être
 créées depuis les notices éditeur et les affirmations quantitatives revérifiées
 dans les articles complets.
+
+## 11. État d'implémentation au 21 juillet 2026
+
+La FLC experte I0 v1, son moteur Mamdani NumPy, ses tests, son runner et ses
+audits sont disponibles dans ce dossier. La note canonique
+`BASELINE_FLC_V1_AUDIT_2026-07-21.md` consigne le screening central d'un an.
+La v1 non optimisée est dominée par RB1/RB2.
+
+Le réglage préannoncé et son résultat sont consignés dans
+`TUNING_PROTOCOL_FLC_I0_V11_P2_2026-07-21.md` et
+`TUNING_FLC_I0_RESULTS_2026-07-21.md`. Le candidat promu
+`flc_8126e6f729c6` domine RB2 sur les deux axes à 25 ans et forme un compromis
+avec RB1 : meilleure LPSP, coût de dégradation supérieur. Son écart de J3 face
+à RB1 n'est que de -0,123 %, donc non matériel. Ce candidat devient le parent
+I0 des futures extensions attribuables.
+
+La couche FLC-IS par correction d'usure relative est maintenant complète. Son
+cache 25 ans `runs/promoted_flc_is_soh_25y_34bdb5fbe2af/` passe l'audit et son
+test nul est bit-à-bit exact, mais les trois candidats actifs sont dominés par
+I0. La note canonique est `TUNING_FLC_IS_SOH_RESULTS_2026-07-21.md`. Le parent
+I0 est donc conservé pour construire IF. L'horizon principal prévu est H18 et
+l'entrée sera l'énergie nette cumulée, avec scénarios futur parfait, erreur
+empirique LSTM et persistance. ISF ne sera testé qu'après IF et son effet SoH
+sera rapporté par l'ablation ISF-IF.

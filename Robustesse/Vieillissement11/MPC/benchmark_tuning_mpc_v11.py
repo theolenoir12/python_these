@@ -243,7 +243,8 @@ def _validate_results(results: dict[str, dict]) -> dict[str, str]:
 
 
 def _run_batch(output: Path, protocol: dict[str, Any], years: float,
-               workers: int) -> dict[str, dict]:
+               workers: int, *, allow_invalid: bool = False
+               ) -> tuple[dict[str, dict], dict[str, str]]:
     configs = protocol["configs"]
     output.mkdir(parents=True, exist_ok=True)
     (output / "protocol.json").write_text(json.dumps(protocol, indent=2) + "\n")
@@ -298,17 +299,43 @@ def _run_batch(output: Path, protocol: dict[str, Any], years: float,
     (output / "failures.json").write_text(json.dumps(failures, indent=2) + "\n")
     invalid = _validate_results(results)
     (output / "invalid.json").write_text(json.dumps(invalid, indent=2) + "\n")
-    if failures or invalid or len(results) != len(configs):
+    if failures or len(results) != len(configs) or (invalid and not allow_invalid):
         raise RuntimeError(
             f"banc incomplet/invalide: {len(results)}/{len(configs)}, "
             f"{len(failures)} echec(s), {len(invalid)} invalide(s)")
-    return results
+    if invalid:
+        print(
+            f"[AVERTISSEMENT] {len(invalid)} trajectoire(s) invalide(s) "
+            "seront exclues du screening",
+            flush=True,
+        )
+    return results, invalid
 
 
 def _rank_screen(output: Path, configs: list[dict[str, Any]],
-                 results: dict[str, dict], n_finalists: int) -> dict[str, Any]:
+                 results: dict[str, dict], n_finalists: int,
+                 invalid: dict[str, str] | None = None) -> dict[str, Any]:
+    invalid = invalid or {}
+    label_to_case = {
+        config["label"]: config["tuning_case"] for config in configs
+    }
+    unknown_invalid = set(invalid) - set(label_to_case)
+    if unknown_invalid:
+        raise RuntimeError(
+            "labels invalides absents du protocole: "
+            + ", ".join(sorted(unknown_invalid)))
+    excluded_cases: dict[str, dict[str, str]] = {}
+    for label, reason in invalid.items():
+        excluded_cases.setdefault(label_to_case[label], {})[label] = reason
+    (output / "excluded_cases.json").write_text(
+        json.dumps(excluded_cases, indent=2) + "\n")
+    if "baseline" in excluded_cases:
+        raise RuntimeError("la baseline du screening est invalide")
+
     by_case: dict[str, list[tuple[int, dict]]] = {}
     for config in configs:
+        if config["tuning_case"] in excluded_cases:
+            continue
         by_case.setdefault(config["tuning_case"], []).append((
             int(config["forecast_seed"]), results[config["label"]]))
     baseline = {seed: result for seed, result in by_case["baseline"]}
@@ -393,6 +420,7 @@ def _rank_screen(output: Path, configs: list[dict[str, Any]],
         "n_finalists_nonbaseline": len(candidates),
         "selected_single_factor_cases": candidates,
         "selected_cases": selected,
+        "excluded_cases": excluded_cases,
         "validation_case_parameters": validation_cases,
         "ranking": ranking,
     }
@@ -587,9 +615,12 @@ def main() -> None:
             cases, args.screen_seeds, args.years, args.baseline_run)
         fingerprint = _fingerprint(protocol)
         screen_output = HERE / "runs" / f"tune_screen_{args.years:g}y_{fingerprint}"
-        results = _run_batch(screen_output, protocol, args.years, args.workers)
+        results, invalid = _run_batch(
+            screen_output, protocol, args.years, args.workers,
+            allow_invalid=True)
         selection = _rank_screen(
-            screen_output, protocol["configs"], results, N_FINALISTS)
+            screen_output, protocol["configs"], results, N_FINALISTS,
+            invalid)
         print(f"OK screening tuning -> {screen_output}", flush=True)
     if args.phase == "screen":
         return
@@ -615,7 +646,7 @@ def main() -> None:
     fingerprint = _fingerprint(protocol)
     validation_output = (
         HERE / "runs" / f"tune_validation_{args.years:g}y_{fingerprint}")
-    results = _run_batch(
+    results, _ = _run_batch(
         validation_output, protocol, args.years, args.workers)
     _rank_validation(
         validation_output, protocol["configs"], results, selected,

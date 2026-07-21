@@ -29,6 +29,12 @@ moyen. Les trois meilleurs réglages portant sur trois leviers distincts sont
 retenus afin de ne pas sélectionner simultanément les bornes haute et basse
 d'un même bouton.
 
+Un cas est exclu dans son ensemble si au moins une de ses trois trajectoires
+échoue à un garde-fou physique (solveur, déficit non fermé après LOL ou LOL
+supérieure à 1). Une trajectoire rejetée est consignée dans `invalid.json` et
+le cas correspondant dans `excluded_cases.json`; une baseline invalide reste
+une erreur bloquante.
+
 ## Étage 2 — validation aveugle
 
 La baseline, les trois réglages simples, leur combinaison top-2 et leur
@@ -60,6 +66,20 @@ Le screening complet doit être créé dans
 `runs/tune_screen_1y_97e636e32db7/`. Le nom du dossier de validation dépend des
 trois cas sélectionnés et n'est donc connu qu'après l'étage 1.
 
+## Résultat de l'étage 1
+
+Le job 218548 a produit les 39/39 trajectoires, sans échec solveur. L'audit
+indépendant retrouve un seul profil pour les 39 points et recalcule exactement
+les métriques et les coûts depuis les NPZ et les ledgers.
+
+`terminal_h2_1p25` est exclu : sur la graine 202603, 35,873 W d'électrolyse
+subsistent pendant deux pas avec `lol=1`, laissant autant de déficit non fermé.
+Les trois leviers sélectionnés sont `battery_wear_0p5`,
+`terminal_bat_1p2` et `fc_wear_2`, avec respectivement -1,132 %, -0,686 % et
+-0,547 % de J3 moyen face à la baseline sur les graines d'apprentissage. Les
+trois gagnent sur 3/3 graines. Le dossier de validation attendu est désormais
+`runs/tune_validation_1y_9c728d3d847a/`.
+
 ## Exécution mésocentre
 
 Le dossier `Common/` n'a pas changé pour cette étape. Dans le dossier distant
@@ -82,10 +102,15 @@ Depuis le dossier canonique `Vieillissement11/MPC` :
 sbatch run_tuning_mpc_v11.slurm
 ```
 
-Le job exécute les quatorze tests, les deux étages et la décision automatique.
+Le job exécute les seize tests, les deux étages et la décision automatique.
 Une interruption est reprise depuis les caches complets. Le résultat à examiner
 en premier est `decision.json` dans le dossier `tune_validation_1y_*`, puis
 `ranking.tsv`, `validation_stats.tsv`, les trajectoires et leurs ledgers.
+
+Pour reprendre après le job 218548, mettre à jour seulement
+`benchmark_tuning_mpc_v11.py` et `test_tuning_mpc_v11.py`, puis resoumettre le
+même lanceur. Les 39 trajectoires de sélection sont relues depuis les caches ;
+seules les 40 trajectoires non-baseline de validation sont nouvelles.
 
 Le rejeu 25 ans n'est pas inclus : il ne sera lancé qu'après audit de la
 validation annuelle et seulement pour la baseline et le réglage effectivement

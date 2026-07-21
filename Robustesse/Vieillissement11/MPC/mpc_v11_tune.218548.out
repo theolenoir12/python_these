@@ -1,0 +1,94 @@
+scipy 1.9.1 milp OK
+test_capacity_fade_does_not_prevent_fc_shutdown (test_mpc_v11.TestMPCV11) ... /Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+ok
+test_ely_piecewise_is_convex_and_contains_j_anchors (test_mpc_v11.TestMPCV11) ... ok
+test_first_executed_action_is_balanced (test_mpc_v11.TestMPCV11) ... ok
+test_lol_is_zero_during_net_surplus (test_mpc_v11.TestMPCV11) ... ok
+test_milp_balance_modes_and_constraints (test_mpc_v11.TestMPCV11) ... ok
+test_model_is_nominal_p2 (test_mpc_v11.TestMPCV11) ... ok
+test_no_soh_null_is_exact (test_mpc_v11.TestMPCV11) ... ok
+test_noisy_forecast_configuration_is_validated (test_mpc_v11.TestMPCV11) ... ok
+test_noisy_forecast_is_paired_and_reproducible (test_mpc_v11.TestMPCV11) ... ok
+test_soh_weights_only_change_objective_weights (test_mpc_v11.TestMPCV11) ... ok
+test_baseline_cache_labels_match_forecast_benchmark (test_tuning_mpc_v11.TestTuningMPCV11) ... ok
+test_every_case_builds_a_valid_mpc_config (test_tuning_mpc_v11.TestTuningMPCV11) ... ok
+test_screen_budget_and_one_factor_changes (test_tuning_mpc_v11.TestTuningMPCV11) ... ok
+test_validation_budget_and_heldout_seeds (test_tuning_mpc_v11.TestTuningMPCV11) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.124s
+
+OK
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+[tune_terminal_h2_1p25_train_s1p0_r202602] LPSP=0.3019% deg=2.573 kEUR J3=2.763 kEUR
+[tune_terminal_h2_0p5_train_s1p0_r202602] LPSP=0.3186% deg=2.625 kEUR J3=2.825 kEUR
+[tune_terminal_bat_1p2_train_s1p0_r202602] LPSP=0.2741% deg=2.571 kEUR J3=2.744 kEUR
+[tune_terminal_h2_1p25_train_s1p0_r202603] LPSP=0.3477% deg=2.592 kEUR J3=2.810 kEUR
+[tune_terminal_bat_0p3_train_s1p0_r202602] LPSP=0.3082% deg=2.580 kEUR J3=2.774 kEUR
+[tune_terminal_bat_1p2_train_s1p0_r202603] LPSP=0.2928% deg=2.605 kEUR J3=2.789 kEUR
+[tune_terminal_h2_1p25_train_s1p0_r202601] LPSP=0.3666% deg=2.586 kEUR J3=2.817 kEUR
+[tune_terminal_h2_0p5_train_s1p0_r202601] LPSP=0.3628% deg=2.641 kEUR J3=2.869 kEUR
+[tune_terminal_bat_1p2_train_s1p0_r202601] LPSP=0.3254% deg=2.581 kEUR J3=2.785 kEUR
+[tune_terminal_bat_0p3_train_s1p0_r202603] LPSP=0.3080% deg=2.608 kEUR J3=2.801 kEUR
+[tune_terminal_h2_0p5_train_s1p0_r202603] LPSP=0.3222% deg=2.645 kEUR J3=2.848 kEUR
+[tune_terminal_bat_0p3_train_s1p0_r202601] LPSP=0.3291% deg=2.591 kEUR J3=2.798 kEUR
+[tune_battery_wear_2_train_s1p0_r202602] LPSP=0.2889% deg=2.622 kEUR J3=2.803 kEUR
+[tune_battery_wear_2_train_s1p0_r202603] LPSP=0.3289% deg=2.645 kEUR J3=2.852 kEUR
+[tune_battery_wear_2_train_s1p0_r202601] LPSP=0.3509% deg=2.616 kEUR J3=2.836 kEUR
+[tune_fc_wear_0p5_train_s1p0_r202602] LPSP=0.2929% deg=2.610 kEUR J3=2.794 kEUR
+[tune_fc_wear_0p5_train_s1p0_r202603] LPSP=0.3174% deg=2.638 kEUR J3=2.838 kEUR
+[tune_battery_wear_0p5_train_s1p0_r202602] LPSP=0.2791% deg=2.567 kEUR J3=2.742 kEUR
+[tune_fc_wear_0p5_train_s1p0_r202601] LPSP=0.3526% deg=2.611 kEUR J3=2.833 kEUR
+[tune_fc_wear_2_train_s1p0_r202602] LPSP=0.2953% deg=2.568 kEUR J3=2.754 kEUR
+[tune_battery_wear_0p5_train_s1p0_r202603] LPSP=0.3080% deg=2.581 kEUR J3=2.774 kEUR
+[tune_battery_wear_0p5_train_s1p0_r202601] LPSP=0.3258% deg=2.559 kEUR J3=2.764 kEUR
+[tune_fc_wear_2_train_s1p0_r202603] LPSP=0.3108% deg=2.582 kEUR J3=2.777 kEUR
+[tune_fc_wear_2_train_s1p0_r202601] LPSP=0.3602% deg=2.572 kEUR J3=2.798 kEUR
+[tune_ely_wear_0p5_train_s1p0_r202602] LPSP=0.2841% deg=2.587 kEUR J3=2.765 kEUR
+[tune_ely_wear_0p5_train_s1p0_r202601] LPSP=0.3494% deg=2.592 kEUR J3=2.811 kEUR
+[tune_ely_wear_0p5_train_s1p0_r202603] LPSP=0.3250% deg=2.609 kEUR J3=2.813 kEUR
+[tune_fc_dynamic_0_train_s1p0_r202602] LPSP=0.2983% deg=2.592 kEUR J3=2.780 kEUR
+[tune_fc_dynamic_0_train_s1p0_r202601] LPSP=0.3387% deg=2.608 kEUR J3=2.820 kEUR
+[tune_fc_dynamic_0_train_s1p0_r202603] LPSP=0.3065% deg=2.624 kEUR J3=2.817 kEUR
+[tune_ely_wear_2_train_s1p0_r202602] LPSP=0.3007% deg=2.582 kEUR J3=2.771 kEUR
+[tune_ely_wear_2_train_s1p0_r202601] LPSP=0.3317% deg=2.592 kEUR J3=2.800 kEUR
+[tune_ely_wear_2_train_s1p0_r202603] LPSP=0.3027% deg=2.613 kEUR J3=2.803 kEUR
+[tune_fc_dynamic_3_train_s1p0_r202602] LPSP=0.3075% deg=2.577 kEUR J3=2.771 kEUR
+[tune_fc_dynamic_3_train_s1p0_r202603] LPSP=0.3186% deg=2.599 kEUR J3=2.799 kEUR
+[tune_fc_dynamic_3_train_s1p0_r202601] LPSP=0.3350% deg=2.586 kEUR J3=2.797 kEUR
+Traceback (most recent call last):
+  File "/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/benchmark_tuning_mpc_v11.py", line 627, in <module>
+    main()
+  File "/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/benchmark_tuning_mpc_v11.py", line 590, in main
+    results = _run_batch(screen_output, protocol, args.years, args.workers)
+  File "/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/benchmark_tuning_mpc_v11.py", line 302, in _run_batch
+    raise RuntimeError(
+RuntimeError: banc incomplet/invalide: 39/39, 0 echec(s), 1 invalide(s)
+
+real	97m12.346s
+user	1083m17.081s
+sys	39m42.737s

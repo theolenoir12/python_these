@@ -157,16 +157,29 @@ bruit x0,5, 10,36 % à x1 (quatre graines seulement), 14,32 % à x1,5 et 50,03 %
 sous persistance. Ces écarts suggèrent que la qualité de prévision est un levier
 matériel, mais ils doivent être recalculés avec la formulation v2.
 
-## Prochaine expérience
+## Tuning : sélection terminée, validation à lancer
 
-Les jobs mésocentre 218546 et 218547 sont clos et ne doivent pas être relancés
-à protocole identique. La prochaine expérience est le tuning à budget fixé du
-MPC H24 sans SoH sur ses coûts terminaux et poids d'usure. La variante SoH
-simple est retirée de ce tuning ; elle reste seulement un résultat négatif
-attribuable. Après sélection sur un an, seuls les finalistes seront rejoués sur
-25 ans et sous erreurs de prévision. Le protocole préannoncé, ses graines
-séparées et ses critères de décision sont dans `TUNING_MPC_V11_P2.md` ; le
-lanceur est `run_tuning_mpc_v11.slurm`.
+Le job 218548 a calculé les 39/39 trajectoires de sélection dans
+`runs/tune_screen_1y_97e636e32db7/`, sans échec solveur. Les 39 points partagent
+un profil bit-à-bit commun et leurs métriques ont été recalculées depuis les
+NPZ et les ledgers sans écart.
+
+Le cas `terminal_h2_1p25` est physiquement rejeté : sa graine 202603 conserve
+35,873 W d'électrolyse sur deux pas alors que la charge est déjà délestée à
+100 %. Les trois leviers admis et retenus par le classement préannoncé sont :
+
+- `battery_wear_0p5` : -1,132 % de J3, gain sur 3/3 graines ;
+- `terminal_bat_1p2` : -0,686 %, gain sur 3/3 ;
+- `fc_wear_2` : -0,547 %, gain sur 3/3.
+
+Ces valeurs sont des résultats d'apprentissage, pas encore des gains acquis.
+La prochaine expérience est la validation aveugle de ces trois cas, de leurs
+combinaisons top-2/top-3 et de la baseline sur les graines 202604/202605. Elle
+doit créer `runs/tune_validation_1y_9c728d3d847a/` : 48 trajectoires, dont 8
+baselines réutilisées et 40 calculs nouveaux. Le protocole et la règle de
+promotion restent dans `TUNING_MPC_V11_P2.md` ; le lanceur est
+`run_tuning_mpc_v11.slurm`. Aucun rejeu 25 ans ne doit précéder la décision de
+validation.
 
 
 ## Information future, reference DP et incertitude

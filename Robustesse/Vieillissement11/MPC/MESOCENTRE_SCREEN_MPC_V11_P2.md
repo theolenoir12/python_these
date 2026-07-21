@@ -8,14 +8,25 @@ banc d'incertitude (34/34). Les caches canoniques sont respectivement
 `runs/forecast_uncertainty_1y_1acc8ef7e9d2/`. Ne pas les resoumettre à protocole
 identique. Les commandes ci-dessous sont conservées pour la reproductibilité.
 
-Le prochain job est le tuning décrit dans `TUNING_MPC_V11_P2.md`. Il réutilise
-11 trajectoires du banc d'incertitude ; conserver impérativement le dossier
-`runs/forecast_uncertainty_1y_1acc8ef7e9d2/` sur le mésocentre, importer les
-nouveaux scripts dans le dossier `MPC/` existant, puis lancer :
+Le job de tuning 218548 a terminé la sélection dans
+`runs/tune_screen_1y_97e636e32db7/`. Il s'est arrêté avant la validation parce
+qu'un cas physiquement invalide faisait échouer tout le banc ; ce cas est
+désormais exclu et tracé sans invalider les autres résultats. Conserver sur le
+mésocentre les dossiers `runs/tune_screen_1y_97e636e32db7/` et
+`runs/forecast_uncertainty_1y_1acc8ef7e9d2/`. Mettre à jour seulement :
+
+- `benchmark_tuning_mpc_v11.py` ;
+- `test_tuning_mpc_v11.py`.
+
+Puis, depuis le dossier `MPC/` existant, relancer :
 
 ```bash
 sbatch run_tuning_mpc_v11.slurm
 ```
+
+Les 39 trajectoires du criblage sont reprises depuis les caches. Le job doit
+calculer seulement 40 nouvelles trajectoires et créer
+`runs/tune_validation_1y_9c728d3d847a/` avec `decision.json`.
 
 ## Dossiers à importer
 

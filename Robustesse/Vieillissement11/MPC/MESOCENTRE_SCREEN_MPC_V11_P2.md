@@ -8,25 +8,34 @@ banc d'incertitude (34/34). Les caches canoniques sont respectivement
 `runs/forecast_uncertainty_1y_1acc8ef7e9d2/`. Ne pas les resoumettre à protocole
 identique. Les commandes ci-dessous sont conservées pour la reproductibilité.
 
-Le job de tuning 218548 a terminé la sélection dans
-`runs/tune_screen_1y_97e636e32db7/`. Il s'est arrêté avant la validation parce
-qu'un cas physiquement invalide faisait échouer tout le banc ; ce cas est
-désormais exclu et tracé sans invalider les autres résultats. Conserver sur le
-mésocentre les dossiers `runs/tune_screen_1y_97e636e32db7/` et
-`runs/forecast_uncertainty_1y_1acc8ef7e9d2/`. Mettre à jour seulement :
+Les jobs 218548 et 218935 ont terminé la sélection et la validation annuelle.
+`combo_top3` est retenu. La dernière étape MPC est le rejeu 25 ans apparié
+contre la baseline. Conserver sur le mésocentre le dossier
+`runs/tune_validation_1y_9c728d3d847a/` et importer :
 
 - `benchmark_tuning_mpc_v11.py` ;
-- `test_tuning_mpc_v11.py`.
+- `test_tuning_mpc_v11.py` ;
+- `benchmark_longrun_tuning_mpc_v11.py` ;
+- `test_longrun_tuning_mpc_v11.py` ;
+- `run_longrun_tuning_mpc_v11.slurm`.
 
-Puis, depuis le dossier `MPC/` existant, relancer :
+Le job 218935 s'étant arrêté avant le post-traitement, copier aussi dans
+`runs/tune_validation_1y_9c728d3d847a/` les trois petits fichiers produits
+localement sans nouveau calcul :
+
+- `decision.json` ;
+- `validation_stats.tsv` ;
+- `excluded_validation_cases.json`.
+
+Puis, depuis le dossier `MPC/` existant, lancer :
 
 ```bash
-sbatch run_tuning_mpc_v11.slurm
+sbatch run_longrun_tuning_mpc_v11.slurm
 ```
 
-Les 39 trajectoires du criblage sont reprises depuis les caches. Le job doit
-calculer seulement 40 nouvelles trajectoires et créer
-`runs/tune_validation_1y_9c728d3d847a/` avec `decision.json`.
+Le job calcule quatre trajectoires de 25 ans en parallèle et doit créer
+`runs/tune_longrun_25y_eab8dde5d5d0/`. Le temps mural estimé est de 12 à 16 h ;
+la limite est 24 h et une relance reprend les trajectoires déjà terminées.
 
 ## Dossiers à importer
 

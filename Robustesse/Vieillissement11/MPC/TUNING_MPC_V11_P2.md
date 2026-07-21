@@ -80,6 +80,19 @@ Les trois leviers sélectionnés sont `battery_wear_0p5`,
 trois gagnent sur 3/3 graines. Le dossier de validation attendu est désormais
 `runs/tune_validation_1y_9c728d3d847a/`.
 
+## Résultat de l'étage 2
+
+Le job 218935 a produit les 48/48 résultats, sans échec solveur.
+`terminal_bat_1p2` et `combo_top2` sont exclus pour déficit non fermé dans au
+moins un scénario. Parmi les cas physiquement valides, `combo_top3` gagne
+1,443 % de J3 sur les graines réservées au bruit x1 et respecte toutes les
+gardes de robustesse : gains de 5,232 % en parfait, 1,365 % sous persistance,
+1,409 % à x0,5 et 1,658 % à x1,5. Il est donc retenu par la règle préannoncée.
+
+La décision complète est
+`runs/tune_validation_1y_9c728d3d847a/decision.json` et son audit
+`analysis/AUDIT_TUNING_MPC_V11_P2_2026-07-21.md`.
+
 ## Exécution mésocentre
 
 Le dossier `Common/` n'a pas changé pour cette étape. Dans le dossier distant
@@ -102,7 +115,7 @@ Depuis le dossier canonique `Vieillissement11/MPC` :
 sbatch run_tuning_mpc_v11.slurm
 ```
 
-Le job exécute les seize tests, les deux étages et la décision automatique.
+Le job exécute les dix-huit tests, les deux étages et la décision automatique.
 Une interruption est reprise depuis les caches complets. Le résultat à examiner
 en premier est `decision.json` dans le dossier `tune_validation_1y_*`, puis
 `ranking.tsv`, `validation_stats.tsv`, les trajectoires et leurs ledgers.
@@ -112,6 +125,8 @@ Pour reprendre après le job 218548, mettre à jour seulement
 même lanceur. Les 39 trajectoires de sélection sont relues depuis les caches ;
 seules les 40 trajectoires non-baseline de validation sont nouvelles.
 
-Le rejeu 25 ans n'est pas inclus : il ne sera lancé qu'après audit de la
-validation annuelle et seulement pour la baseline et le réglage effectivement
-retenu.
+Le rejeu 25 ans n'est pas inclus dans ce job. Après audit annuel, le lanceur
+`run_longrun_tuning_mpc_v11.slurm` compare seulement la baseline et
+`combo_top3` au bruit x1 sur les graines réservées 202604/202605. Il exécute les
+20 tests puis quatre trajectoires ; la sortie attendue est
+`runs/tune_longrun_25y_eab8dde5d5d0/`.

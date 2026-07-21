@@ -2,10 +2,11 @@
 
 Date : 21 juillet 2026.
 
-Statut : protocole de développement. La baseline FLC experte I0 est réglée et
-auditée sur 25 ans. Sa première extension SoH a été testée avec un nul exact,
-mais aucune variante active n'est retenue. Les couches prévision, règles
-apprises et ANFIS restent à construire.
+Statut : protocole de développement. La branche FLC experte est close : I0 est
+réglée et auditée sur 25 ans. Sa première extension SoH a été testée avec un
+nul exact, mais aucune variante active n'est retenue. La couche prévision IF
+est retenue, la combinaison ISF ne l'est pas. Les règles apprises et ANFIS
+restent à construire.
 Le dossier `Vieillissement11/MPC/` est hors périmètre de ce chantier.
 
 ## 1. Question scientifique
@@ -319,7 +320,17 @@ La couche FLC-IS par correction d'usure relative est maintenant complète. Son
 cache 25 ans `runs/promoted_flc_is_soh_25y_34bdb5fbe2af/` passe l'audit et son
 test nul est bit-à-bit exact, mais les trois candidats actifs sont dominés par
 I0. La note canonique est `TUNING_FLC_IS_SOH_RESULTS_2026-07-21.md`. Le parent
-I0 est donc conservé pour construire IF. L'horizon principal prévu est H18 et
-l'entrée sera l'énergie nette cumulée, avec scénarios futur parfait, erreur
-empirique LSTM et persistance. ISF ne sera testé qu'après IF et son effet SoH
-sera rapporté par l'ablation ISF-IF.
+I0 a donc été conservé pour construire IF. L'horizon principal est H18 et
+l'entrée est l'énergie nette cumulée, avec scénarios futur parfait, erreur
+empirique LSTM et persistance. ISF a été testé après IF et son effet SoH est
+rapporté par l'ablation ISF-IF.
+
+La couche FLC-IF et l'ablation ISF-IF sont désormais complètes. Le protocole et
+la note canonique sont `TUNING_PROTOCOL_FLC_IF_ISF_V11_P2_2026-07-21.md` et
+`TUNING_FLC_IF_ISF_RESULTS_2026-07-21.md`. Le cache final 25 ans
+`runs/final_flc_if_isf_25y_87baec18c287/` passe l'audit et son test nul est
+bit-à-bit exact. IF avec force 1 est promue ; sous erreur LSTM iid, elle vaut en
+moyenne LPSP=0,595000 %, dégradation=62,915 kEUR et J3=72,262 kEUR, soit
+-1,644 % de J3 face à I0. ISF ajoute 11,29 EUR de J3 à IF en moyenne appariée
+et n'est pas promue. La prochaine famille éventuelle est rule-learning ; ANFIS
+ne vient qu'ensuite si le gain justifie sa complexité.

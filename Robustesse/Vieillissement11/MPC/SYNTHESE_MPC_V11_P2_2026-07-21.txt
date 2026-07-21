@@ -1,0 +1,245 @@
+SYNTHESE DES TRAVAUX MPC V11-p=2
+Date : 21 juillet 2026
+
+
+1. OBJECTIF ET PERIMETRE
+
+L'objectif était de construire et d'évaluer une stratégie MPC réellement
+online, compatible avec les nouvelles fonctions de coût de Vieillissement11,
+puis de déterminer si une information explicite sur le SoH améliore
+matériellement la gestion d'énergie.
+
+Le modèle de vieillissement retenu est Vieillissement11 avec p=2. Les coûts
+publiés sont toujours recalculés après simulation depuis le ledger exact V11.
+Le coût unifié utilisé pour les décisions est :
+
+J3 = coût de dégradation + 3 EUR/kWh x EENS.
+
+Le dossier canonique unique est :
+Python/Robustesse/Vieillissement11/MPC/
+
+Les références principales sont :
+- README_MPC_V11_P2.md ;
+- TUNING_MPC_V11_P2.md ;
+- analysis/AUDIT_MPC_V11_P2_2026-07-21.md ;
+- analysis/AUDIT_TUNING_MPC_V11_P2_2026-07-21.md.
+
+
+2. CE QUI A ETE FAIT
+
+2.1. Formulation MPC
+
+Un MPC mixte linéaire est résolu à chaque heure avec HiGHS. Il comprend :
+- le bilan de puissance, le délestage et l'écrêtage ;
+- les dynamiques de la batterie et du réservoir H2 ;
+- les modes exclusifs de la batterie, de la pile à combustible et de
+  l'électrolyseur ;
+- les démarrages et la dynamique de puissance FC/ELY ;
+- un surrogate des coûts de vieillissement V11-p=2 ;
+- des valeurs terminales pour l'énergie batterie et hydrogène.
+
+Seule la première action de chaque horizon est appliquée. Le contrôleur est
+donc online : il n'accède qu'à la mesure courante et à la prévision disponible
+sur son horizon, contrairement à la programmation dynamique annuelle qui reste
+une référence clairvoyante.
+
+La formulation courante est :
+mpc-v11-p2-milp-v2-delta-capacity-fade-2026-07-20
+
+La version v2 corrige une borne de variation qui pouvait rendre artificiellement
+impossible l'arrêt d'un composant après une baisse de sa puissance maximale due
+au vieillissement. Les résultats v1 sont conservés uniquement comme diagnostic.
+
+2.2. Choix de l'horizon et comparaison aux stratégies de référence
+
+Le screening annuel v2 est dans :
+runs/screen_1y_718d8fe28384/
+
+Le MPC H24 sans pondération explicite du SoH est retenu comme baseline online.
+En prévision parfaite, il atteint :
+- LPSP = 0,265062 % ;
+- coût de dégradation = 2,378489 kEUR ;
+- J3 = 2,545048 kEUR.
+
+Il réduit J3 de 5,096 % face au MPC H6 et de 11,895 % face à RB1. Il domine
+RB1 et RB2 sur les axes LPSP et dégradation pour ce screening annuel.
+
+La programmation dynamique annuelle reste néanmoins meilleure. A la LPSP du
+MPC H24, le surcoût de dégradation interpolé du MPC vaut environ 0,635 kEUR,
+soit +36,42 %. Son J3 dépasse de 37,93 % le meilleur point PD échantillonné.
+Cette comparaison mesure la perte liée au caractère online et à l'horizon
+limité ; la PD connaît le profil annuel futur.
+
+2.3. Incertitude de prévision et intégration simple du SoH
+
+Le banc annuel est dans :
+runs/forecast_uncertainty_1y_1acc8ef7e9d2/
+
+Par rapport à la prévision parfaite, le J3 du MPC H24 sans SoH augmente en
+moyenne de :
+- 4,77 % avec le bruit x0,5 ;
+- 9,98 % avec le bruit nominal x1 ;
+- 13,80 % avec le bruit x1,5 ;
+- 50,08 % sous persistance.
+
+La qualité de la prévision est donc un levier majeur.
+
+La pondération simple du SoH dans l'objectif interne
+(beta_fc=beta_ely=1) n'apporte en revanche que 0,18 à 0,42 % de gain moyen
+selon le régime de prévision. Le meilleur gain individuel reste inférieur à
+0,7 %. Cette intégration simple du SoH est donc considérée comme non matérielle.
+Cela ne démontre pas que le SoH est inutile : cela montre seulement que cette
+pondération multiplicative simple ne suffit pas.
+
+2.4. Tuning attribuable du MPC H24
+
+Le protocole a séparé les graines de sélection et de validation.
+
+Sélection :
+- 13 cas, dont 12 perturbations unifactorielles ;
+- graines 202601, 202602 et 202603 au bruit x1 ;
+- 39 trajectoires ;
+- dossier : runs/tune_screen_1y_97e636e32db7/.
+
+Le cas terminal_h2_1p25 a été rejeté car il maintenait de l'électrolyse pendant
+un délestage déjà total, laissant un déficit non fermé après une LOL bornée à 1.
+
+Validation aveugle :
+- baseline, trois leviers simples et deux combinaisons ;
+- graines réservées 202604 et 202605 ;
+- prévision parfaite, persistance et bruits x0,5, x1 et x1,5 ;
+- 48 trajectoires, dont 8 baselines réutilisées ;
+- dossier : runs/tune_validation_1y_9c728d3d847a/.
+
+Les 48 résultats sont complets, sans échec solveur. Les profils sont communs et
+les métriques et coûts ont été recalculés sans écart depuis les trajectoires et
+les ledgers.
+
+Les cas terminal_bat_1p2 et combo_top2 ont été exclus de la décision car ils
+présentent au moins un scénario avec électrolyse pendant un délestage total.
+
+Le réglage retenu est combo_top3 :
+- battery_wear_scale = 0,5 au lieu de 1 ;
+- terminal_bat_eur_per_kwh = 1,2 au lieu de 0,6 ;
+- fc_wear_scale = 2 au lieu de 1 ;
+- tous les autres paramètres et informations online restent identiques.
+
+Sur les graines réservées au bruit x1, combo_top3 réduit le J3 moyen de 1,443 %
+face à la baseline. Il gagne également :
+- 5,232 % en prévision parfaite ;
+- 1,365 % sous persistance ;
+- 1,409 % au bruit x0,5 ;
+- 1,658 % au bruit x1,5.
+
+Le réglage dépasse donc le seuil de promotion préannoncé de 1 % et ne présente
+pas de pénalité dans les régimes de robustesse. Le gain reste toutefois modeste
+et n'est établi annuellement que sur deux graines réservées.
+
+
+3. RESULTATS ACQUIS ET CONCLUSIONS ENCORE OUVERTES
+
+Résultats acquis :
+- la formulation MPC v2 est valide et compatible avec le pas horaire ;
+- H24 est préférable à H6 et constitue la baseline MPC online ;
+- la qualité de prévision a un effet matériel sur les performances ;
+- l'intégration simple du SoH par pondération des coûts FC/ELY est non
+  matérielle ;
+- combo_top3 est le meilleur réglage annuel admissible selon le protocole de
+  tuning et franchit le seuil de 1 % sur les graines réservées ;
+- la PD annuelle reste nettement supérieure au MPC, comme attendu pour une
+  référence clairvoyante.
+
+Conclusions encore ouvertes :
+- la conservation du gain de combo_top3 sur 25 ans ;
+- la stabilité de ce gain face à l'accumulation du vieillissement ;
+- le partage exact entre gain de fiabilité et gain de dégradation sur 25 ans ;
+- la pertinence pratique d'un gain proche de 1 à 2 % une fois la variabilité
+  longue durée prise en compte.
+
+
+4. CE QU'IL RESTE A FAIRE POUR CLOTURER LE MPC
+
+Un dernier calcul apparié doit comparer la baseline et combo_top3 sur 25 ans,
+au bruit nominal x1, avec les graines réservées 202604 et 202605. Il comporte
+quatre trajectoires : deux stratégies x deux graines.
+
+Fichiers à placer sur le mésocentre dans Vieillissement11/MPC/ :
+- benchmark_tuning_mpc_v11.py ;
+- test_tuning_mpc_v11.py ;
+- benchmark_longrun_tuning_mpc_v11.py ;
+- test_longrun_tuning_mpc_v11.py ;
+- run_longrun_tuning_mpc_v11.slurm.
+
+Le dossier distant suivant doit être conservé :
+runs/tune_validation_1y_9c728d3d847a/
+
+Comme le job annuel 218935 s'est arrêté avant le post-traitement, les fichiers
+locaux suivants doivent aussi être copiés dans ce dossier distant :
+- decision.json ;
+- validation_stats.tsv ;
+- excluded_validation_cases.json.
+
+Commande à lancer depuis Vieillissement11/MPC/ :
+sbatch run_longrun_tuning_mpc_v11.slurm
+
+Sortie attendue :
+runs/tune_longrun_25y_eab8dde5d5d0/
+
+Le calcul exécute quatre trajectoires en parallèle. Le temps mural estimé est
+de 12 à 16 heures, avec une limite Slurm de 24 heures. Une relance reprend les
+trajectoires déjà terminées depuis leurs caches.
+
+Après rapatriement, il faudra :
+1. vérifier 4/4 trajectoires, les échecs solveur et les bilans physiques ;
+2. recalculer les coûts, EENS, LPSP et J3 depuis les NPZ et les ledgers ;
+3. lire comparison.json et comparison.tsv ;
+4. vérifier le signe du gain sur chacune des deux graines ;
+5. vérifier si le gain agrégé reste supérieur au seuil hérité de 1 % ;
+6. documenter le partage entre dégradation et fiabilité ;
+7. figer la configuration MPC finale et clore le chantier MPC.
+
+Aucun nouveau tuning MPC ne doit être ouvert avant ce résultat. Si le gain 25
+ans disparaît ou devient instable, la baseline H24 sera conservée. S'il reste
+positif et matériel, combo_top3 deviendra la configuration MPC finale.
+
+
+5. PERSPECTIVES SCIENTIFIQUES APRES LE MPC
+
+Une fois le contrôle 25 ans terminé, les pistes prioritaires sont :
+
+1. Comparaison online à information attribuable
+Comparer le MPC final aux stratégies FLC, règles apprises et éventuellement
+ANFIS sur les mêmes profils, mêmes graines, mêmes prévisions et mêmes métriques.
+La PD reste une borne de référence et non une stratégie online directement
+comparable en information disponible.
+
+2. Intégration plus riche du SoH
+Le résultat négatif concerne seulement une pondération simple dans l'objectif
+MPC. Une logique floue, des règles apprises ou une politique distillée depuis
+la PD peuvent utiliser le SoH pour modifier structurellement les arbitrages,
+les seuils et les réserves énergétiques.
+
+3. Prévision
+Comme l'erreur de prévision dégrade fortement J3, les améliorations de prévision
+ou une formulation plus robuste/stochastique du MPC sont potentiellement plus
+prometteuses qu'un nouveau réglage fin de ses poids.
+
+4. Manuscrit
+Après le 25 ans, préparer une synthèse compacte comprenant :
+- le schéma de formulation et le caractère online du MPC ;
+- le choix H24 ;
+- la comparaison RB1/RB2/PD ;
+- la sensibilité à la prévision ;
+- le résultat négatif de la pondération SoH simple ;
+- le tuning annuel et sa confirmation ou non sur 25 ans ;
+- les limites d'attribution et le faible nombre de graines de validation.
+
+
+6. REGLE D'ORGANISATION
+
+Ne conserver qu'un seul dossier canonique Vieillissement11/MPC/. Lors des
+transferts, copier le contenu du dossier MPC vers le dossier MPC distant déjà
+ouvert, et non le dossier lui-même, afin d'éviter de recréer MPC/MPC.
+
+Les travaux FLC sont indépendants et ne doivent pas être modifiés depuis le
+chantier MPC.

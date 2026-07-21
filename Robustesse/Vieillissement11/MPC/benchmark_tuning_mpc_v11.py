@@ -306,7 +306,7 @@ def _run_batch(output: Path, protocol: dict[str, Any], years: float,
     if invalid:
         print(
             f"[AVERTISSEMENT] {len(invalid)} trajectoire(s) invalide(s) "
-            "seront exclues du screening",
+            "seront exclues du classement",
             flush=True,
         )
     return results, invalid
@@ -437,7 +437,28 @@ def _scenario_key(config: dict[str, Any]) -> tuple[str, float]:
 
 def _rank_validation(output: Path, configs: list[dict[str, Any]],
                      results: dict[str, dict], selected: list[str],
-                     training_seeds: list[int]) -> dict[str, Any]:
+                     training_seeds: list[int],
+                     invalid: dict[str, str] | None = None) -> dict[str, Any]:
+    invalid = invalid or {}
+    label_to_case = {
+        config["label"]: config["tuning_case"] for config in configs
+    }
+    unknown_invalid = set(invalid) - set(label_to_case)
+    if unknown_invalid:
+        raise RuntimeError(
+            "labels invalides absents du protocole: "
+            + ", ".join(sorted(unknown_invalid)))
+    excluded_cases: dict[str, dict[str, str]] = {}
+    for label, reason in invalid.items():
+        excluded_cases.setdefault(label_to_case[label], {})[label] = reason
+    (output / "excluded_validation_cases.json").write_text(
+        json.dumps(excluded_cases, indent=2) + "\n")
+    if "baseline" in excluded_cases:
+        raise RuntimeError("la baseline de validation est invalide")
+    valid_selected = [
+        case for case in selected if case not in excluded_cases
+    ]
+
     grouped: dict[tuple[str, str, float], list[dict]] = {}
     for config in configs:
         mode, scale = _scenario_key(config)
@@ -449,7 +470,7 @@ def _rank_validation(output: Path, configs: list[dict[str, Any]],
         "std_j3_keur\tmean_lpsp_pct\tmean_degradation_keur\t"
         "delta_j3_vs_baseline_pct"
     ]
-    for case in selected:
+    for case in valid_selected:
         stats[case] = {}
         for mode, scale in (("perfect", 0.0), ("persistence", 0.0),
                             ("noisy", 0.5), ("noisy", 1.0), ("noisy", 1.5)):
@@ -465,7 +486,7 @@ def _rank_validation(output: Path, configs: list[dict[str, Any]],
             }
     baseline = stats["baseline"]
     ranking = []
-    for case in selected:
+    for case in valid_selected:
         case_stats = stats[case]
         deltas = {
             f"{mode}_{scale:g}": 100.0 * (
@@ -519,6 +540,8 @@ def _rank_validation(output: Path, configs: list[dict[str, Any]],
         "best_holdout_gain_pct": best["holdout_x1_gain_vs_baseline_pct"],
         "retained_case": retained_case,
         "retained_tuned_configuration": retained,
+        "physically_validated_cases": valid_selected,
+        "excluded_cases": excluded_cases,
         "ranking": ranking,
     }
     (output / "decision.json").write_text(json.dumps(decision, indent=2) + "\n")
@@ -646,11 +669,12 @@ def main() -> None:
     fingerprint = _fingerprint(protocol)
     validation_output = (
         HERE / "runs" / f"tune_validation_{args.years:g}y_{fingerprint}")
-    results, _ = _run_batch(
-        validation_output, protocol, args.years, args.workers)
+    results, invalid = _run_batch(
+        validation_output, protocol, args.years, args.workers,
+        allow_invalid=True)
     _rank_validation(
         validation_output, protocol["configs"], results, selected,
-        list(screen_protocol["training_seeds"]))
+        list(screen_protocol["training_seeds"]), invalid)
     print(f"OK validation tuning -> {validation_output}", flush=True)
 
 

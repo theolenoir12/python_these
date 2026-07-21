@@ -71,5 +71,22 @@ actives promues depuis le screening cinq ans sont toutes dominées par I0 à
 25 ans ; aucune n'est retenue. Le cache canonique est
 `runs/promoted_flc_is_soh_25y_34bdb5fbe2af/`, avec audit `PASS`.
 
-La prochaine couche IF utilisera une énergie nette prévue agrégée à H18, puis
-la combinaison ISF sera jugée par ablation par rapport à IF.
+## Extension prévision IF et clôture de la FLC experte
+
+La couche IF et son ablation ISF sont terminées. Le protocole et les résultats
+canoniques sont :
+
+- `TUNING_PROTOCOL_FLC_IF_ISF_V11_P2_2026-07-21.md` ;
+- `TUNING_FLC_IF_ISF_RESULTS_2026-07-21.md`.
+
+La variante retenue emploie l'énergie nette prévue à H18, une hystérésis de
+`±39,3768 kWh` sous erreur et `forecast_strength=1`. Elle est construite par
+`make_selected_if_policy_v11()`. Sous l'erreur LSTM iid simulée sur huit
+graines et 25 ans, elle forme un compromis avec I0 : LPSP moyenne 0,595000 %,
+dégradation 62,915 kEUR et J3 72,262 kEUR, soit -1,644 % de J3 face à I0.
+
+ISF n'est pas promue : l'ablation appariée donne `ISF-IF=+11,29 EUR` de J3
+en moyenne, IC95 `[+1,85 ; +20,73]`, et aucune amélioration simultanée des deux
+axes. Le cache final `runs/final_flc_if_isf_25y_87baec18c287/` passe l'audit.
+La branche FLC experte est close ; rule-learning et ANFIS constituent la suite
+éventuelle, avec leurs propres protocoles attribuables.

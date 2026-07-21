@@ -15,6 +15,7 @@ from benchmark_tuning_mpc_v11 import (
     _baseline_source_label,
     _case_parameters,
     _rank_screen,
+    _rank_validation,
     _screen_configs,
     _validation_configs,
 )
@@ -135,6 +136,60 @@ class TestTuningMPCV11(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "baseline"):
                 _rank_screen(
                     Path(tmp), configs, results, 0,
+                    {configs[0]["label"]: "invalide"},
+                )
+
+    def test_validation_excludes_invalid_case_before_decision(self):
+        all_cases = _case_parameters()
+        selected = ["baseline", "battery_wear_0p5", "fc_wear_2"]
+        cases = {case: all_cases[case] for case in selected}
+        configs = _validation_configs(
+            cases, selected, list(DEFAULT_VALIDATION_SEEDS))
+        offsets = {
+            "baseline": 0.0,
+            "battery_wear_0p5": -0.06,
+            "fc_wear_2": -0.20,
+        }
+        results = {
+            config["label"]: {
+                "j_voll3_keur": 3.0 + offsets[config["tuning_case"]],
+                "lpsp_pct": 0.3,
+                "degradation_keur": 2.0,
+            }
+            for config in configs
+        }
+        invalid_label = next(
+            config["label"] for config in configs
+            if config["tuning_case"] == "fc_wear_2"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            decision = _rank_validation(
+                output, configs, results, selected,
+                list(DEFAULT_SCREEN_SEEDS),
+                {invalid_label: "deficit non ferme apres LOL"},
+            )
+            excluded = json.loads(
+                (output / "excluded_validation_cases.json").read_text())
+        self.assertEqual(decision["retained_case"], "battery_wear_0p5")
+        self.assertNotIn(
+            "fc_wear_2",
+            {row["tuning_case"] for row in decision["ranking"]},
+        )
+        self.assertEqual(
+            excluded["fc_wear_2"][invalid_label],
+            "deficit non ferme apres LOL",
+        )
+
+    def test_validation_rejects_invalid_baseline(self):
+        cases = {"baseline": _case_parameters()["baseline"]}
+        configs = _validation_configs(
+            cases, ["baseline"], list(DEFAULT_VALIDATION_SEEDS))
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(RuntimeError, "baseline"):
+                _rank_validation(
+                    Path(tmp), configs, {}, ["baseline"],
+                    list(DEFAULT_SCREEN_SEEDS),
                     {configs[0]["label"]: "invalide"},
                 )
 

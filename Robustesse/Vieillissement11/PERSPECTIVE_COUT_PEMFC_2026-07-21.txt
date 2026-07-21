@@ -1,0 +1,161 @@
+================================================================================
+ PERSPECTIVE — FONCTION DE COUT DE DEGRADATION PEMFC : INDEPENDANCE AU POINT
+ DE FONCTIONNEMENT ET DEPENDANCE AU COURANT
+ Vieillissement11 — note de discussion — 2026-07-21
+================================================================================
+
+OBJET
+-----
+Cette note resume une discussion sur le modele de degradation PEMFC de V11
+(Common/degradation_v11.py, noyau utilise par la BOUCLE et par les couts
+publics de Common/cost_fcn_total2.py). Elle documente un constat de structure :
+le cout de degradation PEMFC ne depend PAS du niveau de puissance choisi heure
+par heure, et discute si ce choix est en accord avec la litterature. Elle ne
+modifie aucun code ni le manuscrit ; c'est un point d'attention pour l'analyse
+de sensibilite et pour l'interpretation du classement des EMS.
+
+
+1. CONSTAT (confirme numeriquement)
+-----------------------------------
+En regime ETABLI, la part PERMANENTE (celle qui est monetisee) est identique
+quel que soit le niveau de puissance. Run de 1000 h, alpha=0, part permanente :
+
+    10 % Pmax  -> 1200.0 uV
+    30 % Pmax  -> 1200.0 uV
+    60 % Pmax  -> 1200.0 uV
+    90 % Pmax  -> 1200.0 uV
+   100 % Pmax  -> 1200.0 uV      (soit 1,2 uV/h x 1000 h dans tous les cas)
+
+Le niveau de puissance (donc la densite de courant j) n'a AUCUN effet horaire
+sur le dommage permanent tant que la pile est ON hors idle.
+
+Mecanisme dans le code (degradation_v11.py) :
+    l.49   "current_exponent": 0.0
+    l.131  factor = (j / j_ref) ** current_exponent   ->  factor = 1  pour tout j
+    l.133  irreversible = (4.8 + s*(1.2 - 4.8)) * factor
+    l.134  reversible   = (22.0 + s*(52.0 - 22.0)) * factor
+Comme l'exposant vaut EXACTEMENT 0, les taux ne dependent que de l'etat de
+stabilite s (0..1), jamais du niveau de courant.
+
+
+2. CE QUI PILOTE REELLEMENT LA DEGRADATION PEMFC
+------------------------------------------------
+Par ordre d'impact (runs de 1000 h) :
+
+  Levier            Mecanisme (code)                        Ordre de grandeur
+  ----------------  --------------------------------------  ---------------------
+  Demarrages        start_uv = 20 uV/evenement (l.146-148)  499 starts -> 9980 uV
+   (OFF -> ON)                                              (DOMINE tout)
+  Idle              idle_uv = 3 uV/h si 0<j<=0.05           2 %Pmax -> 4,2 uV/h
+   (P tres basse)   (l.149-150)                             (> marche etablie !)
+  Dynamique         via s : irr = 4.8 + s*(1.2-4.8)         swings 30<->90 %
+   (transitoires)   (l.119-133)                             -> 4,24 uV/h (~x3,5)
+  Heures ON         irr = 1.2 uV/h en regime etabli         1000 h -> 1200 uV
+   etablies
+
+  -> Moteurs reels : NB DE DEMARRAGES, TEMPS IDLE, VARIABILITE du profil,
+     TEMPS ON total. JAMAIS le niveau de puissance en tant que tel.
+
+  Detail des regimes compares (1000 h chacun) :
+     idle 2 %Pmax        : permanent = 4200 uV   (idle 3 uV/h + irr 1,2)
+     dynamique 30<->90 % : permanent = 4244 uV   (s_final = 0,15 ; irr ~4,24 uV/h)
+     start/stop 60%/OFF  : permanent = 12100 uV  (9980 uV de starts, 499 cycles)
+
+  A noter : un demarrage (20 uV) equivaut a ~17 h de marche etablie.
+
+
+3. ACCORD / DESACCORD AVEC LA LITTERATURE
+-----------------------------------------
+L'intuition courante "haute puissance = plus de degradation" est, pour une
+PEMFC, contestee voire partiellement INVERSEE :
+
+  - Le dommage dominant du catalyseur (dissolution Pt, murissement d'Ostwald,
+    corrosion carbone) survient a HAUT POTENTIEL de cellule = BASSE densite de
+    courant (OCV, idle, ralenti). Sur une PEMFC, haute puissance = fort courant
+    = BAS potentiel = regime plutot PROTECTEUR pour le catalyseur.
+  - Le modele V11 encode deja cette physique : la penalite idle (3 uV/h) est
+    PLUS forte que la marche etablie a mi/haute puissance (1,2 uV/h). C'est donc
+    une dependance a la puissance, mais AU BAS de la plage et de signe INVERSE
+    a l'intuition "haute puissance".
+  - Hierarchie reconnue (revues Pei, Ren, Zhang) : start-stop >> cyclage/
+    transitoires ~ idle/OCV > effet du niveau. Le modele V11 respecte cette
+    hierarchie.
+
+CE MODELE N'EST DONC PAS "FAUX" — il est meme plus fidele a la physique du
+catalyseur que la loi naive "haute puissance pire". MAIS la critique reste
+legitime sur plusieurs points :
+
+  (a) ZERO dependance monotone au niveau. Le modele legacy Pei encore present
+      dans le repo (cost_fcn_total2.py:142-147) donnait FC_ALPHA_HIGH=1.47e-3/h
+      > FC_ALPHA_LOW=1.26e-3/h : la haute puissance y etait ~17 % plus
+      dommageable par heure. V11 a SUPPRIME ce gradient. La justification
+      (LITERATURE_COST_MODEL_V11.md, sur Colombo : les 4 pentes croissantes
+      sont une SENSIBILITE de tension d'une cellule vieillie mesuree a
+      differents courants, pas 4 lois de generation de dommage) est solide,
+      mais elle sert a poser un choix ABSOLU (exponent = 0) la ou un petit
+      gradient residuel serait plus fidele.
+
+  (b) Des mecanismes reellement croissants avec j sont ABSENTS : amincissement
+      et stress mecanique de la membrane, contraintes thermiques, pertes de
+      transport de masse.
+
+  (c) ASYMETRIE contre-intuitive : seule l'amplitude |dj| du changement compte,
+      pas la destination (_fc_steadiness_next, l.119-123). Monter vers 90 % ou
+      redescendre vers 30 % produit la MEME penalite de transitoire. Aucun
+      "cout de sejour" a haute puissance.
+
+
+4. CONSEQUENCE POUR L'EMS / L'OPTIMISATION
+------------------------------------------
+En pratique le cout PEMFC se reduit a :
+
+    cout_FC ~ 20 uV x (nb demarrages)
+            + [1,2 .. 4,8] uV/h x (heures ON)
+            + 3 uV/h x (heures idle)
+
+Un optimiseur (RB2, DP, MPC, FLC...) apprend donc a MINIMISER les demarrages,
+EVITER l'idle, LISSER le profil et REDUIRE les heures ON — mais il est
+RIGOUREUSEMENT INDIFFERENT au niveau de puissance heure par heure. Il n'a
+aucune raison intrinseque de preferer une puissance moderee a la pleine
+puissance. Si la vraie physique penalise la haute densite de courant
+(membrane, thermique), l'EMS optimal V11 pourrait SUR-SOLLICITER la pleine
+puissance sans en payer le prix -> biais potentiel dans le classement des
+strategies.
+
+
+5. LEVIER DISPONIBLE ET PROPOSITION DE SENSIBILITE
+--------------------------------------------------
+current_exponent est precisement la poignee prevue (fixee a 0 par defaut). La
+traiter EXACTEMENT comme l'exposant d'overload de la PEMWE (p=3), c'est-a-dire
+comme un OVERRIDE EXPLICITE d'analyse de sensibilite et non comme valeur
+nominale :
+
+  - poser current_exponent = 0.5 puis 1.0 ;
+  - REANCRER les taux 1,2 / 4,8 uV/h sur j_ref = 0.5 A/cm2 pour ne pas deplacer
+    la calibration McCay (a j_ref, factor = 1 : la calibration reste exacte au
+    point de mesure) ;
+  - verifier si le classement EMS et l'eventuelle sur-utilisation de la haute
+    puissance bougent.
+
+Coherent avec la logique V11 : ne rien affirmer hors du domaine mesure, mais
+tracer la sensibilite. Symetrique du traitement de l'exposant overload PEMWE.
+
+
+6. POINTS D'ENTREE CODE
+-----------------------
+  Common/degradation_v11.py
+     FC_V11 (l.39-58)                parametres PEMFC
+     _fc_steadiness_next (l.119-123) etat de stabilite s (transitoires)
+     _fc_rates (l.126-135)           taux ; current_exponent=0 -> factor=1
+     advance_fc_density (l.138-152)  integration + start + idle
+     permanent_uv / state_cost_eur   part monetisee = irr + start + idle
+  Common/cost_fcn_total2.py
+     l.142-147                        coefficients legacy Pei (high>low/h)
+     get_cost_fc (override V11)       renvoie le cout via degradation_v11
+  LITERATURE_COST_MODEL_V11.md        justification current_exponent=0 (Colombo)
+
+--------------------------------------------------------------------------------
+ Statut : point d'attention ouvert. Le current_exponent PEMFC (=0) est a
+ traiter comme override de sensibilite, au meme titre que l'exposant overload
+ PEMWE (p=3). Aucune modification de code effectuee.
+--------------------------------------------------------------------------------

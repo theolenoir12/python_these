@@ -1,5 +1,22 @@
 # Calculs MPC V11-p=2 sur le mésocentre
 
+## Statut
+
+Les jobs v2 sont terminés : 218546 pour le screening (8/8) et 218547 pour le
+banc d'incertitude (34/34). Les caches canoniques sont respectivement
+`runs/screen_1y_718d8fe28384/` et
+`runs/forecast_uncertainty_1y_1acc8ef7e9d2/`. Ne pas les resoumettre à protocole
+identique. Les commandes ci-dessous sont conservées pour la reproductibilité.
+
+Le prochain job est le tuning décrit dans `TUNING_MPC_V11_P2.md`. Il réutilise
+11 trajectoires du banc d'incertitude ; conserver impérativement le dossier
+`runs/forecast_uncertainty_1y_1acc8ef7e9d2/` sur le mésocentre, importer les
+nouveaux scripts dans le dossier `MPC/` existant, puis lancer :
+
+```bash
+sbatch run_tuning_mpc_v11.slurm
+```
+
 ## Dossiers à importer
 
 Remplacer sur le mésocentre :

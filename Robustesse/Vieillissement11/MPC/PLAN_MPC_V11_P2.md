@@ -1,11 +1,11 @@
 # Plan canonique du MPC online V11-p=2
 
-Date : 20 juillet 2026.
+Date : 21 juillet 2026.
 
-Statut : formulation v2 corrigée et testée localement ; screening et banc de
-prévision v2 à rejouer intégralement avant toute conclusion MPC. Les anciens
-caches restent des diagnostics v1. Voir
-`analysis/DIAGNOSTIC_MPC_DELTA_BOUND_2026-07-20.md`.
+Statut : formulation v2, screening annuel 8/8 et banc de prévision 34/34
+validés. H24 sans SoH est retenu comme base online ; la pondération SoH simple
+reste sous 0,7 % sur toutes les paires bruitées et n'est pas retenue pour le
+tuning. Voir `analysis/AUDIT_MPC_V11_P2_2026-07-21.md`.
 
 ## Statut et objectif
 
@@ -91,9 +91,11 @@ borne PD : elle ne connaît que la fenêtre disponible à l'heure courante.
 2. smoke court v2, horizons 6 h et 24 h — terminé, cache
    `runs/smoke_1d_9a11b7e02867/` ;
 3. banc d'un an v2 pour éliminer les formulations dominées et vérifier le temps
-   de calcul — à rejouer entièrement ; H24 est seulement l'hypothèse issue de v1 ;
-4. banc d'incertitude v2 — à rejouer entièrement avec les graines communes ;
-5. réglage apparié à budget identique des deux variantes ;
+   de calcul — terminé, `runs/screen_1y_718d8fe28384/`, H24 retenu ;
+4. banc d'incertitude v2 — terminé, 34/34 dans
+   `runs/forecast_uncertainty_1y_1acc8ef7e9d2/` ;
+5. tuning H24 sans SoH à budget fixé — protocole et job prêts dans
+   `TUNING_MPC_V11_P2.md`, résultats mésocentre attendus ;
 6. rejeu 25 ans uniquement pour les finalistes ;
 7. robustesse au bruit/biais du SoH, aux erreurs de prévision et aux profils
    hors réglage.

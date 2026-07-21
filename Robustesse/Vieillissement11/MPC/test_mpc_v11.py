@@ -126,6 +126,10 @@ class TestMPCV11(unittest.TestCase):
             MPCConfig(forecast_mode="noisy", forecast_error_rho=1.0)
         with self.assertRaises(ValueError):
             MPCConfig(forecast_mode="noisy", forecast_sigma_scale=-1.0)
+        with self.assertRaises(ValueError):
+            MPCConfig(fc_wear_scale=-1.0)
+        with self.assertRaises(ValueError):
+            MPCConfig(terminal_h2_eur_per_kwh=-1.0)
 
     def test_first_executed_action_is_balanced(self):
         policy = MPCPolicyV11(MPCConfig(horizon_steps=6))

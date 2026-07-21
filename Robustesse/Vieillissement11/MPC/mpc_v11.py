@@ -130,6 +130,13 @@ class MPCConfig:
             raise ValueError("health_floor doit appartenir a ]0,1]")
         if self.voll_eur_per_kwh <= 0.0:
             raise ValueError("la VoLL interne doit etre positive")
+        if min(self.terminal_bat_eur_per_kwh,
+               self.terminal_h2_eur_per_kwh) < 0.0:
+            raise ValueError("les valeurs terminales doivent etre positives")
+        if min(self.battery_wear_scale, self.fc_wear_scale,
+               self.ely_wear_scale, self.fc_dynamic_scale,
+               self.high_soc_hold_eur) < 0.0:
+            raise ValueError("les poids de cout doivent etre positifs")
         if self.time_limit_s <= 0.0:
             raise ValueError("time_limit_s doit etre positif")
 

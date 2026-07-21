@@ -4,55 +4,9 @@
   "dp_front_points": 17,
   "mpc_points": [
     {
-      "label": "mpc_soh_both1_h6",
-      "lpsp_pct": 0.6740361068859522,
-      "degradation_keur": 2.256181550020145,
-      "forecast_mode": "perfect",
-      "dominated_by_dp": true,
-      "dominating_dp_eps": [
-        50.0,
-        6.0,
-        4.0,
-        3.0,
-        2.0,
-        1.5,
-        1.0,
-        0.75,
-        0.5,
-        0.35,
-        0.3,
-        0.25
-      ],
-      "n_dp_front_points_dominated": 0,
-      "dominates_entire_dp_front": false
-    },
-    {
       "label": "mpc_no_soh_h6",
-      "lpsp_pct": 0.6758171659793603,
-      "degradation_keur": 2.2566115111017564,
-      "forecast_mode": "perfect",
-      "dominated_by_dp": true,
-      "dominating_dp_eps": [
-        50.0,
-        6.0,
-        4.0,
-        3.0,
-        2.0,
-        1.5,
-        1.0,
-        0.75,
-        0.5,
-        0.35,
-        0.3,
-        0.25
-      ],
-      "n_dp_front_points_dominated": 0,
-      "dominates_entire_dp_front": false
-    },
-    {
-      "label": "mpc_soh_ely1_h6",
-      "lpsp_pct": 0.6733703386367113,
-      "degradation_keur": 2.2574848520087767,
+      "lpsp_pct": 0.6797617873217511,
+      "degradation_keur": 2.2545558814399236,
       "forecast_mode": "perfect",
       "dominated_by_dp": true,
       "dominating_dp_eps": [
@@ -74,8 +28,54 @@
     },
     {
       "label": "mpc_soh_fc1_h6",
-      "lpsp_pct": 0.6760603423531814,
-      "degradation_keur": 2.2570444430040357,
+      "lpsp_pct": 0.6766888843297097,
+      "degradation_keur": 2.254191096665888,
+      "forecast_mode": "perfect",
+      "dominated_by_dp": true,
+      "dominating_dp_eps": [
+        50.0,
+        6.0,
+        4.0,
+        3.0,
+        2.0,
+        1.5,
+        1.0,
+        0.75,
+        0.5,
+        0.35,
+        0.3,
+        0.25
+      ],
+      "n_dp_front_points_dominated": 0,
+      "dominates_entire_dp_front": false
+    },
+    {
+      "label": "mpc_soh_both1_h6",
+      "lpsp_pct": 0.6781171447223089,
+      "degradation_keur": 2.2545485841288078,
+      "forecast_mode": "perfect",
+      "dominated_by_dp": true,
+      "dominating_dp_eps": [
+        50.0,
+        6.0,
+        4.0,
+        3.0,
+        2.0,
+        1.5,
+        1.0,
+        0.75,
+        0.5,
+        0.35,
+        0.3,
+        0.25
+      ],
+      "n_dp_front_points_dominated": 0,
+      "dominates_entire_dp_front": false
+    },
+    {
+      "label": "mpc_soh_ely1_h6",
+      "lpsp_pct": 0.6797100846803497,
+      "degradation_keur": 2.2536959901034543,
       "forecast_mode": "perfect",
       "dominated_by_dp": true,
       "dominating_dp_eps": [
@@ -97,8 +97,8 @@
     },
     {
       "label": "mpc_no_soh_h24",
-      "lpsp_pct": 0.26297888876585135,
-      "degradation_keur": 2.375767809676605,
+      "lpsp_pct": 0.2650619265182686,
+      "degradation_keur": 2.3784888884545796,
       "forecast_mode": "perfect",
       "dominated_by_dp": true,
       "dominating_dp_eps": [
@@ -116,8 +116,8 @@
     },
     {
       "label": "mpc_soh_both1_h24",
-      "lpsp_pct": 0.26221318640823954,
-      "degradation_keur": 2.3778330329542228,
+      "lpsp_pct": 0.25957396801607885,
+      "degradation_keur": 2.3732784180901,
       "forecast_mode": "perfect",
       "dominated_by_dp": true,
       "dominating_dp_eps": [

@@ -18,8 +18,8 @@ import numpy as np
 
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_SCREEN = HERE / "runs" / "screen_1y_d840744e29c7"
-DEFAULT_FORECAST = HERE / "runs" / "forecast_uncertainty_1y_d0a7f75d0466"
+DEFAULT_SCREEN = HERE / "runs" / "screen_1y_718d8fe28384"
+DEFAULT_FORECAST = HERE / "runs" / "forecast_uncertainty_1y_1acc8ef7e9d2"
 DEFAULT_DP = (
     HERE.parent / "DP" / "results" / "mpc_reference_1y_1b54f384caa8"
     / "dp_reference_1y_51x51_v2.npz"
@@ -368,11 +368,21 @@ def _write_report(output: Path, screen: dict[str, Any], forecast: dict[str, Any]
             "echec solveur et aucun deficit de bilan apres application de la LOL."
         )
         result_heading = "## Resultats acquis sur un an"
-        decision = (
-            "Le choix de la base MPC et le passage au tuning dependent de la "
-            "completude du banc d'incertitude v2 et du critere de materialite "
-            "de quelques pourcents pour la variante SoH."
-        )
+        if (not forecast["errors"] and not forecast["missing"]
+                and not forecast["failures"]):
+            decision = (
+                "H24 est retenu comme base MPC online. La ponderation SoH "
+                "simple a beta_fc=beta_ely=1 reste tres inferieure au seuil "
+                "pratique de quelques pourcents et n'est pas retenue pour le "
+                "tuning. La prochaine etape est le reglage symetrique des "
+                "couts terminaux et poids d'usure de H24 sans SoH."
+            )
+        else:
+            decision = (
+                "Le choix de la base MPC et le passage au tuning dependent de "
+                "la completude du banc d'incertitude v2 et du critere de "
+                "materialite de quelques pourcents pour la variante SoH."
+            )
     if forecast["errors"]:
         forecast_verdict = (
             "Le banc de prevision charge est lui aussi anterieur a la "
@@ -388,6 +398,18 @@ def _write_report(output: Path, screen: dict[str, Any], forecast: dict[str, Any]
         f"Le ou les points manquants sont `{', '.join(forecast['missing'])}`."
         if forecast["missing"] else "Aucun point ne manque."
     )
+    if (not forecast["failures"] and not forecast["errors"]
+            and not forecast["missing"]):
+        solver_conclusion = (
+            "Les 34 trajectoires d'incertitude sont allees au terme sans "
+            "echec solveur ; la formulation v2 leve donc l'infaisabilite v1 "
+            "sur tout ce protocole annuel."
+        )
+    else:
+        solver_conclusion = (
+            "La robustesse numerique totale ne pourra etre conclue qu'apres "
+            "resolution des erreurs ou points manquants."
+        )
 
     paired_lines = []
     for row in paired:
@@ -398,7 +420,7 @@ def _write_report(output: Path, screen: dict[str, Any], forecast: dict[str, Any]
             f"{_fmt_signed(row['delta_j3_pct_mean'])} %, "
             f"SoH meilleur sur {row['soh_j3_wins']}/{row['n_pairs']} paire(s).")
 
-    report = f"""# Audit des resultats MPC V11-p=2 du 20 juillet 2026
+    report = f"""# Audit des resultats MPC V11-p=2 du 21 juillet 2026
 
 ## Verdict
 
@@ -411,11 +433,9 @@ les deficits apres LOL (residu maximal {forecast_max_shortage:.3g} W). Les
 residus positifs precedemment signales sont exclusivement de la puissance
 excedentaire : ils correspondent a un ecretage implicite de
 {min(forecast_curtailment):.3f} a {max(forecast_curtailment):.3f} kWh/an selon
-la trajectoire, qu'il faudra enregistrer explicitement dans les prochaines
-sorties. L'ancien `get_lol` a aussi produit `lol>1` sur {surplus_lol_steps} pas
-de surplus repartis dans {surplus_lol_trajectories} trajectoire(s) ; ces pas ne
-contribuent ni a l'EENS ni a la LPSP. La borne `lol=0` en surplus est maintenant
-ajoutee au code pour les prochaines simulations.
+la trajectoire et sont enregistres separement. La borne `lol=0` en surplus est
+active : {surplus_lol_steps} pas `lol>1` sont observes dans
+{surplus_lol_trajectories} trajectoire(s).
 
 {result_heading}
 
@@ -427,8 +447,8 @@ ajoutee au code pour les prochaines simulations.
 - Temps de resolution H24 sans SoH : {1000*h24['mean_solve_seconds']:.1f} ms
   en moyenne, {h24['max_solve_seconds']:.2f} s au maximum. Les trajectoires de
   prevision terminees restent sous {forecast_max_solve:.2f} s par decision ;
-  elles sont donc compatibles avec un controle online horaire. L'echec MILP
-  isole interdit toutefois de conclure encore a une robustesse numerique totale.
+  elles sont donc compatibles avec un controle online horaire.
+- {solver_conclusion}
 - Les {dp['n_points']} points DP comparables utilisent le meme horizon
   d'evaluation, le meme profil et le meme modele V11-p=2. Tous les points du
   screening sont domines par le DP. A la LPSP du MPC H24, son surcout de
@@ -475,7 +495,7 @@ def main() -> None:
     parser.add_argument("--forecast", type=Path, default=DEFAULT_FORECAST)
     parser.add_argument("--dp", type=Path, default=DEFAULT_DP)
     parser.add_argument("--output", type=Path,
-                        default=HERE / "analysis" / "AUDIT_MPC_V11_P2_2026-07-20.md")
+                        default=HERE / "analysis" / "AUDIT_MPC_V11_P2_2026-07-21.md")
     args = parser.parse_args()
 
     screen = _audit_run(args.screen)

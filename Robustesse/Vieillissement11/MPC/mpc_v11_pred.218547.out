@@ -1,0 +1,76 @@
+test_capacity_fade_does_not_prevent_fc_shutdown (test_mpc_v11.TestMPCV11) ... /Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:515: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+ok
+test_ely_piecewise_is_convex_and_contains_j_anchors (test_mpc_v11.TestMPCV11) ... ok
+test_first_executed_action_is_balanced (test_mpc_v11.TestMPCV11) ... ok
+test_lol_is_zero_during_net_surplus (test_mpc_v11.TestMPCV11) ... ok
+test_milp_balance_modes_and_constraints (test_mpc_v11.TestMPCV11) ... ok
+test_model_is_nominal_p2 (test_mpc_v11.TestMPCV11) ... ok
+test_no_soh_null_is_exact (test_mpc_v11.TestMPCV11) ... ok
+test_noisy_forecast_configuration_is_validated (test_mpc_v11.TestMPCV11) ... ok
+test_noisy_forecast_is_paired_and_reproducible (test_mpc_v11.TestMPCV11) ... ok
+test_soh_weights_only_change_objective_weights (test_mpc_v11.TestMPCV11) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.125s
+
+OK
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:515: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:515: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:515: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:515: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:515: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:515: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:515: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:515: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:515: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:515: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+[mpc_no_soh_h24_persistence] LPSP=2.5955% deg=2.189 kEUR
+[mpc_no_soh_h24_noisy_s1p0_r202602] LPSP=0.2914% deg=2.581 kEUR
+[mpc_no_soh_h24_noisy_s1p0_r202603] LPSP=0.3101% deg=2.610 kEUR
+[mpc_no_soh_h24_noisy_s1p0_r202601] LPSP=0.3453% deg=2.590 kEUR
+[mpc_no_soh_h24_noisy_s0p5_r202605] LPSP=0.3091% deg=2.483 kEUR
+[mpc_no_soh_h24_noisy_s0p5_r202603] LPSP=0.3010% deg=2.487 kEUR
+[mpc_no_soh_h24_noisy_s0p5_r202601] LPSP=0.3165% deg=2.474 kEUR
+[mpc_no_soh_h24_noisy_s0p5_r202604] LPSP=0.3210% deg=2.470 kEUR
+[mpc_no_soh_h24_noisy_s0p5_r202602] LPSP=0.2705% deg=2.464 kEUR
+[mpc_no_soh_h24_perfect] LPSP=0.2651% deg=2.378 kEUR
+[mpc_no_soh_h24_noisy_s1p0_r202604] LPSP=0.3577% deg=2.594 kEUR
+[mpc_soh_both1_h24_persistence] LPSP=2.5721% deg=2.189 kEUR
+[mpc_no_soh_h24_noisy_s1p5_r202601] LPSP=0.3564% deg=2.680 kEUR
+[mpc_no_soh_h24_noisy_s1p5_r202602] LPSP=0.3057% deg=2.664 kEUR
+[mpc_no_soh_h24_noisy_s1p0_r202605] LPSP=0.3218% deg=2.599 kEUR
+[mpc_no_soh_h24_noisy_s1p5_r202603] LPSP=0.3259% deg=2.694 kEUR
+[mpc_no_soh_h24_noisy_s1p5_r202605] LPSP=0.3901% deg=2.678 kEUR
+[mpc_no_soh_h24_noisy_s1p5_r202604] LPSP=0.3743% deg=2.664 kEUR
+[mpc_soh_both1_h24_noisy_s0p5_r202601] LPSP=0.3156% deg=2.471 kEUR
+[mpc_soh_both1_h24_perfect] LPSP=0.2596% deg=2.373 kEUR
+[mpc_soh_both1_h24_noisy_s0p5_r202602] LPSP=0.2602% deg=2.465 kEUR
+[mpc_soh_both1_h24_noisy_s0p5_r202603] LPSP=0.2958% deg=2.482 kEUR
+[mpc_soh_both1_h24_noisy_s1p0_r202601] LPSP=0.3242% deg=2.585 kEUR
+[mpc_soh_both1_h24_noisy_s1p0_r202602] LPSP=0.2853% deg=2.577 kEUR
+[mpc_soh_both1_h24_noisy_s1p0_r202603] LPSP=0.2995% deg=2.600 kEUR
+[mpc_soh_both1_h24_noisy_s0p5_r202605] LPSP=0.3022% deg=2.480 kEUR
+[mpc_soh_both1_h24_noisy_s0p5_r202604] LPSP=0.3172% deg=2.474 kEUR
+[mpc_soh_both1_h24_noisy_s1p0_r202604] LPSP=0.3603% deg=2.581 kEUR
+[mpc_soh_both1_h24_noisy_s1p5_r202601] LPSP=0.3579% deg=2.672 kEUR
+[mpc_soh_both1_h24_noisy_s1p0_r202605] LPSP=0.3269% deg=2.595 kEUR
+[mpc_soh_both1_h24_noisy_s1p5_r202602] LPSP=0.3007% deg=2.654 kEUR
+[mpc_soh_both1_h24_noisy_s1p5_r202603] LPSP=0.3270% deg=2.677 kEUR
+[mpc_soh_both1_h24_noisy_s1p5_r202604] LPSP=0.3693% deg=2.657 kEUR
+[mpc_soh_both1_h24_noisy_s1p5_r202605] LPSP=0.3947% deg=2.662 kEUR
+OK -> /Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/runs/forecast_uncertainty_1y_1acc8ef7e9d2
+
+real	117m48.394s
+user	1058m39.003s
+sys	41m53.538s

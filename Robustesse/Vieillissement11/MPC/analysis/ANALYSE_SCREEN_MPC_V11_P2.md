@@ -1,6 +1,6 @@
 # Analyse du screening MPC V11-p=2
 
-Source : runs/screen_1y_d840744e29c7.
+Source : runs/screen_1y_718d8fe28384.
 
 ## Validite
 
@@ -10,14 +10,13 @@ doit pas etre superposee a un front DP de 25 ans.
 
 ## Resultats
 
-- Passage H6 vers H24 sans SoH : variation de J3 = -5.231 %.
-- Effet SoH FC+ELY a H24 : variation de J3 = +0.062 %.
+- Passage H6 vers H24 sans SoH : variation de J3 = -5.096 %.
+- Effet SoH FC+ELY a H24 : variation de J3 = -0.340 %.
 
 ## Front non domine du screening
 
-- H24 sans SoH
+- H6 SoH-FC
 - H6 SoH-ELY
-- H6 SoH-FC+ELY
 - H24 SoH-FC+ELY
 
 La comparaison scientifique avec le DP doit etre effectuee avec

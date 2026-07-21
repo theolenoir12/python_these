@@ -198,9 +198,11 @@ sur années tenues à l'écart il faudra soit un offset de départ, soit d'autre
 profils. Le holdout annuel actuel reste in-sample météo (profil répété).
 
 --------------------------------------------------------------------------------
-5. PERSPECTIVES / BIFURCATION (à trancher pour la prochaine session)
+5. PERSPECTIVES / BIFURCATION
 --------------------------------------------------------------------------------
-Recommandation : A (aligné sur le seul mécanisme prévision qui a marché).
+DÉCISION 2026-07-21 (avec l'utilisateur) : direction A retenue. Le code est
+livré (cf. §8) ; reste à lancer le benchmark boucle fermée sur mésocentre.
+Recommandation initiale : A (aligné sur le seul mécanisme prévision qui a marché).
 
   A. FORECAST-COMME-RÈGLE. Greffer une règle de précharge / préservation H2
      déclenchée par E_net_H AU-DESSUS de l'arbre distillé (architecture
@@ -226,7 +228,9 @@ Recommandation : A (aligné sur le seul mécanisme prévision qui a marché).
   python -m FuzzyRules.rl_dataset_v11              # manifeste dataset
   python -m FuzzyRules.rl_tree_policy_v11          # balayage profondeur + test nul
   python -m FuzzyRules.rl_tree_forecast_policy_v11 # fidélité IF + importances
+  python -m FuzzyRules.rl_tree_precharge_policy_v11 # appariement précharge vs FLC-IF
   python -m FuzzyRules.run_smoke_rl_v11 --days 365 --depths 3 4 5 6
+  python -m FuzzyRules.run_smoke_rl_precharge_v11 --days 365 --depth 4 --with-flc-if
   Mémoire de suivi (inter-sessions) : rule-learning-phase-v11.
 
 --------------------------------------------------------------------------------
@@ -267,4 +271,38 @@ avec GENIAL_DATA_DIR pointant un profil de substitution et les LUT d'efficacité
 recopiées depuis Vieillissement9_4/Common (mêmes courbes physiques). Les
 invariants testés (bilan, signes, reset, test nul) sont indépendants du profil.
 Sur mésocentre, les CSV canoniques sont présents : rien à changer.
+
+--------------------------------------------------------------------------------
+8. DIRECTION A LIVRÉE — FORECAST-COMME-RÈGLE (arbre I0 + précharge)
+--------------------------------------------------------------------------------
+Mécanisme : on greffe AU-DESSUS de l'arbre I0 distillé la MÊME règle de précharge
+que la FLC-IF (qui gagnait -1,6 % de J3). Quand un déficit net est prévu à H18
+(E_net_H > +seuil) et que la batterie n'est pas pleine (SoC < soc_target), on
+réduit la commande électrolyseur déjà émise (p_ely <- p_ely·(1-force)) : l'énergie
+de surplus reste en réserve batterie au lieu de partir en H2. La foresight entre
+donc par une action CONDITIONNELLE (structurelle), jamais comme feature d'arbre
+(le véhicule qui échouait, §2.5).
+
+Livré (2026-07-21) :
+  - rl_tree_precharge_policy_v11.py : make_tree_precharge_policy_v11(tree, ...).
+    Parent = make_tree_policy_v11 (arbre I0 ou IS) ; refuse un arbre IF (la
+    prévision n'entre pas deux fois). Signal de prévision et hystérésis
+    STRICTEMENT appariés à flc_forecast_policy_v11 (mêmes constantes DEFAULT_*,
+    même formule E_net_H, même règle enter/exit/dwell). Force 0 = arbre nu
+    bit-à-bit, sans tirage. Diagnostics : precharge_applied_steps, H2 gardé.
+  - tests/test_rl_tree_precharge_policy_v11.py (15) : test nul bit-à-bit,
+    APPARIEMENT du signal avec la FLC-IF sur séquences (oracle + gaussien seedé),
+    précharge ne touche que l'ELY, garde SoC>=cible, hystérésis, IS->ISF.
+  - run_smoke_rl_precharge_v11.py : compare RB1/RB2, arbre I0 nu, arbre I0 +
+    précharge, et (option --with-flc-if) la FLC-IF promue. Le moteur fournit la
+    vraie prévision oracle profile_net[j:j+H] via P_tot_ref_future (câblage
+    init_and_run_loop vérifié en intégration).
+
+RESTE À FAIRE sur mésocentre (ne tourne pas dans le conteneur de dev) :
+  python -m FuzzyRules.run_smoke_rl_precharge_v11 --days 365 --depth 4 --with-flc-if
+  Lecture attendue : la précharge-règle doit rapprocher l'arbre I0 des baselines
+  là où la feature échouait ; comparer le gain relatif à celui obtenu par la
+  FLC-IF (-1,6 %) pour isoler l'effet de FAMILLE (arbre vs FLC) à règle identique.
+  Puis : robustesse gaussian_iid (graines communes), profils hors apprentissage,
+  et 25 ans si finaliste.
 ================================================================================

@@ -128,10 +128,12 @@ def make_tree_policy_v11(tree, deadband_w=0.0, candidate_id=None):
 
         wear = (0.0, 0.0, 0.0)
         if info == "IS":
+            # Usure relative >= 0, sans borne haute (identique a _wear du
+            # dataset : np.clip((1-SoH)/(1-SoH_EoL), 0.0, None)).
             wear = (
-                min(max((1.0 - SoH_bat_t) / (1.0 - SOH_EOL["bat"]), 0.0), None),
-                min(max((1.0 - SoH_fc_t) / (1.0 - SOH_EOL["fc"]), 0.0), None),
-                min(max((1.0 - SoH_ely_t) / (1.0 - SOH_EOL["ely"]), 0.0), None),
+                max((1.0 - SoH_bat_t) / (1.0 - SOH_EOL["bat"]), 0.0),
+                max((1.0 - SoH_fc_t) / (1.0 - SOH_EOL["fc"]), 0.0),
+                max((1.0 - SoH_ely_t) / (1.0 - SOH_EOL["ely"]), 0.0),
             )
         p_net = float(P_tot_ref_t)
         x = _feature_vector(p_net, SoC_t, E_h2_t, E_h2_init, info, wear)

@@ -180,9 +180,11 @@ Non encore réalisé dans cette phase :
   [ ] analyze_rl_surfaces.py : surfaces de commande u_h2(P_net, SoC) à H2 fixé +
       cohérence physique + diagnostics d'imitation par strate (Étape A du plan).
   [ ] variantes IS strictement appariées en boucle fermée (test nul SoH exact,
-      effet IS-I0) — outillage prêt (X_is, wear), non encore benchmarké.
-  [ ] tests unitaires FuzzyRules/tests/test_rl_*.py (bilan fermé, reset,
-      test nul, invariants de signe) sur le modèle des tests FLC.
+      effet IS-I0) — outillage prêt (X_is, wear), MAINTENANT exécutable après
+      correctif du bug IS (cf. §7), non encore benchmarké.
+  [x] tests unitaires FuzzyRules/tests/test_rl_*.py (bilan fermé, reset,
+      test nul, invariants de signe) — FAIT le 2026-07-21 (45 tests, arbres
+      jouets sans cache enseignant). DEUX bugs source corrigés (cf. §7).
   [ ] validation aveugle (Étape C) : blocs temporels réservés ET profils hors
       apprentissage (les autres profils du dossier Robustesse), sous bruit/biais
       prévision avec graines communes.
@@ -226,4 +228,43 @@ Recommandation : A (aligné sur le seul mécanisme prévision qui a marché).
   python -m FuzzyRules.rl_tree_forecast_policy_v11 # fidélité IF + importances
   python -m FuzzyRules.run_smoke_rl_v11 --days 365 --depths 3 4 5 6
   Mémoire de suivi (inter-sessions) : rule-learning-phase-v11.
+
+--------------------------------------------------------------------------------
+7. SUITE 2026-07-21 — TESTS UNITAIRES ET CORRECTIFS SOURCE
+--------------------------------------------------------------------------------
+Tests ajoutés (45 au total, modèle des tests FLC, aucun cache enseignant :
+arbres JOUETS ajustés sur des données synthétiques aux prédictions contrôlées) :
+  - tests/test_rl_dataset_v11.py (17)         : prévision énergétique nette
+    (troncature de queue), usure relative, zones, découpage par blocs d'années
+    contigus, poids fréquence-inverse, stratification, normalisation.
+  - tests/test_rl_tree_policy_v11.py (16)      : bilan fermé déficit/surplus,
+    zone morte, gardes de défaillance FC/ELY, limite physique via get_lol,
+    reset() exact, test nul de permutation d'une feature non utilisée, BoL IS
+    (usure nulle), _feature_vector (formes I0/IS, clamps).
+  - tests/test_rl_tree_forecast_policy_v11.py (12) : rejet arbre non-IF /
+    scénario / noise_rho ; oracle lit le futur ; persistance ignore les valeurs
+    futures (puissance courante) ; bruit gaussien seedé + reset reproductible ;
+    gardes de défaillance et bilan fermé IF.
+Exécution (93 tests FuzzyRules OK, moteur boucle-fermée FLC inclus) depuis
+Vieillissement11/ : python -m unittest discover -s FuzzyRules/tests -p 'test_*.py'.
+
+DEUX bugs source trouvés PAR les tests et corrigés :
+  (B1) rl_tree_policy_v11.py, branche IS : l'usure était calculée par
+       min(max((1-SoH)/(1-SoH_EoL), 0.0), None). En Python 3, min(float, None)
+       lève TypeError → la policy IS PLANTAIT au premier pas. C'est la cause du
+       « IS non encore benchmarké » : cette branche n'a jamais tourné en boucle
+       fermée. Corrigé en max((1-SoH)/(1-SoH_EoL), 0.0), aligné sur _wear du
+       dataset (np.clip(., 0.0, None)). Effet : IS est désormais exécutable ;
+       aucun résultat publié n'est invalidé (aucun n'existait).
+  (B2) rl_dataset_v11.py, build_split_mask : masque alloué en dtype '<U5' alors
+       que l'étiquette 'unused' fait 6 caractères → stockée tronquée 'unuse'. Le
+       manifeste comptait donc toujours 0 année 'unused'. Les masques
+       train/val/test (≤5 car.) et donc les modèles ne sont PAS affectés ; seul
+       le décompte de provenance l'était. Corrigé en dtype '<U6'.
+
+Note harnais dev : ce conteneur n'a ni cache PD ni simu_env ; les tests tournent
+avec GENIAL_DATA_DIR pointant un profil de substitution et les LUT d'efficacité
+recopiées depuis Vieillissement9_4/Common (mêmes courbes physiques). Les
+invariants testés (bilan, signes, reset, test nul) sont indépendants du profil.
+Sur mésocentre, les CSV canoniques sont présents : rien à changer.
 ================================================================================

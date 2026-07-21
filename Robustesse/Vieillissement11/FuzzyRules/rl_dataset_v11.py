@@ -118,7 +118,7 @@ def build_strata(teacher, h2_n):
 
 def build_split_mask(n, split_years=DEFAULT_SPLIT_YEARS):
     """Masque de partition par blocs d'annees contigus."""
-    split = np.empty(n, dtype="<U5")
+    split = np.empty(n, dtype="<U6")  # "unused" fait 6 caracteres
     split[:] = "unused"
     for name, (y0, y1) in split_years.items():
         lo = y0 * STEPS_PER_YEAR

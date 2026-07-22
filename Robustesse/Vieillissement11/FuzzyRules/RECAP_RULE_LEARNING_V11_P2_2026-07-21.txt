@@ -343,4 +343,42 @@ l'incohérence (et non l'information), les options vivantes se réduisent à :
   D  Cible timing/classification — AFFAIBLIE par ce résultat : le problème n'est
      pas régression-vs-classification de l'amplitude mais la cohérence ; une
      distillation du timing hériterait de la même dérive.
+
+--------------------------------------------------------------------------------
+9. DIRECTION B — DAgger : FAISABILITÉ ÉTABLIE + OUTILLAGE LIVRÉ (2026-07-22)
+--------------------------------------------------------------------------------
+FAISABILITÉ (question ouverte de la note : « la PD est-elle interrogeable hors
+grille ? ») : OUI, l'oracle existe DÉJÀ dans DP/.
+  - DP/dp_aging.py DPPolicy._rollout_action prend un état CONTINU (SoC, E_h2,
+    SoH...) et renvoie l'action optimale par lookahead 1 pas (coût immédiat +
+    V(t+1) interpolé bilinéairement sur la grille). Pas besoin d'être sur un nœud.
+  - DP/dp_core.py backward(store_policy=True) produit une GRILLE de politique
+    policy[t, i_SoC, j_H2, fc_on, ely_on] (1 an, SoH=1), SANS ÉTAT, interrogeable
+    par plus-proche-voisin (c'est make_dp_policy). C'est l'oracle retenu :
+    stateless -> ré-étiquetage hors-ligne trivial, et il correspond au jeu I0.
+
+DESIGN retenu (DAgger 1 an SoH=1) : (0) arbre distillé classique ; puis, à chaque
+itération : dérouler l'arbre 1 an (init_and_run_loop), ré-étiqueter les états
+visités par la grille PD, agréger au jeu enseignant (union), re-ajuster l'arbre.
+Le disciple apprend ainsi à se rattraper sur SA PROPRE distribution d'états.
+LIMITE assumée : le disciple vieillit un peu sur l'année alors que la grille est
+au neuf ; écart de SoH faible en année 0. Version aging-aware (rollout dp_aging
+avec état) reportée.
+
+LIVRÉ (2026-07-22, non exécutable hors mésocentre pour la boucle) :
+  - rl_dagger_v11.py : DiscipleStateLogger (journalise les états visités +
+    marche/arrêt dérivés de l'action), build_i0_features (mêmes normalisations
+    que le dataset), relabel_with_policy_grid (lookup PPV sur la grille PD),
+    dagger_aggregate (union enseignant + lots re-étiquetés, poids).
+  - tests/test_rl_dagger_v11.py (12) : logger/délégation/reset, features,
+    plus-proche-voisin, ré-étiquetage contre grille synthétique, agrégation.
+  - run_dagger_rl_v11.py (+ .slurm) : résout la grille PD (dp_core), itère
+    DAgger, rapporte la trace J3-par-itération vs RB1/RB2 et l'arbre 0.
+
+À LANCER (mésocentre) :
+  sbatch run_dagger_rl_v11.slurm   # depuis .../Vieillissement11/FuzzyRules
+  Lecture : J3 de l'arbre décroît-il d'itération en itération vers RB1 (~2889) en
+  partant de l'arbre 0 (~3354) ? Si oui, la dérive de distribution était bien le
+  goulot (confirme le diagnostic §8) et rule-learning a un point POSITIF. Sinon,
+  bascule sur C (ANFIS) avec le négatif conforté.
 ================================================================================

@@ -428,4 +428,43 @@ bat la validation hors apprentissage à complexité/temps online reportés (plan
 §2.3) ; sinon il CONFIRME le plafond d'imitation plutôt qu'il ne le franchit.
 Piste si l'on veut viser un apprentissage compétitif : entraînement en boucle
 fermée / DAgger-sur-ANFIS plutôt que clonage MSE (hors périmètre immédiat).
+
+--------------------------------------------------------------------------------
+11. ANFIS (Étape D) — SCAFFOLDING LIVRÉ (2026-07-22)
+--------------------------------------------------------------------------------
+Moteur Takagi-Sugeno d'ordre 1, NumPy pur, deux branches déficit/surplus, calqué
+sur la structure de la FLC (3 appartenances par entrée -> 27 règles par branche,
+comme les 27 règles Mamdani de la FLC I0) mais à conséquences LINÉAIRES apprises.
+
+Choix d'implémentation :
+  - appartenances gaussiennes, prémisses FIGÉES à l'initialisation (grille
+    uniforme sur l'étendue standardisée de chaque entrée) ;
+  - conséquences d'ordre 1 ajustées par MOINDRES CARRÉS ridge (couche 1 de
+    l'apprentissage hybride de Jang) : à prémisses figées la sortie est linéaire
+    en les paramètres -> ajustement exact, rapide, déterministe, sans gradient.
+    L'affinage des prémisses par gradient est une extension ultérieure ;
+  - même wrapper de boucle que l'arbre/FLC (zone morte, gardes de défaillance,
+    faisabilité par get_lol) -> comparaison de FAMILLE propre (flou vs CART) ;
+  - ablation I0/IS via colonnes d'usure (nulles au neuf), comme les autres.
+
+LIVRÉ :
+  - anfis_ts.py : AnfisTS1 (init_uniform, normalized_firing, fit_consequents LSE,
+    predict) ; grille de règles, standardisation des entrées.
+  - anfis_policy_v11.py : AnfisTwoBranch.fit (route par signe de P_net) +
+    make_anfis_policy_v11 (policy de boucle, métadonnées, 2x27 règles).
+  - tests/test_anfis_ts.py (10) : appartenances, partition de l'unité, récup.
+    exacte d'une cible linéaire, réduction d'erreur non linéaire.
+  - tests/test_anfis_policy_v11.py (12) : bilan fermé, gardes, zone morte, reset,
+    routage de branche, refus si trop peu d'échantillons. Suite FuzzyRules : 142 OK.
+  - run_anfis_v11.py (+ .slurm) : boucle fermée 1 an vs RB1/RB2 et arbre I0 d4 ;
+    rapporte J3, NB DE RÈGLES et TEMPS DE DÉCISION amorti (critères plan §2.3) ;
+    ablation I0/IS et sensibilité au nb d'appartenances (mf=2 vs 3).
+
+À LANCER (mésocentre) :
+  sbatch run_anfis_v11.slurm   # depuis .../Vieillissement11/FuzzyRules
+  Lecture : J3 de l'ANFIS vs RB1 (~2889) et vs l'arbre d4 (~3354). Le lissage
+  flou d'ordre 1 franchit-il le plafond d'imitation (§10) ou le confirme-t-il ?
+  Vérifier aussi que le temps de décision reste négligeable devant l'heure et que
+  le nb de règles reste publiable. Ensuite seulement : affinage des prémisses par
+  gradient si prometteur, et validation hors apprentissage (Étape C).
 ================================================================================

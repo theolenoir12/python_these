@@ -298,11 +298,49 @@ Livré (2026-07-21) :
     vraie prévision oracle profile_net[j:j+H] via P_tot_ref_future (câblage
     init_and_run_loop vérifié en intégration).
 
-RESTE À FAIRE sur mésocentre (ne tourne pas dans le conteneur de dev) :
-  python -m FuzzyRules.run_smoke_rl_precharge_v11 --days 365 --depth 4 --with-flc-if
-  Lecture attendue : la précharge-règle doit rapprocher l'arbre I0 des baselines
-  là où la feature échouait ; comparer le gain relatif à celui obtenu par la
-  FLC-IF (-1,6 %) pour isoler l'effet de FAMILLE (arbre vs FLC) à règle identique.
-  Puis : robustesse gaussian_iid (graines communes), profils hors apprentissage,
-  et 25 ans si finaliste.
+RÉSULTAT MÉSOCENTRE (job 220945, 2026-07-22, boucle fermée 1 an, V11-p=2) :
+  Garde OK : 60 tests RL passent ; appariement du signal de précharge RL vs
+  FLC-IF = 2000/2000 identiques (env mésocentre numpy 1.21.5 / sklearn 1.0.2).
+
+  ORACLE (J3 = C_deg + 3·EENS, EUR) :
+    politique                       J3       deg      EENS    LPSP%   précharge
+    rb1 (0,20;0,40)              2888,6   2511,1    125,8   0,601      —
+    rb2 (0,574;0,465)           3064,2   2676,6    129,2   0,617      —
+    arbre I0 d4 (nu)            3354,4   2486,6    289,3   1,381      —
+    arbre I0 d4 + précharge     3987,1   2523,3    488,0   2,330   228× / 624 kWh
+    flc_if_selected             2912,8   2689,7     74,4   0,355   112× / 606 kWh
+  GAUSSIAN_IID (seed 0) : arbre+précharge J3=3948,2 (EENS 481,6) ;
+    flc_if J3=2902,3 (EENS 76,4). Robuste à l'erreur de prévision.
+
+  LECTURE — DIRECTION A NÉGATIVE (résultat propre et transférable) :
+  (i)   La MÊME règle, strictement appariée (2000/2000), AIDE la FLC (EENS 74,4,
+        meilleure fiabilité du tableau) et CASSE l'arbre (EENS +69 % vs nu ;
+        arbre+précharge DOMINÉ sur les deux axes par l'arbre nu). L'écart est
+        donc un pur EFFET DE FAMILLE : c'est le parent, pas la règle.
+  (ii)  Cause = le diagnostic §2.2 : l'arbre est un clone INCOHÉRENT (dérive de
+        distribution). La précharge suppose un parent qui, au déficit, puise
+        dans la batterie au lieu de délester ; la FLC le fait, l'arbre non.
+        Lui retirer sa frugalité H2 (624 kWh non électrolysés) sans qu'il sache
+        utiliser la réserve aggrave l'EENS au lieu de la réduire.
+  (iii) Bilan des DEUX véhicules de foresight sur l'arbre : feature -> ignorée
+        (§2.5) ; règle -> pénalisante (ici). Le goulot du disciple n'est PAS le
+        canal d'information mais l'incohérence du clonage. Aucune injection de
+        foresight ne le répare ; seule une correction de la dérive de
+        distribution (DAgger, option B) le pourrait.
+
+  Sortie brute : FuzzyRules/rl_precharge_v11.220945.out ; caches
+  runs/smoke_rl_precharge_c0861c874802 (oracle) et _b45f89cf1116 (gaussian).
+
+BIFURCATION APRÈS A (à trancher) : A étant épuisé et le goulot identifié comme
+l'incohérence (et non l'information), les options vivantes se réduisent à :
+  B  DAgger — attaque la cause racine (ré-étiqueter les états visités par
+     l'action PD, ré-entraîner). Seule voie pouvant produire un résultat
+     rule-learning POSITIF. Pré-requis : PD interrogeable hors grille 51×51.
+  C  Acter l'arbre comme famille dominée (comme la FLC v1 avant réglage) et
+     passer à ANFIS (Étape D du plan). Le résultat négatif rule-learning tient
+     comme contribution : « fidélité d'imitation != performance, et le goulot
+     est l'incohérence, pas l'information ».
+  D  Cible timing/classification — AFFAIBLIE par ce résultat : le problème n'est
+     pas régression-vs-classification de l'amplitude mais la cohérence ; une
+     distillation du timing hériterait de la même dérive.
 ================================================================================

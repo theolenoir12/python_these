@@ -1,0 +1,73 @@
+{
+  "branches": {
+    "deficit": {
+      "command_fraction_max": 0.9175000000000001,
+      "command_fraction_min": 0.0,
+      "monotonicity": {
+        "h2": {
+          "comparisons": 28830,
+          "expected_direction": "nondecreasing",
+          "largest_local_reversal": 0.015075864310905795,
+          "largest_step_in_expected_direction": 0.14208596193606526,
+          "violation_count": 2079,
+          "violation_fraction": 0.07211238293444329
+        },
+        "severity": {
+          "comparisons": 28830,
+          "expected_direction": "nondecreasing",
+          "largest_local_reversal": 0.012295474831348185,
+          "largest_step_in_expected_direction": 0.19536820970087898,
+          "violation_count": 608,
+          "violation_fraction": 0.021089143253555324
+        },
+        "soc": {
+          "comparisons": 28830,
+          "expected_direction": "nonincreasing",
+          "largest_local_reversal": 0.014461164578218555,
+          "largest_step_in_expected_direction": 0.22302465403735056,
+          "violation_count": 748,
+          "violation_fraction": 0.025945195976413458
+        }
+      },
+      "zero_fraction": 0.0515591957302541
+    },
+    "surplus": {
+      "command_fraction_max": 0.9175000000000001,
+      "command_fraction_min": 0.0,
+      "monotonicity": {
+        "h2": {
+          "comparisons": 28830,
+          "expected_direction": "nonincreasing",
+          "largest_local_reversal": 0.012295474831348518,
+          "largest_step_in_expected_direction": 0.14208596193606526,
+          "violation_count": 598,
+          "violation_fraction": 0.020742282344779744
+        },
+        "severity": {
+          "comparisons": 28830,
+          "expected_direction": "nondecreasing",
+          "largest_local_reversal": 0.012295474831348463,
+          "largest_step_in_expected_direction": 0.14208596193606526,
+          "violation_count": 598,
+          "violation_fraction": 0.020742282344779744
+        },
+        "soc": {
+          "comparisons": 28830,
+          "expected_direction": "nondecreasing",
+          "largest_local_reversal": 0.012295474831348463,
+          "largest_step_in_expected_direction": 0.14208596193606526,
+          "violation_count": 598,
+          "violation_fraction": 0.020742282344779744
+        }
+      },
+      "zero_fraction": 0.06874559430700547
+    }
+  },
+  "deadband_fraction": 0.1,
+  "figure": "/home/theo/Documents/Doctorat/GENIAL/Python/Robustesse/Vieillissement11/FuzzyRules/figures/flc_surfaces_i0_5f9ebd0d8f1e.png",
+  "grid_evaluations_per_branch": 29791,
+  "grid_points_per_axis": 31,
+  "policy_id": "flc-mamdani-expert-v11-p2-i0-v1-2026-07-21",
+  "spec_sha256": "5f9ebd0d8f1e0eea9c0fafbb19bf6386c80081b60b4db5a59928a015eeeb9c13",
+  "tolerance": 1e-12
+}

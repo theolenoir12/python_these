@@ -1,0 +1,1448 @@
+From 2614f641651058f729d044f151fd8e5e0541b134 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 21 Jul 2026 13:23:35 +0000
+Subject: [PATCH 1/2] RL: tests unitaires + 2 correctifs (policy IS, masque
+ split)
+
+Ajoute 45 tests unitaires pour la famille rule-learning (arbres jouets,
+sans cache enseignant), sur le modele des tests FLC :
+- test_rl_dataset_v11 (17)          : prevision energetique, usure, zones,
+  blocs d'annees, poids frequence-inverse, stratification, normalisation.
+- test_rl_tree_policy_v11 (16)       : bilan ferme, zone morte, gardes de
+  defaillance, limite physique, reset exact, test nul de permutation, BoL IS.
+- test_rl_tree_forecast_policy_v11 (12) : oracle/persistance, bruit gaussien
+  seede + reset, gardes IF.
+Suite FuzzyRules complete : 93 tests OK (moteur boucle-fermee FLC inclus).
+
+Corrige deux bugs trouves par ces tests :
+- rl_tree_policy_v11 (IS) : min(max(x, None)) levait TypeError en Python 3,
+  la policy IS plantait au premier pas (cause du "IS non benchmarke") ;
+  remplace par max(x, 0.0), aligne sur _wear du dataset.
+- rl_dataset_v11 : build_split_mask allouait le masque en dtype '<U5', ce
+  qui tronquait l'etiquette 'unused' (6 car.) ; le decompte de provenance
+  etait toujours 0. Corrige en '<U6' (train/val/test et modeles non affectes).
+
+Met a jour la note de suivi (section 7).
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_0179FU55fV2dh7cuwExF8bpq
+---
+ .../RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt |  47 +++-
+ .../FuzzyRules/rl_dataset_v11.py              |   2 +-
+ .../FuzzyRules/rl_tree_policy_v11.py          |   8 +-
+ .../FuzzyRules/tests/test_rl_dataset_v11.py   | 145 ++++++++++++
+ .../tests/test_rl_tree_forecast_policy_v11.py | 149 +++++++++++++
+ .../tests/test_rl_tree_policy_v11.py          | 211 ++++++++++++++++++
+ 6 files changed, 555 insertions(+), 7 deletions(-)
+ create mode 100644 Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_dataset_v11.py
+ create mode 100644 Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_tree_forecast_policy_v11.py
+ create mode 100644 Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_tree_policy_v11.py
+
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt b/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt
+index 130c2b5..9d5df9c 100644
+--- a/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt
++++ b/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt
+@@ -180,9 +180,11 @@ Non encore réalisé dans cette phase :
+   [ ] analyze_rl_surfaces.py : surfaces de commande u_h2(P_net, SoC) à H2 fixé +
+       cohérence physique + diagnostics d'imitation par strate (Étape A du plan).
+   [ ] variantes IS strictement appariées en boucle fermée (test nul SoH exact,
+-      effet IS-I0) — outillage prêt (X_is, wear), non encore benchmarké.
+-  [ ] tests unitaires FuzzyRules/tests/test_rl_*.py (bilan fermé, reset,
+-      test nul, invariants de signe) sur le modèle des tests FLC.
++      effet IS-I0) — outillage prêt (X_is, wear), MAINTENANT exécutable après
++      correctif du bug IS (cf. §7), non encore benchmarké.
++  [x] tests unitaires FuzzyRules/tests/test_rl_*.py (bilan fermé, reset,
++      test nul, invariants de signe) — FAIT le 2026-07-21 (45 tests, arbres
++      jouets sans cache enseignant). DEUX bugs source corrigés (cf. §7).
+   [ ] validation aveugle (Étape C) : blocs temporels réservés ET profils hors
+       apprentissage (les autres profils du dossier Robustesse), sous bruit/biais
+       prévision avec graines communes.
+@@ -226,4 +228,43 @@ Recommandation : A (aligné sur le seul mécanisme prévision qui a marché).
+   python -m FuzzyRules.rl_tree_forecast_policy_v11 # fidélité IF + importances
+   python -m FuzzyRules.run_smoke_rl_v11 --days 365 --depths 3 4 5 6
+   Mémoire de suivi (inter-sessions) : rule-learning-phase-v11.
++
++--------------------------------------------------------------------------------
++7. SUITE 2026-07-21 — TESTS UNITAIRES ET CORRECTIFS SOURCE
++--------------------------------------------------------------------------------
++Tests ajoutés (45 au total, modèle des tests FLC, aucun cache enseignant :
++arbres JOUETS ajustés sur des données synthétiques aux prédictions contrôlées) :
++  - tests/test_rl_dataset_v11.py (17)         : prévision énergétique nette
++    (troncature de queue), usure relative, zones, découpage par blocs d'années
++    contigus, poids fréquence-inverse, stratification, normalisation.
++  - tests/test_rl_tree_policy_v11.py (16)      : bilan fermé déficit/surplus,
++    zone morte, gardes de défaillance FC/ELY, limite physique via get_lol,
++    reset() exact, test nul de permutation d'une feature non utilisée, BoL IS
++    (usure nulle), _feature_vector (formes I0/IS, clamps).
++  - tests/test_rl_tree_forecast_policy_v11.py (12) : rejet arbre non-IF /
++    scénario / noise_rho ; oracle lit le futur ; persistance ignore les valeurs
++    futures (puissance courante) ; bruit gaussien seedé + reset reproductible ;
++    gardes de défaillance et bilan fermé IF.
++Exécution (93 tests FuzzyRules OK, moteur boucle-fermée FLC inclus) depuis
++Vieillissement11/ : python -m unittest discover -s FuzzyRules/tests -p 'test_*.py'.
++
++DEUX bugs source trouvés PAR les tests et corrigés :
++  (B1) rl_tree_policy_v11.py, branche IS : l'usure était calculée par
++       min(max((1-SoH)/(1-SoH_EoL), 0.0), None). En Python 3, min(float, None)
++       lève TypeError → la policy IS PLANTAIT au premier pas. C'est la cause du
++       « IS non encore benchmarké » : cette branche n'a jamais tourné en boucle
++       fermée. Corrigé en max((1-SoH)/(1-SoH_EoL), 0.0), aligné sur _wear du
++       dataset (np.clip(., 0.0, None)). Effet : IS est désormais exécutable ;
++       aucun résultat publié n'est invalidé (aucun n'existait).
++  (B2) rl_dataset_v11.py, build_split_mask : masque alloué en dtype '<U5' alors
++       que l'étiquette 'unused' fait 6 caractères → stockée tronquée 'unuse'. Le
++       manifeste comptait donc toujours 0 année 'unused'. Les masques
++       train/val/test (≤5 car.) et donc les modèles ne sont PAS affectés ; seul
++       le décompte de provenance l'était. Corrigé en dtype '<U6'.
++
++Note harnais dev : ce conteneur n'a ni cache PD ni simu_env ; les tests tournent
++avec GENIAL_DATA_DIR pointant un profil de substitution et les LUT d'efficacité
++recopiées depuis Vieillissement9_4/Common (mêmes courbes physiques). Les
++invariants testés (bilan, signes, reset, test nul) sont indépendants du profil.
++Sur mésocentre, les CSV canoniques sont présents : rien à changer.
+ ================================================================================
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/rl_dataset_v11.py b/Robustesse/Vieillissement11/FuzzyRules/rl_dataset_v11.py
+index 5feeb47..3cb8912 100644
+--- a/Robustesse/Vieillissement11/FuzzyRules/rl_dataset_v11.py
++++ b/Robustesse/Vieillissement11/FuzzyRules/rl_dataset_v11.py
+@@ -118,7 +118,7 @@ def build_strata(teacher, h2_n):
+ 
+ def build_split_mask(n, split_years=DEFAULT_SPLIT_YEARS):
+     """Masque de partition par blocs d'annees contigus."""
+-    split = np.empty(n, dtype="<U5")
++    split = np.empty(n, dtype="<U6")  # "unused" fait 6 caracteres
+     split[:] = "unused"
+     for name, (y0, y1) in split_years.items():
+         lo = y0 * STEPS_PER_YEAR
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/rl_tree_policy_v11.py b/Robustesse/Vieillissement11/FuzzyRules/rl_tree_policy_v11.py
+index a54c5a3..c58e648 100644
+--- a/Robustesse/Vieillissement11/FuzzyRules/rl_tree_policy_v11.py
++++ b/Robustesse/Vieillissement11/FuzzyRules/rl_tree_policy_v11.py
+@@ -128,10 +128,12 @@ def make_tree_policy_v11(tree, deadband_w=0.0, candidate_id=None):
+ 
+         wear = (0.0, 0.0, 0.0)
+         if info == "IS":
++            # Usure relative >= 0, sans borne haute (identique a _wear du
++            # dataset : np.clip((1-SoH)/(1-SoH_EoL), 0.0, None)).
+             wear = (
+-                min(max((1.0 - SoH_bat_t) / (1.0 - SOH_EOL["bat"]), 0.0), None),
+-                min(max((1.0 - SoH_fc_t) / (1.0 - SOH_EOL["fc"]), 0.0), None),
+-                min(max((1.0 - SoH_ely_t) / (1.0 - SOH_EOL["ely"]), 0.0), None),
++                max((1.0 - SoH_bat_t) / (1.0 - SOH_EOL["bat"]), 0.0),
++                max((1.0 - SoH_fc_t) / (1.0 - SOH_EOL["fc"]), 0.0),
++                max((1.0 - SoH_ely_t) / (1.0 - SOH_EOL["ely"]), 0.0),
+             )
+         p_net = float(P_tot_ref_t)
+         x = _feature_vector(p_net, SoC_t, E_h2_t, E_h2_init, info, wear)
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_dataset_v11.py b/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_dataset_v11.py
+new file mode 100644
+index 0000000..a3f12fc
+--- /dev/null
++++ b/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_dataset_v11.py
+@@ -0,0 +1,145 @@
++"""Tests unitaires des briques du jeu d'apprentissage rule-learning V11-p=2.
++
++Fonctions pures, sans cache enseignant : prevision d'energie nette (troncature de
++queue), usure relative, zones de stratification, decoupage par blocs d'annees
++contigus, poids par frequence inverse. Ces briques materialisent les regles du
++protocole (PLAN_FUZZY_RULE_LEARNING_V11_P2 section 5) : jamais de decoupage
++horaire aleatoire, stratification et surponderation des etats rares.
++"""
++
++import unittest
++
++import numpy as np
++
++from FuzzyRules.rl_dataset_v11 import (
++    HORIZON_STEPS_IF,
++    IF_FEATURES,
++    SOH_EOL,
++    STEPS_PER_YEAR,
++    _normalize_features,
++    _wear,
++    _zone,
++    build_split_mask,
++    build_strata,
++    inverse_frequency_weights,
++    net_energy_forecast_kwh,
++)
++
++
++class NetEnergyForecastTests(unittest.TestCase):
++    def test_cumulative_window_with_tail_truncation(self):
++        # P_net constant 1000 W, horizon 2, dt=1 h -> 2 kWh sauf queue tronquee.
++        e = net_energy_forecast_kwh(np.full(4, 1000.0), horizon=2)
++        np.testing.assert_allclose(e, [2.0, 2.0, 2.0, 1.0])
++
++    def test_signed_energy_follows_sign_of_power(self):
++        e = net_energy_forecast_kwh(np.array([-1000.0, -1000.0]), horizon=2)
++        self.assertLess(e[0], 0.0)
++
++    def test_default_horizon_is_eighteen(self):
++        self.assertEqual(HORIZON_STEPS_IF, 18)
++        self.assertEqual(IF_FEATURES[-1], "E_net_h18_kwh")
++
++
++class WearTests(unittest.TestCase):
++    def test_fresh_component_has_zero_wear(self):
++        self.assertEqual(float(_wear(1.0, SOH_EOL["bat"])), 0.0)
++
++    def test_end_of_life_has_unit_wear(self):
++        self.assertAlmostEqual(float(_wear(SOH_EOL["ely"], SOH_EOL["ely"])), 1.0)
++
++    def test_midpoint_wear(self):
++        eol = 0.7  # bat
++        soh = 0.85  # a mi-chemin de la perte (1-0.85)/(1-0.7) = 0.5
++        self.assertAlmostEqual(float(_wear(soh, eol)), 0.5)
++
++    def test_wear_is_clamped_nonnegative(self):
++        # SoH > 1 (impossible physiquement) ne doit pas produire d'usure < 0.
++        self.assertEqual(float(_wear(1.2, 0.7)), 0.0)
++
++
++class ZoneTests(unittest.TestCase):
++    def test_digitize_low_mid_high(self):
++        z = _zone(np.array([100.0, 1000.0, 5000.0]), (500.0, 3000.0))
++        np.testing.assert_array_equal(z, [0, 1, 2])
++
++
++class SplitMaskTests(unittest.TestCase):
++    def test_contiguous_year_blocks_partition_without_overlap(self):
++        n = 3 * STEPS_PER_YEAR
++        split = build_split_mask(n, {"train": (0, 1), "val": (1, 2),
++                                     "test": (2, 3)})
++        self.assertEqual((split == "train").sum(), STEPS_PER_YEAR)
++        self.assertEqual((split == "val").sum(), STEPS_PER_YEAR)
++        self.assertEqual((split == "test").sum(), STEPS_PER_YEAR)
++        # Blocs contigus : la frontiere tombe exactement sur l'annee.
++        self.assertEqual(split[STEPS_PER_YEAR - 1], "train")
++        self.assertEqual(split[STEPS_PER_YEAR], "val")
++
++    def test_years_beyond_data_are_truncated(self):
++        n = STEPS_PER_YEAR + 5
++        split = build_split_mask(n, {"train": (0, 1), "val": (1, 20)})
++        self.assertEqual((split == "train").sum(), STEPS_PER_YEAR)
++        self.assertEqual((split == "val").sum(), 5)   # queue tronquee
++
++    def test_unused_years_are_labelled_unused(self):
++        n = 3 * STEPS_PER_YEAR
++        split = build_split_mask(n, {"train": (0, 1)})
++        self.assertEqual((split == "unused").sum(), 2 * STEPS_PER_YEAR)
++
++
++class InverseFrequencyWeightTests(unittest.TestCase):
++    def test_rare_strata_get_higher_weight(self):
++        strata = np.array(["A", "A", "A", "B"])
++        split = np.array(["train", "train", "train", "train"])
++        w = inverse_frequency_weights(strata, split, "train")
++        self.assertGreater(w[3], w[0])   # B (rare) > A (frequent)
++
++    def test_weight_is_zero_outside_subset(self):
++        strata = np.array(["A", "A", "B"])
++        split = np.array(["train", "train", "val"])
++        w = inverse_frequency_weights(strata, split, "train")
++        self.assertEqual(w[2], 0.0)
++
++    def test_uniform_strata_give_unit_weight(self):
++        strata = np.array(["A", "A", "A", "A"])
++        split = np.array(["train"] * 4)
++        w = inverse_frequency_weights(strata, split, "train")
++        np.testing.assert_allclose(w, 1.0)
++
++
++class StrataTests(unittest.TestCase):
++    def test_label_encodes_sign_amplitude_soc_h2_and_lol(self):
++        teacher = {
++            "P_net": np.array([2000.0, -4000.0]),
++            "SoC": np.array([0.50, 0.10]),
++            "lol_tab": np.array([0.0, 1.0]),
++        }
++        h2_n = np.array([0.30, 0.05])
++        strata = build_strata(teacher, h2_n)
++        self.assertEqual(strata[0], "def|p1|s1|h1|l0")
++        self.assertEqual(strata[1], "sur|p2|s0|h0|l1")
++
++    def test_idle_when_net_power_is_zero(self):
++        teacher = {"P_net": np.array([0.0]), "SoC": np.array([0.5]),
++                   "lol_tab": np.array([0.0])}
++        strata = build_strata(teacher, np.array([0.5]))
++        self.assertTrue(strata[0].startswith("idle|"))
++
++
++class NormalizeFeaturesTests(unittest.TestCase):
++    def test_soc_and_h2_are_clamped_to_unit_interval(self):
++        p, soc_n, h2_n = _normalize_features(
++            np.array([1000.0, 1000.0]),
++            np.array([0.10, 1.10]),   # sous / au-dessus des bornes
++            np.array([-10.0, 500.0]),  # sous / au-dessus des bornes
++        )
++        np.testing.assert_array_equal(p, [1000.0, 1000.0])
++        self.assertTrue(np.all((soc_n >= 0.0) & (soc_n <= 1.0)))
++        self.assertTrue(np.all((h2_n >= 0.0) & (h2_n <= 1.0)))
++        self.assertEqual(soc_n[0], 0.0)
++        self.assertEqual(h2_n[0], 0.0)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_tree_forecast_policy_v11.py b/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_tree_forecast_policy_v11.py
+new file mode 100644
+index 0000000..1717f13
+--- /dev/null
++++ b/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_tree_forecast_policy_v11.py
+@@ -0,0 +1,149 @@
++"""Tests unitaires de la policy 'regles apprises' IF (arbre + prevision H18).
++
++Comme pour les tests I0/IS, aucun cache enseignant n'est requis : l'arbre jouet
++est ajuste pour que sa prediction DEPENDE de la feature de prevision, ce qui rend
++observables la mecanique de prevision (oracle vs persistance), l'injection de
++bruit gaussien seede et la restauration par ``reset()``.
++"""
++
++import unittest
++
++import numpy as np
++
++from Common import Init_EMR_MG_v16_python as I
++from FuzzyRules.rl_dataset_v11 import HORIZON_STEPS_IF
++from FuzzyRules.rl_tree_forecast_policy_v11 import (
++    POLICY_ID_STEM,
++    make_forecast_tree_policy_v11,
++)
++from FuzzyRules.rl_tree_policy_v11 import fit_tree
++from FuzzyRules.tests.test_rl_tree_policy_v11 import _I0_ROWS, _args, _toy_dataset
++
++
++# Regimes : la cible depend de P_net (colonne 0) ET, en deficit, du signe de
++# l'energie nette prevue (colonne 3). Un futur negatif (deficit a venir) demande
++# plus de FC ; un futur positif en demande moins.
++_IF_ROWS = [
++    ((2000.0, 0.5, 0.5, -50.0), 1500.0),   # deficit + futur deficitaire
++    ((2000.0, 0.5, 0.5, 50.0), 500.0),     # deficit + futur excedentaire
++    ((-5000.0, 0.5, 0.5, 0.0), -3000.0),   # surplus -> ELY
++]
++
++
++def _if_tree():
++    ds = _toy_dataset(_IF_ROWS, "IF")
++    return fit_tree(ds, "IF", max_depth=3, min_samples_leaf=1)
++
++
++def _i0_tree():
++    return fit_tree(_toy_dataset(_I0_ROWS, "I0"), "I0", max_depth=3,
++                    min_samples_leaf=1)
++
++
++class ForecastTreeConstructionTests(unittest.TestCase):
++    def test_rejects_non_if_tree(self):
++        with self.assertRaises(ValueError):
++            make_forecast_tree_policy_v11(_i0_tree())
++
++    def test_rejects_unknown_scenario(self):
++        with self.assertRaises(ValueError):
++            make_forecast_tree_policy_v11(_if_tree(),
++                                         forecast_scenario="crystal_ball")
++
++    def test_rejects_out_of_range_noise_rho(self):
++        with self.assertRaises(ValueError):
++            make_forecast_tree_policy_v11(_if_tree(), forecast_scenario="oracle",
++                                         noise_rho=1.0)
++
++    def test_metadata_declares_if_and_horizon(self):
++        policy = make_forecast_tree_policy_v11(_if_tree())
++        self.assertEqual(policy.information_set, "IF")
++        self.assertEqual(policy.forecast_horizon_steps, HORIZON_STEPS_IF)
++        self.assertTrue(policy.policy_id.startswith(POLICY_ID_STEM))
++        self.assertEqual(policy.rl_metadata["forecast"]["scenario"], "oracle")
++
++
++class ForecastMechanicsTests(unittest.TestCase):
++    def test_none_future_gives_zero_energy_and_closes_balance(self):
++        # Futur absent -> e_net=0 (>=0) -> feuille "500" ; bilan ferme.
++        policy = make_forecast_tree_policy_v11(_if_tree())
++        action, lol = policy(*_args(net=2000.0), P_tot_ref_future=None)
++        self.assertGreaterEqual(action[1], 0.0)
++        self.assertEqual(action[2], 0.0)
++        self.assertAlmostEqual(sum(action), 2000.0, places=9)
++        self.assertEqual(lol, 0.0)
++
++    def test_oracle_reads_future_sign(self):
++        policy = make_forecast_tree_policy_v11(_if_tree(),
++                                              forecast_scenario="oracle")
++        future_deficit = np.full(HORIZON_STEPS_IF, 3000.0)   # e_net > 0
++        future_surplus = np.full(HORIZON_STEPS_IF, -3000.0)  # e_net < 0
++        p_fc_pos, _ = policy(*_args(net=2000.0), P_tot_ref_future=future_deficit)
++        policy.reset()
++        p_fc_neg, _ = policy(*_args(net=2000.0), P_tot_ref_future=future_surplus)
++        # Futur deficitaire (e_net<0) -> plus de FC que futur excedentaire.
++        self.assertGreater(p_fc_neg[1], p_fc_pos[1])
++
++    def test_persistence_uses_current_power_not_future_values(self):
++        policy = make_forecast_tree_policy_v11(_if_tree(),
++                                              forecast_scenario="persistence")
++        # Futur non vide mais dont les valeurs sont ignorees par la persistance :
++        # e_net = P_tot_ref_t * H * dt/1000 = 2000*18/1000 = 36 kWh > 0 -> "500".
++        oracle = make_forecast_tree_policy_v11(_if_tree(),
++                                              forecast_scenario="oracle")
++        misleading = np.full(HORIZON_STEPS_IF, -99999.0)
++        persist_fc, _ = policy(*_args(net=2000.0), P_tot_ref_future=misleading)
++        oracle_fc, _ = oracle(*_args(net=2000.0), P_tot_ref_future=misleading)
++        # L'oracle suit le futur (tres deficitaire) -> beaucoup de FC ; la
++        # persistance ignore ces valeurs et suit la puissance courante.
++        self.assertGreater(oracle_fc[1], persist_fc[1])
++
++    def test_gaussian_noise_is_seeded_and_reset_reproducible(self):
++        policy = make_forecast_tree_policy_v11(
++            _if_tree(), forecast_scenario="gaussian_iid",
++            sigma_inject_kwh=80.0, noise_seed=7,
++        )
++        future = np.full(HORIZON_STEPS_IF, 100.0)
++        first = policy(*_args(net=2000.0), P_tot_ref_future=future)
++        second = policy(*_args(net=2000.0), P_tot_ref_future=future)
++        policy.reset()
++        replay = policy(*_args(net=2000.0), P_tot_ref_future=future)
++        self.assertEqual(first, replay)      # reset rejoue la meme sequence
++        # Le bruit tire des valeurs differentes d'un pas au suivant.
++        self.assertNotEqual(first, second)
++
++
++class ForecastGuardTests(unittest.TestCase):
++    def test_surplus_uses_ely_only_and_closes_balance(self):
++        policy = make_forecast_tree_policy_v11(_if_tree())
++        action, _ = policy(*_args(net=-5000.0),
++                           P_tot_ref_future=np.zeros(HORIZON_STEPS_IF))
++        self.assertEqual(action[1], 0.0)
++        self.assertLessEqual(action[2], 0.0)
++        self.assertAlmostEqual(sum(action), -5000.0, places=9)
++
++    def test_fc_failure_clamps_command_to_nonpositive(self):
++        policy = make_forecast_tree_policy_v11(_if_tree())
++        action, _ = policy(*_args(net=2000.0, failures=["FC"]),
++                           P_tot_ref_future=np.full(HORIZON_STEPS_IF, -3000.0))
++        self.assertEqual(action[1], 0.0)
++        self.assertAlmostEqual(sum(action), 2000.0, places=9)
++
++    def test_ely_failure_clamps_command_to_nonnegative(self):
++        policy = make_forecast_tree_policy_v11(_if_tree())
++        action, _ = policy(*_args(net=-5000.0, failures=["ELY"]),
++                           P_tot_ref_future=np.zeros(HORIZON_STEPS_IF))
++        self.assertEqual(action[2], 0.0)
++        self.assertAlmostEqual(sum(action), -5000.0, places=9)
++
++    def test_deadband_zeroes_micro_command(self):
++        # Feuille "500" (deficit modere) coupee par une large zone morte.
++        policy = make_forecast_tree_policy_v11(_if_tree(), deadband_w=800.0)
++        action, _ = policy(*_args(net=2000.0),
++                           P_tot_ref_future=np.full(HORIZON_STEPS_IF, 3000.0))
++        self.assertEqual(action[1], 0.0)
++        self.assertAlmostEqual(action[0], 2000.0, places=9)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_tree_policy_v11.py b/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_tree_policy_v11.py
+new file mode 100644
+index 0000000..c1f717d
+--- /dev/null
++++ b/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_tree_policy_v11.py
+@@ -0,0 +1,211 @@
++"""Tests unitaires de la policy 'regles apprises' par arbre (I0/IS), V11-p=2.
++
++On n'utilise PAS le cache enseignant (218 999 pas, hors depot) : les invariants
++du wrapper de policy sont isoles avec des arbres JOUETS ajustes sur des donnees
++synthetiques dont on controle exactement les predictions. Ces tests verifient les
++invariants obligatoires du protocole (PLAN_FUZZY_RULE_LEARNING_V11_P2 section 6) :
++bilan de puissance ferme, gardes de defaillance, zone morte, ``reset()`` exact,
++test nul de permutation d'une feature non utilisee, invariants de signe.
++"""
++
++import unittest
++
++import numpy as np
++
++from Common import Init_EMR_MG_v16_python as I
++from FuzzyRules.rl_dataset_v11 import I0_FEATURES, IS_FEATURES
++from FuzzyRules.rl_tree_policy_v11 import (
++    POLICY_ID_STEM,
++    _feature_vector,
++    fit_tree,
++    make_tree_policy_v11,
++    null_test_unused_permutation,
++)
++
++
++def _toy_dataset(rows, information_set="I0", n_features=3, reps=60):
++    """Construit un dataset synthetique au format attendu par ``fit_tree``.
++
++    ``rows`` est une liste de ``(features_tuple, y)``. Chaque ligne est repliquee
++    ``reps`` fois pour laisser des feuilles pures ; toutes les lignes sont dans le
++    bloc 'train'. La cible ``y`` etant constante pour un vecteur de features
++    donne, l'arbre predit exactement les valeurs choisies.
++    """
++    X, y = [], []
++    for feats, target in rows:
++        for _ in range(reps):
++            X.append(list(feats))
++            y.append(target)
++    X = np.asarray(X, float)
++    y = np.asarray(y, float)
++    key = {"I0": "X_i0", "IS": "X_is", "IF": "X_if"}[information_set]
++    return {
++        key: X,
++        "y": y,
++        "split": np.array(["train"] * len(y), dtype="<U6"),
++        "inv_freq_weight": np.ones(len(y)),
++    }
++
++
++def _args(net, soc=0.60, h2=100.0, soh_bat=1.0, soh_fc=1.0, soh_ely=1.0,
++          failures=None, p_fc_max=None, p_ely_max=None):
++    """Arguments de boucle, meme convention que les tests FLC."""
++    return (
++        soc, net, list(failures or []), np.zeros(1), 0.0, 0.0, soh_bat,
++        h2, 200.0,
++        I.FC["P_fc_max"] if p_fc_max is None else p_fc_max,
++        I.ELY["P_ely_max"] if p_ely_max is None else p_ely_max,
++        float("inf"), float("inf"), soh_fc, soh_ely,
++    )
++
++
++# Trois regimes distincts en P_net (colonne 0), SoC/H2 constants : la cible ne
++# depend que de P_net, donc l'arbre ne coupe que sur P_net (SoC/H2 non utilises).
++_I0_ROWS = [
++    ((2000.0, 0.5, 0.5), 1000.0),   # deficit franc -> FC +1000 W
++    ((-5000.0, 0.5, 0.5), -3000.0),  # surplus franc -> ELY -3000 W
++    ((150.0, 0.5, 0.5), 150.0),      # micro-deficit -> pour la zone morte
++]
++
++
++class TreePolicyInvariantTests(unittest.TestCase):
++    def setUp(self):
++        ds = _toy_dataset(_I0_ROWS, "I0")
++        self.tree = fit_tree(ds, "I0", max_depth=3, min_samples_leaf=1)
++
++    # -- fidelite de l'arbre jouet (predictions controlees) -------------------
++    def test_toy_tree_predicts_chosen_values(self):
++        pred = self.tree.predict(np.array(
++            [[2000.0, 0.5, 0.5], [-5000.0, 0.5, 0.5], [150.0, 0.5, 0.5]]
++        ))
++        np.testing.assert_allclose(pred, [1000.0, -3000.0, 150.0])
++
++    # -- invariants de signe et fermeture du bilan ----------------------------
++    def test_deficit_uses_fc_and_battery_only_and_closes_balance(self):
++        policy = make_tree_policy_v11(self.tree)
++        action, lol = policy(*_args(net=2000.0))
++        self.assertGreaterEqual(action[1], 0.0)   # p_fc >= 0
++        self.assertEqual(action[2], 0.0)          # p_ely == 0
++        self.assertAlmostEqual(sum(action), 2000.0, places=9)
++        self.assertEqual(lol, 0.0)
++
++    def test_surplus_uses_ely_and_battery_only_and_closes_balance(self):
++        policy = make_tree_policy_v11(self.tree)
++        action, lol = policy(*_args(net=-5000.0))
++        self.assertEqual(action[1], 0.0)          # p_fc == 0
++        self.assertLessEqual(action[2], 0.0)      # p_ely <= 0
++        self.assertAlmostEqual(sum(action), -5000.0, places=9)
++        self.assertEqual(lol, 0.0)
++
++    # -- zone morte -----------------------------------------------------------
++    def test_deadband_zeroes_micro_command_to_battery(self):
++        policy = make_tree_policy_v11(self.tree, deadband_w=200.0)
++        action, _ = policy(*_args(net=150.0))
++        self.assertEqual(action[1], 0.0)          # FC coupee
++        self.assertEqual(action[2], 0.0)          # ELY coupee
++        self.assertAlmostEqual(action[0], 150.0, places=9)  # tout batterie
++
++    def test_deadband_zero_keeps_micro_command(self):
++        policy = make_tree_policy_v11(self.tree, deadband_w=0.0)
++        action, _ = policy(*_args(net=150.0))
++        self.assertGreater(action[1], 0.0)        # FC non coupee
++
++    # -- gardes de defaillance identiques a la FLC ----------------------------
++    def test_fc_failure_clamps_command_to_nonpositive(self):
++        policy = make_tree_policy_v11(self.tree)
++        action, _ = policy(*_args(net=2000.0, failures=["FC"]))
++        self.assertEqual(action[1], 0.0)          # pas de FC quand FC en panne
++        self.assertAlmostEqual(sum(action), 2000.0, places=9)
++
++    def test_ely_failure_clamps_command_to_nonnegative(self):
++        policy = make_tree_policy_v11(self.tree)
++        action, _ = policy(*_args(net=-5000.0, failures=["ELY"]))
++        self.assertEqual(action[2], 0.0)          # pas d'ELY quand ELY en panne
++        self.assertAlmostEqual(sum(action), -5000.0, places=9)
++
++    # -- physique deleguee a la couche de securite commune --------------------
++    def test_physical_power_limit_is_applied_by_get_lol(self):
++        policy = make_tree_policy_v11(self.tree)
++        action, _ = policy(*_args(net=2000.0, soc=0.3, p_fc_max=100.0))
++        self.assertLessEqual(action[1] / I.CONV["eta"], 100.0 + 1e-6)
++
++    # -- reset exact (policy sans memoire) ------------------------------------
++    def test_reset_is_exact_for_stateless_policy(self):
++        policy = make_tree_policy_v11(self.tree)
++        before = policy(*_args(net=2000.0))
++        policy.reset()
++        after = policy(*_args(net=2000.0))
++        self.assertEqual(before, after)
++
++    # -- test nul : permuter une feature non utilisee ne change rien ----------
++    def test_null_permutation_of_unused_feature_leaves_prediction_intact(self):
++        feature, delta = null_test_unused_permutation(self.tree, _toy_dataset(
++            _I0_ROWS, "I0"))
++        self.assertIn(feature, ("SoC_norm", "E_h2_norm"))
++        self.assertLess(delta, 1e-9)
++
++    # -- identite et metadonnees explicites -----------------------------------
++    def test_identity_and_metadata_are_explicit(self):
++        policy = make_tree_policy_v11(self.tree)
++        self.assertEqual(policy.information_set, "I0")
++        self.assertTrue(policy.policy_id.startswith(f"{POLICY_ID_STEM}-i0-"))
++        self.assertEqual(len(policy.rl_metadata["spec_sha256"]), 64)
++        self.assertEqual(policy.rl_metadata["features"], list(I0_FEATURES))
++        self.assertIn("signed", policy.rl_metadata["target"])
++
++    def test_distinct_deadband_yields_distinct_policy_id(self):
++        a = make_tree_policy_v11(self.tree, deadband_w=0.0)
++        b = make_tree_policy_v11(self.tree, deadband_w=50.0)
++        self.assertNotEqual(a.policy_id, b.policy_id)
++
++
++class FeatureVectorTests(unittest.TestCase):
++    def test_i0_shape_and_normalization_clamps(self):
++        # SoC sous la borne basse -> 0 ; H2 au-dessus du reservoir -> 1.
++        x = _feature_vector(1000.0, SoC_t=0.10, E_h2_t=250.0, E_h2_init=200.0,
++                            information_set="I0")
++        self.assertEqual(x.shape, (1, 3))
++        self.assertEqual(x[0, 0], 1000.0)
++        self.assertEqual(x[0, 1], 0.0)   # SoC clampe en bas
++        self.assertEqual(x[0, 2], 1.0)   # H2 clampe en haut
++
++    def test_is_appends_three_wear_columns(self):
++        x = _feature_vector(1000.0, SoC_t=0.60, E_h2_t=100.0, E_h2_init=200.0,
++                            information_set="IS", wear=(0.5, 0.2, 0.9))
++        self.assertEqual(x.shape, (1, 6))
++        np.testing.assert_allclose(x[0, 3:], [0.5, 0.2, 0.9])
++
++
++class ISPolicyTests(unittest.TestCase):
++    """IS : au BoL (SoH=1) l'usure est nulle ; le bilan reste ferme."""
++
++    def setUp(self):
++        # Cible ne depend que de P_net : usure non utilisee (comme un neuf).
++        rows = [
++            ((2000.0, 0.5, 0.5, 0.0, 0.0, 0.0), 1200.0),
++            ((-5000.0, 0.5, 0.5, 0.0, 0.0, 0.0), -2500.0),
++        ]
++        ds = _toy_dataset(rows, "IS")
++        self.tree = fit_tree(ds, "IS", max_depth=3, min_samples_leaf=1)
++
++    def test_information_set_and_features(self):
++        policy = make_tree_policy_v11(self.tree)
++        self.assertEqual(policy.information_set, "IS")
++        self.assertEqual(policy.rl_metadata["features"], list(IS_FEATURES))
++
++    def test_bol_feeds_zero_wear_and_matches_direct_prediction(self):
++        policy = make_tree_policy_v11(self.tree)
++        action, _ = policy(*_args(net=2000.0, soh_bat=1.0, soh_fc=1.0,
++                                  soh_ely=1.0))
++        # Au BoL, l'usure est (0,0,0) : la prediction egale l'arbre sur ce point.
++        soc_n = (0.60 - 0.20) / (0.995 - 0.20)
++        h2_n = 100.0 / 200.0
++        direct = float(self.tree.predict(
++            np.array([[2000.0, soc_n, h2_n, 0.0, 0.0, 0.0]]))[0])
++        self.assertGreaterEqual(action[1], 0.0)
++        self.assertAlmostEqual(action[1], max(direct, 0.0), places=6)
++        self.assertAlmostEqual(sum(action), 2000.0, places=9)
++
++
++if __name__ == "__main__":
++    unittest.main()
+-- 
+2.43.0
+
+
+From f40476b678f9f28c4793108b5a07fe0f70520c38 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 21 Jul 2026 13:37:54 +0000
+Subject: [PATCH 2/2] RL direction A : forecast-comme-regle (arbre I0 +
+ precharge)
+
+Greffe la regle de precharge de la FLC-IF (le mecanisme -1,6 %) AU-DESSUS de
+l'arbre I0 distille. La foresight entre par une action conditionnelle
+(preservation H2 sous deficit prevu), pas comme feature d'arbre (le vehicule
+qui echouait, recap section 2.5).
+
+- rl_tree_precharge_policy_v11.py : make_tree_precharge_policy_v11(tree, ...).
+  Parent = arbre I0/IS ; refuse un arbre IF. Signal de prevision et hysteresis
+  strictement apparies a flc_forecast_policy_v11 (memes constantes, meme regle).
+  Force 0 = arbre nu bit-a-bit, sans tirage aleatoire (test nul).
+- tests/test_rl_tree_precharge_policy_v11.py (15) : test nul, APPARIEMENT du
+  signal avec la FLC-IF (oracle + gaussien seede), precharge ne touche que
+  l'ELY, garde SoC>=cible, hysteresis, parent IS -> ISF.
+- run_smoke_rl_precharge_v11.py : compare RB1/RB2, arbre I0 nu, arbre I0 +
+  precharge, et (option) la FLC-IF promue pour lire l'effet de famille.
+  Cablage init_and_run_loop (P_tot_ref_future) verifie en integration.
+
+Suite FuzzyRules : 108 tests OK. Note de suivi : sections 5 et 8.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_0179FU55fV2dh7cuwExF8bpq
+---
+ .../RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt |  42 ++-
+ .../rl_tree_precharge_policy_v11.py           | 305 ++++++++++++++++++
+ .../FuzzyRules/run_smoke_rl_precharge_v11.py  | 149 +++++++++
+ .../test_rl_tree_precharge_policy_v11.py      | 207 ++++++++++++
+ 4 files changed, 701 insertions(+), 2 deletions(-)
+ create mode 100644 Robustesse/Vieillissement11/FuzzyRules/rl_tree_precharge_policy_v11.py
+ create mode 100644 Robustesse/Vieillissement11/FuzzyRules/run_smoke_rl_precharge_v11.py
+ create mode 100644 Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_tree_precharge_policy_v11.py
+
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt b/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt
+index 9d5df9c..3a3760f 100644
+--- a/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt
++++ b/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt
+@@ -198,9 +198,11 @@ sur années tenues à l'écart il faudra soit un offset de départ, soit d'autre
+ profils. Le holdout annuel actuel reste in-sample météo (profil répété).
+ 
+ --------------------------------------------------------------------------------
+-5. PERSPECTIVES / BIFURCATION (à trancher pour la prochaine session)
++5. PERSPECTIVES / BIFURCATION
+ --------------------------------------------------------------------------------
+-Recommandation : A (aligné sur le seul mécanisme prévision qui a marché).
++DÉCISION 2026-07-21 (avec l'utilisateur) : direction A retenue. Le code est
++livré (cf. §8) ; reste à lancer le benchmark boucle fermée sur mésocentre.
++Recommandation initiale : A (aligné sur le seul mécanisme prévision qui a marché).
+ 
+   A. FORECAST-COMME-RÈGLE. Greffer une règle de précharge / préservation H2
+      déclenchée par E_net_H AU-DESSUS de l'arbre distillé (architecture
+@@ -226,7 +228,9 @@ Recommandation : A (aligné sur le seul mécanisme prévision qui a marché).
+   python -m FuzzyRules.rl_dataset_v11              # manifeste dataset
+   python -m FuzzyRules.rl_tree_policy_v11          # balayage profondeur + test nul
+   python -m FuzzyRules.rl_tree_forecast_policy_v11 # fidélité IF + importances
++  python -m FuzzyRules.rl_tree_precharge_policy_v11 # appariement précharge vs FLC-IF
+   python -m FuzzyRules.run_smoke_rl_v11 --days 365 --depths 3 4 5 6
++  python -m FuzzyRules.run_smoke_rl_precharge_v11 --days 365 --depth 4 --with-flc-if
+   Mémoire de suivi (inter-sessions) : rule-learning-phase-v11.
+ 
+ --------------------------------------------------------------------------------
+@@ -267,4 +271,38 @@ avec GENIAL_DATA_DIR pointant un profil de substitution et les LUT d'efficacité
+ recopiées depuis Vieillissement9_4/Common (mêmes courbes physiques). Les
+ invariants testés (bilan, signes, reset, test nul) sont indépendants du profil.
+ Sur mésocentre, les CSV canoniques sont présents : rien à changer.
++
++--------------------------------------------------------------------------------
++8. DIRECTION A LIVRÉE — FORECAST-COMME-RÈGLE (arbre I0 + précharge)
++--------------------------------------------------------------------------------
++Mécanisme : on greffe AU-DESSUS de l'arbre I0 distillé la MÊME règle de précharge
++que la FLC-IF (qui gagnait -1,6 % de J3). Quand un déficit net est prévu à H18
++(E_net_H > +seuil) et que la batterie n'est pas pleine (SoC < soc_target), on
++réduit la commande électrolyseur déjà émise (p_ely <- p_ely·(1-force)) : l'énergie
++de surplus reste en réserve batterie au lieu de partir en H2. La foresight entre
++donc par une action CONDITIONNELLE (structurelle), jamais comme feature d'arbre
++(le véhicule qui échouait, §2.5).
++
++Livré (2026-07-21) :
++  - rl_tree_precharge_policy_v11.py : make_tree_precharge_policy_v11(tree, ...).
++    Parent = make_tree_policy_v11 (arbre I0 ou IS) ; refuse un arbre IF (la
++    prévision n'entre pas deux fois). Signal de prévision et hystérésis
++    STRICTEMENT appariés à flc_forecast_policy_v11 (mêmes constantes DEFAULT_*,
++    même formule E_net_H, même règle enter/exit/dwell). Force 0 = arbre nu
++    bit-à-bit, sans tirage. Diagnostics : precharge_applied_steps, H2 gardé.
++  - tests/test_rl_tree_precharge_policy_v11.py (15) : test nul bit-à-bit,
++    APPARIEMENT du signal avec la FLC-IF sur séquences (oracle + gaussien seedé),
++    précharge ne touche que l'ELY, garde SoC>=cible, hystérésis, IS->ISF.
++  - run_smoke_rl_precharge_v11.py : compare RB1/RB2, arbre I0 nu, arbre I0 +
++    précharge, et (option --with-flc-if) la FLC-IF promue. Le moteur fournit la
++    vraie prévision oracle profile_net[j:j+H] via P_tot_ref_future (câblage
++    init_and_run_loop vérifié en intégration).
++
++RESTE À FAIRE sur mésocentre (ne tourne pas dans le conteneur de dev) :
++  python -m FuzzyRules.run_smoke_rl_precharge_v11 --days 365 --depth 4 --with-flc-if
++  Lecture attendue : la précharge-règle doit rapprocher l'arbre I0 des baselines
++  là où la feature échouait ; comparer le gain relatif à celui obtenu par la
++  FLC-IF (-1,6 %) pour isoler l'effet de FAMILLE (arbre vs FLC) à règle identique.
++  Puis : robustesse gaussian_iid (graines communes), profils hors apprentissage,
++  et 25 ans si finaliste.
+ ================================================================================
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/rl_tree_precharge_policy_v11.py b/Robustesse/Vieillissement11/FuzzyRules/rl_tree_precharge_policy_v11.py
+new file mode 100644
+index 0000000..4bfafc0
+--- /dev/null
++++ b/Robustesse/Vieillissement11/FuzzyRules/rl_tree_precharge_policy_v11.py
+@@ -0,0 +1,305 @@
++"""Policy 'regles apprises' IF par REGLE de precharge au-dessus de l'arbre I0.
++
++Direction A du recap (RECAP_RULE_LEARNING_V11_P2 section 5) : le diagnostic a
++montre que l'arbre CART ignore la prevision quand elle est fournie comme feature
++(forecast-comme-feature, section 2.5). La valeur de la foresight est ici
++STRUCTURELLE : une action CONDITIONNELLE de precharge / preservation H2. On la
++greffe donc AU-DESSUS de l'arbre I0 distille, exactement comme la couche FLC-IF
++(``flc_forecast_policy_v11``) se greffe au-dessus de la FLC experte I0.
++
++Comparaison strictement appariee avec la FLC-IF : meme signal de prevision
++(``E_net_H``, memes scenarios oracle / gaussian_iid / gaussian_ar1 / persistance,
++memes ``bias_kwh`` / ``sigma_design_kwh`` importes de ``flc_forecast_policy_v11``)
++et meme regle a hysteresis. La seule difference entre les deux familles est le
++PARENT : FLC experte contre arbre distille. Ce qui change d'une famille a l'autre
++est donc l'effet de FAMILLE, pas l'effet de jeu d'information.
++
++Regle de precharge (identique a la FLC-IF) :
++
++- ``E_net_H > +m_sigma*sigma_design``  -> precharge ON (deficit net a venir) ;
++- ``E_net_H < -m_sigma*sigma_design``  -> precharge OFF ;
++- entre les deux, on retient l'etat (hysteresis), ``min_dwell_steps`` de garde ;
++- si precharge ON et ``SoC < soc_target`` et le parent demandait de
++  l'electrolyse (``p_ely < 0``), on reduit cette commande :
++  ``p_ely <- p_ely * (1 - forecast_strength)`` ; la batterie ferme le bilan.
++
++Test nul obligatoire (protocole section 6) : ``forecast_strength = 0`` appelle
++directement l'arbre parent, bit-a-bit, sans consommer aucun tirage aleatoire.
++"""
++
++from __future__ import annotations
++
++import hashlib
++import json
++import math
++
++import numpy as np
++
++from Common import Init_EMR_MG_v16_python as I
++from Common.get_lol import get_lol
++
++from .flc_forecast_policy_v11 import (
++    DEFAULT_BIAS_KWH,
++    DEFAULT_HORIZON_STEPS,
++    DEFAULT_SIGMA_KWH,
++    FORECAST_SCENARIOS,
++)
++from .rl_tree_policy_v11 import make_tree_policy_v11
++
++POLICY_ID_STEM = "rl-tree-precharge-pd-v11-p2"
++
++
++def make_tree_precharge_policy_v11(
++    tree,
++    deadband_w=0.0,
++    forecast_strength=0.0,
++    forecast_scenario="oracle",
++    horizon_steps=DEFAULT_HORIZON_STEPS,
++    soc_target=0.99,
++    threshold_sigma_multiplier=None,
++    min_dwell_steps=0,
++    bias_kwh=DEFAULT_BIAS_KWH,
++    sigma_design_kwh=DEFAULT_SIGMA_KWH,
++    sigma_inject_kwh=None,
++    noise_rho=0.0,
++    noise_seed=0,
++    candidate_id=None,
++):
++    """Construit la policy IF 'arbre + regle de precharge' de boucle.
++
++    ``tree`` est un arbre distille de jeu I0 (ou IS) : la prevision n'entre PAS
++    comme feature de l'arbre, seulement par la regle. Passer un arbre IF est
++    refuse, car cela reviendrait a melanger les deux vehicules de foresight.
++    """
++    base_info = tree._genial_meta["information_set"]
++    if base_info not in ("I0", "IS"):
++        raise ValueError(
++            "l'arbre parent doit etre I0 ou IS (la prevision entre par la "
++            "regle, pas comme feature) ; recu: " + base_info
++        )
++    forecast_strength = float(forecast_strength)
++    if not 0.0 <= forecast_strength <= 1.0:
++        raise ValueError("forecast_strength doit appartenir a [0, 1]")
++    if forecast_scenario not in FORECAST_SCENARIOS:
++        raise ValueError(f"scenario de prevision inconnu: {forecast_scenario}")
++    horizon_steps = int(horizon_steps)
++    if horizon_steps <= 0:
++        raise ValueError("horizon_steps doit etre positif")
++    soc_target = float(soc_target)
++    if not 0.2 <= soc_target <= 0.995:
++        raise ValueError("soc_target doit appartenir a [0,2 ; 0,995]")
++    min_dwell_steps = int(min_dwell_steps)
++    if min_dwell_steps < 0:
++        raise ValueError("min_dwell_steps doit etre positif ou nul")
++    bias_kwh = float(bias_kwh)
++    sigma_design_kwh = float(sigma_design_kwh)
++    if sigma_design_kwh < 0.0:
++        raise ValueError("sigma_design_kwh doit etre positif ou nul")
++    sigma_inject_kwh = float(
++        sigma_design_kwh if sigma_inject_kwh is None else sigma_inject_kwh
++    )
++    if sigma_inject_kwh < 0.0:
++        raise ValueError("sigma_inject_kwh doit etre positif ou nul")
++    noise_rho = float(noise_rho)
++    if not 0.0 <= noise_rho < 1.0:
++        raise ValueError("noise_rho doit appartenir a [0, 1[")
++    noise_seed = int(noise_seed)
++    if threshold_sigma_multiplier is None:
++        threshold_sigma_multiplier = 0.0 if forecast_scenario == "oracle" else 1.0
++    threshold_sigma_multiplier = float(threshold_sigma_multiplier)
++    if threshold_sigma_multiplier < 0.0:
++        raise ValueError("threshold_sigma_multiplier doit etre positif ou nul")
++
++    parent = make_tree_policy_v11(tree, deadband_w=deadband_w)
++    information_set = (
++        {"I0": "IF", "IS": "ISF"}[base_info]
++        if forecast_strength > 0.0 else base_info
++    )
++
++    params = {
++        "forecast_strength": forecast_strength,
++        "forecast_scenario": forecast_scenario,
++        "horizon_steps": horizon_steps,
++        "soc_target": soc_target,
++        "threshold_sigma_multiplier": threshold_sigma_multiplier,
++        "min_dwell_steps": min_dwell_steps,
++        "bias_kwh": bias_kwh,
++        "sigma_design_kwh": sigma_design_kwh,
++        "sigma_inject_kwh": sigma_inject_kwh,
++        "noise_rho": noise_rho,
++        "noise_seed": noise_seed,
++        "deadband_w": deadband_w,
++    }
++    specification = {
++        "policy_id_stem": POLICY_ID_STEM,
++        "parent_spec_sha256": parent.rl_metadata["spec_sha256"],
++        "parent_information_set": base_info,
++        "information_set": information_set,
++        "forecast_rule": {
++            "enter": "E_net_H > +m_sigma*sigma_design",
++            "exit": "E_net_H < -m_sigma*sigma_design",
++            "between": "retain hysteresis state",
++            "action": "P_ely <- P_ely*(1-forecast_strength)",
++        },
++        "parameters": params,
++    }
++    spec_sha256 = hashlib.sha256(
++        json.dumps(specification, sort_keys=True, separators=(",", ":")).encode()
++    ).hexdigest()
++    policy_id = f"{POLICY_ID_STEM}-{information_set.lower()}-{spec_sha256[:12]}"
++
++    state = {
++        "rng": np.random.default_rng(noise_seed),
++        "eps": 0.0,
++        "precharge_on": False,
++        "dwell_remaining": 0,
++        "forecast_calls": 0,
++        "noise_draws": 0,
++        "precharge_signal_steps": 0,
++        "precharge_applied_steps": 0,
++        "ely_energy_removed_kwh_dc": 0.0,
++    }
++
++    def reset():
++        parent.reset()
++        state.update({
++            "rng": np.random.default_rng(noise_seed),
++            "eps": 0.0,
++            "precharge_on": False,
++            "dwell_remaining": 0,
++            "forecast_calls": 0,
++            "noise_draws": 0,
++            "precharge_signal_steps": 0,
++            "precharge_applied_steps": 0,
++            "ely_energy_removed_kwh_dc": 0.0,
++        })
++
++    def _forecast_energy_kwh(P_tot_ref_t, P_tot_ref_future):
++        if P_tot_ref_future is None or len(P_tot_ref_future) == 0:
++            return None
++        dt_h = float(I.LOAD["Ts"] / 3600.0)
++        if forecast_scenario == "persistence":
++            energy_kwh = float(P_tot_ref_t) * horizon_steps * dt_h / 1000.0
++        else:
++            future = np.asarray(P_tot_ref_future[:horizon_steps], dtype=float)
++            energy_kwh = float(np.sum(future) * dt_h / 1000.0)
++        if forecast_scenario in ("gaussian_iid", "gaussian_ar1"):
++            innovation = float(state["rng"].standard_normal())
++            state["noise_draws"] += 1
++            if forecast_scenario == "gaussian_ar1":
++                state["eps"] = (
++                    noise_rho * state["eps"]
++                    + math.sqrt(1.0 - noise_rho ** 2) * innovation
++                )
++            else:
++                state["eps"] = innovation
++            energy_kwh += bias_kwh + sigma_inject_kwh * state["eps"]
++        return energy_kwh
++
++    def precharge_signal(SoC_t, P_tot_ref_t, P_tot_ref_future):
++        energy_kwh = _forecast_energy_kwh(P_tot_ref_t, P_tot_ref_future)
++        if energy_kwh is None:
++            return False, None
++        state["forecast_calls"] += 1
++        threshold = threshold_sigma_multiplier * sigma_design_kwh
++        if state["dwell_remaining"] > 0:
++            state["dwell_remaining"] -= 1
++        elif (not state["precharge_on"]) and energy_kwh > threshold:
++            state["precharge_on"] = True
++            state["dwell_remaining"] = min_dwell_steps
++        elif state["precharge_on"] and energy_kwh < -threshold:
++            state["precharge_on"] = False
++            state["dwell_remaining"] = min_dwell_steps
++        active = bool(state["precharge_on"] and float(SoC_t) < soc_target)
++        if active:
++            state["precharge_signal_steps"] += 1
++        return active, energy_kwh
++
++    def diagnostics():
++        return {key: value for key, value in state.items() if key != "rng"}
++
++    def rule(SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t, alpha_ely_t,
++             SoH_bat_t, E_h2_t, E_h2_init, P_fc_max_t, P_ely_max_t,
++             RUL_fc_t, RUL_ely_t, SoH_fc_t, SoH_ely_t,
++             P_tot_ref_future=None):
++        policy_args = (
++            SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t, alpha_ely_t,
++            SoH_bat_t, E_h2_t, E_h2_init, P_fc_max_t, P_ely_max_t,
++            RUL_fc_t, RUL_ely_t, SoH_fc_t, SoH_ely_t,
++        )
++        if forecast_strength == 0.0:
++            return parent(*policy_args)
++
++        base_action, base_lol = parent(*policy_args)
++        active, _ = precharge_signal(SoC_t, P_tot_ref_t, P_tot_ref_future)
++        # On ne touche que si un electrolyseur tourne (p_ely < 0) : c'est
++        # l'energie de surplus qu'on garde en batterie au lieu d'en faire du H2.
++        if not active or base_action[2] == 0.0:
++            return base_action, base_lol
++
++        p_fc = float(base_action[1])
++        p_ely = float(base_action[2]) * (1.0 - forecast_strength)
++        p_bat = float(P_tot_ref_t) - p_fc - p_ely
++        removed_w = abs(float(base_action[2]) - p_ely)
++        state["precharge_applied_steps"] += 1
++        state["ely_energy_removed_kwh_dc"] += (
++            removed_w * I.LOAD["Ts"] / 3600.0 / 1000.0
++        )
++        return get_lol(
++            SoC_t, (p_bat, p_fc, p_ely), P_tot_ref_t, defaillances,
++            E_h2_t, E_h2_init, P_fc_max_t, P_ely_max_t, SoH_bat_t,
++        )
++
++    rule.reset = reset
++    rule.precharge_signal = precharge_signal
++    rule.forecast_diagnostics = diagnostics
++    rule.parent_policy = parent
++    rule.tree = tree
++    rule.forecast_horizon_steps = horizon_steps
++    rule.policy_id = policy_id
++    rule.information_set = information_set
++    rule.deadband_w = deadband_w
++    rule.candidate_id = candidate_id
++    rule.forecast_parameters = params
++    rule.rl_metadata = {
++        "policy_id": policy_id,
++        "spec_sha256": spec_sha256,
++        "information_set": information_set,
++        "parent_spec_sha256": parent.rl_metadata["spec_sha256"],
++        "parent_information_set": base_info,
++        "n_leaves": parent.rl_metadata["n_leaves"],
++        "inputs_added": ("E_net_forecast_H%d" % horizon_steps,),
++        "forecast_rule_count": 3,
++        "forecast_rule": specification["forecast_rule"],
++        "parameters": params,
++    }
++    return rule
++
++
++if __name__ == "__main__":
++    # Auto-diagnostic sans boucle fermee : verifie que la regle de precharge est
++    # STRICTEMENT appariee a celle de la FLC-IF (meme signal sur une meme
++    # sequence d'entrees), et que le test nul est bit-a-bit.
++    from .flc_forecast_policy_v11 import make_forecast_augmented_flc_policy_v11
++    from .rl_dataset_v11 import build_dataset
++    from .rl_tree_policy_v11 import fit_tree
++
++    ds = build_dataset()
++    tree = fit_tree(ds, "I0", max_depth=4)
++    rl = make_tree_precharge_policy_v11(
++        tree, forecast_strength=1.0, forecast_scenario="oracle")
++    flc = make_forecast_augmented_flc_policy_v11(
++        forecast_strength=1.0, forecast_scenario="oracle")
++
++    rng = np.random.default_rng(0)
++    mismatches = 0
++    for _ in range(2000):
++        soc = float(rng.uniform(0.2, 1.0))
++        pnet = float(rng.uniform(-20000, 5000))
++        future = rng.uniform(-20000, 5000, size=18)
++        a_rl, _ = rl.precharge_signal(soc, pnet, future)
++        a_flc, _ = flc.precharge_signal(soc, pnet, future)
++        mismatches += int(a_rl != a_flc)
++    print(f"precharge signal appariement RL vs FLC-IF : "
++          f"{2000 - mismatches}/2000 identiques")
++    print("policy_id:", rl.policy_id, "| info:", rl.information_set)
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/run_smoke_rl_precharge_v11.py b/Robustesse/Vieillissement11/FuzzyRules/run_smoke_rl_precharge_v11.py
+new file mode 100644
+index 0000000..5208430
+--- /dev/null
++++ b/Robustesse/Vieillissement11/FuzzyRules/run_smoke_rl_precharge_v11.py
+@@ -0,0 +1,149 @@
++"""Smoke boucle fermee de la direction A : arbre I0 + REGLE de precharge.
++
++Question posee (recap section 5, direction A) : la foresight, INUTILE comme
++feature de l'arbre (section 2.5), redevient-elle utile comme REGLE de precharge
++au-dessus de l'arbre I0 distille, comme elle l'a ete au-dessus de la FLC experte
++(FLC-IF, -1,6 % de J3) ?
++
++Comparaison strictement appariee, meme moteur ``init_and_run_loop`` et meme
++prevision oracle fournie par la boucle :
++
++  - RB1 (0,20 ; 0,40) et RB2 (0,574 ; 0,465)          : references ;
++  - rl_tree_i0_d{d}                                    : arbre I0 nu (domine) ;
++  - rl_tree_precharge_i0_d{d}                          : arbre I0 + precharge A ;
++  - flc_if_selected                                   : la FLC-IF promue (le
++    parent FLC de la MEME regle) pour lire l'effet de famille.
++
++Le test nul (force 0 = arbre nu bit-a-bit) est couvert par les tests unitaires ;
++ici on mesure la performance en boucle fermee.
++"""
++
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++from pathlib import Path
++
++import numpy as np
++
++from Common.degradation_v11 import ELY_V11, MODEL_ID
++from Common.rb1_policy_v11 import make_rb1_policy_v11
++from Common.rb2_policy import make_rb2_policy
++
++from .flc_forecast_policy_v11 import make_selected_if_policy_v11
++from .run_smoke_flc_v11 import HERE, VOLL, _evaluate, _profile_hash
++from .rl_dataset_v11 import build_dataset
++from .rl_tree_policy_v11 import fit_tree, make_tree_policy_v11
++from .rl_tree_precharge_policy_v11 import make_tree_precharge_policy_v11
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--days", type=float, default=365.0)
++    parser.add_argument("--depth", type=int, default=4,
++                        help="profondeur de l'arbre I0 de base (d4 = meilleur "
++                             "arbre nu du recap)")
++    parser.add_argument("--deadband-w", type=float, default=0.0)
++    parser.add_argument("--forecast-scenario", default="oracle",
++                        choices=["oracle", "gaussian_iid", "gaussian_ar1",
++                                 "persistence"])
++    parser.add_argument("--forecast-strength", type=float, default=1.0)
++    parser.add_argument("--min-samples-leaf", type=int, default=200)
++    parser.add_argument("--noise-seed", type=int, default=0)
++    parser.add_argument("--with-flc-if", action="store_true",
++                        help="ajoute la FLC-IF promue (effet de famille)")
++    args = parser.parse_args()
++    if not 0.0 < args.days <= 365.0:
++        raise ValueError("--days doit appartenir a ]0, 365]")
++    years = args.days / 365.0
++    expected_steps = max(0, int(round(args.days * 24.0)) - 1)
++
++    dataset = build_dataset()
++    tree = fit_tree(dataset, "I0", max_depth=args.depth,
++                    min_samples_leaf=args.min_samples_leaf)
++
++    base = make_tree_policy_v11(tree, deadband_w=args.deadband_w)
++    precharge = make_tree_precharge_policy_v11(
++        tree, deadband_w=args.deadband_w,
++        forecast_strength=args.forecast_strength,
++        forecast_scenario=args.forecast_scenario, noise_seed=args.noise_seed,
++    )
++
++    policies = {
++        "rb1_v11_p2_020_040": make_rb1_policy_v11(0.20, 0.40),
++        "rb2_v11_p2_0574_0465": make_rb2_policy(0.574, 0.465),
++        f"rl_tree_i0_d{args.depth}": base,
++        f"rl_tree_precharge_i0_d{args.depth}_{args.forecast_scenario}": precharge,
++    }
++    if args.with_flc_if:
++        policies["flc_if_selected"] = make_selected_if_policy_v11(
++            forecast_scenario=args.forecast_scenario, noise_seed=args.noise_seed,
++        )
++
++    meta = {
++        label: {
++            "policy_id": getattr(pol, "policy_id", label),
++            "information_set": getattr(pol, "information_set", None),
++            "n_leaves": getattr(pol, "rl_metadata", {}).get("n_leaves"),
++        }
++        for label, pol in policies.items()
++    }
++    manifest = {
++        "protocol_id": "smoke-rl-precharge-v11-p2-2026-07-21",
++        "model_id": MODEL_ID,
++        "ely_stress_exponent": float(ELY_V11["stress_exponent"]),
++        "voll_eur_per_kwh": VOLL,
++        "days_requested": float(args.days),
++        "expected_steps": expected_steps,
++        "profile_sha256": _profile_hash(expected_steps),
++        "base_depth": args.depth,
++        "deadband_w": args.deadband_w,
++        "forecast_scenario": args.forecast_scenario,
++        "forecast_strength": args.forecast_strength,
++        "min_samples_leaf": args.min_samples_leaf,
++        "noise_seed": args.noise_seed,
++        "precharge_spec_sha256": precharge.rl_metadata["spec_sha256"],
++        "dataset_split_years": {k: list(v) for k, v in
++                                dataset["split_years"].items()},
++        "policy_meta": meta,
++        "replacement_accounting": "corrected",
++    }
++    fingerprint = hashlib.sha256(
++        json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()
++    ).hexdigest()[:12]
++    run_dir = HERE / "runs" / f"smoke_rl_precharge_{fingerprint}"
++    run_dir.mkdir(parents=True, exist_ok=True)
++
++    results = {}
++    for label, policy in policies.items():
++        summary, arrays, _ = _evaluate(policy, years)
++        if summary["steps"] != expected_steps:
++            raise AssertionError(
++                f"{label}: {summary['steps']} pas, attendu {expected_steps}"
++            )
++        results[label] = summary
++        np.savez_compressed(run_dir / f"{label}.npz", **arrays)
++        diag = ""
++        if hasattr(policy, "forecast_diagnostics"):
++            d = policy.forecast_diagnostics()
++            diag = (f" precharge={d['precharge_applied_steps']}"
++                    f" H2kept={d['ely_energy_removed_kwh_dc']:.1f}kWh")
++        print(
++            f"{label:44s} J3={summary['unified_voll3_eur']:10.3f} "
++            f"deg={summary['degradation_eur']:9.3f} "
++            f"EENS={summary['eens_kwh']:8.3f} "
++            f"LPSP={summary['lpsp_pct']:6.3f}% "
++            f"starts={summary['fc_starts']}/{summary['ely_starts']}{diag}",
++            flush=True,
++        )
++
++    (run_dir / "summary.json").write_text(
++        json.dumps({"manifest": manifest, "fingerprint": fingerprint,
++                    "results": results}, indent=2, sort_keys=True) + "\n"
++    )
++    print(f"Resultats : {run_dir}")
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_tree_precharge_policy_v11.py b/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_tree_precharge_policy_v11.py
+new file mode 100644
+index 0000000..3e7c200
+--- /dev/null
++++ b/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_tree_precharge_policy_v11.py
+@@ -0,0 +1,207 @@
++"""Tests de la policy IF 'arbre + regle de precharge' (direction A), V11-p=2.
++
++Verifie les invariants obligatoires (PLAN_FUZZY_RULE_LEARNING_V11_P2 section 6) et
++surtout l'APPARIEMENT STRICT du signal de precharge avec la FLC-IF : sur des
++sequences d'entrees identiques, la regle greffee sur l'arbre et celle greffee sur
++la FLC experte doivent produire exactement le meme signal (meme feature de
++prevision, meme hysteresis). Ce qui distingue les deux familles est alors le seul
++parent (arbre vs FLC), donc un effet de famille pur.
++"""
++
++import unittest
++
++import numpy as np
++
++from Common import Init_EMR_MG_v16_python as I
++from FuzzyRules.flc_forecast_policy_v11 import (
++    make_forecast_augmented_flc_policy_v11,
++)
++from FuzzyRules.rl_tree_policy_v11 import fit_tree, make_tree_policy_v11
++from FuzzyRules.rl_tree_precharge_policy_v11 import (
++    POLICY_ID_STEM,
++    make_tree_precharge_policy_v11,
++)
++from FuzzyRules.tests.test_rl_tree_policy_v11 import _I0_ROWS, _args, _toy_dataset
++
++
++def _i0_tree():
++    return fit_tree(_toy_dataset(_I0_ROWS, "I0"), "I0", max_depth=3,
++                    min_samples_leaf=1)
++
++
++def _if_tree():
++    from FuzzyRules.tests.test_rl_tree_forecast_policy_v11 import _IF_ROWS
++    return fit_tree(_toy_dataset(_IF_ROWS, "IF"), "IF", max_depth=3,
++                    min_samples_leaf=1)
++
++
++class ConstructionTests(unittest.TestCase):
++    def test_rejects_if_tree_as_parent(self):
++        with self.assertRaises(ValueError):
++            make_tree_precharge_policy_v11(_if_tree())
++
++    def test_rejects_unknown_scenario(self):
++        with self.assertRaises(ValueError):
++            make_tree_precharge_policy_v11(_i0_tree(),
++                                          forecast_scenario="crystal_ball")
++
++    def test_rejects_out_of_range_strength(self):
++        with self.assertRaises(ValueError):
++            make_tree_precharge_policy_v11(_i0_tree(), forecast_strength=1.5)
++
++    def test_metadata_declares_if_from_i0_parent(self):
++        policy = make_tree_precharge_policy_v11(_i0_tree(), forecast_strength=1.0)
++        self.assertEqual(policy.information_set, "IF")
++        self.assertEqual(policy.forecast_horizon_steps, 18)
++        self.assertTrue(policy.policy_id.startswith(POLICY_ID_STEM))
++        self.assertEqual(policy.rl_metadata["parent_information_set"], "I0")
++        self.assertEqual(policy.rl_metadata["forecast_rule_count"], 3)
++
++
++class NullTestBitExact(unittest.TestCase):
++    """Force nulle = arbre parent bit-a-bit, sans aucun tirage aleatoire."""
++
++    def test_zero_strength_is_bit_exact_and_draws_nothing(self):
++        tree = _i0_tree()
++        parent = make_tree_policy_v11(tree)
++        null = make_tree_precharge_policy_v11(
++            tree, forecast_strength=0.0, forecast_scenario="gaussian_iid",
++            noise_seed=123,
++        )
++        future = np.full(18, 5000.0)
++        for net in (-5000.0, 2000.0, 150.0):
++            args = _args(net=net)
++            self.assertEqual(null(*args, P_tot_ref_future=future), parent(*args))
++        self.assertEqual(null.forecast_diagnostics()["noise_draws"], 0)
++
++
++class PairingWithFLCIF(unittest.TestCase):
++    """Le signal de precharge est identique a celui de la FLC-IF."""
++
++    def _pair(self, scenario, seed=0):
++        rl = make_tree_precharge_policy_v11(
++            _i0_tree(), forecast_strength=1.0, forecast_scenario=scenario,
++            noise_seed=seed,
++        )
++        flc = make_forecast_augmented_flc_policy_v11(
++            forecast_strength=1.0, forecast_scenario=scenario, noise_seed=seed,
++        )
++        return rl, flc
++
++    def test_oracle_signal_matches_over_a_sequence(self):
++        rl, flc = self._pair("oracle")
++        rng = np.random.default_rng(1)
++        for _ in range(500):
++            soc = float(rng.uniform(0.2, 1.0))
++            pnet = float(rng.uniform(-20000.0, 5000.0))
++            future = rng.uniform(-20000.0, 5000.0, size=18)
++            a_rl, e_rl = rl.precharge_signal(soc, pnet, future)
++            a_flc, e_flc = flc.precharge_signal(soc, pnet, future)
++            self.assertEqual(a_rl, a_flc)
++            self.assertAlmostEqual(e_rl, e_flc, places=9)
++
++    def test_gaussian_iid_signal_matches_with_shared_seed(self):
++        rl, flc = self._pair("gaussian_iid", seed=7)
++        rng = np.random.default_rng(2)
++        for _ in range(500):
++            soc = float(rng.uniform(0.2, 1.0))
++            pnet = float(rng.uniform(-20000.0, 5000.0))
++            future = rng.uniform(-20000.0, 5000.0, size=18)
++            self.assertEqual(rl.precharge_signal(soc, pnet, future)[0],
++                             flc.precharge_signal(soc, pnet, future)[0])
++
++
++class PrechargeActionTests(unittest.TestCase):
++    def setUp(self):
++        self.policy = make_tree_precharge_policy_v11(
++            _i0_tree(), forecast_strength=1.0, forecast_scenario="oracle")
++        self.future_deficit = np.full(18, 3000.0)   # E_net_H > 0 -> precharge ON
++
++    def test_precharge_moves_surplus_from_ely_to_battery(self):
++        parent = make_tree_policy_v11(_i0_tree())
++        base, _ = parent(*_args(net=-5000.0, soc=0.6))
++        action, _ = self.policy(*_args(net=-5000.0, soc=0.6),
++                                P_tot_ref_future=self.future_deficit)
++        self.assertLess(base[2], 0.0)      # le parent electrolysait
++        self.assertEqual(action[2], 0.0)   # precharge coupe l'ELY (force 1)
++        self.assertEqual(action[1], 0.0)   # toujours pas de FC
++        self.assertAlmostEqual(sum(action), -5000.0, places=9)  # bilan ferme
++
++    def test_precharge_leaves_deficit_action_untouched(self):
++        # En deficit le parent ne fait pas d'ELY -> rien a preserver.
++        parent = make_tree_policy_v11(_i0_tree())
++        base = parent(*_args(net=2000.0, soc=0.6))
++        action = self.policy(*_args(net=2000.0, soc=0.6),
++                             P_tot_ref_future=self.future_deficit)
++        self.assertEqual(action, base)
++
++    def test_soc_at_target_disables_precharge(self):
++        # SoC >= soc_target : batterie deja pleine, pas de precharge meme si
++        # un deficit est prevu.
++        parent = make_tree_policy_v11(_i0_tree())
++        base = parent(*_args(net=-5000.0, soc=0.995))
++        action = self.policy(*_args(net=-5000.0, soc=0.995),
++                             P_tot_ref_future=self.future_deficit)
++        self.assertEqual(action, base)
++
++    def test_no_future_leaves_parent_unchanged(self):
++        parent = make_tree_policy_v11(_i0_tree())
++        base = parent(*_args(net=-5000.0, soc=0.6))
++        action = self.policy(*_args(net=-5000.0, soc=0.6),
++                             P_tot_ref_future=None)
++        self.assertEqual(action, base)
++
++    def test_future_surplus_does_not_trigger_precharge(self):
++        # E_net_H < 0 (surplus a venir) -> precharge OFF -> parent inchange.
++        parent = make_tree_policy_v11(_i0_tree())
++        base = parent(*_args(net=-5000.0, soc=0.6))
++        action = self.policy(*_args(net=-5000.0, soc=0.6),
++                             P_tot_ref_future=np.full(18, -3000.0))
++        self.assertEqual(action, base)
++
++
++class HysteresisTests(unittest.TestCase):
++    def test_state_is_retained_between_thresholds(self):
++        policy = make_tree_precharge_policy_v11(
++            _i0_tree(), forecast_strength=1.0, forecast_scenario="gaussian_iid",
++            sigma_design_kwh=10.0, threshold_sigma_multiplier=1.0,
++            sigma_inject_kwh=0.0, bias_kwh=0.0, noise_seed=0,
++        )
++        # seuil = 1 * 10 = 10 kWh. E_net_H = sum(future)*1/1000.
++        big_deficit = np.full(18, 2000.0)   # 36 kWh > +10 -> ON
++        small = np.full(18, 100.0)          # 1.8 kWh, entre -10 et +10 -> retient
++        big_surplus = np.full(18, -2000.0)  # -36 kWh < -10 -> OFF
++        self.assertTrue(policy.precharge_signal(0.5, 0.0, big_deficit)[0])
++        self.assertTrue(policy.precharge_signal(0.5, 0.0, small)[0])   # retenu ON
++        self.assertFalse(policy.precharge_signal(0.5, 0.0, big_surplus)[0])
++        self.assertFalse(policy.precharge_signal(0.5, 0.0, small)[0])  # retenu OFF
++
++    def test_reset_replays_noise_and_hysteresis(self):
++        policy = make_tree_precharge_policy_v11(
++            _i0_tree(), forecast_strength=1.0, forecast_scenario="gaussian_iid",
++            noise_seed=456,
++        )
++        future = np.zeros(18)
++        first = policy.precharge_signal(0.5, 0.0, future)
++        policy.precharge_signal(0.5, 0.0, future)
++        policy.reset()
++        replay = policy.precharge_signal(0.5, 0.0, future)
++        self.assertEqual(first, replay)
++        self.assertEqual(policy.forecast_diagnostics()["noise_draws"], 1)
++
++
++class ISParentTests(unittest.TestCase):
++    def test_is_parent_yields_isf(self):
++        rows = [
++            ((2000.0, 0.5, 0.5, 0.0, 0.0, 0.0), 1000.0),
++            ((-5000.0, 0.5, 0.5, 0.0, 0.0, 0.0), -3000.0),
++        ]
++        tree = fit_tree(_toy_dataset(rows, "IS"), "IS", max_depth=3,
++                        min_samples_leaf=1)
++        policy = make_tree_precharge_policy_v11(tree, forecast_strength=1.0)
++        self.assertEqual(policy.information_set, "ISF")
++        self.assertEqual(policy.rl_metadata["parent_information_set"], "IS")
++
++
++if __name__ == "__main__":
++    unittest.main()
+-- 
+2.43.0
+

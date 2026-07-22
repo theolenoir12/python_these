@@ -1,0 +1,49 @@
+numpy 1.21.5 | sklearn 1.0.2
+test_constant_input_column_is_handled (FuzzyRules.tests.test_anfis_ts.ConsequentFitTests) ... ok
+test_fit_beats_constant_on_nonlinear_target (FuzzyRules.tests.test_anfis_ts.ConsequentFitTests) ... ok
+test_grid_model_represents_global_linear_target (FuzzyRules.tests.test_anfis_ts.ConsequentFitTests) ... ok
+test_predict_before_fit_raises (FuzzyRules.tests.test_anfis_ts.ConsequentFitTests) ... ok
+test_single_mf_recovers_linear_target_exactly (FuzzyRules.tests.test_anfis_ts.ConsequentFitTests) ... ok
+test_peak_at_center (FuzzyRules.tests.test_anfis_ts.GaussianMFTests) ... ok
+test_symmetric_and_decreasing (FuzzyRules.tests.test_anfis_ts.GaussianMFTests) ... ok
+test_normalized_firing_sums_to_one (FuzzyRules.tests.test_anfis_ts.PartitionOfUnityTests) ... ok
+test_grid_rule_count_is_nmf_power_ninputs (FuzzyRules.tests.test_anfis_ts.StructureTests) ... ok
+test_two_mf_two_inputs_gives_four_rules (FuzzyRules.tests.test_anfis_ts.StructureTests) ... ok
+test_deadband_below_prediction_keeps_command (FuzzyRules.tests.test_anfis_policy_v11.AnfisPolicyInvariantTests) ... ok
+test_deficit_uses_fc_and_battery_only_and_closes_balance (FuzzyRules.tests.test_anfis_policy_v11.AnfisPolicyInvariantTests) ... ok
+test_ely_failure_clamps_to_nonnegative (FuzzyRules.tests.test_anfis_policy_v11.AnfisPolicyInvariantTests) ... ok
+test_fc_failure_clamps_to_nonpositive (FuzzyRules.tests.test_anfis_policy_v11.AnfisPolicyInvariantTests) ... ok
+test_large_deadband_routes_everything_to_battery (FuzzyRules.tests.test_anfis_policy_v11.AnfisPolicyInvariantTests) ... ok
+test_metadata_and_rule_count (FuzzyRules.tests.test_anfis_policy_v11.AnfisPolicyInvariantTests) ... ok
+test_physical_power_limit_applied_by_get_lol (FuzzyRules.tests.test_anfis_policy_v11.AnfisPolicyInvariantTests) ... ok
+test_reset_is_exact_for_stateless_policy (FuzzyRules.tests.test_anfis_policy_v11.AnfisPolicyInvariantTests) ... ok
+test_soh_is_not_a_hidden_input_in_i0 (FuzzyRules.tests.test_anfis_policy_v11.AnfisPolicyInvariantTests) ... ok
+test_surplus_uses_ely_and_battery_only_and_closes_balance (FuzzyRules.tests.test_anfis_policy_v11.AnfisPolicyInvariantTests) ... ok
+test_fit_rejects_too_few_samples_per_branch (FuzzyRules.tests.test_anfis_policy_v11.TwoBranchModelTests) ... ok
+test_routing_predicts_right_sign_per_branch (FuzzyRules.tests.test_anfis_policy_v11.TwoBranchModelTests) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.239s
+
+OK
+=== ANFIS I0 + IS (mf=3), vs RB1/RB2 et arbre d4 ===
+rb1_v11_p2_020_040     J3=  2888.640 deg= 2511.147 EENS= 125.831 LPSP= 0.601% starts=329/319
+rb2_v11_p2_0574_0465   J3=  3064.200 deg= 2676.641 EENS= 129.186 LPSP= 0.617% starts=386/367
+rl_tree_i0_d4          J3=  3354.413 deg= 2486.584 EENS= 289.276 LPSP= 1.381% starts=390/390
+anfis_i0_mf3           J3=  4174.117 deg= 2620.225 EENS= 517.964 LPSP= 2.473% starts=479/483 regles=27+27 t/pas= 403.6us
+anfis_is_mf3           J3=  4981.975 deg= 2505.068 EENS= 825.636 LPSP= 3.942% starts=496/496 regles=729+729 t/pas= 437.1us
+Resultats : /Work/Users/tlenoir/genial/Robustesse/Vieillissement11/FuzzyRules/runs/smoke_anfis_624d1ce0dd78
+
+real	1m8.362s
+user	1m4.854s
+sys	0m2.692s
+=== ANFIS I0 (mf=2) ===
+rb1_v11_p2_020_040     J3=  2888.640 deg= 2511.147 EENS= 125.831 LPSP= 0.601% starts=329/319
+rb2_v11_p2_0574_0465   J3=  3064.200 deg= 2676.641 EENS= 129.186 LPSP= 0.617% starts=386/367
+anfis_i0_mf2           J3=  3493.010 deg= 2596.077 EENS= 298.978 LPSP= 1.427% starts=418/419 regles=8+8 t/pas= 387.6us
+Resultats : /Work/Users/tlenoir/genial/Robustesse/Vieillissement11/FuzzyRules/runs/smoke_anfis_b0e7e51e6fd3
+
+real	0m11.631s
+user	0m10.611s
+sys	0m0.284s
+=== TERMINE ===

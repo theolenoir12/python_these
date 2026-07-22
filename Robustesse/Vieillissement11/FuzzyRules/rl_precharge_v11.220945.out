@@ -1,0 +1,91 @@
+numpy 1.21.5 | sklearn 1.0.2
+test_rare_strata_get_higher_weight (FuzzyRules.tests.test_rl_dataset_v11.InverseFrequencyWeightTests) ... ok
+test_uniform_strata_give_unit_weight (FuzzyRules.tests.test_rl_dataset_v11.InverseFrequencyWeightTests) ... ok
+test_weight_is_zero_outside_subset (FuzzyRules.tests.test_rl_dataset_v11.InverseFrequencyWeightTests) ... ok
+test_cumulative_window_with_tail_truncation (FuzzyRules.tests.test_rl_dataset_v11.NetEnergyForecastTests) ... ok
+test_default_horizon_is_eighteen (FuzzyRules.tests.test_rl_dataset_v11.NetEnergyForecastTests) ... ok
+test_signed_energy_follows_sign_of_power (FuzzyRules.tests.test_rl_dataset_v11.NetEnergyForecastTests) ... ok
+test_soc_and_h2_are_clamped_to_unit_interval (FuzzyRules.tests.test_rl_dataset_v11.NormalizeFeaturesTests) ... ok
+test_contiguous_year_blocks_partition_without_overlap (FuzzyRules.tests.test_rl_dataset_v11.SplitMaskTests) ... ok
+test_unused_years_are_labelled_unused (FuzzyRules.tests.test_rl_dataset_v11.SplitMaskTests) ... ok
+test_years_beyond_data_are_truncated (FuzzyRules.tests.test_rl_dataset_v11.SplitMaskTests) ... ok
+test_idle_when_net_power_is_zero (FuzzyRules.tests.test_rl_dataset_v11.StrataTests) ... ok
+test_label_encodes_sign_amplitude_soc_h2_and_lol (FuzzyRules.tests.test_rl_dataset_v11.StrataTests) ... ok
+test_end_of_life_has_unit_wear (FuzzyRules.tests.test_rl_dataset_v11.WearTests) ... ok
+test_fresh_component_has_zero_wear (FuzzyRules.tests.test_rl_dataset_v11.WearTests) ... ok
+test_midpoint_wear (FuzzyRules.tests.test_rl_dataset_v11.WearTests) ... ok
+test_wear_is_clamped_nonnegative (FuzzyRules.tests.test_rl_dataset_v11.WearTests) ... ok
+test_digitize_low_mid_high (FuzzyRules.tests.test_rl_dataset_v11.ZoneTests) ... ok
+test_i0_shape_and_normalization_clamps (FuzzyRules.tests.test_rl_tree_policy_v11.FeatureVectorTests) ... ok
+test_is_appends_three_wear_columns (FuzzyRules.tests.test_rl_tree_policy_v11.FeatureVectorTests) ... ok
+test_bol_feeds_zero_wear_and_matches_direct_prediction (FuzzyRules.tests.test_rl_tree_policy_v11.ISPolicyTests) ... ok
+test_information_set_and_features (FuzzyRules.tests.test_rl_tree_policy_v11.ISPolicyTests) ... ok
+test_deadband_zero_keeps_micro_command (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_deadband_zeroes_micro_command_to_battery (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_deficit_uses_fc_and_battery_only_and_closes_balance (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_distinct_deadband_yields_distinct_policy_id (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_ely_failure_clamps_command_to_nonnegative (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_fc_failure_clamps_command_to_nonpositive (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_identity_and_metadata_are_explicit (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_null_permutation_of_unused_feature_leaves_prediction_intact (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_physical_power_limit_is_applied_by_get_lol (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_reset_is_exact_for_stateless_policy (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_surplus_uses_ely_and_battery_only_and_closes_balance (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_toy_tree_predicts_chosen_values (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_deadband_zeroes_micro_command (FuzzyRules.tests.test_rl_tree_forecast_policy_v11.ForecastGuardTests) ... ok
+test_ely_failure_clamps_command_to_nonnegative (FuzzyRules.tests.test_rl_tree_forecast_policy_v11.ForecastGuardTests) ... ok
+test_fc_failure_clamps_command_to_nonpositive (FuzzyRules.tests.test_rl_tree_forecast_policy_v11.ForecastGuardTests) ... ok
+test_surplus_uses_ely_only_and_closes_balance (FuzzyRules.tests.test_rl_tree_forecast_policy_v11.ForecastGuardTests) ... ok
+test_gaussian_noise_is_seeded_and_reset_reproducible (FuzzyRules.tests.test_rl_tree_forecast_policy_v11.ForecastMechanicsTests) ... ok
+test_none_future_gives_zero_energy_and_closes_balance (FuzzyRules.tests.test_rl_tree_forecast_policy_v11.ForecastMechanicsTests) ... ok
+test_oracle_reads_future_sign (FuzzyRules.tests.test_rl_tree_forecast_policy_v11.ForecastMechanicsTests) ... ok
+test_persistence_uses_current_power_not_future_values (FuzzyRules.tests.test_rl_tree_forecast_policy_v11.ForecastMechanicsTests) ... ok
+test_metadata_declares_if_and_horizon (FuzzyRules.tests.test_rl_tree_forecast_policy_v11.ForecastTreeConstructionTests) ... ok
+test_rejects_non_if_tree (FuzzyRules.tests.test_rl_tree_forecast_policy_v11.ForecastTreeConstructionTests) ... ok
+test_rejects_out_of_range_noise_rho (FuzzyRules.tests.test_rl_tree_forecast_policy_v11.ForecastTreeConstructionTests) ... ok
+test_rejects_unknown_scenario (FuzzyRules.tests.test_rl_tree_forecast_policy_v11.ForecastTreeConstructionTests) ... ok
+test_metadata_declares_if_from_i0_parent (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.ConstructionTests) ... ok
+test_rejects_if_tree_as_parent (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.ConstructionTests) ... ok
+test_rejects_out_of_range_strength (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.ConstructionTests) ... ok
+test_rejects_unknown_scenario (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.ConstructionTests) ... ok
+test_reset_replays_noise_and_hysteresis (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.HysteresisTests) ... ok
+test_state_is_retained_between_thresholds (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.HysteresisTests) ... ok
+test_is_parent_yields_isf (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.ISParentTests) ... ok
+test_zero_strength_is_bit_exact_and_draws_nothing (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.NullTestBitExact) ... ok
+test_gaussian_iid_signal_matches_with_shared_seed (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.PairingWithFLCIF) ... ok
+test_oracle_signal_matches_over_a_sequence (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.PairingWithFLCIF) ... ok
+test_future_surplus_does_not_trigger_precharge (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.PrechargeActionTests) ... ok
+test_no_future_leaves_parent_unchanged (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.PrechargeActionTests) ... ok
+test_precharge_leaves_deficit_action_untouched (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.PrechargeActionTests) ... ok
+test_precharge_moves_surplus_from_ely_to_battery (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.PrechargeActionTests) ... ok
+test_soc_at_target_disables_precharge (FuzzyRules.tests.test_rl_tree_precharge_policy_v11.PrechargeActionTests) ... ok
+
+----------------------------------------------------------------------
+Ran 60 tests in 0.215s
+
+OK
+precharge signal appariement RL vs FLC-IF : 2000/2000 identiques
+policy_id: rl-tree-precharge-pd-v11-p2-if-9d8815d94103 | info: IF
+=== ORACLE (depth 4) ===
+rb1_v11_p2_020_040                           J3=  2888.640 deg= 2511.147 EENS= 125.831 LPSP= 0.601% starts=329/319
+rb2_v11_p2_0574_0465                         J3=  3064.200 deg= 2676.641 EENS= 129.186 LPSP= 0.617% starts=386/367
+rl_tree_i0_d4                                J3=  3354.413 deg= 2486.584 EENS= 289.276 LPSP= 1.381% starts=390/390
+rl_tree_precharge_i0_d4_oracle               J3=  3987.148 deg= 2523.284 EENS= 487.955 LPSP= 2.330% starts=370/383 precharge=228 H2kept=624.4kWh
+flc_if_selected                              J3=  2912.754 deg= 2689.660 EENS=  74.365 LPSP= 0.355% starts=388/384 precharge=112 H2kept=606.5kWh
+Resultats : /Work/Users/tlenoir/genial/Robustesse/Vieillissement11/FuzzyRules/runs/smoke_rl_precharge_c0861c874802
+
+real	0m21.962s
+user	0m21.139s
+sys	0m0.243s
+=== GAUSSIAN_IID seed 0 (depth 4) ===
+rb1_v11_p2_020_040                           J3=  2888.640 deg= 2511.147 EENS= 125.831 LPSP= 0.601% starts=329/319
+rb2_v11_p2_0574_0465                         J3=  3064.200 deg= 2676.641 EENS= 129.186 LPSP= 0.617% starts=386/367
+rl_tree_i0_d4                                J3=  3354.413 deg= 2486.584 EENS= 289.276 LPSP= 1.381% starts=390/390
+rl_tree_precharge_i0_d4_gaussian_iid         J3=  3948.167 deg= 2503.391 EENS= 481.592 LPSP= 2.299% starts=383/387 precharge=182 H2kept=486.6kWh
+flc_if_selected                              J3=  2902.255 deg= 2673.156 EENS=  76.366 LPSP= 0.365% starts=388/379 precharge=79 H2kept=417.4kWh
+Resultats : /Work/Users/tlenoir/genial/Robustesse/Vieillissement11/FuzzyRules/runs/smoke_rl_precharge_b45f89cf1116
+
+real	0m22.383s
+user	0m21.750s
+sys	0m0.237s
+=== TERMINE ===

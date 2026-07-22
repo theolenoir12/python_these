@@ -1,0 +1,107 @@
+From 8594f548a0755a8ce36402cdac3b458e1400acc2 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 22 Jul 2026 09:22:23 +0000
+Subject: [PATCH] RL: resultat DAgger consigne + verdict rule-learning ; fix
+ JSON
+
+Job 222223 (DAgger 1 an) : l'arbre s'ameliore un peu (iter0->iter2 J3 -2,4 %,
+EENS -11 %) puis se degrade et reste loin de RB1/RB2. Goulot double : derive de
+distribution (partiellement corrigee) + capacite d'un CART peu profond. La
+famille regles-apprises est dominee sous toutes les variantes (arbre nu,
+feature prevision, regle precharge, DAgger) -> bascule vers ANFIS (section 10).
+
+Corrige un bug JSON (int64 non serialisable, get_n_leaves) qui coupait
+l'ecriture de summary.json apres l'impression de la trace ; aucun resultat
+n'avait ete perdu.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_0179FU55fV2dh7cuwExF8bpq
+---
+ .../RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt | 59 +++++++++++++++++--
+ .../FuzzyRules/run_dagger_rl_v11.py           |  2 +-
+ 2 files changed, 54 insertions(+), 7 deletions(-)
+
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt b/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt
+index 3232e89..b2187f3 100644
+--- a/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt
++++ b/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt
+@@ -375,10 +375,57 @@ LIVRÉ (2026-07-22, non exécutable hors mésocentre pour la boucle) :
+   - run_dagger_rl_v11.py (+ .slurm) : résout la grille PD (dp_core), itère
+     DAgger, rapporte la trace J3-par-itération vs RB1/RB2 et l'arbre 0.
+ 
+-À LANCER (mésocentre) :
+-  sbatch run_dagger_rl_v11.slurm   # depuis .../Vieillissement11/FuzzyRules
+-  Lecture : J3 de l'arbre décroît-il d'itération en itération vers RB1 (~2889) en
+-  partant de l'arbre 0 (~3354) ? Si oui, la dérive de distribution était bien le
+-  goulot (confirme le diagnostic §8) et rule-learning a un point POSITIF. Sinon,
+-  bascule sur C (ANFIS) avec le négatif conforté.
++RÉSULTAT MÉSOCENTRE (job 222223, 2026-07-22, 4 min, boucle fermée 1 an) :
++  iter   J3        deg      EENS    LPSP%   feuilles
++  RB1  2888,6    2511,1   125,8   0,601      —
++  RB2  3064,2    2676,6   129,2   0,617      —
++  0    3354,4    2486,6   289,3   1,381     16   (arbre nu = behavioral cloning)
++  1    3281,5    2495,1   262,1   1,251     15
++  2    3274,0    2501,7   257,4   1,229     16   (MEILLEUR)
++  3    3311,4    2526,8   261,5   1,249     16
++  4    3345,9    2544,0   267,3   1,276     16
++  5    3550,9    2439,1   370,6   1,769     16
++  (Un bug JSON int64 a coupé l'écriture de summary.json APRÈS l'impression de
++   toute la trace ; corrigé dans run_dagger_rl_v11.py, aucun résultat perdu.)
++
++  LECTURE :
++  (i)   DAgger aide, dans la bonne direction : iter0->iter2 J3 -2,4 %, EENS -11 %
++        (289->257). La dérive de distribution était donc BIEN une partie du
++        goulot (diagnostic §8 confirmé directionnellement).
++  (ii)  Mais ça plafonne (iter1-2) puis se DÉGRADE (iter3->5, J3 remonte à 3551,
++        pire que l'arbre nu ; starts oscillent 390->460) : instabilité DAgger
++        vanilla classique.
++  (iii) Même le meilleur (iter2, 3274) reste LOIN au-dessus de RB1 (2889) et RB2
++        (3064) ; EENS 257 contre 126 pour RB1 (~2x). DAgger NE ferme PAS l'écart.
++
++  DIAGNOSTIC AFFINÉ : le goulot de l'arbre est DOUBLE — (a) dérive de
++  distribution (partiellement corrigée par DAgger, d'où -11 % d'EENS) ET (b)
++  CAPACITÉ REPRÉSENTATIONNELLE d'un CART de régression peu profond (16 feuilles),
++  incapable de reproduire la gestion cohérente de la réserve de la PD. DAgger
++  corrige (a), pas (b).
++
++--------------------------------------------------------------------------------
++10. VERDICT RULE-LEARNING ET BASCULE VERS ANFIS
++--------------------------------------------------------------------------------
++La famille RÈGLES-APPRISES (arbre de régression distillé de la PD) est DOMINÉE
++par le rule-based (RB1/RB2) et la FLC experte, sous toutes les variantes testées
++et de façon cohérente :
++  - arbre I0 nu                          : dominé (dérive de distribution) ;
++  - prévision-comme-feature (IF)         : ignorée par le CART (§2.5) ;
++  - prévision-comme-règle (précharge, A) : pénalisante sur l'arbre alors qu'elle
++                                           aide la FLC (§8) ;
++  - DAgger (B)                           : -2,4 % au mieux, instable, reste dominé.
++Résultat scientifique transférable et honnête : « fidélité d'imitation !=
++performance en boucle fermée » ; le goulot est double (incohérence du clonage +
++capacité d'un arbre peu profond), et aucune injection d'information (SoH,
++prévision) ni correction de dérive (DAgger) ne suffit à rejoindre des règles
++expertes bien réglées.
++
++SUITE : passage à ANFIS (Étape D du plan), dernière famille apprise. MISE EN
++GARDE issue de ce chantier : ANFIS entraîné par pure imitation clone le même
++maître -> risque du même plafond (dérive + capacité). Il ne sera promu que s'il
++bat la validation hors apprentissage à complexité/temps online reportés (plan
++§2.3) ; sinon il CONFIRME le plafond d'imitation plutôt qu'il ne le franchit.
++Piste si l'on veut viser un apprentissage compétitif : entraînement en boucle
++fermée / DAgger-sur-ANFIS plutôt que clonage MSE (hors périmètre immédiat).
+ ================================================================================
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.py b/Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.py
+index a232a63..ce5dd64 100644
+--- a/Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.py
++++ b/Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.py
+@@ -135,7 +135,7 @@ def main():
+                 f"iter {k}: {summary['steps']} pas, attendu {expected_steps}")
+         label = f"dagger_iter{k}_d{args.depth}"
+         results[label] = summary
+-        dagger_trace.append({"iter": k, "n_leaves": tree.get_n_leaves(),
++        dagger_trace.append({"iter": int(k), "n_leaves": int(tree.get_n_leaves()),
+                              "train_size": int(len(y0) + sum(
+                                  len(b[1]) for b in relabel_batches)),
+                              **{key: summary[key] for key in
+-- 
+2.43.0
+

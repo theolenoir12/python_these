@@ -1,0 +1,75 @@
+numpy 1.21.5 | sklearn 1.0.2
+test_no_batches_returns_base (FuzzyRules.tests.test_rl_dagger_v11.AggregateTests) ... ok
+test_union_shapes_and_weights (FuzzyRules.tests.test_rl_dagger_v11.AggregateTests) ... ok
+test_features_match_dataset_normalization (FuzzyRules.tests.test_rl_dagger_v11.FeatureTests) ... ok
+test_delegates_and_returns_disciple_action (FuzzyRules.tests.test_rl_dagger_v11.LoggerTests) ... ok
+test_logs_states_and_derived_onoff (FuzzyRules.tests.test_rl_dagger_v11.LoggerTests) ... ok
+test_reset_clears_log_and_resets_disciple (FuzzyRules.tests.test_rl_dagger_v11.LoggerTests) ... ok
+test_picks_closest_node (FuzzyRules.tests.test_rl_dagger_v11.NearestIndexTests) ... ok
+test_both_off_when_micro_powers (FuzzyRules.tests.test_rl_dagger_v11.OnOffTests) ... ok
+test_ely_on_when_ely_power_negative (FuzzyRules.tests.test_rl_dagger_v11.OnOffTests) ... ok
+test_fc_on_when_fc_power_positive (FuzzyRules.tests.test_rl_dagger_v11.OnOffTests) ... ok
+test_lookup_returns_grid_control (FuzzyRules.tests.test_rl_dagger_v11.RelabelTests) ... ok
+test_time_index_is_clamped_to_horizon (FuzzyRules.tests.test_rl_dagger_v11.RelabelTests) ... ok
+test_i0_shape_and_normalization_clamps (FuzzyRules.tests.test_rl_tree_policy_v11.FeatureVectorTests) ... ok
+test_is_appends_three_wear_columns (FuzzyRules.tests.test_rl_tree_policy_v11.FeatureVectorTests) ... ok
+test_bol_feeds_zero_wear_and_matches_direct_prediction (FuzzyRules.tests.test_rl_tree_policy_v11.ISPolicyTests) ... ok
+test_information_set_and_features (FuzzyRules.tests.test_rl_tree_policy_v11.ISPolicyTests) ... ok
+test_deadband_zero_keeps_micro_command (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_deadband_zeroes_micro_command_to_battery (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_deficit_uses_fc_and_battery_only_and_closes_balance (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_distinct_deadband_yields_distinct_policy_id (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_ely_failure_clamps_command_to_nonnegative (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_fc_failure_clamps_command_to_nonpositive (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_identity_and_metadata_are_explicit (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_null_permutation_of_unused_feature_leaves_prediction_intact (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_physical_power_limit_is_applied_by_get_lol (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_reset_is_exact_for_stateless_policy (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_surplus_uses_ely_and_battery_only_and_closes_balance (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+test_toy_tree_predicts_chosen_values (FuzzyRules.tests.test_rl_tree_policy_v11.TreePolicyInvariantTests) ... ok
+
+----------------------------------------------------------------------
+Ran 28 tests in 0.072s
+
+OK
+=== DAgger (depth 4, 5 iterations) ===
+Resolution de la grille de politique PD (1 an, SoH=1)...
+  grille (8760, 51, 51, 2, 2), 63 controles.
+rb1_v11_p2_020_040         J3=  2888.640 deg= 2511.147 EENS= 125.831 LPSP= 0.601% starts=329/319
+rb2_v11_p2_0574_0465       J3=  3064.200 deg= 2676.641 EENS= 129.186 LPSP= 0.617% starts=386/367
+dagger_iter0_d4            J3=  3354.413 deg= 2486.584 EENS= 289.276 LPSP= 1.381% starts=390/390 leaves= 16
+dagger_iter1_d4            J3=  3281.504 deg= 2495.131 EENS= 262.124 LPSP= 1.251% starts=390/390 leaves= 15
+dagger_iter2_d4            J3=  3274.029 deg= 2501.701 EENS= 257.443 LPSP= 1.229% starts=416/416 leaves= 16
+dagger_iter3_d4            J3=  3311.388 deg= 2526.791 EENS= 261.532 LPSP= 1.249% starts=441/441 leaves= 16
+dagger_iter4_d4            J3=  3345.904 deg= 2544.039 EENS= 267.288 LPSP= 1.276% starts=460/460 leaves= 16
+dagger_iter5_d4            J3=  3550.916 deg= 2439.057 EENS= 370.620 LPSP= 1.769% starts=390/390 leaves= 16
+Traceback (most recent call last):
+  File "/Softs/spack/opt/spack/linux-rocky8-x86_64/gcc-12.1.0/anaconda3-2022.10-4dli7tnnxt7jyiuizrzg2h5w5crmdpuj/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/Softs/spack/opt/spack/linux-rocky8-x86_64/gcc-12.1.0/anaconda3-2022.10-4dli7tnnxt7jyiuizrzg2h5w5crmdpuj/lib/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.py", line 192, in <module>
+    main()
+  File "/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.py", line 179, in main
+    json.dumps({"manifest": manifest, "fingerprint": fingerprint,
+  File "/Softs/spack/opt/spack/linux-rocky8-x86_64/gcc-12.1.0/anaconda3-2022.10-4dli7tnnxt7jyiuizrzg2h5w5crmdpuj/lib/python3.9/json/__init__.py", line 234, in dumps
+    return cls(
+  File "/Softs/spack/opt/spack/linux-rocky8-x86_64/gcc-12.1.0/anaconda3-2022.10-4dli7tnnxt7jyiuizrzg2h5w5crmdpuj/lib/python3.9/json/encoder.py", line 201, in encode
+    chunks = list(chunks)
+  File "/Softs/spack/opt/spack/linux-rocky8-x86_64/gcc-12.1.0/anaconda3-2022.10-4dli7tnnxt7jyiuizrzg2h5w5crmdpuj/lib/python3.9/json/encoder.py", line 431, in _iterencode
+    yield from _iterencode_dict(o, _current_indent_level)
+  File "/Softs/spack/opt/spack/linux-rocky8-x86_64/gcc-12.1.0/anaconda3-2022.10-4dli7tnnxt7jyiuizrzg2h5w5crmdpuj/lib/python3.9/json/encoder.py", line 405, in _iterencode_dict
+    yield from chunks
+  File "/Softs/spack/opt/spack/linux-rocky8-x86_64/gcc-12.1.0/anaconda3-2022.10-4dli7tnnxt7jyiuizrzg2h5w5crmdpuj/lib/python3.9/json/encoder.py", line 325, in _iterencode_list
+    yield from chunks
+  File "/Softs/spack/opt/spack/linux-rocky8-x86_64/gcc-12.1.0/anaconda3-2022.10-4dli7tnnxt7jyiuizrzg2h5w5crmdpuj/lib/python3.9/json/encoder.py", line 405, in _iterencode_dict
+    yield from chunks
+  File "/Softs/spack/opt/spack/linux-rocky8-x86_64/gcc-12.1.0/anaconda3-2022.10-4dli7tnnxt7jyiuizrzg2h5w5crmdpuj/lib/python3.9/json/encoder.py", line 438, in _iterencode
+    o = _default(o)
+  File "/Softs/spack/opt/spack/linux-rocky8-x86_64/gcc-12.1.0/anaconda3-2022.10-4dli7tnnxt7jyiuizrzg2h5w5crmdpuj/lib/python3.9/json/encoder.py", line 179, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type int64 is not JSON serializable
+
+real	4m12.839s
+user	4m10.689s
+sys	0m0.302s

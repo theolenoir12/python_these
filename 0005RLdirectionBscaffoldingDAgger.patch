@@ -1,0 +1,699 @@
+From b2791845568b87f6ac01af3b4126ab25663db672 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 22 Jul 2026 08:24:48 +0000
+Subject: [PATCH] RL direction B : scaffolding DAgger (faisabilite etablie)
+
+Faisabilite confirmee : l'oracle de re-etiquetage existe deja dans DP/
+(dp_core.backward store_policy -> grille policy[t,i,j,fc_on,ely_on] sans etat ;
+dp_aging.DPPolicy._rollout_action off-grid par lookahead). Design retenu :
+DAgger 1 an SoH=1 avec la grille dp_core (stateless -> re-etiquetage hors-ligne).
+
+- rl_dagger_v11.py : DiscipleStateLogger, build_i0_features (normalisations du
+  dataset), relabel_with_policy_grid (PPV sur la grille PD), dagger_aggregate.
+- tests/test_rl_dagger_v11.py (12) : logger, features, plus-proche-voisin,
+  re-etiquetage contre grille synthetique, agregation. Suite FuzzyRules : 120 OK.
+- run_dagger_rl_v11.py (+ .slurm) : resout la grille PD, itere DAgger, rapporte
+  la trace J3-par-iteration vs RB1/RB2 et l'arbre 0.
+- Note de suivi : section 9 (faisabilite + design + limite aging assumee).
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_0179FU55fV2dh7cuwExF8bpq
+---
+ .../RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt |  38 ++++
+ .../FuzzyRules/rl_dagger_v11.py               | 178 ++++++++++++++++
+ .../FuzzyRules/run_dagger_rl_v11.py           | 192 ++++++++++++++++++
+ .../FuzzyRules/run_dagger_rl_v11.slurm        |  49 +++++
+ .../FuzzyRules/tests/test_rl_dagger_v11.py    | 174 ++++++++++++++++
+ 5 files changed, 631 insertions(+)
+ create mode 100644 Robustesse/Vieillissement11/FuzzyRules/rl_dagger_v11.py
+ create mode 100644 Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.py
+ create mode 100644 Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.slurm
+ create mode 100644 Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_dagger_v11.py
+
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt b/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt
+index 22bb81c..3232e89 100644
+--- a/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt
++++ b/Robustesse/Vieillissement11/FuzzyRules/RECAP_RULE_LEARNING_V11_P2_2026-07-21.txt
+@@ -343,4 +343,42 @@ l'incohérence (et non l'information), les options vivantes se réduisent à :
+   D  Cible timing/classification — AFFAIBLIE par ce résultat : le problème n'est
+      pas régression-vs-classification de l'amplitude mais la cohérence ; une
+      distillation du timing hériterait de la même dérive.
++
++--------------------------------------------------------------------------------
++9. DIRECTION B — DAgger : FAISABILITÉ ÉTABLIE + OUTILLAGE LIVRÉ (2026-07-22)
++--------------------------------------------------------------------------------
++FAISABILITÉ (question ouverte de la note : « la PD est-elle interrogeable hors
++grille ? ») : OUI, l'oracle existe DÉJÀ dans DP/.
++  - DP/dp_aging.py DPPolicy._rollout_action prend un état CONTINU (SoC, E_h2,
++    SoH...) et renvoie l'action optimale par lookahead 1 pas (coût immédiat +
++    V(t+1) interpolé bilinéairement sur la grille). Pas besoin d'être sur un nœud.
++  - DP/dp_core.py backward(store_policy=True) produit une GRILLE de politique
++    policy[t, i_SoC, j_H2, fc_on, ely_on] (1 an, SoH=1), SANS ÉTAT, interrogeable
++    par plus-proche-voisin (c'est make_dp_policy). C'est l'oracle retenu :
++    stateless -> ré-étiquetage hors-ligne trivial, et il correspond au jeu I0.
++
++DESIGN retenu (DAgger 1 an SoH=1) : (0) arbre distillé classique ; puis, à chaque
++itération : dérouler l'arbre 1 an (init_and_run_loop), ré-étiqueter les états
++visités par la grille PD, agréger au jeu enseignant (union), re-ajuster l'arbre.
++Le disciple apprend ainsi à se rattraper sur SA PROPRE distribution d'états.
++LIMITE assumée : le disciple vieillit un peu sur l'année alors que la grille est
++au neuf ; écart de SoH faible en année 0. Version aging-aware (rollout dp_aging
++avec état) reportée.
++
++LIVRÉ (2026-07-22, non exécutable hors mésocentre pour la boucle) :
++  - rl_dagger_v11.py : DiscipleStateLogger (journalise les états visités +
++    marche/arrêt dérivés de l'action), build_i0_features (mêmes normalisations
++    que le dataset), relabel_with_policy_grid (lookup PPV sur la grille PD),
++    dagger_aggregate (union enseignant + lots re-étiquetés, poids).
++  - tests/test_rl_dagger_v11.py (12) : logger/délégation/reset, features,
++    plus-proche-voisin, ré-étiquetage contre grille synthétique, agrégation.
++  - run_dagger_rl_v11.py (+ .slurm) : résout la grille PD (dp_core), itère
++    DAgger, rapporte la trace J3-par-itération vs RB1/RB2 et l'arbre 0.
++
++À LANCER (mésocentre) :
++  sbatch run_dagger_rl_v11.slurm   # depuis .../Vieillissement11/FuzzyRules
++  Lecture : J3 de l'arbre décroît-il d'itération en itération vers RB1 (~2889) en
++  partant de l'arbre 0 (~3354) ? Si oui, la dérive de distribution était bien le
++  goulot (confirme le diagnostic §8) et rule-learning a un point POSITIF. Sinon,
++  bascule sur C (ANFIS) avec le négatif conforté.
+ ================================================================================
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/rl_dagger_v11.py b/Robustesse/Vieillissement11/FuzzyRules/rl_dagger_v11.py
+new file mode 100644
+index 0000000..0886f03
+--- /dev/null
++++ b/Robustesse/Vieillissement11/FuzzyRules/rl_dagger_v11.py
+@@ -0,0 +1,178 @@
++"""DAgger (Dataset Aggregation) pour la distillation PD -> arbre, V11-p=2.
++
++Direction B du recap : l'arbre I0 distille est domine par manque de COHERENCE
++(derive de distribution du behavioral cloning, section 2.2), et non par manque
++d'information (feature ignoree section 2.5, regle penalisante section 8). DAgger
++attaque directement cette cause : on deroule le disciple, on RE-ETIQUETTE les
++etats qu'il visite avec l'action de la PD (l'oracle), on agrege ces paires au jeu
++d'apprentissage, et on re-ajuste l'arbre ; on itere. Le disciple apprend ainsi
++a se rattraper sur sa PROPRE distribution d'etats, pas seulement sur celle de la
++PD omnisciente.
++
++Oracle de re-etiquetage : la grille de politique 1 an SoH=1 de ``DP.dp_core``
++(``backward(store_policy=True)`` -> ``policy[t, i_SoC, j_H2, fc_on, ely_on]``).
++Elle est SANS ETAT : le re-etiquetage se fait donc hors-ligne, par plus-proche-
++voisin sur ``(SoC, E_h2)`` et lookup exact sur ``(t, fc_on, ely_on)`` -- exactement
++la regle que ``dp_core.make_dp_policy`` applique a la PD elle-meme.
++
++Ce module isole la logique PURE et testable (logger d'etats visites, extraction
++de features, re-etiquetage contre une grille, agregation). Le calcul de la vraie
++grille PD et la boucle refit/evaluation en boucle fermee vivent dans le runner
++mesocentre ``run_dagger_rl_v11`` (non testable hors cache/simu).
++"""
++
++from __future__ import annotations
++
++import numpy as np
++
++from .rl_dataset_v11 import _normalize_features
++from .rl_teacher_cache import E_H2_INIT
++
++# Seuils marche/arret alignes sur la boucle physique (cf. dp_aging.forward :
++# fc_on quand P_dc_fc depasse ~1 W ; ely_on quand |P_dc_ely| depasse un epsilon).
++_FC_ON_W = 1.0
++_ELY_ON_W = 1.0
++
++
++def onoff_from_action(action, fc_on_w=_FC_ON_W, ely_on_w=_ELY_ON_W):
++    """(fc_on, ely_on) a partir de l'action realisee (P_dc_bat, P_dc_fc, P_dc_ely)."""
++    return int(action[1] > fc_on_w), int(abs(action[2]) > ely_on_w)
++
++
++class DiscipleStateLogger:
++    """Enveloppe une policy disciple : delegue et journalise l'etat visite.
++
++    Signature de boucle identique a la policy enveloppee. A chaque pas on
++    enregistre l'etat AVANT transition (P_net, SoC, E_h2) et les indicateurs
++    marche/arret DERIVES DE L'ACTION realisee (ce que l'oracle grille attend en
++    entree de son lookup au pas suivant). Un compteur de pas fournit l'index
++    temporel ``t`` du template PD.
++    """
++
++    def __init__(self, disciple):
++        self.disciple = disciple
++        self.reset()
++
++    def reset(self):
++        reset = getattr(self.disciple, "reset", None)
++        if callable(reset):
++            reset()
++        self.t = 0
++        self.P_net, self.SoC, self.E_h2 = [], [], []
++        self.E_h2_init, self.fc_on, self.ely_on = [], [], []
++
++    def __call__(self, SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t,
++                 alpha_ely_t, SoH_bat_t, E_h2_t, E_h2_init, P_fc_max_t,
++                 P_ely_max_t, RUL_fc_t, RUL_ely_t, SoH_fc_t, SoH_ely_t,
++                 **kwargs):
++        action, lol = self.disciple(
++            SoC_t, P_tot_ref_t, defaillances, lol_tab, alpha_fc_t, alpha_ely_t,
++            SoH_bat_t, E_h2_t, E_h2_init, P_fc_max_t, P_ely_max_t,
++            RUL_fc_t, RUL_ely_t, SoH_fc_t, SoH_ely_t, **kwargs)
++        fc_on, ely_on = onoff_from_action(action)
++        self.P_net.append(float(P_tot_ref_t))
++        self.SoC.append(float(SoC_t))
++        self.E_h2.append(float(E_h2_t))
++        self.E_h2_init.append(float(E_h2_init))
++        self.fc_on.append(fc_on)
++        self.ely_on.append(ely_on)
++        self.t += 1
++        return action, lol
++
++    def visited(self):
++        """Etats visites journalises, en tableaux numpy alignes."""
++        return {
++            "P_net": np.asarray(self.P_net, float),
++            "SoC": np.asarray(self.SoC, float),
++            "E_h2": np.asarray(self.E_h2, float),
++            "E_h2_init": np.asarray(self.E_h2_init, float),
++            "fc_on": np.asarray(self.fc_on, int),
++            "ely_on": np.asarray(self.ely_on, int),
++            "t": np.arange(len(self.P_net), dtype=int),
++        }
++
++
++def build_i0_features(visited):
++    """Matrice de features I0 ``[P_net_w, SoC_norm, E_h2_norm]`` des etats visites.
++
++    Normalisation STRICTEMENT identique au jeu d'apprentissage
++    (``rl_dataset_v11._normalize_features``) pour que les paires re-etiquetees
++    vivent dans le meme espace que les labels enseignants.
++    """
++    P_net, soc_n, h2_n = _normalize_features(
++        visited["P_net"], visited["SoC"], visited["E_h2"])
++    return np.column_stack([P_net, soc_n, h2_n])
++
++
++def _nearest_index(grid, values):
++    """Indice du plus proche voisin de ``values`` dans ``grid`` (croissant)."""
++    grid = np.asarray(grid, float)
++    idx = np.clip(np.searchsorted(grid, values), 0, len(grid) - 1)
++    lo = np.clip(idx - 1, 0, len(grid) - 1)
++    take_lo = np.abs(values - grid[lo]) < np.abs(values - grid[idx])
++    return np.where(take_lo, lo, idx)
++
++
++def relabel_with_policy_grid(visited, policy_grid, u, soc_grid, h2_grid):
++    """Re-etiquette les etats visites par l'action u_h2 de la grille PD.
++
++    ``policy_grid`` a la forme ``(T, Ns, Nh, 2, 2)`` (int) et contient l'indice
++    du controle optimal dans ``u`` ; ``soc_grid`` (Ns) et ``h2_grid`` (Nh) sont
++    les noeuds de la PD. Le lookup est celui de ``dp_core.make_dp_policy`` :
++    plus-proche-voisin sur SoC et E_h2, exact sur ``(t, fc_on, ely_on)``. Un pas
++    au-dela de l'horizon du template est ramene au dernier pas disponible.
++    """
++    policy_grid = np.asarray(policy_grid)
++    u = np.asarray(u, float)
++    T = policy_grid.shape[0]
++    t = np.clip(visited["t"], 0, T - 1)
++    i = _nearest_index(soc_grid, visited["SoC"])
++    j = _nearest_index(h2_grid, visited["E_h2"])
++    fc_on = np.clip(visited["fc_on"], 0, 1)
++    ely_on = np.clip(visited["ely_on"], 0, 1)
++    ctrl_idx = policy_grid[t, i, j, fc_on, ely_on]
++    return u[ctrl_idx]
++
++
++def dagger_aggregate(base_X, base_y, relabel_batches, base_weight=1.0,
++                     visited_weight=1.0):
++    """Agrege le jeu enseignant et les lots re-etiquetes (union DAgger).
++
++    Retourne ``(X, y, sample_weight)``. ``relabel_batches`` est une liste de
++    couples ``(X_k, y_k)`` collectes aux iterations successives. Les poids
++    permettent, si besoin, de sur/sous-ponderer les etats visites face au socle
++    enseignant (par defaut : poids uniformes).
++    """
++    Xs, ys, ws = [np.asarray(base_X, float)], [np.asarray(base_y, float)], [
++        np.full(len(base_y), float(base_weight))]
++    for X_k, y_k in relabel_batches:
++        X_k = np.asarray(X_k, float)
++        y_k = np.asarray(y_k, float)
++        Xs.append(X_k)
++        ys.append(y_k)
++        ws.append(np.full(len(y_k), float(visited_weight)))
++    return np.vstack(Xs), np.concatenate(ys), np.concatenate(ws)
++
++
++if __name__ == "__main__":
++    # Demonstration hors boucle fermee : re-etiquetage d'etats synthetiques
++    # contre une grille jouet (aucun cache requis).
++    T, Ns, Nh, Nu = 4, 5, 5, 3
++    soc_grid = np.linspace(0.2, 0.995, Ns)
++    h2_grid = np.linspace(0.0, E_H2_INIT, Nh)
++    u = np.array([-3000.0, 0.0, 1000.0])
++    rng = np.random.default_rng(0)
++    policy_grid = rng.integers(0, Nu, size=(T, Ns, Nh, 2, 2))
++    visited = {
++        "P_net": np.array([2000.0, -5000.0]),
++        "SoC": np.array([0.6, 0.9]),
++        "E_h2": np.array([100.0, 20.0]),
++        "E_h2_init": np.array([E_H2_INIT, E_H2_INIT]),
++        "fc_on": np.array([1, 0]),
++        "ely_on": np.array([0, 1]),
++        "t": np.array([0, 1]),
++    }
++    y = relabel_with_policy_grid(visited, policy_grid, u, soc_grid, h2_grid)
++    X = build_i0_features(visited)
++    print("features visites :\n", X)
++    print("labels PD re-etiquetes :", y)
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.py b/Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.py
+new file mode 100644
+index 0000000..a232a63
+--- /dev/null
++++ b/Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.py
+@@ -0,0 +1,192 @@
++"""DAgger boucle fermee (direction B) : distillation PD -> arbre, V11-p=2.
++
++Boucle : on deroule l'arbre courant sur 1 an (moteur init_and_run_loop), on
++RE-ETIQUETTE les etats qu'il a visites avec l'action de la PD (grille de
++politique 1 an SoH=1 de dp_core), on agrege ces paires au jeu enseignant, on
++re-ajuste l'arbre, on itere. Objectif : voir si corriger la derive de
++distribution (la cause diagnostiquee du domino de l'arbre, recap sections 2.2 /
++8) rapproche l'arbre I0 des references RB1/RB2 la ou aucune injection de
++foresight n'y parvenait.
++
++Oracle = grille de politique PD SoH=1 (sans etat). LIMITE ASSUMEE : le disciple
++vieillit un peu au fil de l'annee alors que la grille est au neuf ; sur l'annee 0
++l'ecart de SoH reste faible. Une version pleinement aging-aware utiliserait le
++rollout de dp_aging (avec etat) et est reportee.
++
++Ne tourne que sur mesocentre (cache enseignant + resolution PD + simulateur).
++Soumettre via run_dagger_rl_v11.slurm.
++"""
++
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++import os
++import sys
++from pathlib import Path
++
++import numpy as np
++from sklearn.tree import DecisionTreeRegressor
++
++from Common.degradation_v11 import ELY_V11, MODEL_ID
++from Common.rb1_policy_v11 import make_rb1_policy_v11
++from Common.rb2_policy import make_rb2_policy
++
++from .run_smoke_flc_v11 import HERE, V11, VOLL, _evaluate, _profile_hash
++from .rl_dataset_v11 import I0_FEATURES, build_dataset
++from .rl_tree_policy_v11 import make_tree_policy_v11
++from .rl_dagger_v11 import (
++    DiscipleStateLogger,
++    build_i0_features,
++    dagger_aggregate,
++    relabel_with_policy_grid,
++)
++
++# dp_core n'est pas un package : on ajoute DP/ au path (comme dp_aging).
++_DP_DIR = str(V11 / "DP")
++if _DP_DIR not in sys.path:
++    sys.path.insert(0, _DP_DIR)
++
++
++def build_pd_policy_grid(n_iter=3, n_fc=10, n_ely=50, verbose=False):
++    """Resout la PD 1 an SoH=1 et renvoie (soc_grid, h2_grid, u, policy)."""
++    import dp_core as dpc
++    soc_grid = np.linspace(dpc.SOC_LO, dpc.SOC_HI, 51)
++    h2_grid = np.linspace(0.0, dpc.E_H2_INIT, 51)
++    u = dpc.control_grid(n_fc=n_fc, n_ely=n_ely, extra_u=dpc.v11_control_anchors())
++    pre = dpc.precompute_controls(u)
++    P_ref, _, _ = dpc.net_reference(dpc.N_YEAR)
++    _, policy = dpc.solve_cyclic(soc_grid, h2_grid, u, pre, P_ref,
++                                 n_iter=n_iter, verbose=verbose)
++    return soc_grid, h2_grid, u, policy
++
++
++def fit_i0_tree(X, y, sample_weight, max_depth, min_samples_leaf,
++                random_state=0):
++    """Ajuste un arbre I0 sur des tableaux explicites (agreges DAgger)."""
++    tree = DecisionTreeRegressor(max_depth=max_depth,
++                                 min_samples_leaf=min_samples_leaf,
++                                 random_state=random_state)
++    tree.fit(X, y, sample_weight=sample_weight)
++    tree._genial_meta = {
++        "information_set": "I0",
++        "max_depth": max_depth,
++        "min_samples_leaf": min_samples_leaf,
++        "sample_weight": "dagger",
++        "n_leaves": int(tree.get_n_leaves()),
++        "features": list(I0_FEATURES),
++    }
++    return tree
++
++
++def _fmt(label, summary, extra=""):
++    return (f"{label:26s} J3={summary['unified_voll3_eur']:10.3f} "
++            f"deg={summary['degradation_eur']:9.3f} "
++            f"EENS={summary['eens_kwh']:8.3f} "
++            f"LPSP={summary['lpsp_pct']:6.3f}% "
++            f"starts={summary['fc_starts']}/{summary['ely_starts']}{extra}")
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--days", type=float, default=365.0)
++    parser.add_argument("--depth", type=int, default=4)
++    parser.add_argument("--min-samples-leaf", type=int, default=200)
++    parser.add_argument("--iterations", type=int, default=5,
++                        help="nombre d'iterations DAgger (au-dela de l'arbre 0)")
++    parser.add_argument("--deadband-w", type=float, default=0.0)
++    parser.add_argument("--visited-weight", type=float, default=1.0)
++    args = parser.parse_args()
++    if not 0.0 < args.days <= 365.0:
++        raise ValueError("--days doit appartenir a ]0, 365]")
++    years = args.days / 365.0
++    expected_steps = max(0, int(round(args.days * 24.0)) - 1)
++
++    dataset = build_dataset()
++    train = dataset["split"] == "train"
++    X0 = dataset["X_i0"][train]
++    y0 = dataset["y"][train]
++
++    print("Resolution de la grille de politique PD (1 an, SoH=1)...", flush=True)
++    soc_grid, h2_grid, u, policy_grid = build_pd_policy_grid()
++    print(f"  grille {policy_grid.shape}, {len(u)} controles.", flush=True)
++
++    references = {
++        "rb1_v11_p2_020_040": make_rb1_policy_v11(0.20, 0.40),
++        "rb2_v11_p2_0574_0465": make_rb2_policy(0.574, 0.465),
++    }
++    results = {}
++    for label, policy in references.items():
++        summary, _, _ = _evaluate(policy, years)
++        results[label] = summary
++        print(_fmt(label, summary), flush=True)
++
++    # Iteration 0 : arbre distille classique (behavioral cloning).
++    tree = fit_i0_tree(X0, y0, None, args.depth, args.min_samples_leaf)
++    relabel_batches = []
++    dagger_trace = []
++    for k in range(args.iterations + 1):
++        policy = make_tree_policy_v11(tree, deadband_w=args.deadband_w)
++        logger = DiscipleStateLogger(policy)
++        summary, _, _ = _evaluate(logger, years)
++        if summary["steps"] != expected_steps:
++            raise AssertionError(
++                f"iter {k}: {summary['steps']} pas, attendu {expected_steps}")
++        label = f"dagger_iter{k}_d{args.depth}"
++        results[label] = summary
++        dagger_trace.append({"iter": k, "n_leaves": tree.get_n_leaves(),
++                             "train_size": int(len(y0) + sum(
++                                 len(b[1]) for b in relabel_batches)),
++                             **{key: summary[key] for key in
++                                ("unified_voll3_eur", "degradation_eur",
++                                 "eens_kwh", "lpsp_pct")}})
++        print(_fmt(label, summary,
++                   extra=f" leaves={tree.get_n_leaves():3d}"), flush=True)
++
++        # Re-etiquetage des etats visites par la PD + agregation + refit.
++        visited = logger.visited()
++        Xk = build_i0_features(visited)
++        yk = relabel_with_policy_grid(visited, policy_grid, u, soc_grid, h2_grid)
++        relabel_batches.append((Xk, yk))
++        X, y, w = dagger_aggregate(X0, y0, relabel_batches,
++                                   visited_weight=args.visited_weight)
++        tree = fit_i0_tree(X, y, w, args.depth, args.min_samples_leaf)
++
++    manifest = {
++        "protocol_id": "dagger-rl-tree-v11-p2-2026-07-22",
++        "model_id": MODEL_ID,
++        "ely_stress_exponent": float(ELY_V11["stress_exponent"]),
++        "voll_eur_per_kwh": VOLL,
++        "days_requested": float(args.days),
++        "expected_steps": expected_steps,
++        "profile_sha256": _profile_hash(expected_steps),
++        "depth": args.depth,
++        "min_samples_leaf": args.min_samples_leaf,
++        "iterations": args.iterations,
++        "deadband_w": args.deadband_w,
++        "visited_weight": args.visited_weight,
++        "oracle": "pd_policy_grid_1y_soh1 (dp_core)",
++        "oracle_caveat": "disciple vieillit; grille au neuf (annee 0, ecart faible)",
++        "replacement_accounting": "corrected",
++    }
++    fingerprint = hashlib.sha256(
++        json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()
++    ).hexdigest()[:12]
++    run_dir = HERE / "runs" / f"dagger_rl_{fingerprint}"
++    run_dir.mkdir(parents=True, exist_ok=True)
++    (run_dir / "summary.json").write_text(
++        json.dumps({"manifest": manifest, "fingerprint": fingerprint,
++                    "results": results, "dagger_trace": dagger_trace},
++                   indent=2, sort_keys=True) + "\n")
++
++    best = min(dagger_trace, key=lambda r: r["unified_voll3_eur"])
++    print(f"\nMeilleure iteration DAgger : #{best['iter']} "
++          f"J3={best['unified_voll3_eur']:.3f} "
++          f"(arbre 0 : {dagger_trace[0]['unified_voll3_eur']:.3f} ; "
++          f"RB1 : {results['rb1_v11_p2_020_040']['unified_voll3_eur']:.3f})")
++    print(f"Resultats : {run_dir}")
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.slurm b/Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.slurm
+new file mode 100644
+index 0000000..abcadbd
+--- /dev/null
++++ b/Robustesse/Vieillissement11/FuzzyRules/run_dagger_rl_v11.slurm
+@@ -0,0 +1,49 @@
++#!/usr/bin/bash -l
++# Direction B du rule-learning : DAgger (Dataset Aggregation) sur l'arbre I0
++# distille. A chaque iteration, on deroule l'arbre courant 1 an, on re-etiquette
++# les etats visites avec l'action de la PD (grille 1 an SoH=1 de dp_core), on
++# agrege au jeu enseignant, on re-ajuste l'arbre. Question : corriger la derive
++# de distribution rapproche-t-il l'arbre des references RB1/RB2 ?
++#
++# Soumettre depuis $WORK/genial/Robustesse/Vieillissement11/FuzzyRules :
++#   sbatch run_dagger_rl_v11.slurm
++# Resultats : FuzzyRules/runs/dagger_rl_<empreinte>/summary.json (+ la trace
++# J3-par-iteration dans la sortie %x.%J.out).
++
++#SBATCH --job-name=rl_dagger_v11
++#SBATCH --output=%x.%J.out
++#SBATCH --error=%x.%J.out
++#SBATCH --time=02:00:00
++#SBATCH --partition=smp
++#SBATCH --cpus-per-task=2
++#SBATCH --mem=16G
++
++export OMP_NUM_THREADS=1
++export OPENBLAS_NUM_THREADS=1
++export MKL_NUM_THREADS=1
++export NUMEXPR_NUM_THREADS=1
++export MPLBACKEND=Agg
++export MPLCONFIGDIR="$WORK/.mplconfig"
++export GENIAL_DATA_DIR="$WORK/genial_data"
++mkdir -p "$MPLCONFIGDIR"
++
++module purge
++module load anaconda3@2022.10/gcc-12.1.0
++
++# Les modules FuzzyRules se lancent depuis Vieillissement11/ (python -m ...).
++cd "$SLURM_SUBMIT_DIR/.." || exit 1
++
++# 1) Garde d'environnement.
++python -c "import numpy, sklearn; print('numpy', numpy.__version__, '| sklearn', sklearn.__version__)" || exit 2
++
++# 2) Tests unitaires du pipeline DAgger (+ arbre/forecast/precharge).
++python -m unittest -v \
++  FuzzyRules.tests.test_rl_dagger_v11 \
++  FuzzyRules.tests.test_rl_tree_policy_v11 || exit 3
++
++# 3) DAgger 1 an, arbre I0 depth 4, 5 iterations.
++echo "=== DAgger (depth 4, 5 iterations) ==="
++time python -m FuzzyRules.run_dagger_rl_v11 \
++  --days 365 --depth 4 --iterations 5 || exit 4
++
++echo "=== TERMINE ==="
+diff --git a/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_dagger_v11.py b/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_dagger_v11.py
+new file mode 100644
+index 0000000..50dc95f
+--- /dev/null
++++ b/Robustesse/Vieillissement11/FuzzyRules/tests/test_rl_dagger_v11.py
+@@ -0,0 +1,174 @@
++"""Tests du pipeline DAgger (direction B), V11-p=2.
++
++Parties pures et testables sans cache PD ni simulateur : logger d'etats visites,
++extraction de features (memes normalisations que le jeu d'apprentissage),
++re-etiquetage plus-proche-voisin contre une grille de politique synthetique,
++agregation. Le calcul de la vraie grille PD et la boucle fermee sont dans le
++runner mesocentre et ne sont pas couverts ici.
++"""
++
++import unittest
++
++import numpy as np
++
++from FuzzyRules.rl_dataset_v11 import _normalize_features
++from FuzzyRules.rl_dagger_v11 import (
++    DiscipleStateLogger,
++    build_i0_features,
++    dagger_aggregate,
++    onoff_from_action,
++    relabel_with_policy_grid,
++    _nearest_index,
++)
++
++
++class _StubDisciple:
++    """Disciple jouet : renvoie une action fixee selon le signe de P_net."""
++
++    def __init__(self):
++        self.calls = 0
++        self.was_reset = False
++
++    def reset(self):
++        self.was_reset = True
++
++    def __call__(self, SoC_t, P_tot_ref_t, *rest, **kwargs):
++        self.calls += 1
++        if P_tot_ref_t >= 0:               # deficit -> FC
++            action = (P_tot_ref_t - 1000.0, 1000.0, 0.0)
++        else:                              # surplus -> ELY
++            action = (P_tot_ref_t + 3000.0, 0.0, -3000.0)
++        return action, 0.0
++
++
++def _args(soc, net, e_h2=100.0, e_h2_init=200.0):
++    return (soc, net, [], np.zeros(1), 0.0, 0.0, 1.0, e_h2, e_h2_init,
++            1753.0, 18430.0, float("inf"), float("inf"), 1.0, 1.0)
++
++
++class OnOffTests(unittest.TestCase):
++    def test_fc_on_when_fc_power_positive(self):
++        self.assertEqual(onoff_from_action((0.0, 500.0, 0.0)), (1, 0))
++
++    def test_ely_on_when_ely_power_negative(self):
++        self.assertEqual(onoff_from_action((0.0, 0.0, -2000.0)), (0, 1))
++
++    def test_both_off_when_micro_powers(self):
++        self.assertEqual(onoff_from_action((1000.0, 0.5, -0.5)), (0, 0))
++
++
++class LoggerTests(unittest.TestCase):
++    def setUp(self):
++        self.stub = _StubDisciple()
++        self.logger = DiscipleStateLogger(self.stub)
++
++    def test_delegates_and_returns_disciple_action(self):
++        out = self.logger(*_args(0.6, 2000.0))
++        self.assertEqual(out, ((1000.0, 1000.0, 0.0), 0.0))
++        self.assertEqual(self.stub.calls, 1)
++
++    def test_logs_states_and_derived_onoff(self):
++        self.logger(*_args(0.6, 2000.0))     # deficit -> fc_on
++        self.logger(*_args(0.8, -5000.0))    # surplus -> ely_on
++        v = self.logger.visited()
++        np.testing.assert_array_equal(v["P_net"], [2000.0, -5000.0])
++        np.testing.assert_array_equal(v["SoC"], [0.6, 0.8])
++        np.testing.assert_array_equal(v["fc_on"], [1, 0])
++        np.testing.assert_array_equal(v["ely_on"], [0, 1])
++        np.testing.assert_array_equal(v["t"], [0, 1])
++
++    def test_reset_clears_log_and_resets_disciple(self):
++        self.logger(*_args(0.6, 2000.0))
++        self.logger.reset()
++        self.assertTrue(self.stub.was_reset)
++        self.assertEqual(len(self.logger.visited()["t"]), 0)
++
++
++class FeatureTests(unittest.TestCase):
++    def test_features_match_dataset_normalization(self):
++        visited = {
++            "P_net": np.array([1500.0, -800.0]),
++            "SoC": np.array([0.10, 0.90]),     # sous borne / interieur
++            "E_h2": np.array([250.0, 50.0]),   # au-dessus reservoir / interieur
++        }
++        X = build_i0_features(visited)
++        P, s, h = _normalize_features(visited["P_net"], visited["SoC"],
++                                      visited["E_h2"])
++        np.testing.assert_allclose(X[:, 0], P)
++        np.testing.assert_allclose(X[:, 1], s)
++        np.testing.assert_allclose(X[:, 2], h)
++        self.assertEqual(X[0, 1], 0.0)   # SoC clampe
++        self.assertEqual(X[0, 2], 1.0)   # H2 clampe
++
++
++class NearestIndexTests(unittest.TestCase):
++    def test_picks_closest_node(self):
++        grid = np.array([0.0, 1.0, 2.0, 3.0])
++        idx = _nearest_index(grid, np.array([-0.4, 0.4, 0.6, 2.9, 5.0]))
++        np.testing.assert_array_equal(idx, [0, 0, 1, 3, 3])
++
++
++class RelabelTests(unittest.TestCase):
++    def setUp(self):
++        self.Ns = self.Nh = 5
++        self.soc_grid = np.linspace(0.2, 0.995, self.Ns)
++        self.h2_grid = np.linspace(0.0, 200.0, self.Nh)
++        self.u = np.array([-3000.0, 0.0, 1000.0])   # ELY, idle, FC
++
++    def test_lookup_returns_grid_control(self):
++        T = 3
++        grid = np.ones((T, self.Ns, self.Nh, 2, 2), dtype=int)  # partout idle
++        # Place un controle FC (idx 2) sur une cellule precise et l'ELY (idx 0)
++        # sur une autre, pour deux etats visites bien identifies.
++        i0 = _nearest_index(self.soc_grid, np.array([0.6]))[0]
++        j0 = _nearest_index(self.h2_grid, np.array([100.0]))[0]
++        grid[0, i0, j0, 1, 0] = 2          # t=0, fc_on=1, ely_on=0 -> FC
++        i1 = _nearest_index(self.soc_grid, np.array([0.95]))[0]
++        j1 = _nearest_index(self.h2_grid, np.array([20.0]))[0]
++        grid[1, i1, j1, 0, 1] = 0          # t=1, fc_on=0, ely_on=1 -> ELY
++        visited = {
++            "SoC": np.array([0.6, 0.95]),
++            "E_h2": np.array([100.0, 20.0]),
++            "fc_on": np.array([1, 0]),
++            "ely_on": np.array([0, 1]),
++            "t": np.array([0, 1]),
++        }
++        y = relabel_with_policy_grid(visited, grid, self.u, self.soc_grid,
++                                     self.h2_grid)
++        np.testing.assert_allclose(y, [1000.0, -3000.0])
++
++    def test_time_index_is_clamped_to_horizon(self):
++        T = 2
++        grid = np.full((T, self.Ns, self.Nh, 2, 2), 2, dtype=int)  # FC partout
++        visited = {
++            "SoC": np.array([0.6]), "E_h2": np.array([100.0]),
++            "fc_on": np.array([0]), "ely_on": np.array([0]),
++            "t": np.array([9]),    # au-dela de T -> ramene au dernier pas
++        }
++        y = relabel_with_policy_grid(visited, grid, self.u, self.soc_grid,
++                                     self.h2_grid)
++        np.testing.assert_allclose(y, [1000.0])
++
++
++class AggregateTests(unittest.TestCase):
++    def test_union_shapes_and_weights(self):
++        base_X = np.zeros((3, 3))
++        base_y = np.array([1.0, 2.0, 3.0])
++        b1 = (np.ones((2, 3)), np.array([4.0, 5.0]))
++        b2 = (2 * np.ones((1, 3)), np.array([6.0]))
++        X, y, w = dagger_aggregate(base_X, base_y, [b1, b2],
++                                   base_weight=1.0, visited_weight=2.0)
++        self.assertEqual(X.shape, (6, 3))
++        np.testing.assert_allclose(y, [1, 2, 3, 4, 5, 6])
++        np.testing.assert_allclose(w, [1, 1, 1, 2, 2, 2])
++
++    def test_no_batches_returns_base(self):
++        base_X = np.ones((2, 3))
++        base_y = np.array([1.0, 2.0])
++        X, y, w = dagger_aggregate(base_X, base_y, [])
++        self.assertEqual(X.shape, (2, 3))
++        np.testing.assert_allclose(w, [1.0, 1.0])
++
++
++if __name__ == "__main__":
++    unittest.main()
+-- 
+2.43.0
+

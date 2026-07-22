@@ -135,7 +135,7 @@ def main():
                 f"iter {k}: {summary['steps']} pas, attendu {expected_steps}")
         label = f"dagger_iter{k}_d{args.depth}"
         results[label] = summary
-        dagger_trace.append({"iter": k, "n_leaves": tree.get_n_leaves(),
+        dagger_trace.append({"iter": int(k), "n_leaves": int(tree.get_n_leaves()),
                              "train_size": int(len(y0) + sum(
                                  len(b[1]) for b in relabel_batches)),
                              **{key: summary[key] for key in

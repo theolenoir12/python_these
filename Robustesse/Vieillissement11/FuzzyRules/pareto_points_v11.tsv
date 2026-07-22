@@ -1,0 +1,22 @@
+# Synthese Pareto V11-p=2, horizon 1 an, profil canonique, moteur init_and_run_loop
+# (comptabilite "corrected", VoLL=3). Tous les points ci-dessous proviennent des
+# runs de cette campagne (memes conditions), transcrits de leurs sorties SLURM.
+# Colonnes : label  famille  augmentation  info  lpsp_pct  eens_kwh  deg_keur  j3_eur  source
+# deg_keur = degradation_eur/1000 ; j3_eur = degradation_eur + 3*eens_kwh (VoLL=3).
+# Front PD (repere) : DP/results/mpc_reference_1y_1b54f384caa8/points.tsv (19 eps).
+label	famille	augmentation	info	lpsp_pct	eens_kwh	deg_keur	j3_eur	source
+RB1	reference	none	I0	0.601	125.831	2.511147	2888.640	job222223
+RB2	reference	none	I0	0.617	129.186	2.676641	3064.200	job222223
+FLC-IF (oracle)	flc	forecast_precharge	IF	0.355	74.365	2.689660	2912.754	job220945
+FLC-IF (gaussian)	flc	forecast_precharge	IF	0.365	76.366	2.673156	2902.255	job220945
+arbre I0 d4	learned_tree	none	I0	1.381	289.276	2.486584	3354.413	job222223
+arbre+precharge (oracle)	learned_tree	forecast_precharge	IF	2.330	487.955	2.523284	3987.148	job220945
+arbre+precharge (gaussian)	learned_tree	forecast_precharge	IF	2.299	481.592	2.503391	3948.167	job220945
+arbre+DAgger iter1	learned_tree	dagger	I0	1.251	262.124	2.495131	3281.504	job222223
+arbre+DAgger iter2 (best)	learned_tree	dagger	I0	1.229	257.443	2.501701	3274.029	job222223
+arbre+DAgger iter3	learned_tree	dagger	I0	1.249	261.532	2.526791	3311.388	job222223
+arbre+DAgger iter4	learned_tree	dagger	I0	1.276	267.288	2.544039	3345.904	job222223
+arbre+DAgger iter5	learned_tree	dagger	I0	1.769	370.620	2.439057	3550.916	job222223
+ANFIS I0 (mf2)	learned_anfis	none	I0	1.427	298.978	2.596077	3493.010	job222457
+ANFIS I0 (mf3)	learned_anfis	none	I0	2.473	517.964	2.620225	4174.117	job222457
+ANFIS IS (mf3)	learned_anfis	soh	IS	3.942	825.636	2.505068	4981.975	job222457

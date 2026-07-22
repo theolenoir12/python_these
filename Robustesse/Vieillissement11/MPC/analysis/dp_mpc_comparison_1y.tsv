@@ -1,7 +1,7 @@
 label	forecast_mode	lpsp_pct	degradation_keur	dominated_by_dp	n_dp_front_points_dominated	dominates_entire_dp_front
-mpc_no_soh_h6	perfect	0.6797617873	2.254555881	1	0	0
-mpc_soh_fc1_h6	perfect	0.6766888843	2.254191097	1	0	0
-mpc_soh_both1_h6	perfect	0.6781171447	2.254548584	1	0	0
-mpc_soh_ely1_h6	perfect	0.6797100847	2.25369599	1	0	0
-mpc_no_soh_h24	perfect	0.2650619265	2.378488888	1	0	0
-mpc_soh_both1_h24	perfect	0.259573968	2.373278418	1	0	0
+mpc_soh_both1_h6	perfect	0.6740361069	2.25618155	1	0	0
+mpc_no_soh_h6	perfect	0.675817166	2.256611511	1	0	0
+mpc_soh_ely1_h6	perfect	0.6733703386	2.257484852	1	0	0
+mpc_soh_fc1_h6	perfect	0.6760603424	2.257044443	1	0	0
+mpc_no_soh_h24	perfect	0.2629788888	2.37576781	1	0	0
+mpc_soh_both1_h24	perfect	0.2622131864	2.377833033	1	0	0

@@ -13,6 +13,7 @@ from benchmark_tuning_mpc_v11 import (
     DEFAULT_VALIDATION_SEEDS,
     MPCConfig,
     _baseline_source_label,
+    _cache_is_reusable,
     _case_parameters,
     _rank_screen,
     _rank_validation,
@@ -22,6 +23,17 @@ from benchmark_tuning_mpc_v11 import (
 
 
 class TestTuningMPCV11(unittest.TestCase):
+
+    def test_invalid_physical_cache_is_not_reused(self):
+        valid = {
+            "max_deficit_shortage_after_lol_w": 1e-8,
+            "lol_above_one_steps": 0,
+            "excess_beyond_clip_kwh": 0.0,
+            "diagnostics": {"failures": 0},
+        }
+        invalid = dict(valid, max_deficit_shortage_after_lol_w=35.884)
+        self.assertTrue(_cache_is_reusable(valid))
+        self.assertFalse(_cache_is_reusable(invalid))
 
     def test_screen_budget_and_one_factor_changes(self):
         cases = _case_parameters()

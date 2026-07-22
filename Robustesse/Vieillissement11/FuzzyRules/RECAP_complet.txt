@@ -1,0 +1,553 @@
+================================================================================
+RÉCAP — RULE-LEARNING (distillation PD → règles), V11-p=2
+Date : 2026-07-21
+Périmètre : Vieillissement11/FuzzyRules/  (famille rule-learning, hors MPC)
+Protocole de référence : PLAN_FUZZY_RULE_LEARNING_V11_P2.md (§2.2, §3, §5, §8)
+Environnement : /home/theo/miniconda3/envs/simu_env/bin/python
+Lancer depuis : Vieillissement11/  (python -m FuzzyRules.<module>)
+================================================================================
+
+--------------------------------------------------------------------------------
+0. CONTEXTE ET DÉCISIONS DE CADRAGE
+--------------------------------------------------------------------------------
+Après clôture de la branche FLC experte (I0 réglée, IS/SoH nulle exacte mais
+dominée, IF/prévision H18 promue à -1,6 % de J3, ISF non retenue), la famille
+suivante du plan est le rule-learning ; ANFIS ensuite.
+
+Décisions arrêtées le 2026-07-21 (avec l'utilisateur) :
+  - commencer par un ARBRE DE RÉGRESSION sklearn (benchmark technique du plan
+    §2.2), et non RIPPER (paquet `wittgenstein` absent de simu_env, et
+    classifieur seulement) ;
+  - traiter la décision marche/arrêt de la chaîne H2 par RÉGRESSION DIRECTE de
+    u_h2 + ZONE MORTE (comme la FLC I0 avec son output_deadband) ;
+  - SÉLECTIONNER la profondeur d'arbre sur J3 EN BOUCLE FERMÉE (la fidélité MSE
+    n'étant qu'un diagnostic, cf. plan §7) ;
+  - suite immédiate testée : jeu d'information IF (features de prévision).
+
+Critère de décision : J3 = C_deg + 3·EENS  (VoLL de reporting = 3 €/kWh, figé).
+Seuil de matérialité annoncé : quelques % sur J3 (> sensibilité numérique).
+
+--------------------------------------------------------------------------------
+1. CE QUI A ÉTÉ FAIT (modules livrés, tous audités)
+--------------------------------------------------------------------------------
+
+1.1 rl_teacher_cache.py — chargeur audité de l'enseignant
+    - Enseignant canonique : PD_seq_v2__* du cache
+      DP/runs/dp_aging_v11_p2_25y_51x51.npz
+      (sha256 90cceb19..., 218 999 pas horaires, ely_stress_exponent=2.0).
+    - CONVENTIONS DÉCODÉES EMPIRIQUEMENT (piège corrigé) :
+        * P_net = P_dc_load - P_dc_pv  (= P_tot_ref_t de main_init_and_loop) ;
+        * commande signée cible : u_h2 = P_dc_fc + P_dc_ely
+          ATTENTION : P_dc_ely est stocké NÉGATIF (charge du bus DC) ; donc
+          PEMFC>0, PEMWE<0. (Un premier décodage en "P_dc_fc - P_dc_ely" était
+          FAUX et gonflait le résidu.)
+        * bilan DC : P_net = P_dc_bat + u_h2 ; la batterie ferme le bilan.
+    - Vérification bilan : résidu intérieur (pas servis, SoC non saturé) p99 =
+      4,5e-13 W (précision machine) → décodage validé. Le résidu global non nul
+      = délestage (EENS) + écrêtage PV, géré à l'identique par get_lol au replay.
+    - Statistiques enseignant : déficit 58,3 % / surplus 41,7 % ; FC actif
+      47,0 %, ELY actif 37,0 % ; heures avec délestage 18,7 % (la traj PD
+      OPTIMALE à ε=3 tolère donc du délestage, cohérent VoLL=3).
+    - Plages : P_net [-30016 ; +4721] W ; u_h2 [-20068 ; +1578] W (dominé ELY).
+
+1.2 rl_dataset_v11.py — jeux d'apprentissage appariés
+    - Cible = u_h2. Features :
+        I0 = [P_net_w, SoC_norm(0,20-0,995), E_h2_norm(0-200)] ;
+        IS = I0 + usure [(1-SoH)/(1-SoH_EoL)] bat/fc/ely
+             (SoH_EoL : bat 0,7 ; fc 0,9 ; ely 0,9 ; nulle au neuf) ;
+        IF = I0 + E_net_h18_kwh (énergie nette prévue cumulée, oracle=vrai
+             futur du maître ; horizon aligné sur la FLC-IF promue).
+    - Découpage par BLOCS D'ANNÉES CONTIGUS (jamais aléatoire horaire) :
+        train années 0-14 (131 400 pas), val 15-19 (43 800), test 20-24 (43 799).
+    - Stratification (76 strates sur le train) : signe·amplitude P_net, zones
+      SoC (0,35/0,70), zones H2 (0,15/0,60), flag délestage. Poids
+      fréquence-inverse disponible pour surpondérer les états rares critiques.
+    - Manifeste de provenance : empreinte cache source, variables, bornes de
+      normalisation, indices de partition, définitions de strates.
+    - MISE EN GARDE enregistrée : profil météo répété chaque année ⇒ un holdout
+      annuel NE démontre PAS la généralisation à d'autres profils (→ Étape C).
+
+1.3 rl_tree_policy_v11.py — distillation arbre + policy (I0/IS)
+    - fit_tree(dataset, information_set, max_depth, min_samples_leaf,
+      sample_weight) sur le bloc train ; DecisionTreeRegressor.
+    - make_tree_policy_v11(tree, deadband_w) → CALLABLE à la MÊME SIGNATURE que
+      flc_policy_v11 : split u_h2 → p_fc=max(u,0), p_ely=min(u,0),
+      p_bat=p_net-u ; gardes de défaillance identiques à la FLC
+      ("FC"→u≤0, "ELY"→u≥0) ; zone morte |u|<deadband→0 ; renvoie get_lol(...).
+      reset() (sans mémoire). Empreinte de spec + texte des règles.
+    - null_test_unused_permutation : permuter une feature d'importance nulle
+      laisse la prédiction inchangée (pour I0, les 3 features sont utilisées).
+
+1.4 rl_tree_forecast_policy_v11.py — policy IF (arbre + feature prévision)
+    - make_forecast_tree_policy_v11 accepte P_tot_ref_future (plombage boucle) ;
+      forecast_horizon_steps exposé ; RÉUTILISE la logique de prévision exacte
+      de flc_forecast_policy_v11 (oracle / gaussian_iid / gaussian_ar1 /
+      persistance ; mêmes bias/σ par défaut) → comparaison strictement appariée
+      avec la FLC-IF.
+
+1.5 run_smoke_rl_v11.py — smoke boucle fermée
+    - Réutilise le harnais d'évaluation de run_smoke_flc_v11 (même moteur
+      init_and_run_loop, comptabilité "corrected", VoLL=3).
+    - Compare arbres (balayage de profondeur) vs RB1 (0,20;0,40) et RB2
+      (0,574;0,465). Sauvegarde npz pleine précision + summary.json empreinté.
+    - Caches produits : runs/smoke_rl_tree_93df61fb46e7 (7 j),
+      runs/smoke_rl_tree_457d86dd4030 (1 an).
+
+--------------------------------------------------------------------------------
+2. RÉSULTATS (tous en boucle fermée V11-p=2, profil canonique)
+--------------------------------------------------------------------------------
+
+2.1 Fidélité open-loop (validation, u_h2 en W)
+    depth  feuilles  MAE   RMSE   accord ON/OFF FC   ELY
+      2       4     1299   2243        0,857        0,923
+      3       8     1088   1922        0,857        0,923
+      4      16     1026   1834        0,857        0,923
+      5      30     1003   1801        0,857        0,923
+      6      54      929   1752        0,847        0,930
+    (Fidélité modeste : ~14 % de désaccord ON/OFF sur la FC. Diagnostic, pas
+     critère de décision.)
+
+2.2 Smoke 7 jours (in-sample, batteries neuves → EENS=0) — INTÉGRATION OK
+    J3 : d5 45,36 < RB1 46,12 < d3 46,21 < d4 46,34 < RB2 50,06.
+    L'arbre cycle plus la chaîne H2 (starts 7/7) que RB1 (3/3).
+
+2.3 Smoke 1 an (I0) — LE RÉSULTAT CENTRAL
+    politique   J3       deg      EENS    LPSP%   feuilles
+    RB1       2888,6   2511,1    125,8   0,601      —
+    RB2       3064,2   2676,6    129,2   0,617      —
+    tree d3   4529,1   2446,6    694,2   3,314      8
+    tree d4   3354,4   2486,6    289,3   1,381     16   (meilleur arbre)
+    tree d5   6323,2   2391,2   1310,7   6,257     30
+    tree d6   6978,4   2376,9   1533,8   7,323     54
+
+    LECTURE :
+    (i)  L'arbre I0 naïf est DOMINÉ par RB1/RB2 sur J3.
+    (ii) Il a une DÉGRADATION PLUS BASSE que RB1/RB2 (il imite la frugalité de
+         la PD) mais son EENS EXPLOSE → il est dominé uniquement par la
+         fiabilité. Cause : le maître PD est OMNISCIENT ; le disciple clone ses
+         actions frugales SANS foresight → la réserve (SoC/H2) se vide →
+         délestage. C'est la dérive de distribution (compounding error) du
+         clonage comportemental.
+    (iii) NON-MONOTONIE profondeur↔J3 : plus l'arbre est profond, meilleure est
+         la MAE mais PIRE est le J3 boucle fermée (d6 catastrophique). ⇒ la
+         sélection sur J3 (et non MSE) est indispensable — décision validée.
+
+2.4 Levier "surpondération des strates rares" (poids fréquence-inverse)
+    variante        J3       EENS
+    d4 sans poids  3354,4   289,3
+    d4 fréq-inv    3363,1   284,0   (marginal)
+    d5 sans poids  6323,2  1310,7
+    d5 fréq-inv    3394,9   308,3   (SPECTACULAIRE : sauve l'arbre profond)
+    ⇒ la pondération SUPPRIME la pathologie de profondeur mais NE FERME PAS
+      l'écart aux baselines (résiduel = EENS).
+
+2.5 Jeu d'information IF (feature prévision) — PISTE TESTÉE, NÉGATIVE
+    Feature = E_net_H (même signal que FLC-IF). Importance dans l'arbre : ~0,06
+    (H18) à ~0,00. Boucle fermée 1 an, oracle :
+    politique          J3       EENS
+    IF_oracle_d4     3548,4    366,1   (PIRE que I0_d4 3354)
+    IF_oracle_d5     3599,0    383,2
+    Balayage d'horizon (oracle, importance de la feature) :
+    H72_d5   3291,2  (imp 0,007)   H168_d5  6297,3   H336_d5  7718,1
+    H72_d4   3354,4  (imp 0,000)   H336_d4  3339,4
+    ⇒ AUCUN horizon (H18 → H336, i.e. jusqu'à 2 semaines) ne ferme l'écart.
+      L'arbre CART IGNORE quasi totalement la feature de prévision.
+
+    INTERPRÉTATION (oriente la suite) : la valeur de la foresight est
+    STRUCTURELLE — une action CONDITIONNELLE de précharge / préservation H2
+    (exactement la RÈGLE de précharge qui faisait gagner -1,6 % à la FLC-IF) —
+    et non une fonction lisse d'un scalaire régressé. Donc :
+    « forecast-comme-feature-d'arbre » est le mauvais véhicule ;
+    « forecast-comme-règle » (au-dessus de l'arbre) l'est.
+
+--------------------------------------------------------------------------------
+3. CONCLUSION DE TRAVAIL
+--------------------------------------------------------------------------------
+Résultat honnête (parallèle à la FLC v1, dominée avant réglage) :
+  - la distillation naïve de la PD omnisciente en règles I0 (arbre de
+    régression) est DOMINÉE par RB1/RB2 sur J3, par l'EENS (dérive de
+    distribution / manque de foresight), pas par la dégradation ;
+  - la surpondération de strates stabilise la profondeur mais ne suffit pas ;
+  - l'ajout d'une feature de prévision oracle (tout horizon) NE recupère PAS les
+    baselines car l'arbre ne l'exploite pas.
+Le résultat scientifique transférable : « fidélité d'imitation ≠ performance en
+boucle fermée », et la foresight utile ici est conditionnelle/structurelle.
+
+--------------------------------------------------------------------------------
+4. CE QUI RESTE À FAIRE
+--------------------------------------------------------------------------------
+Non encore réalisé dans cette phase :
+  [ ] analyze_rl_surfaces.py : surfaces de commande u_h2(P_net, SoC) à H2 fixé +
+      cohérence physique + diagnostics d'imitation par strate (Étape A du plan).
+  [ ] variantes IS strictement appariées en boucle fermée (test nul SoH exact,
+      effet IS-I0) — outillage prêt (X_is, wear), MAINTENANT exécutable après
+      correctif du bug IS (cf. §7), non encore benchmarké.
+  [x] tests unitaires FuzzyRules/tests/test_rl_*.py (bilan fermé, reset,
+      test nul, invariants de signe) — FAIT le 2026-07-21 (45 tests, arbres
+      jouets sans cache enseignant). DEUX bugs source corrigés (cf. §7).
+  [ ] validation aveugle (Étape C) : blocs temporels réservés ET profils hors
+      apprentissage (les autres profils du dossier Robustesse), sous bruit/biais
+      prévision avec graines communes.
+  [ ] finalistes uniquement : rejouer 25 ans, puis sensibilité V11 p=3.
+  [ ] ANFIS (Étape D) : Takagi-Sugeno ordre 1, deux branches, initialisé sur
+      les partitions floues, même enseignant/budget, ablation I0/IS, coût online
+      et nb de règles reportés.
+
+Note technique : init_and_run_loop démarre toujours à t=0 ; pour une validation
+sur années tenues à l'écart il faudra soit un offset de départ, soit d'autres
+profils. Le holdout annuel actuel reste in-sample météo (profil répété).
+
+--------------------------------------------------------------------------------
+5. PERSPECTIVES / BIFURCATION
+--------------------------------------------------------------------------------
+DÉCISION 2026-07-21 (avec l'utilisateur) : direction A retenue. Le code est
+livré (cf. §8) ; reste à lancer le benchmark boucle fermée sur mésocentre.
+Recommandation initiale : A (aligné sur le seul mécanisme prévision qui a marché).
+
+  A. FORECAST-COMME-RÈGLE. Greffer une règle de précharge / préservation H2
+     déclenchée par E_net_H AU-DESSUS de l'arbre distillé (architecture
+     FLC-IF, qui gagnait -1,6 %). Réutilise le pipeline + flc_forecast_policy.
+     Coût faible, ciblé sur le mécanisme prouvé.
+
+  B. DAgger (correction de la dérive de distribution). Re-étiqueter les états
+     visités par le disciple avec l'action PD (interpolation de la grille
+     51×51), ré-entraîner itérativement. S'attaque à la cause racine de l'EENS.
+     Plus lourd ; à vérifier : la PD est-elle interrogeable hors grille ?
+
+  C. Acter l'arbre I0 comme datapoint dominé (comme FLC v1) et passer à ANFIS.
+
+  D. Changer la cible : distiller le TIMING marche/arrêt FC/ELY (classification)
+     plutôt que l'amplitude (régression), la valeur de la foresight étant dans
+     le timing. (Reconsidère la décision "régression directe" à la lumière des
+     preuves.)
+
+--------------------------------------------------------------------------------
+6. REPRODUCTIBILITÉ (depuis Vieillissement11/)
+--------------------------------------------------------------------------------
+  python -m FuzzyRules.rl_teacher_cache            # manifeste enseignant
+  python -m FuzzyRules.rl_dataset_v11              # manifeste dataset
+  python -m FuzzyRules.rl_tree_policy_v11          # balayage profondeur + test nul
+  python -m FuzzyRules.rl_tree_forecast_policy_v11 # fidélité IF + importances
+  python -m FuzzyRules.rl_tree_precharge_policy_v11 # appariement précharge vs FLC-IF
+  python -m FuzzyRules.run_smoke_rl_v11 --days 365 --depths 3 4 5 6
+  python -m FuzzyRules.run_smoke_rl_precharge_v11 --days 365 --depth 4 --with-flc-if
+  Mémoire de suivi (inter-sessions) : rule-learning-phase-v11.
+
+--------------------------------------------------------------------------------
+7. SUITE 2026-07-21 — TESTS UNITAIRES ET CORRECTIFS SOURCE
+--------------------------------------------------------------------------------
+Tests ajoutés (45 au total, modèle des tests FLC, aucun cache enseignant :
+arbres JOUETS ajustés sur des données synthétiques aux prédictions contrôlées) :
+  - tests/test_rl_dataset_v11.py (17)         : prévision énergétique nette
+    (troncature de queue), usure relative, zones, découpage par blocs d'années
+    contigus, poids fréquence-inverse, stratification, normalisation.
+  - tests/test_rl_tree_policy_v11.py (16)      : bilan fermé déficit/surplus,
+    zone morte, gardes de défaillance FC/ELY, limite physique via get_lol,
+    reset() exact, test nul de permutation d'une feature non utilisée, BoL IS
+    (usure nulle), _feature_vector (formes I0/IS, clamps).
+  - tests/test_rl_tree_forecast_policy_v11.py (12) : rejet arbre non-IF /
+    scénario / noise_rho ; oracle lit le futur ; persistance ignore les valeurs
+    futures (puissance courante) ; bruit gaussien seedé + reset reproductible ;
+    gardes de défaillance et bilan fermé IF.
+Exécution (93 tests FuzzyRules OK, moteur boucle-fermée FLC inclus) depuis
+Vieillissement11/ : python -m unittest discover -s FuzzyRules/tests -p 'test_*.py'.
+
+DEUX bugs source trouvés PAR les tests et corrigés :
+  (B1) rl_tree_policy_v11.py, branche IS : l'usure était calculée par
+       min(max((1-SoH)/(1-SoH_EoL), 0.0), None). En Python 3, min(float, None)
+       lève TypeError → la policy IS PLANTAIT au premier pas. C'est la cause du
+       « IS non encore benchmarké » : cette branche n'a jamais tourné en boucle
+       fermée. Corrigé en max((1-SoH)/(1-SoH_EoL), 0.0), aligné sur _wear du
+       dataset (np.clip(., 0.0, None)). Effet : IS est désormais exécutable ;
+       aucun résultat publié n'est invalidé (aucun n'existait).
+  (B2) rl_dataset_v11.py, build_split_mask : masque alloué en dtype '<U5' alors
+       que l'étiquette 'unused' fait 6 caractères → stockée tronquée 'unuse'. Le
+       manifeste comptait donc toujours 0 année 'unused'. Les masques
+       train/val/test (≤5 car.) et donc les modèles ne sont PAS affectés ; seul
+       le décompte de provenance l'était. Corrigé en dtype '<U6'.
+
+Note harnais dev : ce conteneur n'a ni cache PD ni simu_env ; les tests tournent
+avec GENIAL_DATA_DIR pointant un profil de substitution et les LUT d'efficacité
+recopiées depuis Vieillissement9_4/Common (mêmes courbes physiques). Les
+invariants testés (bilan, signes, reset, test nul) sont indépendants du profil.
+Sur mésocentre, les CSV canoniques sont présents : rien à changer.
+
+--------------------------------------------------------------------------------
+8. DIRECTION A LIVRÉE — FORECAST-COMME-RÈGLE (arbre I0 + précharge)
+--------------------------------------------------------------------------------
+Mécanisme : on greffe AU-DESSUS de l'arbre I0 distillé la MÊME règle de précharge
+que la FLC-IF (qui gagnait -1,6 % de J3). Quand un déficit net est prévu à H18
+(E_net_H > +seuil) et que la batterie n'est pas pleine (SoC < soc_target), on
+réduit la commande électrolyseur déjà émise (p_ely <- p_ely·(1-force)) : l'énergie
+de surplus reste en réserve batterie au lieu de partir en H2. La foresight entre
+donc par une action CONDITIONNELLE (structurelle), jamais comme feature d'arbre
+(le véhicule qui échouait, §2.5).
+
+Livré (2026-07-21) :
+  - rl_tree_precharge_policy_v11.py : make_tree_precharge_policy_v11(tree, ...).
+    Parent = make_tree_policy_v11 (arbre I0 ou IS) ; refuse un arbre IF (la
+    prévision n'entre pas deux fois). Signal de prévision et hystérésis
+    STRICTEMENT appariés à flc_forecast_policy_v11 (mêmes constantes DEFAULT_*,
+    même formule E_net_H, même règle enter/exit/dwell). Force 0 = arbre nu
+    bit-à-bit, sans tirage. Diagnostics : precharge_applied_steps, H2 gardé.
+  - tests/test_rl_tree_precharge_policy_v11.py (15) : test nul bit-à-bit,
+    APPARIEMENT du signal avec la FLC-IF sur séquences (oracle + gaussien seedé),
+    précharge ne touche que l'ELY, garde SoC>=cible, hystérésis, IS->ISF.
+  - run_smoke_rl_precharge_v11.py : compare RB1/RB2, arbre I0 nu, arbre I0 +
+    précharge, et (option --with-flc-if) la FLC-IF promue. Le moteur fournit la
+    vraie prévision oracle profile_net[j:j+H] via P_tot_ref_future (câblage
+    init_and_run_loop vérifié en intégration).
+
+RÉSULTAT MÉSOCENTRE (job 220945, 2026-07-22, boucle fermée 1 an, V11-p=2) :
+  Garde OK : 60 tests RL passent ; appariement du signal de précharge RL vs
+  FLC-IF = 2000/2000 identiques (env mésocentre numpy 1.21.5 / sklearn 1.0.2).
+
+  ORACLE (J3 = C_deg + 3·EENS, EUR) :
+    politique                       J3       deg      EENS    LPSP%   précharge
+    rb1 (0,20;0,40)              2888,6   2511,1    125,8   0,601      —
+    rb2 (0,574;0,465)           3064,2   2676,6    129,2   0,617      —
+    arbre I0 d4 (nu)            3354,4   2486,6    289,3   1,381      —
+    arbre I0 d4 + précharge     3987,1   2523,3    488,0   2,330   228× / 624 kWh
+    flc_if_selected             2912,8   2689,7     74,4   0,355   112× / 606 kWh
+  GAUSSIAN_IID (seed 0) : arbre+précharge J3=3948,2 (EENS 481,6) ;
+    flc_if J3=2902,3 (EENS 76,4). Robuste à l'erreur de prévision.
+
+  LECTURE — DIRECTION A NÉGATIVE (résultat propre et transférable) :
+  (i)   La MÊME règle, strictement appariée (2000/2000), AIDE la FLC (EENS 74,4,
+        meilleure fiabilité du tableau) et CASSE l'arbre (EENS +69 % vs nu ;
+        arbre+précharge DOMINÉ sur les deux axes par l'arbre nu). L'écart est
+        donc un pur EFFET DE FAMILLE : c'est le parent, pas la règle.
+  (ii)  Cause = le diagnostic §2.2 : l'arbre est un clone INCOHÉRENT (dérive de
+        distribution). La précharge suppose un parent qui, au déficit, puise
+        dans la batterie au lieu de délester ; la FLC le fait, l'arbre non.
+        Lui retirer sa frugalité H2 (624 kWh non électrolysés) sans qu'il sache
+        utiliser la réserve aggrave l'EENS au lieu de la réduire.
+  (iii) Bilan des DEUX véhicules de foresight sur l'arbre : feature -> ignorée
+        (§2.5) ; règle -> pénalisante (ici). Le goulot du disciple n'est PAS le
+        canal d'information mais l'incohérence du clonage. Aucune injection de
+        foresight ne le répare ; seule une correction de la dérive de
+        distribution (DAgger, option B) le pourrait.
+
+  Sortie brute : FuzzyRules/rl_precharge_v11.220945.out ; caches
+  runs/smoke_rl_precharge_c0861c874802 (oracle) et _b45f89cf1116 (gaussian).
+
+BIFURCATION APRÈS A (à trancher) : A étant épuisé et le goulot identifié comme
+l'incohérence (et non l'information), les options vivantes se réduisent à :
+  B  DAgger — attaque la cause racine (ré-étiqueter les états visités par
+     l'action PD, ré-entraîner). Seule voie pouvant produire un résultat
+     rule-learning POSITIF. Pré-requis : PD interrogeable hors grille 51×51.
+  C  Acter l'arbre comme famille dominée (comme la FLC v1 avant réglage) et
+     passer à ANFIS (Étape D du plan). Le résultat négatif rule-learning tient
+     comme contribution : « fidélité d'imitation != performance, et le goulot
+     est l'incohérence, pas l'information ».
+  D  Cible timing/classification — AFFAIBLIE par ce résultat : le problème n'est
+     pas régression-vs-classification de l'amplitude mais la cohérence ; une
+     distillation du timing hériterait de la même dérive.
+
+--------------------------------------------------------------------------------
+9. DIRECTION B — DAgger : FAISABILITÉ ÉTABLIE + OUTILLAGE LIVRÉ (2026-07-22)
+--------------------------------------------------------------------------------
+FAISABILITÉ (question ouverte de la note : « la PD est-elle interrogeable hors
+grille ? ») : OUI, l'oracle existe DÉJÀ dans DP/.
+  - DP/dp_aging.py DPPolicy._rollout_action prend un état CONTINU (SoC, E_h2,
+    SoH...) et renvoie l'action optimale par lookahead 1 pas (coût immédiat +
+    V(t+1) interpolé bilinéairement sur la grille). Pas besoin d'être sur un nœud.
+  - DP/dp_core.py backward(store_policy=True) produit une GRILLE de politique
+    policy[t, i_SoC, j_H2, fc_on, ely_on] (1 an, SoH=1), SANS ÉTAT, interrogeable
+    par plus-proche-voisin (c'est make_dp_policy). C'est l'oracle retenu :
+    stateless -> ré-étiquetage hors-ligne trivial, et il correspond au jeu I0.
+
+DESIGN retenu (DAgger 1 an SoH=1) : (0) arbre distillé classique ; puis, à chaque
+itération : dérouler l'arbre 1 an (init_and_run_loop), ré-étiqueter les états
+visités par la grille PD, agréger au jeu enseignant (union), re-ajuster l'arbre.
+Le disciple apprend ainsi à se rattraper sur SA PROPRE distribution d'états.
+LIMITE assumée : le disciple vieillit un peu sur l'année alors que la grille est
+au neuf ; écart de SoH faible en année 0. Version aging-aware (rollout dp_aging
+avec état) reportée.
+
+LIVRÉ (2026-07-22, non exécutable hors mésocentre pour la boucle) :
+  - rl_dagger_v11.py : DiscipleStateLogger (journalise les états visités +
+    marche/arrêt dérivés de l'action), build_i0_features (mêmes normalisations
+    que le dataset), relabel_with_policy_grid (lookup PPV sur la grille PD),
+    dagger_aggregate (union enseignant + lots re-étiquetés, poids).
+  - tests/test_rl_dagger_v11.py (12) : logger/délégation/reset, features,
+    plus-proche-voisin, ré-étiquetage contre grille synthétique, agrégation.
+  - run_dagger_rl_v11.py (+ .slurm) : résout la grille PD (dp_core), itère
+    DAgger, rapporte la trace J3-par-itération vs RB1/RB2 et l'arbre 0.
+
+RÉSULTAT MÉSOCENTRE (job 222223, 2026-07-22, 4 min, boucle fermée 1 an) :
+  iter   J3        deg      EENS    LPSP%   feuilles
+  RB1  2888,6    2511,1   125,8   0,601      —
+  RB2  3064,2    2676,6   129,2   0,617      —
+  0    3354,4    2486,6   289,3   1,381     16   (arbre nu = behavioral cloning)
+  1    3281,5    2495,1   262,1   1,251     15
+  2    3274,0    2501,7   257,4   1,229     16   (MEILLEUR)
+  3    3311,4    2526,8   261,5   1,249     16
+  4    3345,9    2544,0   267,3   1,276     16
+  5    3550,9    2439,1   370,6   1,769     16
+  (Un bug JSON int64 a coupé l'écriture de summary.json APRÈS l'impression de
+   toute la trace ; corrigé dans run_dagger_rl_v11.py, aucun résultat perdu.)
+
+  LECTURE :
+  (i)   DAgger aide, dans la bonne direction : iter0->iter2 J3 -2,4 %, EENS -11 %
+        (289->257). La dérive de distribution était donc BIEN une partie du
+        goulot (diagnostic §8 confirmé directionnellement).
+  (ii)  Mais ça plafonne (iter1-2) puis se DÉGRADE (iter3->5, J3 remonte à 3551,
+        pire que l'arbre nu ; starts oscillent 390->460) : instabilité DAgger
+        vanilla classique.
+  (iii) Même le meilleur (iter2, 3274) reste LOIN au-dessus de RB1 (2889) et RB2
+        (3064) ; EENS 257 contre 126 pour RB1 (~2x). DAgger NE ferme PAS l'écart.
+
+  DIAGNOSTIC AFFINÉ : le goulot de l'arbre est DOUBLE — (a) dérive de
+  distribution (partiellement corrigée par DAgger, d'où -11 % d'EENS) ET (b)
+  CAPACITÉ REPRÉSENTATIONNELLE d'un CART de régression peu profond (16 feuilles),
+  incapable de reproduire la gestion cohérente de la réserve de la PD. DAgger
+  corrige (a), pas (b).
+
+--------------------------------------------------------------------------------
+10. VERDICT RULE-LEARNING ET BASCULE VERS ANFIS
+--------------------------------------------------------------------------------
+La famille RÈGLES-APPRISES (arbre de régression distillé de la PD) est DOMINÉE
+par le rule-based (RB1/RB2) et la FLC experte, sous toutes les variantes testées
+et de façon cohérente :
+  - arbre I0 nu                          : dominé (dérive de distribution) ;
+  - prévision-comme-feature (IF)         : ignorée par le CART (§2.5) ;
+  - prévision-comme-règle (précharge, A) : pénalisante sur l'arbre alors qu'elle
+                                           aide la FLC (§8) ;
+  - DAgger (B)                           : -2,4 % au mieux, instable, reste dominé.
+Résultat scientifique transférable et honnête : « fidélité d'imitation !=
+performance en boucle fermée » ; le goulot est double (incohérence du clonage +
+capacité d'un arbre peu profond), et aucune injection d'information (SoH,
+prévision) ni correction de dérive (DAgger) ne suffit à rejoindre des règles
+expertes bien réglées.
+
+SUITE : passage à ANFIS (Étape D du plan), dernière famille apprise. MISE EN
+GARDE issue de ce chantier : ANFIS entraîné par pure imitation clone le même
+maître -> risque du même plafond (dérive + capacité). Il ne sera promu que s'il
+bat la validation hors apprentissage à complexité/temps online reportés (plan
+§2.3) ; sinon il CONFIRME le plafond d'imitation plutôt qu'il ne le franchit.
+Piste si l'on veut viser un apprentissage compétitif : entraînement en boucle
+fermée / DAgger-sur-ANFIS plutôt que clonage MSE (hors périmètre immédiat).
+
+--------------------------------------------------------------------------------
+11. ANFIS (Étape D) — SCAFFOLDING LIVRÉ (2026-07-22)
+--------------------------------------------------------------------------------
+Moteur Takagi-Sugeno d'ordre 1, NumPy pur, deux branches déficit/surplus, calqué
+sur la structure de la FLC (3 appartenances par entrée -> 27 règles par branche,
+comme les 27 règles Mamdani de la FLC I0) mais à conséquences LINÉAIRES apprises.
+
+Choix d'implémentation :
+  - appartenances gaussiennes, prémisses FIGÉES à l'initialisation (grille
+    uniforme sur l'étendue standardisée de chaque entrée) ;
+  - conséquences d'ordre 1 ajustées par MOINDRES CARRÉS ridge (couche 1 de
+    l'apprentissage hybride de Jang) : à prémisses figées la sortie est linéaire
+    en les paramètres -> ajustement exact, rapide, déterministe, sans gradient.
+    L'affinage des prémisses par gradient est une extension ultérieure ;
+  - même wrapper de boucle que l'arbre/FLC (zone morte, gardes de défaillance,
+    faisabilité par get_lol) -> comparaison de FAMILLE propre (flou vs CART) ;
+  - ablation I0/IS via colonnes d'usure (nulles au neuf), comme les autres.
+
+LIVRÉ :
+  - anfis_ts.py : AnfisTS1 (init_uniform, normalized_firing, fit_consequents LSE,
+    predict) ; grille de règles, standardisation des entrées.
+  - anfis_policy_v11.py : AnfisTwoBranch.fit (route par signe de P_net) +
+    make_anfis_policy_v11 (policy de boucle, métadonnées, 2x27 règles).
+  - tests/test_anfis_ts.py (10) : appartenances, partition de l'unité, récup.
+    exacte d'une cible linéaire, réduction d'erreur non linéaire.
+  - tests/test_anfis_policy_v11.py (12) : bilan fermé, gardes, zone morte, reset,
+    routage de branche, refus si trop peu d'échantillons. Suite FuzzyRules : 142 OK.
+  - run_anfis_v11.py (+ .slurm) : boucle fermée 1 an vs RB1/RB2 et arbre I0 d4 ;
+    rapporte J3, NB DE RÈGLES et TEMPS DE DÉCISION amorti (critères plan §2.3) ;
+    ablation I0/IS et sensibilité au nb d'appartenances (mf=2 vs 3).
+
+RÉSULTAT MÉSOCENTRE (job 222457, 2026-07-22, boucle fermée 1 an) :
+  politique      J3       deg      EENS    LPSP%   règles     t/pas
+  rb1          2888,6   2511,1   125,8   0,601      —          —
+  rb2          3064,2   2676,6   129,2   0,617      —          —
+  arbre I0 d4  3354,4   2486,6   289,3   1,381      —          —
+  anfis I0 mf3 4174,1   2620,2   518,0   2,473    27+27     404 µs
+  anfis IS mf3 4982,0   2505,1   825,6   3,942   729+729    437 µs
+  anfis I0 mf2 3493,0   2596,1   299,0   1,427     8+8      388 µs
+
+  LECTURE :
+  (i)   ANFIS est DOMINÉ. Même le meilleur (mf=2, 3493) reste au-dessus de
+        l'arbre (3354), lui-même dominé par RB1 (2889). Le flou ne franchit PAS
+        le plafond d'imitation (§10) : il le CONFIRME.
+  (ii)  Plus d'appartenances = PIRE (mf3 4174 >> mf2 3493) : même pathologie
+        fidélité != performance que la profondeur de l'arbre (§2.3). Les
+        conséquences linéaires EXTRAPOLENT hors du support -> EENS explose (518).
+  (iii) IS par grille = explosion combinatoire (3^6 = 729 règles/branche, J3
+        4982), exactement l'écueil interdit par le plan (le SoH ne doit pas
+        entrer dans le produit cartésien). Non-départ ; il faudrait la couche
+        mutative de la FLC, sans intérêt puisque I0 est déjà dominé.
+  (iv)  Seul critère passé : temps de décision ~400 µs/pas, négligeable devant
+        l'heure. Nb de règles publiable en mf=2/3 (I0), pas en IS.
+
+  Caches : runs/smoke_anfis_624d1ce0dd78 (I0+IS mf3), runs/smoke_anfis_b0e7e51e6fd3
+  (I0 mf2). Note : borner les conséquences à la plage de u_h2 tempérerait
+  l'extrapolation, mais le plafond est confirmé sur toutes les capacités -> sans
+  intérêt de poursuivre.
+
+--------------------------------------------------------------------------------
+12. VERDICT FINAL — CHANTIER APPRENTISSAGE BOUCLÉ
+--------------------------------------------------------------------------------
+TOUTES les familles apprises par imitation de la PD sont DOMINÉES par le
+rule-based (RB1/RB2) et la FLC experte, de façon cohérente :
+  arbre I0 nu ; arbre + prévision-feature ; arbre + prévision-règle (précharge) ;
+  arbre + DAgger ; ANFIS I0/IS (mf 2 et 3). Et la capacité accrue AGGRAVE
+  systématiquement (profondeur d'arbre, nb d'appartenances ANFIS).
+
+Résultat de thèse, transférable : distiller un optimum offline OMNISCIENT (PD) en
+contrôleur online — arbre de régression OU système flou Sugeno — produit des
+politiques dominées par des règles expertes bien réglées. Double cause : (a)
+dérive de distribution du clonage comportemental ; (b) écart fidélité-performance
+(plus de capacité = meilleure imitation MSE, PIRE J3 en boucle fermée). La valeur
+est dans la STRUCTURE EXPERTE + le RÉGLAGE, pas dans l'apprentissage depuis la PD.
+
+Ce qui TIENT (rappel) : FLC experte I0 réglée (compromis avec RB1), FLC-IF
+prévision promue (-1,6 % de J3). L'apport online utile est la RÈGLE de précharge
+conditionnelle greffée sur un parent COHÉRENT (la FLC), pas l'imitation.
+
+Suites POSSIBLES hors périmètre imitation (si un résultat appris positif est
+souhaité pour le manuscrit) : apprentissage en BOUCLE FERMÉE (RL / optimisation
+directe du J3) plutôt que clonage MSE. À arbitrer selon l'objectif du chapitre.
+
+--------------------------------------------------------------------------------
+13. SYNTHÈSE PARETO — FIGURES DE TOUTES LES FAMILLES (2026-07-22)
+--------------------------------------------------------------------------------
+Figures de résumé dans le plan (fiabilité, dégradation), horizon 1 an, profil
+canonique, moteur commun (init_and_run_loop, comptabilité corrigée, VoLL=3), avec
+le front PD en repère. Toutes les stratégies et leurs augmentations sur un même
+graphe montrent l'ordre : références RB1/RB2 et FLC(+prévision) proches du front,
+familles apprises (arbre +/- prévision/DAgger, ANFIS I0/IS) au-dessus (dominées).
+
+LIVRÉ :
+  - pareto_points_v11.tsv : table consolidée des points de la campagne (label,
+    famille, augmentation, info, LPSP, EENS, deg kEUR/an, J3 EUR/an, source-job).
+    Chaque point est transcrit de la sortie de son run (mêmes conditions).
+  - plot_pareto_families_v11.py : figures figures_synthese/ ->
+      pareto_lpsp_deg{,_zoom}, pareto_eens_deg{,_zoom} (plans Pareto, plein +
+      zoom cluster), classement_j3 (barres J3, lecture directe du "qui domine").
+    Front PD lu depuis DP/results/mpc_reference_1y_1b54f384caa8/points.tsv.
+    DROITES ISOCOÛTS J3 (3000..5000 EUR/an) superposées : comme LPSP est
+    proportionnel a EENS (meme profil), J3=const est une droite dans les deux
+    plans -> lecture directe du niveau de coût de chaque stratégie.
+  - tests/test_pareto_summary_v11.py (5) : parsing, familles connues, cohérence
+    J3, trajectoire DAgger. Suite FuzzyRules : 147 OK.
+  - run_pareto_summary_v11.py (+ .slurm) : recalcule au MÊME harnais un point PD
+    central (DPPolicy rollout, eps=3) et la FLC-I0 réglée, les ajoute à la table
+    (figures_synthese/pareto_points_merged.tsv) et régénère les figures.
+
+CAVEAT D'HONNÊTETÉ (consigné sur les figures et ici) : le front PD tracé est
+l'export canonique de la PD ; son coût de dégradation (~1,7 kEUR/an) provient d'un
+chemin de comptabilité distinct du ledger réalisé des stratégies (~2,5 kEUR/an).
+L'écart absolu au front mélange donc deux comptabilités. Le CLASSEMENT RELATIF
+des stratégies (message principal) est rigoureux (harnais identique). Le runner
+de synthèse ajoute un point PD recalculé au même harnais pour quantifier l'écart
+-> à lancer sur mésocentre (sbatch run_pareto_summary_v11.slurm).
+
+Points figurés (1 an) : RB1 (J3 2889), RB2 (3064), FLC-IF oracle/gaussian
+(2913/2902), arbre I0 d4 (3354), arbre+précharge oracle/gaussian (3987/3948),
+arbre+DAgger iter1..5 (3282/3274/3311/3346/3551), ANFIS I0 mf2/mf3 (3493/4174),
+ANFIS IS (4982). À compléter par PD (harnais) et FLC-I0 réglée via le runner.
+================================================================================

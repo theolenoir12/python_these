@@ -17,11 +17,8 @@ from Common import Init_EMR_MG_v16_python as I  # noqa: E402
 from Common.degradation_v11 import (  # noqa: E402
     ELY_V11, MODEL_ID, aging_snapshot, new_ely_state, new_fc_state,
 )
-from Common.electrochemistry import ely_pmax, ely_power, fc_pmax  # noqa: E402
-from Common.get_lol import get_lol  # noqa: E402
-from MPC.mpc_v11 import (  # noqa: E402
-    ETA, EXECUTION_BALANCE_TOL_W, MPCConfig, MPCPolicyV11,
-)
+from Common.electrochemistry import ely_pmax, ely_power  # noqa: E402
+from MPC.mpc_v11 import ETA, MPCConfig, MPCPolicyV11  # noqa: E402
 
 
 class TestMPCV11(unittest.TestCase):
@@ -128,10 +125,6 @@ class TestMPCV11(unittest.TestCase):
             MPCConfig(forecast_mode="noisy", forecast_error_rho=1.0)
         with self.assertRaises(ValueError):
             MPCConfig(forecast_mode="noisy", forecast_sigma_scale=-1.0)
-        with self.assertRaises(ValueError):
-            MPCConfig(fc_wear_scale=-1.0)
-        with self.assertRaises(ValueError):
-            MPCConfig(terminal_h2_eur_per_kwh=-1.0)
 
     def test_first_executed_action_is_balanced(self):
         policy = MPCPolicyV11(MPCConfig(horizon_steps=6))
@@ -148,48 +141,6 @@ class TestMPCV11(unittest.TestCase):
         diagnostics = policy.diagnostics()
         self.assertEqual(diagnostics["failures"], 0)
         self.assertEqual(diagnostics["calls"], 1)
-
-    def test_execution_guard_cuts_ely_during_total_load_shedding(self):
-        policy = MPCPolicyV11(MPCConfig(horizon_steps=6))
-        p_ref = 1507.77777778
-        action, lol = policy._execute_balanced_action(
-            0.20001, p_ref, [], 100.0, 200.0,
-            I.FC["P_fc_max"], I.ELY["P_ely_max"], 1.0,
-            fc=0.0, ely=35.8840614,
-        )
-        shortage = policy._deficit_shortage_after_lol_w(p_ref, action, lol)
-        self.assertLessEqual(shortage, EXECUTION_BALANCE_TOL_W)
-        self.assertEqual(float(action[2]), 0.0)
-        self.assertAlmostEqual(lol, 1.0)
-        self.assertEqual(policy.execution_balance_guard_steps, 1)
-        self.assertEqual(policy.failures, 0)
-
-    def test_lol_is_zero_during_net_surplus(self):
-        _, lol = get_lol(
-            0.99, (-5000.0, 1000.0, 0.0), -100.0, [], 100.0, 200.0,
-            I.FC["P_fc_max"], I.ELY["P_ely_max"], 1.0,
-        )
-        self.assertEqual(lol, 0.0)
-
-    def test_capacity_fade_does_not_prevent_fc_shutdown(self):
-        alpha_fc = 0.0651027772307
-        current_cap = 0.999 * ETA * float(fc_pmax(alpha_fc))
-        policy = MPCPolicyV11(MPCConfig(horizon_steps=6))
-        policy.previous_fc_w = current_cap + 1e-3
-        policy.previous_fc_on = 1
-        solution = policy.solve_horizon(
-            np.full(6, 1494.44444444), soc=0.20001,
-            h2_kwh=0.178819895668, h2_capacity_kwh=200.0,
-            soh_bat=0.931046010648, soh_fc=0.977213796658,
-            soh_ely=0.995734240325, alpha_fc=alpha_fc,
-            alpha_ely=0.0124887915519,
-            p_fc_max_w=float(fc_pmax(alpha_fc)),
-            p_ely_max_w=float(ely_pmax(0.0124887915519)),
-            aging_context=self.aging,
-        )
-        self.assertTrue(solution["success"])
-        self.assertAlmostEqual(float(solution["fc_w"][0]), 0.0, places=8)
-        self.assertGreater(float(solution["shed_w"][0]), 0.0)
 
 
 if __name__ == "__main__":

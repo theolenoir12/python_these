@@ -1,0 +1,41 @@
+scipy 1.9.1 milp OK
+test_capacity_fade_does_not_prevent_fc_shutdown (test_mpc_v11.TestMPCV11) ... /Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+ok
+test_ely_piecewise_is_convex_and_contains_j_anchors (test_mpc_v11.TestMPCV11) ... ok
+test_first_executed_action_is_balanced (test_mpc_v11.TestMPCV11) ... ok
+test_lol_is_zero_during_net_surplus (test_mpc_v11.TestMPCV11) ... ok
+test_milp_balance_modes_and_constraints (test_mpc_v11.TestMPCV11) ... ok
+test_model_is_nominal_p2 (test_mpc_v11.TestMPCV11) ... ok
+test_no_soh_null_is_exact (test_mpc_v11.TestMPCV11) ... ok
+test_noisy_forecast_configuration_is_validated (test_mpc_v11.TestMPCV11) ... ok
+test_noisy_forecast_is_paired_and_reproducible (test_mpc_v11.TestMPCV11) ... ok
+test_soh_weights_only_change_objective_weights (test_mpc_v11.TestMPCV11) ... ok
+test_baseline_cache_labels_match_forecast_benchmark (test_tuning_mpc_v11.TestTuningMPCV11) ... ok
+test_every_case_builds_a_valid_mpc_config (test_tuning_mpc_v11.TestTuningMPCV11) ... ok
+test_screen_budget_and_one_factor_changes (test_tuning_mpc_v11.TestTuningMPCV11) ... ok
+test_screen_excludes_whole_case_if_one_seed_is_invalid (test_tuning_mpc_v11.TestTuningMPCV11) ... ok
+test_screen_rejects_invalid_baseline (test_tuning_mpc_v11.TestTuningMPCV11) ... ok
+test_validation_budget_and_heldout_seeds (test_tuning_mpc_v11.TestTuningMPCV11) ... ok
+test_validation_excludes_invalid_case_before_decision (test_tuning_mpc_v11.TestTuningMPCV11) ... Decision tuning: battery_wear_0p5 (meilleur gain holdout x1=2.000 %)
+ok
+test_validation_rejects_invalid_baseline (test_tuning_mpc_v11.TestTuningMPCV11) ... ok
+test_comparison_is_paired_and_uses_ratio_of_means (test_longrun_tuning_mpc_v11.TestLongrunTuningMPCV11) ... ok
+test_configs_are_paired_and_only_change_retained_parameters (test_longrun_tuning_mpc_v11.TestLongrunTuningMPCV11) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 0.152s
+
+OK
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/mpc_v11.py:522: RuntimeWarning: Unrecognized options detected: {'mip_rel_gap'}. These will be passed to HiGHS verbatim.
+  result = milp(
+[long_baseline_s1p0_r202604] LPSP=0.4662% deg=61.401 kEUR J3=68.725 kEUR
+[long_combo_top3_s1p0_r202604] LPSP=0.4434% deg=60.239 kEUR J3=67.205 kEUR
+[long_combo_top3_s1p0_r202605] LPSP=0.4474% deg=60.198 kEUR J3=67.226 kEUR
+slurmstepd: error: *** JOB 219129 ON node4-26 CANCELLED AT 2026-07-22T12:26:49 DUE TO TIME LIMIT ***

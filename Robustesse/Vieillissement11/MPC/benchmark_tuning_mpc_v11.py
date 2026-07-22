@@ -228,17 +228,28 @@ def _write_points(output: Path, configs: list[dict[str, Any]],
     (output / "summary.json").write_text(json.dumps(results, indent=2) + "\n")
 
 
+def _invalid_result_reason(result: dict) -> str | None:
+    diagnostics = result.get("diagnostics") or {}
+    if diagnostics.get("failures", 0):
+        return "echec solveur enregistre"
+    if result.get("max_deficit_shortage_after_lol_w", 0.0) > 1e-4:
+        return "deficit non ferme apres LOL"
+    if (result.get("lol_above_one_steps", 0)
+            and result.get("excess_beyond_clip_kwh", 0.0) > 1e-9):
+        return "lol>1 en deficit"
+    return None
+
+
+def _cache_is_reusable(result: dict) -> bool:
+    return _invalid_result_reason(result) is None
+
+
 def _validate_results(results: dict[str, dict]) -> dict[str, str]:
     invalid: dict[str, str] = {}
     for label, result in results.items():
-        diagnostics = result.get("diagnostics") or {}
-        if diagnostics.get("failures", 0):
-            invalid[label] = "echec solveur enregistre"
-        elif result.get("max_deficit_shortage_after_lol_w", 0.0) > 1e-4:
-            invalid[label] = "deficit non ferme apres LOL"
-        elif (result.get("lol_above_one_steps", 0)
-              and result.get("excess_beyond_clip_kwh", 0.0) > 1e-9):
-            invalid[label] = "lol>1 en deficit"
+        reason = _invalid_result_reason(result)
+        if reason is not None:
+            invalid[label] = reason
     return invalid
 
 
@@ -264,8 +275,11 @@ def _run_batch(output: Path, protocol: dict[str, Any], years: float,
         complete = all((output / name).exists() for name in (
             f"{label}.npz", f"{label}_ledger.json", f"{label}_summary.json"))
         if complete:
-            results[label] = json.loads(
-                (output / f"{label}_summary.json").read_text())
+            cached = json.loads((output / f"{label}_summary.json").read_text())
+            if _cache_is_reusable(cached):
+                results[label] = cached
+            else:
+                pending.append((config, years, str(output)))
         else:
             pending.append((config, years, str(output)))
     _write_points(output, configs, results)

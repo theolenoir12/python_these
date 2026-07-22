@@ -1,0 +1,26 @@
+concurrent.futures.process._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/Softs/spack/opt/spack/linux-rocky8-x86_64/gcc-12.1.0/anaconda3-2022.10-4dli7tnnxt7jyiuizrzg2h5w5crmdpuj/lib/python3.9/concurrent/futures/process.py", line 246, in _process_worker
+    r = call_item.fn(*call_item.args, **call_item.kwargs)
+  File "/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/DP/dp_pareto.py", line 93, in run_one
+    eps, Ns, Nh, n_fc, n_ely, n_years, n_iter = args
+ValueError: not enough values to unpack (expected 7, got 6)
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/run_dp_reference_for_mpc.py", line 124, in <module>
+    main()
+  File "/Work/Users/tlenoir/genial/Robustesse/Vieillissement11/MPC/run_dp_reference_for_mpc.py", line 108, in main
+    raw = future.result()
+  File "/Softs/spack/opt/spack/linux-rocky8-x86_64/gcc-12.1.0/anaconda3-2022.10-4dli7tnnxt7jyiuizrzg2h5w5crmdpuj/lib/python3.9/concurrent/futures/_base.py", line 439, in result
+    return self.__get_result()
+  File "/Softs/spack/opt/spack/linux-rocky8-x86_64/gcc-12.1.0/anaconda3-2022.10-4dli7tnnxt7jyiuizrzg2h5w5crmdpuj/lib/python3.9/concurrent/futures/_base.py", line 391, in __get_result
+    raise self._exception
+ValueError: not enough values to unpack (expected 7, got 6)
+
+real	0m3.490s
+user	0m25.174s
+sys	0m2.408s

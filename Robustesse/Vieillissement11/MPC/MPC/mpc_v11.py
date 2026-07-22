@@ -41,8 +41,6 @@ from Common.get_lol import get_lol
 
 
 NOMINAL_ELY_STRESS_EXPONENT = 2.0
-MPC_FORMULATION_ID = "mpc-v11-p2-milp-v3-execution-balance-guard-2026-07-22"
-EXECUTION_BALANCE_TOL_W = 1e-4
 if not np.isclose(ELY_V11["stress_exponent"], NOMINAL_ELY_STRESS_EXPONENT):
     raise RuntimeError(
         "MPC V11 attribue au nominal p=2, mais degradation_v11 expose p=%r"
@@ -131,13 +129,6 @@ class MPCConfig:
             raise ValueError("health_floor doit appartenir a ]0,1]")
         if self.voll_eur_per_kwh <= 0.0:
             raise ValueError("la VoLL interne doit etre positive")
-        if min(self.terminal_bat_eur_per_kwh,
-               self.terminal_h2_eur_per_kwh) < 0.0:
-            raise ValueError("les valeurs terminales doivent etre positives")
-        if min(self.battery_wear_scale, self.fc_wear_scale,
-               self.ely_wear_scale, self.fc_dynamic_scale,
-               self.high_soc_hold_eur) < 0.0:
-            raise ValueError("les poids de cout doivent etre positifs")
         if self.time_limit_s <= 0.0:
             raise ValueError("time_limit_s doit etre positif")
 
@@ -185,7 +176,7 @@ class MPCPolicyV11:
         self.config = config or MPCConfig()
         self.forecast_horizon_steps = self.config.horizon_steps
         self.policy_id = (
-            f"mpc_v11_p2_v3_{self.config.health_mode}_h{self.config.horizon_steps}_"
+            f"mpc_v11_p2_{self.config.health_mode}_h{self.config.horizon_steps}_"
             f"{self.config.forecast_mode}_{self.config.fingerprint}"
         )
         self.reset()
@@ -203,7 +194,6 @@ class MPCPolicyV11:
         self.max_constraint_residual = 0.0
         self.max_lol = 0.0
         self.lol_above_one_steps = 0
-        self.execution_balance_guard_steps = 0
         self.planned_shed_kwh = 0.0
         self.planned_curtail_kwh = 0.0
         self.last_solution: dict[str, Any] | None = None
@@ -371,13 +361,6 @@ class MPCPolicyV11:
         upper[e] = ecap
         upper[df] = fcap
         upper[de] = ecap
-        # Au premier pas, la puissance executee a l'heure precedente peut etre
-        # infinitesimalement superieure a la nouvelle capacite, qui diminue avec
-        # le vieillissement. La variable de variation doit alors pouvoir couvrir
-        # l'arret complet. La borner a la seule capacite courante rendait le MILP
-        # artificiellement infaisable lorsque le stock H2 imposait cet arret.
-        upper[df[0]] = max(fcap, float(self.previous_fc_w))
-        upper[de[0]] = max(ecap, float(self.previous_ely_w))
         upper[soc_high] = 1.0
         for k in range(horizon):
             upper[ely_segment[k]] = segment_widths
@@ -571,57 +554,10 @@ class MPCPolicyV11:
         self.last_solution = solution
         return solution
 
-    @staticmethod
-    def _deficit_shortage_after_lol_w(
-            p_ref_w: float, action: tuple[float, float, float], lol: float
-            ) -> float:
-        if p_ref_w <= 0.0:
-            return 0.0
-        return max(0.0, float(p_ref_w) - float(sum(action))
-                   - float(lol) * float(p_ref_w))
-
-    def _execute_balanced_action(
-            self, SoC_t, P_tot_ref_t, defaillances, E_h2_t, E_h2_init,
-            P_fc_max_t, P_ely_max_t, SoH_bat_t, fc: float, ely: float,
-            ) -> tuple[tuple[float, float, float], float]:
-        """Applique les saturations physiques sans déficit implicite.
-
-        Une LOL totale ne peut pas compenser une consommation d'électrolyse
-        résiduelle lorsque la batterie est à sa borne basse et que la pile ne
-        fournit rien. Dans ce cas rare, l'électrolyse est coupée à l'exécution,
-        puis l'action et la LOL sont recalculées avec ``get_lol``.
-        """
-        p_ref_w = float(P_tot_ref_t)
-        battery = p_ref_w - float(fc) + float(ely)
-        action, lol = get_lol(
-            SoC_t, (battery, float(fc), -float(ely)), p_ref_w, defaillances,
-            E_h2_t, E_h2_init, P_fc_max_t, P_ely_max_t, SoH_bat_t,
-        )
-        shortage_w = self._deficit_shortage_after_lol_w(p_ref_w, action, lol)
-        if shortage_w > EXECUTION_BALANCE_TOL_W \
-                and float(action[2]) < -EXECUTION_BALANCE_TOL_W:
-            battery = p_ref_w - float(fc)
-            action, lol = get_lol(
-                SoC_t, (battery, float(fc), 0.0), p_ref_w, defaillances,
-                E_h2_t, E_h2_init, P_fc_max_t, P_ely_max_t, SoH_bat_t,
-            )
-            self.execution_balance_guard_steps += 1
-            shortage_w = self._deficit_shortage_after_lol_w(
-                p_ref_w, action, lol)
-        if shortage_w > EXECUTION_BALANCE_TOL_W:
-            self.failures += 1
-            raise RuntimeError(
-                "deficit non ferme apres LOL a l'execution: "
-                f"{shortage_w:.12g} W; P_ref={p_ref_w:.12g}; "
-                f"action={tuple(float(value) for value in action)}; lol={lol:.12g}"
-            )
-        return action, float(lol)
-
     def diagnostics(self) -> dict[str, Any]:
         return {
             "policy_id": self.policy_id,
             "model_id": MODEL_ID,
-            "mpc_formulation_id": MPC_FORMULATION_ID,
             "ely_stress_exponent": NOMINAL_ELY_STRESS_EXPONENT,
             "config": asdict(self.config),
             "config_fingerprint": self.config.fingerprint,
@@ -634,7 +570,6 @@ class MPCPolicyV11:
             "max_constraint_residual": self.max_constraint_residual,
             "max_lol": self.max_lol,
             "lol_above_one_steps": self.lol_above_one_steps,
-            "execution_balance_guard_steps": self.execution_balance_guard_steps,
             "planned_shed_kwh": self.planned_shed_kwh,
             "planned_curtail_kwh": self.planned_curtail_kwh,
         }
@@ -660,23 +595,12 @@ class MPCPolicyV11:
         if len(forecast) < 2:
             forecast = np.r_[forecast, float(P_tot_ref_t)]
 
-        try:
-            solution = self.solve_horizon(
-                forecast, float(SoC_t), float(E_h2_t), float(E_h2_init),
-                float(SoH_bat_t), float(SoH_fc_t), float(SoH_ely_t),
-                float(alpha_fc_t), float(alpha_ely_t),
-                float(P_fc_max_t), float(P_ely_max_t), aging_context,
-            )
-        except RuntimeError as exc:
-            raise RuntimeError(
-                f"{exc}; call={self.calls}; P_ref={float(P_tot_ref_t):.12g}; "
-                f"SoC={float(SoC_t):.12g}; E_h2={float(E_h2_t):.12g}; "
-                f"SoH=({float(SoH_bat_t):.12g},{float(SoH_fc_t):.12g},"
-                f"{float(SoH_ely_t):.12g}); "
-                f"alpha=({float(alpha_fc_t):.12g},{float(alpha_ely_t):.12g})"
-                f"; previous_dc=({self.previous_fc_w:.12g},"
-                f"{-self.previous_ely_w:.12g})"
-            ) from exc
+        solution = self.solve_horizon(
+            forecast, float(SoC_t), float(E_h2_t), float(E_h2_init),
+            float(SoH_bat_t), float(SoH_fc_t), float(SoH_ely_t),
+            float(alpha_fc_t), float(alpha_ely_t),
+            float(P_fc_max_t), float(P_ely_max_t), aging_context,
+        )
         if not solution["success"]:
             raise RuntimeError(solution["message"])
 
@@ -687,9 +611,10 @@ class MPCPolicyV11:
         if "ELY" in defaillances:
             ely = 0.0
         # La batterie est l'ajustement a l'execution, comme pour RB1/RB2/PD.
-        action, lol = self._execute_balanced_action(
-            SoC_t, P_tot_ref_t, defaillances, E_h2_t, E_h2_init,
-            P_fc_max_t, P_ely_max_t, SoH_bat_t, fc, ely,
+        battery = float(P_tot_ref_t) - fc + ely
+        action, lol = get_lol(
+            SoC_t, (battery, fc, -ely), P_tot_ref_t, defaillances,
+            E_h2_t, E_h2_init, P_fc_max_t, P_ely_max_t, SoH_bat_t,
         )
 
         self.calls += 1

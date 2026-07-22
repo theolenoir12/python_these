@@ -2,13 +2,12 @@
 
 ## Statut
 
-Le noyau déterministe corrigé, le screening annuel et le banc d'incertitude
-sont terminés et audités. Il s'agit d'un MPC mixte linéaire résolu à chaque
-heure par HiGHS via `scipy.optimize.milp`. Seule la première action est appliquée
-par la boucle V11. La formulation courante est identifiée par
-`mpc-v11-p2-milp-v2-delta-capacity-fade-2026-07-20`. L'audit canonique est
-`analysis/AUDIT_MPC_V11_P2_2026-07-21.md` ; le diagnostic qui invalide les
-caches v1 reste `analysis/DIAGNOSTIC_MPC_DELTA_BOUND_2026-07-20.md`.
+Le noyau déterministe est corrigé et le screening annuel doit être rejoué. Il
+s'agit d'un MPC mixte linéaire résolu à chaque heure par HiGHS via
+`scipy.optimize.milp`. Seule la première action est appliquée par la boucle V11.
+La formulation courante est identifiée par
+`mpc-v11-p2-milp-v2-delta-capacity-fade-2026-07-20`. Le diagnostic qui invalide
+les caches MPC v1 est `analysis/DIAGNOSTIC_MPC_DELTA_BOUND_2026-07-20.md`.
 
 Les anciens résultats de `Python/Robustesse/MPC3/` ne sont pas réutilisés comme
 résultats : ils reposent sur les anciennes fonctions de coût. Leur architecture
@@ -80,38 +79,6 @@ H6 et H24, sans échec, `lol>1` ni résidu de bilan ; son test nul est exact. Un
 mini-screening séparé confirme que l'identifiant v2 est enregistré dans le
 protocole et la trajectoire.
 
-## Résultats annuels v2 audités
-
-Le screening parfait `runs/screen_1y_718d8fe28384/` est complet (8/8), et le
-banc `runs/forecast_uncertainty_1y_1acc8ef7e9d2/` contient 34/34 trajectoires.
-Les 42 trajectoires partagent exactement le même profil de 8 759 pas. Les
-ledgers et métriques sont reproductibles, tous les déficits sont fermés et
-aucun solveur n'échoue.
-
-Le MPC H24 sans SoH atteint 0,265062 % de LPSP, 2,378489 kEUR de dégradation
-et 2,545048 kEUR pour J3. Il réduit J3 de 5,096 % face à H6 et de 11,895 % face
-à RB1, et domine RB1 et RB2 sur les deux axes. Son temps de résolution vaut
-189,4 ms en moyenne et 3,42 s au maximum. Les trajectoires bruitées restent
-sous 5,11 s par décision : H24 est retenu comme base online.
-
-Tous les points MPC du screening restent dominés par la référence PD annuelle.
-À la LPSP de H24 sans SoH, son surcoût de dégradation interpolé est de
-0,634953 kEUR (+36,42 %) ; son J3 est 37,93 % au-dessus du meilleur point PD
-échantillonné à `epsilon=3`.
-
-La qualité de la prévision est matérielle : face à la prévision parfaite, J3
-augmente de 4,77 % au bruit x0,5, 9,98 % à x1, 13,80 % à x1,5 et 50,08 % sous
-persistance. À l'inverse, la pondération SoH simple
-`beta_fc=beta_ely=1` ne réduit J3 que de 0,178 %, 0,381 % et 0,416 % en moyenne
-aux trois niveaux de bruit, de 0,340 % sous prévision parfaite et de 0,363 %
-sous persistance. Le gain individuel maximal parmi les cinq graines bruitées
-reste inférieur à 0,7 %. Cette injection du SoH est donc non matérielle au seuil
-pratique de quelques pourcents et n'est pas retenue pour le tuning.
-
-Le correctif v2 ne change pas le diagnostic qualitatif v1 : sur le screening,
-la variation de J3 v2–v1 vaut +0,159 % pour H24 sans SoH et -0,244 % pour H24
-avec SoH ; RB1 et RB2 sont strictement inchangées.
-
 ## Résultats annuels v1, conservés uniquement comme diagnostic
 
 Le screening `runs/screen_1y_d840744e29c7/` compare :
@@ -157,38 +124,15 @@ bruit x0,5, 10,36 % à x1 (quatre graines seulement), 14,32 % à x1,5 et 50,03 %
 sous persistance. Ces écarts suggèrent que la qualité de prévision est un levier
 matériel, mais ils doivent être recalculés avec la formulation v2.
 
-## Tuning annuel terminé
+## Prochaine expérience
 
-Le job 218548 a calculé les 39/39 trajectoires de sélection dans
-`runs/tune_screen_1y_97e636e32db7/`, sans échec solveur. Les 39 points partagent
-un profil bit-à-bit commun et leurs métriques ont été recalculées depuis les
-NPZ et les ledgers sans écart.
-
-Le cas `terminal_h2_1p25` est physiquement rejeté : sa graine 202603 conserve
-35,873 W d'électrolyse sur deux pas alors que la charge est déjà délestée à
-100 %. Les trois leviers admis et retenus par le classement préannoncé sont :
-
-- `battery_wear_0p5` : -1,132 % de J3, gain sur 3/3 graines ;
-- `terminal_bat_1p2` : -0,686 %, gain sur 3/3 ;
-- `fc_wear_2` : -0,547 %, gain sur 3/3.
-
-La validation aveugle du job 218935 est complète dans
-`runs/tune_validation_1y_9c728d3d847a/` : 48/48 résultats, aucun échec solveur
-et recalcul exact des métriques. `terminal_bat_1p2` et `combo_top2` sont exclus
-car au moins un scénario fait fonctionner l'électrolyseur pendant un délestage
-total.
-
-`combo_top3` est retenu : il gagne 1,443 % de J3 face à la baseline sur les
-graines réservées au bruit x1. Il gagne également en parfait (-5,232 %), sous
-persistance (-1,365 %), à x0,5 (-1,409 %) et à x1,5 (-1,658 %). Sa configuration
-combine `battery_wear_scale=0,5`, `terminal_bat_eur_per_kwh=1,2` et
-`fc_wear_scale=2`. L'audit complet est
-`analysis/AUDIT_TUNING_MPC_V11_P2_2026-07-21.md`.
-
-La dernière expérience MPC prévue compare la baseline et `combo_top3` sur 25
-ans au bruit x1 avec les graines 202604/202605. Le lanceur est
-`run_longrun_tuning_mpc_v11.slurm` et la sortie attendue
-`runs/tune_longrun_25y_eab8dde5d5d0/`.
+Réimporter les contenus des dossiers canoniques `Common/` et `MPC/`, puis
+relancer successivement `run_screen_mpc_v11.slurm` et
+`run_forecast_uncertainty_mpc_v11.slurm`. L'identifiant de formulation entre
+dans les empreintes : de nouveaux dossiers sont créés et aucun cache MPC v1
+n'est réutilisé. Le tuning ne commencera qu'après audit complet de ces deux
+runs. La variante SoH ne sera conservée que si elle franchit le seuil de
+quelques pourcents.
 
 
 ## Information future, reference DP et incertitude
